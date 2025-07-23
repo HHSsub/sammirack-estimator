@@ -3,7 +3,7 @@ import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
 import { useProducts } from './contexts/ProductContext';
 import OptionSelector from './components/OptionSelector';
-import BomDisplay from './components/BomDisplay';
+import BomDisplay from './components/BOMDisplay'
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
