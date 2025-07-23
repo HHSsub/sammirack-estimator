@@ -6,7 +6,7 @@ import EstimateForm from './components/EstimateForm';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import HistoryPage from './components/HistoryPage';
 import PrintTemplate from './components/PrintTemplate';
-import { BOMCalculator } from '@/utils/BOMCalculator';
+import { BOMCalculator } from './utils/BOMCalculator'; 
 
 // BOMCalculator를 전역에서 접근 가능하게 하여 PrintService 등에서 사용
 window.BOMCalculator = BOMCalculator;
