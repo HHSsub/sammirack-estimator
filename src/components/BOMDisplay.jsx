@@ -1,19 +1,14 @@
 import React from 'react';
 import { getKoreanName } from '../utils/nameMap';
 
-function BOMDisplay({ bom }) {
+function BOMDisplay({ bom, title = "부품 목록 (BOM)" }) {
   if (!bom || bom.length === 0) {
-    return (
-      <div className="bom-section mt-4">
-        <h3 className="text-lg font-semibold mb-2">부품 목록 (BOM)</h3>
-        <p>표시할 부품 목록이 없습니다.</p>
-      </div>
-    );
+    return null; // 표시할 내용 없으면 아무것도 렌더링 안 함
   }
 
   return (
-    <div className="bom-section mt-4">
-      <h3 className="text-lg font-semibold mb-2">부품 목록 (BOM)</h3>
+    <div className="bom-section mt-4 p-4 border rounded">
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <table className="w-full text-left border-collapse">
         <thead>
           <tr>
@@ -24,7 +19,8 @@ function BOMDisplay({ bom }) {
         <tbody>
           {bom.map((item, index) => (
             <tr key={index}>
-              <td className="border-b p-2">{getKoreanName(item)}</td>
+              {/* item.code가 있으면 getKoreanName 사용, 없으면(합산된 경우) item.name 사용 */}
+              <td className="border-b p-2">{item.code ? getKoreanName(item) : item.name}</td>
               <td className="border-b p-2 text-right">{item.quantity}</td>
             </tr>
           ))}
