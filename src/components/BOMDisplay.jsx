@@ -1,10 +1,14 @@
 import React from 'react';
-import { useProducts } from '../contexts/ProductContext';
 import { getKoreanName } from '../utils/nameMap';
 
-function BomDisplay({ bom }) {
+function BOMDisplay({ bom }) {
   if (!bom || bom.length === 0) {
-    return <div className="bom-section"><p>표시할 부품 목록이 없습니다. 옵션을 모두 선택해주세요.</p></div>;
+    return (
+      <div className="bom-section mt-4">
+        <h3 className="text-lg font-semibold mb-2">부품 목록 (BOM)</h3>
+        <p>표시할 부품 목록이 없습니다.</p>
+      </div>
+    );
   }
 
   return (
@@ -30,4 +34,4 @@ function BomDisplay({ bom }) {
   );
 }
 
-export default BomDisplay;
+export default BOMDisplay;
