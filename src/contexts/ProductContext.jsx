@@ -31,7 +31,7 @@ export const ProductProvider = ({ children }) => {
     const { type, version, color, size, height, level, quantity } = selections;
     const product = productsData[type];
 
-    // 1. 동적 옵션 목록 업데이트 (완전 재작성)
+    // 1. 동적 옵션 목록 업데이트 (완전 재설계)
     const newOptions = { versions: [], sizes: [], heights: [], levels: [], colors: [] };
     if (product) {
       if (product.버전) newOptions.versions = Object.keys(product.버전);
