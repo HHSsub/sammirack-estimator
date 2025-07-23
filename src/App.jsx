@@ -30,29 +30,42 @@ function App() {
   const [showBOM, setShowBOM] = useState(false); // BOM 표시 여부
 
   // --- 데이터 로딩 및 가공 ---
-  useEffect(() => {
-    fetch('./data.json')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        // 원본 객체 데이터를 애플리케이션에서 사용하기 쉬운 배열 형태로 변환
-        const productsArray = Object.keys(data).map(key => ({
-          name: key, // 제품 이름 ("스텐랙", "하이랙")
-          data: data[key], // 원본 데이터 저장
-        }));
-        setProducts(productsArray);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("데이터 로딩 또는 처리 중 에러 발생:", err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []); // 컴포넌트 마운트 시 한 번만 실행
+useEffect(() => {
+  fetch('./data.json')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      // ✅ 원본 객체 데이터를 배열로 변환 + UI에서 바로 쓰기 좋은 구조
+      const productsArray = Object.entries(data).map(([name, productData]) => ({
+        name,
+        versions: productData.버전 ? Object.keys(productData.버전) : [],
+        basePrices: productData.기본가격 || {},
+        colors: productData.색상 || [],
+        additionalParts: productData.추가상품 || {},
+        bomComponents: productData.부품구성 || {},
+        sizeOptions: productData.기본가격
+          ? Object.keys(productData.기본가격).map(size => ({
+              size,
+              priceModifier: 0
+            }))
+          : [],
+        levelOptions: [{ level: '3단', priceModifier: 0 }, { level: '4단', priceModifier: 0 }],
+        heightOptions: [{ height: '1800', priceModifier: 0 }]
+      }));
+
+      setProducts(productsArray);  // 이게 핵심
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error("데이터 로딩 또는 처리 중 에러 발생:", err);
+      setError(err.message);
+      setLoading(false);
+    });
+}, []);
 
   // --- 선택된 제품 찾기 ---
   const selectedProduct = products.find(p => p.name === rackType);
