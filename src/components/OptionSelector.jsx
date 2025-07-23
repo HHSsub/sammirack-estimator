@@ -7,35 +7,44 @@ function OptionSelector() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    const resetFields = (startField) => {
-      const fields = ['version', 'color', 'size', 'height', 'level'];
-      const startIndex = fields.indexOf(startField);
-      const fieldsToReset = {};
-      if (startIndex !== -1) {
-        for (let i = startIndex + 1; i < fields.length; i++) {
-          fieldsToReset[fields[i]] = '';
-        }
+    setSelections(prev => {
+      const newSelections = { ...prev, [name]: value };
+
+      // 상위 옵션이 바뀌면 하위 옵션을 리셋
+      if (name === 'type') {
+        newSelections.version = '';
+        newSelections.color = '';
+        newSelections.size = '';
+        newSelections.height = '';
+        newSelections.level = '';
       }
-      return fieldsToReset;
-    };
+      if (name === 'color' || name === 'version') {
+        newSelections.size = '';
+        newSelections.height = '';
+        newSelections.level = '';
+      }
+      if (name === 'size') {
+        newSelections.height = '';
+        newSelections.level = '';
+      }
+      if (name === 'height') {
+        newSelections.level = '';
+      }
+      if (name === 'quantity') {
+        newSelections.quantity = parseInt(value, 10) || 1;
+      }
 
-    let fieldsToReset = {};
-    if (name === 'type') fieldsToReset = resetFields('type');
-    if (name === 'color') fieldsToReset = resetFields('color');
-    if (name === 'size') fieldsToReset = resetFields('size');
-    if (name === 'height') fieldsToReset = resetFields('height');
-
-    setSelections(prev => ({
-      ...prev,
-      ...fieldsToReset,
-      [name]: name === 'quantity' ? parseInt(value, 10) || 1 : value,
-    }));
+      return newSelections;
+    });
   };
 
   if (loading) return <p>데이터를 불러오는 중...</p>;
 
+  const productTypeSelected = selections.type && productsData?.[selections.type];
+
   return (
     <div className="product-selection grid grid-cols-2 gap-4">
+      {/* 제품 유형 */}
       <div className="form-group">
         <label>제품 유형:</label>
         <select name="type" value={selections.type} onChange={handleChange}>
@@ -44,26 +53,29 @@ function OptionSelector() {
         </select>
       </div>
 
+      {/* 스텐랙 버전 */}
       {selections.type === '스텐랙' && (
         <div className="form-group">
           <label>버전:</label>
-          <select name="version" value={selections.version} onChange={handleChange} disabled={availableOptions.versions.length === 0}>
+          <select name="version" value={selections.version} onChange={handleChange} disabled={!productTypeSelected}>
             <option value="">선택하세요</option>
             {availableOptions.versions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
         </div>
       )}
 
+      {/* 하이랙 색상/타입 */}
       {selections.type === '하이랙' && (
         <div className="form-group">
           <label>색상/타입:</label>
-          <select name="color" value={selections.color} onChange={handleChange} disabled={availableOptions.colors.length === 0}>
+          <select name="color" value={selections.color} onChange={handleChange} disabled={!productTypeSelected}>
             <option value="">선택하세요</option>
             {availableOptions.colors.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       )}
 
+      {/* 규격 */}
       <div className="form-group">
         <label>규격:</label>
         <select name="size" value={selections.size} onChange={handleChange} disabled={availableOptions.sizes.length === 0}>
@@ -72,6 +84,7 @@ function OptionSelector() {
         </select>
       </div>
       
+      {/* 높이 */}
       <div className="form-group">
         <label>높이:</label>
         <select name="height" value={selections.height} onChange={handleChange} disabled={availableOptions.heights.length === 0}>
@@ -80,6 +93,7 @@ function OptionSelector() {
         </select>
       </div>
 
+      {/* 단수 */}
       <div className="form-group">
         <label>단수:</label>
         <select name="level" value={selections.level} onChange={handleChange} disabled={availableOptions.levels.length === 0}>
@@ -88,6 +102,7 @@ function OptionSelector() {
         </select>
       </div>
 
+      {/* 수량 */}
       <div className="form-group">
         <label>수량:</label>
         <input type="number" name="quantity" min="1" value={selections.quantity} onChange={handleChange} />
