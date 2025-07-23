@@ -10,7 +10,7 @@ export const ProductProvider = ({ children }) => {
 
   const [selections, setSelections] = useState({
     type: '',
-    version: '',
+    version: '', // 스텐랙 버전은 가격에 직접 영향을 주지 않고, 설명 등에 활용될 수 있음
     color: '',
     size: '',
     height: '',
@@ -37,9 +37,10 @@ export const ProductProvider = ({ children }) => {
   useEffect(() => {
     if (!productsData) return;
 
-    const { type, version, color, size, height, level, quantity } = selections;
+    const { type, color, size, height, level, quantity } = selections;
     const product = productsData[type];
 
+    // 1. 동적 옵션 목록 업데이트
     const newOptions = { versions: [], sizes: [], heights: [], levels: [], colors: [] };
     if (product) {
       if (product.버전) newOptions.versions = Object.keys(product.버전);
@@ -47,7 +48,7 @@ export const ProductProvider = ({ children }) => {
       
       const priceData = product.기본가격;
       if (priceData) {
-        const sizeSource = type === '하이랙' ? priceData[color] : priceData;
+        const sizeSource = type === '하이랙' && color ? priceData[color] : priceData;
         if (sizeSource) {
           newOptions.sizes = Object.keys(sizeSource);
           if (size && sizeSource[size]) {
@@ -61,19 +62,22 @@ export const ProductProvider = ({ children }) => {
     }
     setAvailableOptions(newOptions);
 
+    // 2. 가격 계산 (로직 수정)
     let unitPrice = 0;
     try {
-      if (type === '스텐랙' && version && size && height && level) {
-        // 스텐랙은 버전별 기본가 + 옵션별 가격으로 재계산해야 할 수 있으나, 우선 버전가격을 기본으로 설정
-        unitPrice = product.버전[version].기본가;
-      } else if (type === '하이랙' && color && size && height && level) {
-        unitPrice = product.기본가격[color][size][height][level];
+      if (type && size && height && level) {
+        if (type === '스텐랙') {
+          unitPrice = product.기본가격[size][height][level];
+        } else if (type === '하이랙' && color) {
+          unitPrice = product.기본가격[color][size][height][level];
+        }
       }
     } catch (e) {
       unitPrice = 0;
     }
     setPrice(unitPrice * (quantity || 1));
 
+    // 3. BOM 계산
     const newBom = bomCalculator.calculateBOM(type, selections);
     setBom(newBom);
 
