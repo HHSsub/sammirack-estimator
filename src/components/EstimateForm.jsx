@@ -1,47 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import BOMDisplay from './BOMDisplay'; // 경로 수정
-import { getKoreanName } from '../utils/nameMap';
+import BOMDisplay from './BOMDisplay';
 
 const EstimateForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // App.jsx에서 전달받은 데이터로 상태 초기화
-  const [estimate, setEstimate] = useState(location.state || {
-    selections: {},
-    price: 0,
-    bom: [],
-  });
+  const [cart, setCart] = useState(location.state?.cart || []);
+  const [cartTotal, setCartTotal] = useState(location.state?.cartTotal || 0);
+  const [totalBom, setTotalBom] = useState(location.state?.totalBom || []);
 
   useEffect(() => {
-    // 데이터가 없으면 홈으로 리디렉션
-    if (!location.state) {
+    if (!location.state || !location.state.cart || location.state.cart.length === 0) {
       alert("견적할 항목을 먼저 선택해주세요.");
       navigate('/');
     }
   }, [location, navigate]);
 
-  const { selections, price, bom } = estimate;
-
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">견적서</h2>
+      
       <div className="mb-4">
         <h3 className="text-xl font-semibold">견적 항목</h3>
-        <p>제품 유형: {selections.type}</p>
-        {selections.version && <p>버전: {selections.version}</p>}
-        {selections.color && <p>색상/타입: {selections.color}</p>}
-        <p>규격: {selections.size}</p>
-        <p>높이: {selections.height}</p>
-        <p>단수: {selections.level}</p>
-        <p>수량: {selections.quantity}</p>
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th className="border-b p-2">항목</th>
+              <th className="border-b p-2 text-right">금액</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cart.map(item => (
+              <tr key={item.id}>
+                <td className="border-b p-2">
+                  {item.selections.type} ({item.selections.version || item.selections.color}) - {item.selections.size} / {item.selections.height} / {item.selections.level} x {item.selections.quantity}개
+                </td>
+                <td className="border-b p-2 text-right">{item.price.toLocaleString()}원</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
       <div className="mb-4">
         <h3 className="text-xl font-semibold">총 견적 금액</h3>
-        <p className="text-2xl text-blue-600">{price.toLocaleString()} 원</p>
+        <p className="text-2xl text-blue-600">{cartTotal.toLocaleString()} 원</p>
       </div>
-      <BOMDisplay bom={bom} />
+
+      <BOMDisplay bom={totalBom} title="총 부품 목록 (BOM)" />
+
       <button onClick={() => window.print()} className="mt-4 p-2 bg-green-500 text-white rounded">
         인쇄
       </button>
