@@ -1,65 +1,33 @@
 import React from 'react';
+import { useProducts } from '../contexts/ProductContext';
+import { getKoreanName } from '../utils/nameMap';
 
-/**
- * Component for displaying BOM (Bill of Materials) data
- */
-const BOMDisplay = ({ components, showPrices = true, className = '' }) => {
-  if (!components || components.length === 0) {
-    return (
-      <div className="p-4 text-center bg-gray-100 rounded-md">
-        <p>BOM 데이터가 없습니다.</p>
-      </div>
-    );
+function BomDisplay({ bom }) {
+  if (!bom || bom.length === 0) {
+    return <div className="bom-section"><p>표시할 부품 목록이 없습니다. 옵션을 모두 선택해주세요.</p></div>;
   }
 
-  const total = components.reduce((sum, comp) => sum + (comp.totalPrice || 0), 0);
-
   return (
-    <div className={`overflow-auto ${className}`}>
-      <table className="w-full border-collapse">
-        <thead className="bg-gray-100">
+    <div className="bom-section mt-4">
+      <h3 className="text-lg font-semibold mb-2">부품 목록 (BOM)</h3>
+      <table className="w-full text-left border-collapse">
+        <thead>
           <tr>
-            <th className="p-2 border text-left">항목</th>
-            <th className="p-2 border text-left">설명</th>
-            <th className="p-2 border text-center">수량</th>
-            <th className="p-2 border text-center">단위</th>
-            {showPrices && (
-              <>
-                <th className="p-2 border text-right">단가</th>
-                <th className="p-2 border text-right">금액</th>
-              </>
-            )}
+            <th className="border-b p-2">품명</th>
+            <th className="border-b p-2 text-right">수량</th>
           </tr>
         </thead>
         <tbody>
-          {components.map((component, index) => (
-            <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-              <td className="p-2 border">{component.name}</td>
-              <td className="p-2 border">{component.description}</td>
-              <td className="p-2 border text-center">{component.quantity}</td>
-              <td className="p-2 border text-center">{component.unit}</td>
-              {showPrices && (
-                <>
-                  <td className="p-2 border text-right">
-                    {component.unitPrice?.toLocaleString()}원
-                  </td>
-                  <td className="p-2 border text-right">
-                    {component.totalPrice?.toLocaleString()}원
-                  </td>
-                </>
-              )}
+          {bom.map((item, index) => (
+            <tr key={index}>
+              <td className="border-b p-2">{getKoreanName(item)}</td>
+              <td className="border-b p-2 text-right">{item.quantity}</td>
             </tr>
           ))}
-          {showPrices && (
-            <tr className="font-bold bg-gray-100">
-              <td colSpan="5" className="p-2 border text-right">총계</td>
-              <td className="p-2 border text-right">{total.toLocaleString()}원</td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
   );
-};
+}
 
-export default BOMDisplay;
+export default BomDisplay;
