@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
 import { useProducts } from './contexts/ProductContext';
 import OptionSelector from './components/OptionSelector';
-import BOMDisplay from './components/BOMDisplay';
+import CartDisplay from './components/CartDisplay'; // 새로 만들 컴포넌트
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
@@ -12,13 +12,7 @@ function App() {
   return (
     <div className="app">
       <nav className="main-nav">
-        <div className="nav-logo"><h1>(주)삼미앵글</h1></div>
-        <div className="nav-links">
-          <Link to="/" className="nav-link">홈</Link>
-          <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
-          <Link to="/purchase-order/new" className="nav-link">발주서 작성</Link>
-          <Link to="/history" className="nav-link">문서 관리</Link>
-        </div>
+        {/* ... 네비게이션 ... */}
       </nav>
       <main className="main-content">
         <Routes>
@@ -29,37 +23,40 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
+      <footer className="app-footer">
+        {/* ... 푸터 ... */}
+      </footer>
     </div>
   );
 }
 
 const HomePage = () => {
-  const { price, bom, selections } = useProducts();
-  const [showBOM, setShowBOM] = useState(false);
-
-  const canProceed = price > 0 && selections.type;
-
+  const { currentPrice, addToCart, cart, cartTotal } = useProducts();
+  
   return (
     <div className="app-container">
       <h2>랙 제품 견적</h2>
       <OptionSelector />
+      
       <div className="price-display">
-        <h3>예상 가격</h3>
-        <p className="price">{price.toLocaleString()}원</p>
+        <h3>현재 항목 예상 가격</h3>
+        <p className="price">{currentPrice.toLocaleString()}원</p>
       </div>
+
+      <button onClick={addToCart} disabled={currentPrice <= 0} className="p-2 bg-blue-500 text-white rounded">
+        목록에 추가
+      </button>
+
+      <CartDisplay /> {/* 장바구니 목록 표시 */}
+
       <div className="action-buttons">
-        <button onClick={() => setShowBOM(!showBOM)} disabled={!canProceed}>
-          {showBOM ? 'BOM 숨기기' : 'BOM 보기'}
-        </button>
-        <Link to="/estimate/new" state={{ selections, price, bom }} className={`create-estimate-button ${!canProceed && 'disabled'}`}>
+        <Link to="/estimate/new" state={{ cart, cartTotal }} className={`create-estimate-button ${cart.length === 0 && 'disabled'}`}>
           견적서 작성
         </Link>
-        <Link to="/purchase-order/new" state={{ selections, price, bom }} className={`create-order-button ${!canProceed && 'disabled'}`}>
+        <Link to="/purchase-order/new" state={{ cart, cartTotal }} className={`create-order-button ${cart.length === 0 && 'disabled'}`}>
           발주서 작성
         </Link>
       </div>
-      {showBOM && <BOMDisplay bom={bom} />}
     </div>
   );
 };
