@@ -2,7 +2,7 @@ import React from 'react';
 
 const BaljuPrint = ({ data }) => {
   return (
-    <div className="print-container balju-print">
+    <div className="print-container balju-print print-only">
       <div className="print-preview-notice">
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
