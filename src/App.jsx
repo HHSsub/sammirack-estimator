@@ -8,6 +8,7 @@ import BOMDisplay from './components/BOMDisplay';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
+import PrintPage from './components/PrintPage';
 import { getKoreanName } from './utils/nameMap';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
           <Route path="/estimate/new" element={<EstimateForm />} />
           <Route path="/purchase-order/new" element={<PurchaseOrderForm />} />
           <Route path="/history" element={<HistoryPage />} />
+          <Route path="/print" element={<PrintPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
