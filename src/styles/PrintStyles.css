@@ -1,10 +1,33 @@
-/* 기존 내용을 다음과 같이 통합 및 개선 */
+/* 기존 내용 유지 + 프린트 영역 제어 추가 */
 @page {
   size: A4 portrait;
   margin: 8mm;
 }
 
 @media print {
+  /* 모든 요소 숨기고 프린트 영역만 표시 */
+  body * {
+    visibility: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .print-container, 
+  .print-container * {
+    visibility: visible !important;
+  }
+  
+  .print-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* 인쇄 품질 보정 */
   * {
     -webkit-print-color-adjust: exact !important;
     color-adjust: exact !important;
@@ -12,19 +35,7 @@
   
   body {
     font-family: "Malgun Gothic", sans-serif !important;
-    margin: 0 !important;
-    padding: 0 !important;
     font-size: 12px !important;
-    background: white !important;
-  }
-  
-  .print-container {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
   }
   
   /* 견적서 전용 스타일 */
@@ -59,17 +70,12 @@
     font-weight: bold !important;
   }
   
-  .balju-print h2 {
-    margin-top: 20px !important;
-    margin-bottom: 8px !important;
-    font-size: 14px !important;
-  }
-  
-  /* 공통 테이블 스타일 */
+  /* 테이블 공통 스타일 */
   .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
     margin-bottom: 10px !important;
+    page-break-inside: avoid !important;
   }
   
   .print-table td,
@@ -77,11 +83,6 @@
     border: 1px solid #000 !important;
     padding: 6px !important;
     text-align: center !important;
-    vertical-align: middle !important;
-  }
-  
-  .print-table .info-table td {
-    text-align: left !important;
   }
   
   .print-table .label {
@@ -89,23 +90,13 @@
     font-weight: bold !important;
   }
   
-  .print-table .quote-table th,
-  .print-table .order-table th,
-  .print-table .material-table th {
+  .print-table th {
     background-color: #d9d9d9 !important;
   }
   
-  .print-table .right {
-    text-align: right !important;
-  }
-  
-  .print-table .left {
-    text-align: left !important;
-  }
-  
+  /* 기타 요소들 */
   .print-notes {
     border: 1px solid #000 !important;
-    height: 60px !important;
     padding: 10px !important;
     margin-top: 10px !important;
   }
@@ -115,9 +106,15 @@
     margin-top: 20px !important;
     font-weight: bold !important;
   }
+  
+  /* 화면 전용 요소 완전히 제거 */
+  header, footer, nav, 
+  .no-print, .print-preview-notice {
+    display: none !important;
+  }
 }
 
-/* 화면 표시용 스타일 */
+/* 화면 표시용 스타일 (변경 없음) */
 @media screen {
   .print-container {
     max-width: 210mm;
@@ -125,7 +122,6 @@
     padding: 20px;
     background: white;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    border: 1px solid #ddd;
   }
   
   .print-preview-notice {
@@ -133,9 +129,6 @@
     border: 1px solid #0066cc;
     padding: 10px;
     margin-bottom: 20px;
-    border-radius: 4px;
     text-align: center;
-    font-weight: bold;
-    color: #0066cc;
   }
 }
