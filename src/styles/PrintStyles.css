@@ -1,235 +1,141 @@
-/* Print Styles for A4 Optimization */
-
+/* 기존 내용을 다음과 같이 통합 및 개선 */
 @page {
   size: A4 portrait;
-  margin: 10mm;
+  margin: 8mm;
 }
 
-/* Global print styles */
 @media print {
   * {
     -webkit-print-color-adjust: exact !important;
     color-adjust: exact !important;
-    print-color-adjust: exact !important;
   }
-
+  
   body {
+    font-family: "Malgun Gothic", sans-serif !important;
     margin: 0 !important;
     padding: 0 !important;
-    font-family: "Malgun Gothic", "맑은 고딕", Arial, sans-serif !important;
     font-size: 12px !important;
-    line-height: 1.2 !important;
-    color: #000 !important;
     background: white !important;
   }
-
-  /* Hide all non-printable elements */
-  .no-print,
-  .preview-actions,
-  nav,
-  header,
-  footer,
-  .sidebar,
-  .menu,
-  .navigation,
-  button:not(.print-only),
-  .btn:not(.print-only) {
-    display: none !important;
-  }
-
-  /* Ensure print containers take full space */
-  .print-container,
-  .gyeonjuk-print,
-  .balju-print {
+  
+  .print-container {
     width: 100% !important;
-    height: auto !important;
+    max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
-    background: white !important;
   }
-
-  .container {
-    width: 100% !important;
-    max-width: none !important;
-    min-height: auto !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-sizing: border-box !important;
+  
+  /* 견적서 전용 스타일 */
+  .gyeonjuk-print {
+    font-size: 11px !important;
   }
-
-  /* Table styles for print */
-  table {
+  
+  .gyeonjuk-print h1 {
+    text-align: center !important;
+    font-size: 20px !important;
+    margin-bottom: 10px !important;
+    font-weight: bold !important;
+  }
+  
+  .gyeonjuk-print .stamp {
+    position: absolute !important;
+    top: 25mm !important;
+    right: 30mm !important;
+    width: 80px !important;
+    opacity: 0.6 !important;
+  }
+  
+  /* 발주서 전용 스타일 */
+  .balju-print {
+    font-size: 10px !important;
+  }
+  
+  .balju-print h1 {
+    text-align: center !important;
+    font-size: 20px !important;
+    margin-bottom: 10px !important;
+    font-weight: bold !important;
+  }
+  
+  .balju-print h2 {
+    margin-top: 20px !important;
+    margin-bottom: 8px !important;
+    font-size: 14px !important;
+  }
+  
+  /* 공통 테이블 스타일 */
+  .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 8px !important;
-    page-break-inside: avoid !important;
+    margin-bottom: 10px !important;
   }
-
-  td, th {
+  
+  .print-table td,
+  .print-table th {
     border: 1px solid #000 !important;
-    padding: 4px 6px !important;
+    padding: 6px !important;
     text-align: center !important;
     vertical-align: middle !important;
-    font-size: 11px !important;
-    line-height: 1.1 !important;
-    word-wrap: break-word !important;
-    overflow: hidden !important;
   }
-
-  .info-table td {
+  
+  .print-table .info-table td {
     text-align: left !important;
   }
-
-  .label {
+  
+  .print-table .label {
     background-color: #f0f0f0 !important;
     font-weight: bold !important;
   }
-
-  .quote-table th,
-  .order-table th,
-  .material-table th {
+  
+  .print-table .quote-table th,
+  .print-table .order-table th,
+  .print-table .material-table th {
     background-color: #d9d9d9 !important;
-    font-weight: bold !important;
   }
-
-  .right {
+  
+  .print-table .right {
     text-align: right !important;
   }
-
-  .left {
+  
+  .print-table .left {
     text-align: left !important;
   }
-
-  /* Typography for print */
-  h1 {
-    text-align: center !important;
-    font-size: 18px !important;
-    margin: 0 0 8px 0 !important;
-    font-weight: bold !important;
-    letter-spacing: 2px !important;
-  }
-
-  h2 {
-    font-size: 14px !important;
-    margin: 12px 0 6px 0 !important;
-    font-weight: bold !important;
-  }
-
-  /* Notes section */
-  .notes {
+  
+  .print-notes {
     border: 1px solid #000 !important;
-    min-height: 40px !important;
-    padding: 8px !important;
-    margin-top: 8px !important;
-    font-size: 11px !important;
-    background: white !important;
-  }
-
-  /* Company info */
-  .company {
-    text-align: right !important;
-    margin-top: 15px !important;
-    font-weight: bold !important;
-    font-size: 12px !important;
-  }
-
-  /* Stamp area */
-  .stamp {
-    position: absolute !important;
-    top: 20mm !important;
-    right: 25mm !important;
-    width: 60px !important;
-    opacity: 0.6 !important;
-  }
-
-  /* Page break control */
-  .page-break-before {
-    page-break-before: always !important;
-  }
-
-  .page-break-after {
-    page-break-after: always !important;
-  }
-
-  .no-page-break {
-    page-break-inside: avoid !important;
-  }
-
-  /* Ensure proper spacing */
-  .material-table {
+    height: 60px !important;
+    padding: 10px !important;
     margin-top: 10px !important;
   }
-
-  /* Fix for webkit browsers */
-  @media print and (-webkit-min-device-pixel-ratio: 0) {
-    table {
-      border-spacing: 0 !important;
-    }
-    
-    td, th {
-      border-width: 1px !important;
-      border-style: solid !important;
-      border-color: #000 !important;
-    }
+  
+  .print-company {
+    text-align: right !important;
+    margin-top: 20px !important;
+    font-weight: bold !important;
   }
 }
 
-/* Screen styles for print preview */
+/* 화면 표시용 스타일 */
 @media screen {
-  .print-preview {
-    width: 210mm;
-    min-height: 297mm;
+  .print-container {
+    max-width: 210mm;
     margin: 20px auto;
-    padding: 10mm;
-    box-sizing: border-box;
+    padding: 20px;
     background: white;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    font-family: "Malgun Gothic", "맑은 고딕", Arial, sans-serif;
-    font-size: 12px;
-    line-height: 1.2;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
   }
-
-  .print-actions {
-    text-align: center;
-    margin: 20px 0;
-  }
-
-  .print-button {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
+  
+  .print-preview-notice {
+    background: #f0f8ff;
+    border: 1px solid #0066cc;
+    padding: 10px;
+    margin-bottom: 20px;
     border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    margin: 0 10px;
-  }
-
-  .print-button:hover {
-    background: #0056b3;
-  }
-
-  .print-button:active {
-    transform: translateY(1px);
-  }
-}
-
-/* Responsive adjustments for smaller screens */
-@media screen and (max-width: 768px) {
-  .print-preview {
-    width: 95%;
-    margin: 10px auto;
-    padding: 5mm;
-  }
-  
-  .print-preview table {
-    font-size: 10px;
-  }
-  
-  .print-preview td,
-  .print-preview th {
-    padding: 3px;
+    text-align: center;
+    font-weight: bold;
+    color: #0066cc;
   }
 }
