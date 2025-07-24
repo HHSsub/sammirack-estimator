@@ -8,7 +8,7 @@ const BaljuPrint = ({ data }) => {
       </div>
       
       <h1>발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-      <img className="stamp" src="/도장.png" alt="도장" />
+      <img className="stamp" src="/images/도장.png" alt="도장" />
 
       {/* 상단 정보 */}
       <table className="print-table info-table">
