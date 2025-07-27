@@ -72,6 +72,7 @@
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* ✅ 이 부분 수정 */
+    overflow: hidden !important; /* PAGE넘어가지 않게할 목적으로 추가 */
   }
   
   .balju-print h1 {
@@ -99,6 +100,7 @@
     border-collapse: collapse !important;
     margin-bottom: 5px !important;
     page-break-inside: avoid !important;
+    page-break-after: avoid !important;  /* ✅ 추가 */
     break-inside: avoid !important;
     font-size: 8px !important; /* 5px에서 8px로 가독성 개선 */
     table-layout: fixed !important;
