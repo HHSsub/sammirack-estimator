@@ -3,15 +3,35 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const estimateNumber = `EST-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
   
-  const items = cart.map(item => ({
-    name: item.name || '',
-    specification: item.specification || '',
-    unit: item.unit || 'set',
-    quantity: item.quantity || 1,
-    unitPrice: item.unitPrice || 0,
-    totalPrice: (item.unitPrice || 0) * (item.quantity || 1),
-    note: item.note || ''
-  }));
+  // cart 데이터를 올바르게 매핑
+  const items = cart.map((cartItem, index) => {
+    const { selections } = cartItem;
+    
+    // 제품명 생성
+    let productName = selections.type || '';
+    if (selections.version) productName += ` (${selections.version})`;
+    if (selections.color) productName += ` (${selections.color})`;
+    
+    // 규격 생성
+    let specification = '';
+    if (selections.size) specification += selections.size;
+    if (selections.height) specification += ` × ${selections.height}`;
+    if (selections.level) specification += ` × ${selections.level}`;
+    
+    // 단가 계산 (총 가격을 수량으로 나눔)
+    const quantity = selections.quantity || 1;
+    const unitPrice = Math.floor(cartItem.price / quantity);
+    
+    return {
+      name: productName,
+      specification: specification,
+      unit: 'set',
+      quantity: quantity,
+      unitPrice: unitPrice,
+      totalPrice: cartItem.price,
+      note: ''
+    };
+  });
 
   const subtotal = cartTotal || 0;
   const tax = Math.floor(subtotal * 0.1);
@@ -33,17 +53,37 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
 // 발주서 데이터 포맷팅
 export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
-  const orderNumber = `PO-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+  const orderNumber = formData?.orderNumber || `PO-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
   
-  const items = cart.map(item => ({
-    name: item.name || '',
-    specification: item.specification || '',
-    unit: item.unit || 'set',
-    quantity: item.quantity || 1,
-    unitPrice: item.unitPrice || 0,
-    totalPrice: (item.unitPrice || 0) * (item.quantity || 1),
-    note: item.note || ''
-  }));
+  // cart 데이터를 올바르게 매핑
+  const items = cart.map((cartItem, index) => {
+    const { selections } = cartItem;
+    
+    // 제품명 생성
+    let productName = selections.type || '';
+    if (selections.version) productName += ` (${selections.version})`;
+    if (selections.color) productName += ` (${selections.color})`;
+    
+    // 규격 생성
+    let specification = '';
+    if (selections.size) specification += selections.size;
+    if (selections.height) specification += ` × ${selections.height}`;
+    if (selections.level) specification += ` × ${selections.level}`;
+    
+    // 단가 계산 (총 가격을 수량으로 나눔)
+    const quantity = selections.quantity || 1;
+    const unitPrice = Math.floor(cartItem.price / quantity);
+    
+    return {
+      name: productName,
+      specification: specification,
+      unit: 'set',
+      quantity: quantity,
+      unitPrice: unitPrice,
+      totalPrice: cartItem.price,
+      note: ''
+    };
+  });
 
   const materialItems = (materials || []).map(material => ({
     name: material.name || '',
@@ -60,7 +100,7 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
   const totalAmount = subtotal + tax;
 
   return {
-    date: currentDate,
+    date: formData?.date || currentDate,
     orderNumber,
     customerName: formData?.customerName || '',
     contactInfo: formData?.contactInfo || '',
