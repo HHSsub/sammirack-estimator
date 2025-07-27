@@ -68,14 +68,15 @@
     letter-spacing: 8px !important;
   }
 
-  /* 견적서 도장 */
+  /* 견적서 도장 - 위치 수정 */
   .gyeonjuk-print .stamp {
     position: absolute !important;
-    top: 20mm !important;
-    right: 15mm !important;
+    top: 35mm !important;
+    right: 25mm !important;
     width: 60px !important;
     height: 60px !important;
-    opacity: 0.7 !important;
+    opacity: 0.8 !important;
+    z-index: 10 !important;
   }
 
   /* 견적서 테이블 공통 스타일 */
@@ -217,16 +218,18 @@
     font-weight: bold !important;
     margin: 8px 0 4px 0 !important;
     padding: 0 !important;
+    text-align: left !important;
   }
 
-  /* 발주서 도장 */
+  /* 발주서 도장 - 위치 수정 */
   .balju-print .stamp {
     position: absolute !important;
-    top: 15mm !important;
-    right: 15mm !important;
+    top: 25mm !important;
+    right: 25mm !important;
     width: 50px !important;
     height: 50px !important;
-    opacity: 0.7 !important;
+    opacity: 0.8 !important;
+    z-index: 10 !important;
   }
 
   /* 발주서 테이블 공통 스타일 */
@@ -258,6 +261,7 @@
   .balju-print .info-table .label {
     background-color: #f0f0f0 !important;
     font-weight: bold !important;
+    width: 20% !important;
   }
 
   /* 발주서 명세 테이블 */
@@ -273,7 +277,7 @@
     height: 14px !important;
   }
 
-  /* 발주서 원자재 테이블 - 행 수 더 축소 */
+  /* 발주서 원자재 테이블 */
   .balju-print .material-table th {
     background-color: #e0e0e0 !important;
     font-weight: bold !important;
@@ -288,14 +292,15 @@
   }
 
   /* 발주서 합계 테이블 */
-  .balju-print .print-table:last-of-type {
+  .balju-print .total-table {
     width: 35% !important;
     margin-left: auto !important;
   }
 
-  .balju-print .print-table:last-of-type .label {
+  .balju-print .total-table .label {
     background-color: #f0f0f0 !important;
     font-weight: bold !important;
+    width: 40% !important;
   }
 
   /* 발주서 비고 */
