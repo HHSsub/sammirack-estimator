@@ -38,13 +38,12 @@
     padding: 0 !important;
     background: white !important;
     height: auto !important;
-    max-height: None; /* 고정 높이 제거 */
-    overflow: hidden !important; /* 넘치지마라 */
-    page-break-inside: avoid;
-    break-inside: avoid;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
+    max-height: 270mm !important; /* A4 높이에서 여백을 뺀 최대 높이 */
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   /* 인쇄 품질 보정 */
@@ -77,18 +76,19 @@
     width: 80px !important;
     opacity: 0.6 !important;
   }
-  
-  /* 발주서 전용 스타일 - 균형잡힌 수정 */
+    
+  /* 발주서 전용 스타일 - 2페이지 문제 해결 */
   .balju-print {
-    font-size: 9px !important; /* 6px에서 9px로 가독성 개선 */
+    font-size: 9px !important;
     line-height: 1.1 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    height: auto !important; /* ✅ 컨텐츠의 A4내 차지 높이 비율 (기존에 95%로 고정해뒀는데, 억지로 95%차지해서 넘어가나싶어 바꿈 */
-    display: block !important;  /* flex에서 block으로 변경 */
-    flex-direction: unset !important; /* column -> unset */
-    justify-content: unset !important;  /* ✅ flex-start -> unset */
-    overflow: hidden !important; /* PAGE넘어가지 않게할 목적으로 추가 */
+    height: auto !important;
+    max-height: 270mm !important; /* A4 높이에서 여백을 뺀 최대 높이 설정 */
+    display: block !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   .balju-print h1 {
@@ -152,13 +152,13 @@
     min-height: 17px !important;
   }
 
-  /* 원자재 테이블 - 적절한 크기로 조정 */
+  /* 원자재 테이블 - 페이지 오버플로우 방지 */
   .balju-print .material-table td,
   .balju-print .material-table th {
     padding: 1px !important;
     line-height: 1.0 !important;
-    font-size: 8px !important; /* 4px에서 7px -> 8px로 개선 */
-    min-height: 11px !important;  /* 12px에서 -> 11px로 좁힘 */
+    font-size: 7px !important; /* 8px에서 7px로 축소 */
+    min-height: 10px !important;  /* 11px에서 10px로 축소 */
   }
   
   .balju-print .print-table .label {
