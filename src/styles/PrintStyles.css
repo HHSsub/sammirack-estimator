@@ -71,10 +71,10 @@
   /* 견적서 도장 - 박이삭 대표자명 오른쪽에 작게 위치 */
   .gyeonjuk-print .stamp {
     position: absolute !important;
-    top: 72px !important; /* 대표자 행 높이에 맞춤 */
+    top: 60px !important; /* 대표자 행 높이에 맞춤 */
     right: 120px !important; /* 박이삭 텍스트 바로 오른쪽 */
-    width: 35px !important; /* 크기 축소 */
-    height: 35px !important; /* 크기 축소 */
+    width: 30px !important; /* 크기 축소 */
+    height: 30px !important; /* 크기 축소 */
     opacity: 0.7 !important;
     z-index: 10 !important;
   }
@@ -224,7 +224,7 @@
   /* 발주서 도장 - 박이삭 대표자명 오른쪽에 작게 위치 */
   .balju-print .stamp {
     position: absolute !important;
-    top: 58px !important; /* 대표자 행 높이에 맞춤 */
+    top: 50px !important; /* 대표자 행 높이에 맞춤 */
     right: 120px !important; /* 박이삭 텍스트 바로 오른쪽 */
     width: 30px !important; /* 크기 축소 */
     height: 30px !important; /* 크기 축소 */
