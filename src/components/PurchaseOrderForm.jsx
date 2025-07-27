@@ -42,7 +42,7 @@ const PurchaseOrderForm = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">발주서 작성</h2>
+      <h2 className="text-2xl font-bold mb-4">거래명세서(발주서) 작성</h2>
       
       {/* Customer Information Form */}
       <div className="mb-6 p-4 border rounded">
