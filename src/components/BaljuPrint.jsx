@@ -14,7 +14,7 @@ const BaljuPrint = ({ data }) => {
       </div>
       
       <div style={{flexShrink: 0}}>
-        <h1>발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
+        <h1>거래명세서(발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서)</h1>
         <img className="stamp" src="/images/도장.png" alt="도장" />
 
         {/* 상단 정보 */}
