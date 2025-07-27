@@ -16,6 +16,11 @@
   .print-container * {
     visibility: visible !important;
   }
+
+  .print-footer {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
   
   .print-container {
     position: absolute !important;
@@ -26,6 +31,7 @@
     padding: 0 !important;
     background: white !important;
     height: auto !important;
+    overflow: hidden !important; /* 넘치지마라 */
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
