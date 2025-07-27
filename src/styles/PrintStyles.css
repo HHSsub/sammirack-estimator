@@ -31,7 +31,10 @@
     padding: 0 !important;
     background: white !important;
     height: auto !important;
+    max-height: 280mm; /* A4에서 margin 여유 고려 */
     overflow: hidden !important; /* 넘치지마라 */
+    page-break-inside: avoid;
+    break-inside: avoid;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
@@ -147,8 +150,8 @@
   .balju-print .material-table th {
     padding: 1px !important;
     line-height: 1.0 !important;
-    font-size: 7px !important; /* 4px에서 7px로 개선 */
-    min-height: 12px !important;
+    font-size: 8px !important; /* 4px에서 7px -> 8px로 개선 */
+    min-height: 11px !important;  /* 12px에서 -> 11px로 좁힘 */
   }
   
   .balju-print .print-table .label {
