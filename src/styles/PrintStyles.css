@@ -71,7 +71,7 @@
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;  /* ✅ 이 부분 수정 */
   }
   
   .balju-print h1 {
