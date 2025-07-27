@@ -5,7 +5,7 @@ const BaljuPrint = ({ data }) => {
   const materialData = data?.materials || [];
   const shouldShowMaterials = materialData.length > 0;
   const maxMaterialRows = Math.min(materialData.length, 15); // 3행에서 15행으로 확장
-  const emptyMaterialRows = Math.max(0, Math.min(5, 15 - materialData.length)); // 최소 5행, 최대 15행
+  const emptyMaterialRows = Math.max(0, Math.min(10, 20 - materialData.length)); // 최소 10행, 최대 20행
   
   return (
     <div className="print-container balju-print print-only">
