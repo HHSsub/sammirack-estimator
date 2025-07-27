@@ -68,7 +68,7 @@
     line-height: 1.1 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    height: 100% !important;
+    height: 98% !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* ✅ 이 부분 수정 */
