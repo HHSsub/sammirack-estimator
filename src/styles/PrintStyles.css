@@ -268,30 +268,34 @@
   .balju-print .order-table th {
     background-color: #e0e0e0 !important;
     font-weight: bold !important;
-    font-size: 7px !important;
-    height: 16px !important;
+    font-size: 8px !important;
+    /* height: 16px !important; */
+    padding: 4.5px !important; /* 4px에서 4.5px로 증가 */
+    min-height: 17.5px !important; /* 17px에서 17.5px로 증가 */
   }
 
   .balju-print .order-table td {
-    font-size: 6px !important;
-    height: 14px !important;
+    font-size: 8px !important;
+    /* height: 14px !important; */
+    padding: 4.5px !important; /* 4px에서 4.5px로 증가 */
+    min-height: 17.5px !important; /* 17px에서 17.5px로 증가 */
   }
 
   /* 발주서 원자재 테이블 */
   .balju-print .material-table th {
     background-color: #e0e0e0 !important;
     font-weight: bold !important;
-    line-height: 0.9 !important; /* 1.0에서 0.9로 축소 */
-    font-size: 5px !important; /* 7px에서 5px로 축소 */
-    min-height: 8px !important; /* 10px에서 8px로 축소 */
-    height: 14px !important;
+    line-height: 1.0 !important; /* 1.0로 */
+    font-size: 7px !important; /* 5px에서 7px로 */
+    min-height: 9.5px !important; /* 8px에서 9.5px로 */
+    /* height: 14px !important; */
   }
 
   .balju-print .material-table td {
-    font-size: 5px !important;
-    line-height: 0.9 !important; /* 1.0에서 0.9로 축소 */
-    min-height: 8px !important; /* 10px에서 8px로 축소 */
-    height: 10px !important;
+    font-size: 7px !important;
+    line-height: 1.0 !important; /* 1.0에서 0.9로 축소 */
+    min-height: 9.5px !important; /* 10px에서 8px로 축소 */
+    /* height: 10px !important; */
     padding: 0px 1px !important;
   }
 
