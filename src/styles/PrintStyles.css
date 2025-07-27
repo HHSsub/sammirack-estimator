@@ -1,7 +1,7 @@
 /* 기존 내용 유지 + 프린트 영역 제어 추가 */
 @page {
   size: A4 portrait;
-  margin: 3mm !important; /* 5mm에서 3mm로 극단적 축소 */
+  margin: 8mm; /* 적당한 여백으로 복원 */
 }
 
 @media print {
@@ -26,8 +26,9 @@
     padding: 0 !important;
     background: white !important;
     height: auto !important;
-    max-height: 277mm !important; /* A4 높이 - 여백 */
-    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
   }
 
   /* 인쇄 품질 보정 */
@@ -61,93 +62,85 @@
     opacity: 0.6 !important;
   }
   
-  /* 발주서 전용 스타일 - 극단적 수정 */
+  /* 발주서 전용 스타일 - 균형잡힌 수정 */
   .balju-print {
-    font-size: 6px !important; /* 8px에서 6px로 극단적 축소 */
-    line-height: 1.0 !important; /* 1.2에서 1.0으로 축소 */
+    font-size: 9px !important; /* 6px에서 9px로 가독성 개선 */
+    line-height: 1.1 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    height: auto !important;
-    max-height: 277mm !important;
-    overflow: hidden !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
   }
   
   .balju-print h1 {
     text-align: center !important;
-    font-size: 16px !important; /* 18px에서 16px로 축소 */
-    margin-bottom: 3px !important; /* 5px에서 3px로 축소 */
+    font-size: 20px !important; /* 16px에서 20px로 복원 */
+    margin-bottom: 8px !important;
     font-weight: bold !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
-    height: 20px !important; /* 높이 강제 고정 */
+    flex-shrink: 0 !important;
   }
 
   .balju-print h2 {
-    font-size: 10px !important; /* 12px에서 10px로 축소 */
-    margin: 2px 0 1px 0 !important; /* 여백 더욱 축소 */
+    font-size: 14px !important; /* 10px에서 14px로 개선 */
+    margin: 8px 0 5px 0 !important;
     font-weight: bold !important;
     page-break-after: avoid !important;
     break-after: avoid !important;
-    height: 12px !important; /* 높이 강제 고정 */
+    flex-shrink: 0 !important;
   }
   
-  /* 테이블 공통 스타일 - 극단적 수정 */
+  /* 테이블 공통 스타일 - 균형잡힌 수정 */
   .balju-print .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 1px !important; /* 3px에서 1px로 축소 */
+    margin-bottom: 5px !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    font-size: 5px !important; /* 7px에서 5px로 극단적 축소 */
-    table-layout: fixed !important; /* 테이블 레이아웃 고정 */
+    font-size: 8px !important; /* 5px에서 8px로 가독성 개선 */
+    table-layout: fixed !important;
+    flex-shrink: 0 !important;
   }
   
   .balju-print .print-table td,
   .balju-print .print-table th {
     border: 1px solid #000 !important;
-    padding: 1px !important; /* 2px에서 1px로 축소 */
+    padding: 3px 2px !important; /* 1px에서 3px로 개선 */
     text-align: center !important;
     vertical-align: middle !important;
-    line-height: 1.0 !important;
-    height: 10px !important; /* 행 높이 강제 고정 */
-    max-height: 10px !important;
+    line-height: 1.1 !important;
+    height: auto !important; /* 고정 높이 제거 */
+    min-height: 15px !important; /* 최소 높이 설정 */
     overflow: hidden !important;
-    white-space: nowrap !important; /* 텍스트 줄바꿈 방지 */
+    word-wrap: break-word !important;
   }
 
-  /* 상단 정보 테이블 최적화 */
+  /* 상단 정보 테이블 */
   .balju-print .info-table td,
   .balju-print .info-table th {
-    height: 8px !important; /* 더 작게 */
-    font-size: 4px !important;
-    padding: 0.5px !important;
+    font-size: 8px !important;
+    padding: 4px !important;
+    min-height: 18px !important;
   }
 
-  /* 발주 명세 테이블 최적화 */
+  /* 발주 명세 테이블 */
   .balju-print .order-table td,
   .balju-print .order-table th {
-    height: 8px !important;
-    font-size: 4px !important;
-    padding: 0.5px !important;
+    font-size: 8px !important;
+    padding: 3px !important;
+    min-height: 16px !important;
   }
 
-  /* 원자재 테이블 극단적 최적화 */
-  .balju-print .material-table {
-    display: none !important; /* 원자재 테이블 완전히 숨김 */
-  }
-
-  /* 원자재 테이블을 표시해야 하는 경우 (조건부) */
-  .balju-print .material-table.show-materials {
-    display: table !important;
-  }
-
+  /* 원자재 테이블 - 적절한 크기로 조정 */
   .balju-print .material-table td,
   .balju-print .material-table th {
-    padding: 0.5px 1px !important; /* 극단적 축소 */
-    line-height: 0.9 !important;
-    font-size: 4px !important; /* 극단적 축소 */
-    height: 6px !important; /* 매우 작게 */
-    max-height: 6px !important;
+    padding: 2px !important;
+    line-height: 1.0 !important;
+    font-size: 7px !important; /* 4px에서 7px로 개선 */
+    min-height: 14px !important;
   }
   
   .balju-print .print-table .label {
@@ -172,39 +165,35 @@
   /* 기타 요소들 */
   .balju-print .print-notes {
     border: 1px solid #000 !important;
-    padding: 2px !important; /* 5px에서 2px로 축소 */
-    margin-top: 2px !important; /* 5px에서 2px로 축소 */
-    font-size: 5px !important;
-    height: 15px !important; /* 높이 제한 */
-    overflow: hidden !important;
+    padding: 5px !important;
+    margin-top: 5px !important;
+    font-size: 8px !important;
+    min-height: 20px !important;
+    flex-shrink: 0 !important;
   }
   
   .balju-print .print-company {
     text-align: right !important;
-    margin-top: 5px !important; /* 10px에서 5px로 축소 */
+    margin-top: 8px !important;
     font-weight: bold !important;
-    font-size: 6px !important;
-    height: 10px !important; /* 높이 제한 */
+    font-size: 9px !important;
+    flex-shrink: 0 !important;
   }
 
   /* 도장 이미지 크기 조정 */
   .balju-print .stamp {
     position: absolute !important;
-    top: 15mm !important; /* 20mm에서 15mm로 조정 */
-    right: 20mm !important; /* 25mm에서 20mm로 조정 */
-    width: 60px !important; /* 70px에서 60px로 축소 */
-    height: 60px !important; /* 높이도 제한 */
+    top: 18mm !important;
+    right: 22mm !important;
+    width: 65px !important;
+    height: 65px !important;
     opacity: 0.6 !important;
   }
 
-  /* 합계 테이블 최적화 */
-  .balju-print .print-table:last-of-type {
-    margin-bottom: 0 !important;
-  }
-
+  /* 합계 테이블 */
   .balju-print .print-table:last-of-type td {
-    height: 8px !important;
-    font-size: 5px !important;
+    min-height: 16px !important;
+    font-size: 8px !important;
   }
 
   /* 브라우저별 호환성 */
@@ -217,20 +206,20 @@
   /* Firefox 전용 최적화 */
   @-moz-document url-prefix() {
     .balju-print {
-      font-size: 5px !important;
+      font-size: 8px !important;
     }
     .balju-print .print-table td,
     .balju-print .print-table th {
-      font-size: 4px !important;
-      height: 8px !important;
+      font-size: 7px !important;
+      min-height: 14px !important;
     }
   }
 
   /* Safari 전용 최적화 */
   @media screen and (-webkit-min-device-pixel-ratio:0) {
     .balju-print .print-table td {
-      padding: 0.5px !important;
-      height: 8px !important;
+      padding: 2px !important;
+      min-height: 14px !important;
     }
   }
   
