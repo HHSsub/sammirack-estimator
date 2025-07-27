@@ -1,7 +1,7 @@
 /* 기존 내용 유지 + 프린트 영역 제어 추가 */
 @page {
   size: A4 portrait;
-  margin: 8mm; /* 적당한 여백으로 복원 */
+  margin: 10mm; /* 적당한 여백으로 복원 */
 }
 
 @media print {
