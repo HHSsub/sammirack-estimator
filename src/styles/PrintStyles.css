@@ -1,7 +1,7 @@
 /* 기존 내용 유지 + 프린트 영역 제어 추가 */
 @page {
   size: A4 portrait;
-  margin: 8mm;
+  margin: 5mm; /* 8mm에서 5mm로 축소 */
 }
 
 @media print {
@@ -58,53 +58,124 @@
     opacity: 0.6 !important;
   }
   
-  /* 발주서 전용 스타일 */
+  /* 발주서 전용 스타일 - 대폭 수정 */
   .balju-print {
-    font-size: 10px !important;
+    font-size: 8px !important; /* 10px에서 8px로 축소 */
+    line-height: 1.2 !important; /* 줄 간격 축소 */
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
   
   .balju-print h1 {
     text-align: center !important;
-    font-size: 20px !important;
-    margin-bottom: 10px !important;
+    font-size: 18px !important; /* 20px에서 18px로 축소 */
+    margin-bottom: 5px !important; /* 10px에서 5px로 축소 */
     font-weight: bold !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .balju-print h2 {
+    font-size: 12px !important;
+    margin: 5px 0 3px 0 !important; /* 여백 축소 */
+    font-weight: bold !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
   
-  /* 테이블 공통 스타일 */
-  .print-table {
+  /* 테이블 공통 스타일 - 대폭 수정 */
+  .balju-print .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 3px !important; /* 10px에서 3px로 축소 */
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    font-size: 7px !important; /* 테이블 내 폰트 더 축소 */
   }
   
-  .print-table td,
-  .print-table th {
+  .balju-print .print-table td,
+  .balju-print .print-table th {
     border: 1px solid #000 !important;
-    padding: 6px !important;
+    padding: 2px !important; /* 6px에서 2px로 축소 */
     text-align: center !important;
+    vertical-align: middle !important;
+    line-height: 1.1 !important;
+  }
+
+  /* 원자재 테이블 특별 최적화 */
+  .balju-print .material-table td,
+  .balju-print .material-table th {
+    padding: 1px 2px !important; /* 더욱 축소 */
+    line-height: 1.0 !important;
+    font-size: 6px !important; /* 원자재 테이블은 더 작게 */
   }
   
-  .print-table .label {
+  .balju-print .print-table .label {
     background-color: #f0f0f0 !important;
     font-weight: bold !important;
   }
   
-  .print-table th {
+  .balju-print .print-table th {
     background-color: #d9d9d9 !important;
+    font-weight: bold !important;
+  }
+
+  /* 텍스트 정렬 클래스 */
+  .balju-print .left {
+    text-align: left !important;
+  }
+
+  .balju-print .right {
+    text-align: right !important;
   }
   
   /* 기타 요소들 */
-  .print-notes {
+  .balju-print .print-notes {
     border: 1px solid #000 !important;
-    padding: 10px !important;
-    margin-top: 10px !important;
+    padding: 5px !important; /* 10px에서 5px로 축소 */
+    margin-top: 5px !important; /* 10px에서 5px로 축소 */
+    font-size: 7px !important;
   }
   
-  .print-company {
+  .balju-print .print-company {
     text-align: right !important;
-    margin-top: 20px !important;
+    margin-top: 10px !important; /* 20px에서 10px로 축소 */
     font-weight: bold !important;
+    font-size: 8px !important;
+  }
+
+  /* 도장 이미지 크기 조정 */
+  .balju-print .stamp {
+    position: absolute !important;
+    top: 20mm !important; /* 25mm에서 20mm로 조정 */
+    right: 25mm !important; /* 30mm에서 25mm로 조정 */
+    width: 70px !important; /* 80px에서 70px로 축소 */
+    opacity: 0.6 !important;
+  }
+
+  /* 브라우저별 호환성 */
+  .balju-print {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Firefox 전용 최적화 */
+  @-moz-document url-prefix() {
+    .balju-print {
+      font-size: 7px !important;
+    }
+    .balju-print .material-table td,
+    .balju-print .material-table th {
+      font-size: 5px !important;
+    }
+  }
+
+  /* Safari 전용 최적화 */
+  @media screen and (-webkit-min-device-pixel-ratio:0) {
+    .balju-print .print-table td {
+      padding: 1px !important;
+    }
   }
   
   /* 화면 전용 요소 완전히 제거 */
