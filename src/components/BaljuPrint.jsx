@@ -10,10 +10,11 @@ const BaljuPrint = ({ data }) => {
   return (
     <div className="print-container balju-print print-only">
       <div className="print-preview-notice">
-        프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
+        프실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
       
-      <div style={{flexShrink: 0}}>
+      {/* flexbox 스타일 제거하고 일반 div 구조로 변경 */}
+      <div className="print-header">
         <h1>거래명세서(발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서)</h1>
         <img className="stamp" src="/images/도장.png" alt="도장" />
 
@@ -95,11 +96,11 @@ const BaljuPrint = ({ data }) => {
         </table>
       </div>
 
-      {/* 원자재 명세서 - 조건부 렌더링 */}
+      {/* 원자재 명세서 - flexbox 제거 */}
       {shouldShowMaterials && (
-        <div style={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
+        <div className="print-materials">
           <h2>원자재 명세서</h2>
-          <table className="print-table material-table" style={{flexGrow: 1}}>
+          <table className="print-table material-table">
             <thead>
               <tr>
                 <th style={{width: '8%'}}>NO</th>
@@ -142,7 +143,7 @@ const BaljuPrint = ({ data }) => {
         </div>
       )}
 
-      <div style={{flexShrink: 0}}>
+      <div className="print-footer">
         {/* 합계 */}
         <table className="print-table">
           <tbody>
