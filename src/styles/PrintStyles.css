@@ -68,7 +68,7 @@
     line-height: 1.1 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    height: 98% !important;
+    height: 95% !important; /* ✅ 컨텐츠의 A4내 차지 높이 비율 */
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* ✅ 이 부분 수정 */
@@ -76,7 +76,7 @@
   
   .balju-print h1 {
     text-align: center !important;
-    font-size: 20px !important; /* 16px에서 20px로 복원 */
+    font-size: 18px !important; /* 16px -> 20 -> 18px로 복원 */
     margin-bottom: 8px !important;
     font-weight: bold !important;
     page-break-after: avoid !important;
