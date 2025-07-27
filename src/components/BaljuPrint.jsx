@@ -1,4 +1,5 @@
 import React from 'react';
+import stampImage from '/images/도장.png'; // 이미지 import 추가
 
 const BaljuPrint = ({ data }) => {
   // 원자재 데이터 균형잡힌 처리
@@ -14,7 +15,7 @@ const BaljuPrint = ({ data }) => {
       </div>
       
       <h1>거래명세서(발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서)</h1>
-      <img className="stamp" src="/sammirack-estimator/images/도장.png" alt="도장" />
+      <img className="stamp" src={stampImage} alt="도장" />
 
       {/* 상단 정보 */}
       <table className="print-table info-table">
