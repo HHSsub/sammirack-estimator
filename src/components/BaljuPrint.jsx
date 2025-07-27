@@ -4,8 +4,8 @@ const BaljuPrint = ({ data }) => {
   // 원자재 데이터 균형잡힌 처리
   const materialData = data?.materials || [];
   const shouldShowMaterials = materialData.length > 0;
-  const maxMaterialRows = Math.min(materialData.length, 15); // 3행에서 15행으로 확장
-  const emptyMaterialRows = Math.max(0, 15 - materialData.length); // 항상 15행 유지
+  const maxMaterialRows = Math.min(materialData.length, 10); // 15행에서 10행으로 축소
+  const emptyMaterialRows = Math.max(0, 10 - materialData.length); // 항상 10행 유지
   
   return (
     <div className="print-container balju-print print-only">
