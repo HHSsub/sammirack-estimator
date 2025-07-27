@@ -1,4 +1,5 @@
 import React from 'react';
+import stampImage from '/images/도장.png'; // 이미지 import 추가
 
 const GyeonjukPrint = ({ data }) => {
   return (
@@ -8,7 +9,7 @@ const GyeonjukPrint = ({ data }) => {
       </div>
       
       <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-      <img className="stamp" src="/sammirack-estimator/images/도장.png" alt="도장" />
+      <img className="stamp" src={stampImage} alt="도장" />
 
       {/* 상단 정보 */}
       <table className="print-table info-table">
