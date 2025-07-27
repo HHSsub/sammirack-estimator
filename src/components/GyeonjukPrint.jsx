@@ -71,19 +71,19 @@ const GyeonjukPrint = ({ data }) => {
             </tr>
           )) || []}
           
-          {/* 빈 행들로 15행 채우기 */}
-          {Array.from({ length: Math.max(0, 15 - (data?.items?.length || 0)) }, (_, index) => (
-            <tr key={`empty-${index}`}>
-              <td>{(data?.items?.length || 0) + index + 1}</td>
-              <td className="left">&nbsp;</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-          ))}
+        {/* 빈 행들로 12행 채우기 - 15행에서 12행으로 축소 */}
+        {Array.from({ length: Math.max(0, 12 - (data?.items?.length || 0)) }, (_, index) => (
+          <tr key={`empty-${index}`}>
+            <td>{(data?.items?.length || 0) + index + 1}</td>
+            <td className="left">&nbsp;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        ))}
         </tbody>
       </table>
 
