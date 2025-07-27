@@ -6,6 +6,13 @@
 
 @media print {
   /* 모든 요소 숨기고 프린트 영역만 표시 */
+
+  html, body {
+    height: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  
   body * {
     visibility: hidden;
     margin: 0 !important;
@@ -77,7 +84,7 @@
     line-height: 1.1 !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    height: 95% !important; /* ✅ 컨텐츠의 A4내 차지 높이 비율 */
+    height: auto !important; /* ✅ 컨텐츠의 A4내 차지 높이 비율 (기존에 95%로 고정해뒀는데, 억지로 95%차지해서 넘어가나싶어 바꿈 */
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;  /* ✅ 이 부분 수정 */
