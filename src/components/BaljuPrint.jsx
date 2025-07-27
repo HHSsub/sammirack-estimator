@@ -5,8 +5,8 @@ const BaljuPrint = ({ data }) => {
   // 원자재 데이터 균형잡힌 처리 - 행 수 2배로 증가
   const materialData = data?.materials || [];
   const shouldShowMaterials = materialData.length > 0;
-  const maxMaterialRows = Math.min(materialData.length, 20); // 12행에서 25행으로 증가
-  const emptyMaterialRows = Math.max(0, 25 - materialData.length); // 항상 25행 유지
+  const maxMaterialRows = Math.min(materialData.length, 30); // 12행에서 25행으로 증가
+  const emptyMaterialRows = Math.max(0, 30 - materialData.length); // 항상 30행 유지
   
   return (
     <div className="print-container balju-print print-only">
@@ -14,7 +14,7 @@ const BaljuPrint = ({ data }) => {
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
       
-      <h1>거래명세서(발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서)</h1>
+      <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
       <img className="stamp" src={stampImage} alt="도장" />
 
       {/* 상단 정보 */}
