@@ -1,11 +1,11 @@
 import React from 'react';
 
 const BaljuPrint = ({ data }) => {
-  // 원자재 데이터 균형잡힌 처리
+  // 원자재 데이터 균형잡힌 처리 - 더 적은 행 수로 축소
   const materialData = data?.materials || [];
   const shouldShowMaterials = materialData.length > 0;
-  const maxMaterialRows = Math.min(materialData.length, 10); // 15행에서 10행으로 축소
-  const emptyMaterialRows = Math.max(0, 10 - materialData.length); // 항상 10행 유지
+  const maxMaterialRows = Math.min(materialData.length, 6); // 10행에서 6행으로 더 축소
+  const emptyMaterialRows = Math.max(0, 6 - materialData.length); // 항상 6행 유지
   
   return (
     <div className="print-container balju-print print-only">
