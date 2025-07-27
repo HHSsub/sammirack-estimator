@@ -180,6 +180,8 @@
     font-weight: bold !important;
     font-size: 9px !important;
     flex-shrink: 0 !important;
+    margin-bottom: 0 !important;  /* 2PAGE 출력방지 */ 
+    padding-bottom: 0 !important; /* 2PAGE 출력방지 */ 
   }
 
   /* 도장 이미지 크기 조정 */
