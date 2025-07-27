@@ -1,7 +1,7 @@
 /* 기존 내용 유지 + 프린트 영역 제어 추가 */
 @page {
   size: A4 portrait;
-  margin: 10mm; /* 적당한 여백으로 복원 */
+  margin: 8mm; /* 적당한 여백으로 복원 */
 }
 
 @media print {
@@ -38,7 +38,7 @@
     padding: 0 !important;
     background: white !important;
     height: auto !important;
-    max-height: 280mm; /* A4에서 margin 여유 고려 */
+    max-height: None; /* 고정 높이 제거 */
     overflow: hidden !important; /* 넘치지마라 */
     page-break-inside: avoid;
     break-inside: avoid;
@@ -85,9 +85,9 @@
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     height: auto !important; /* ✅ 컨텐츠의 A4내 차지 높이 비율 (기존에 95%로 고정해뒀는데, 억지로 95%차지해서 넘어가나싶어 바꿈 */
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;  /* ✅ 이 부분 수정 */
+    display: block !important;  /* flex에서 block으로 변경 */
+    flex-direction: unset !important; /* column -> unset */
+    justify-content: unset !important;  /* ✅ flex-start -> unset */
     overflow: hidden !important; /* PAGE넘어가지 않게할 목적으로 추가 */
   }
   
@@ -216,6 +216,12 @@
     font-size: 8px !important;
   }
 
+  .balju-print > *:last-child {
+    page-break-after: avoid !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  
   /* 브라우저별 호환성 */
   .balju-print {
     -webkit-print-color-adjust: exact !important;
