@@ -4,8 +4,8 @@ const BaljuPrint = ({ data }) => {
   // 원자재 데이터 균형잡힌 처리
   const materialData = data?.materials || [];
   const shouldShowMaterials = materialData.length > 0;
-  const maxMaterialRows = Math.min(materialData.length, 8); // 10행에서 8행으로 축소
-  const emptyMaterialRows = Math.max(0, 8 - materialData.length); // 항상 8행 유지
+  const maxMaterialRows = Math.min(materialData.length, 6); // 8행에서 6행으로 축소
+  const emptyMaterialRows = Math.max(0, 6 - materialData.length); // 항상 6행 유지
   
   return (
     <div className="print-container balju-print print-only">
@@ -64,7 +64,7 @@ const BaljuPrint = ({ data }) => {
         </thead>
         <tbody>
           {/* 발주 품목 데이터 */}
-          {data?.items?.slice(0, 5).map((item, index) => (
+          {data?.items?.slice(0, 4).map((item, index) => (
             <tr key={index}>
               <td>{index + 1}</td>
               <td className="left">{item.name || ''}</td>
@@ -77,8 +77,8 @@ const BaljuPrint = ({ data }) => {
             </tr>
           )) || []}
           
-          {/* 빈 행들로 5행 채우기 */}
-          {Array.from({ length: Math.max(0, 5 - (data?.items?.length || 0)) }, (_, index) => (
+          {/* 빈 행들로 4행 채우기 */}
+          {Array.from({ length: Math.max(0, 4 - (data?.items?.length || 0)) }, (_, index) => (
             <tr key={`empty-${index}`}>
               <td>{(data?.items?.length || 0) + index + 1}</td>
               <td className="left">&nbsp;</td>
