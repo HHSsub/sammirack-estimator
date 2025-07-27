@@ -1,6 +1,13 @@
 import React from 'react';
 
 const BaljuPrint = ({ data }) => {
+  // 원자재 데이터 동적 처리
+  const materialData = data?.materials || [];
+  const maxMaterialRows = Math.min(materialData.length, 20); // 최대 20행으로 제한
+  const minMaterialRows = 5; // 최소 5행 보장
+  const displayMaterialRows = Math.max(maxMaterialRows, minMaterialRows);
+  const emptyMaterialRows = Math.max(0, displayMaterialRows - materialData.length);
+
   return (
     <div className="print-container balju-print print-only">
       <div className="print-preview-notice">
@@ -58,7 +65,7 @@ const BaljuPrint = ({ data }) => {
         </thead>
         <tbody>
           {/* 발주 품목 데이터 */}
-          {data?.items?.slice(0, 8).map((item, index) => (
+          {data?.items?.slice(0, 6).map((item, index) => (
             <tr key={index}>
               <td>{index + 1}</td>
               <td className="left">{item.name || ''}</td>
@@ -71,8 +78,8 @@ const BaljuPrint = ({ data }) => {
             </tr>
           )) || []}
           
-          {/* 빈 행들로 8행 채우기 */}
-          {Array.from({ length: Math.max(0, 8 - (data?.items?.length || 0)) }, (_, index) => (
+          {/* 빈 행들로 6행 채우기 (8행에서 6행으로 축소) */}
+          {Array.from({ length: Math.max(0, 6 - (data?.items?.length || 0)) }, (_, index) => (
             <tr key={`empty-${index}`}>
               <td>{(data?.items?.length || 0) + index + 1}</td>
               <td className="left">&nbsp;</td>
@@ -87,51 +94,52 @@ const BaljuPrint = ({ data }) => {
         </tbody>
       </table>
 
-      {/* 원자재 명세서 */}
-      <h2>원자재 명세서</h2>
-      <table className="print-table material-table">
-        <thead>
-          <tr>
-            <th>NO</th>
-            <th>원자재명</th>
-            <th>규격</th>
-            <th>단위</th>
-            <th>수량</th>
-            <th>단가</th>
-            <th>공급가</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* 원자재 데이터 */}
-          {data?.materials?.slice(0, 30).map((material, index) => (
-            <tr key={index}>
-              <td>{index + 1}</td>
-              <td className="left">{material.name || ''}</td>
-              <td>{material.specification || ''}</td>
-              <td>{material.unit || ''}</td>
-              <td>{material.quantity || ''}</td>
-              <td className="right">{material.unitPrice ? material.unitPrice.toLocaleString() : ''}</td>
-              <td className="right">{material.totalPrice ? material.totalPrice.toLocaleString() : ''}</td>
-              <td>{material.note || ''}</td>
-            </tr>
-          )) || []}
-          
-          {/* 빈 행들로 30행 채우기 */}
-          {Array.from({ length: Math.max(0, 30 - (data?.materials?.length || 0)) }, (_, index) => (
-            <tr key={`empty-${index}`}>
-              <td>{(data?.materials?.length || 0) + index + 1}</td>
-              <td className="left">&nbsp;</td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* 원자재 명세서 - 조건부 렌더링 및 동적 행 수 */}
+      {materialData.length > 0 && (
+        <>
+          <h2>원자재 명세서</h2>
+          <table className="print-table material-table">
+            <thead>
+              <tr>
+                <th>NO</th>
+                <th>원자재명</th>
+                <th>규격/단위</th> {/* 규격과 단위 병합 */}
+                <th>수량</th>
+                <th>단가</th>
+                <th>공급가</th>
+                <th>비고</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* 실제 원자재 데이터 */}
+              {materialData.slice(0, displayMaterialRows).map((material, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td className="left">{material.name || ''}</td>
+                  <td>{`${material.specification || ''} ${material.unit || ''}`.trim()}</td>
+                  <td>{material.quantity || ''}</td>
+                  <td className="right">{material.unitPrice ? material.unitPrice.toLocaleString() : ''}</td>
+                  <td className="right">{material.totalPrice ? material.totalPrice.toLocaleString() : ''}</td>
+                  <td>{material.note || ''}</td>
+                </tr>
+              ))}
+              
+              {/* 빈 행들로 최소 행 수 보장 */}
+              {Array.from({ length: emptyMaterialRows }, (_, index) => (
+                <tr key={`empty-${index}`}>
+                  <td>{materialData.length + index + 1}</td>
+                  <td className="left">&nbsp;</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
 
       {/* 합계 */}
       <table className="print-table">
@@ -151,10 +159,12 @@ const BaljuPrint = ({ data }) => {
         </tbody>
       </table>
 
-      {/* 비고 */}
-      <div className="print-notes">
-        {data?.notes || ''}
-      </div>
+      {/* 비고 - 조건부 렌더링 */}
+      {data?.notes && data.notes.trim() && (
+        <div className="print-notes">
+          <strong>비고:</strong> {data.notes}
+        </div>
+      )}
 
       {/* 하단 회사명 */}
       <div className="print-company">(주)삼미앵글랙산업</div>
