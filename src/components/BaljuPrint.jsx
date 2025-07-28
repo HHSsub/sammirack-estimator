@@ -17,48 +17,109 @@ const BaljuPrint = ({ data }) => {
         <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
         <img className="stamp" src={stampImage} alt="도장" />
 
-        <table className="print-table info-table">
+        {/* 상단 정보 테이블 좌/우 이분할 개편 */}
+        <table className="print-table info-table" style={{ width: '100%', tableLayout: 'fixed', fontSize: 13, marginBottom: 10 }}>
+          <colgroup>
+            <col style={{ width: '60%' }} />
+            <col style={{ width: '40%' }} />
+          </colgroup>
           <tbody>
             <tr>
-              <td className="label" style={{ width: '12%' }}>발주일자</td>
-              <td style={{ width: '18%' }}>{data?.date || ''}</td>
-              <td className="label" style={{ width: '15%' }}>발주번호</td>
-              <td style={{ width: '20%' }}>{data?.orderNumber || ''}</td>
-              <td className="label" style={{ width: '12%' }}>상호</td>
-              <td>삼미앵글랙산업</td>
-            </tr>
-            <tr>
-              <td className="label">상호명</td>
-              <td colSpan="1">{data?.companyName || ''}</td>
-              <td className="label">담당자</td>
-              <td colSpan="1">{data?.contactPerson || ''}</td>
-              <td className="label">대표자</td>
-              <td>박이삭</td>
-            </tr>
-            <tr>
-              <td colSpan="4" style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                아래와 같이 발주합니다.
+              {/* 좌측: 발주일자, 상호명, 담당자, 문구 */}
+              <td style={{ border: 'none', padding: 0, verticalAlign: 'top' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <tbody>
+                    <tr>
+                      <td className="label" style={{
+                        width: '23%', fontWeight: 600, border: '1px solid #ddd', background: '#f8f9fa', textAlign: 'center', padding: '4px 7px'
+                      }}>발주일자</td>
+                      <td style={{
+                        width: '23%', border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>{data?.date || ''}</td>
+                      <td className="label" style={{
+                        width: '23%', fontWeight: 600, border: '1px solid #ddd', background: '#f8f9fa', textAlign: 'center', padding: '4px 7px'
+                      }}>상호명</td>
+                      <td style={{
+                        width: '23%', border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>{data?.companyName || ''}</td>
+                      <td className="label" style={{
+                        width: '15%', fontWeight: 600, border: '1px solid #ddd', background: '#f8f9fa', textAlign: 'center', padding: '4px 7px'
+                      }}>담당자</td>
+                      <td style={{
+                        border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>{data?.contactPerson || ''}</td>
+                    </tr>
+                    <tr>
+                      <td colSpan={6} style={{
+                        border: '1px solid #ddd',
+                        borderTop: 'none',
+                        background: '#fff',
+                        textAlign: 'center',
+                        padding: '11px 0 8px',
+                        fontWeight: 600,
+                        fontSize: 15,
+                      }}>
+                        아래와 같이 발주합니다
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </td>
-              <td className="label">소재지</td>
-              <td>경기도 광명시 원노온사로 39, 제1동</td>
-            </tr>
-            <tr>
-              <td colSpan="4"></td>
-              <td className="label">TEL</td>
-              <td>(02)2611-4597</td>
-            </tr>
-            <tr>
-              <td colSpan="4"></td>
-              <td className="label">FAX</td>
-              <td>(02)2611-4595</td>
-            </tr>
-            <tr>
-              <td colSpan="4"></td>
-              <td className="label">홈페이지</td>
-              <td>http://www.ssmake.com</td>
+              {/* 우측: 대표자, 사업자번호, 소재지, TEL, FAX, (이메일), 홈페이지 */}
+              <td style={{ border: 'none', padding: 0, verticalAlign: 'top' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <tbody>
+                    <tr>
+                      <td className="label" style={{
+                        width: '34%', background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>대표자</td>
+                      <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>박이삭</td>
+                    </tr>
+                    <tr>
+                      <td className="label" style={{
+                        background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>사업자번호</td>
+                      <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>232-81-01750</td>
+                    </tr>
+                    <tr>
+                      <td className="label" style={{
+                        background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>소재지</td>
+                      <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>경기도 광명시 원노온사로 39, 제1동</td>
+                    </tr>
+                    <tr>
+                      <td className="label" style={{
+                        background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>TEL</td>
+                      <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>(02)2611-4597</td>
+                    </tr>
+                    <tr>
+                      <td className="label" style={{
+                        background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>FAX</td>
+                      <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>(02)2611-4595</td>
+                    </tr>
+                    {data?.email && (
+                      <tr>
+                        <td className="label" style={{
+                          background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                        }}>이메일</td>
+                        <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>{data.email}</td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td className="label" style={{
+                        background: '#f8f9fa', fontWeight: 600, border: '1px solid #ddd', textAlign: 'center', padding: '4px 7px'
+                      }}>홈페이지</td>
+                      <td style={{ border: '1px solid #ddd', textAlign: 'left', padding: '4px 7px' }}>http://www.ssmake.com</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
             </tr>
           </tbody>
         </table>
+        {/* ===== info-table 개편 끝 ===== */}
 
         {/* 발주 품목 테이블 */}
         <table className="print-table order-table">
@@ -164,13 +225,11 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
-
         {data?.notes?.trim() && (
           <div className="print-notes">
             <strong>비고:</strong> {data.notes}
           </div>
         )}
-
         <div className="print-company">(주)삼미앵글랙산업</div>
       </div>
     </div>
