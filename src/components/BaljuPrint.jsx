@@ -40,27 +40,31 @@ const BaljuPrint = ({ data }) => {
               <td className="label">대표자</td>
               <td>박이삭</td>
             </tr>
+            {/* 좌측 2칸 병합 + 아래 4줄까지 병합하여 문구만 하나의 블록에 정중앙 표시 */}
             <tr>
-              <td className="label"></td>
-              <td></td>
+              <td colSpan={2} rowSpan={4} style={{
+                textAlign: 'center',
+                fontWeight: 'bold',
+                fontSize: 15,
+                verticalAlign: 'middle',
+                padding: '18px 0',
+                background: '#fff',
+                border: '1px solid #ddd'
+              }}>
+                아래와 같이 발주합니다
+              </td>
               <td className="label">소재지</td>
               <td>경기도 광명시 원노온사로 39, 제1동</td>
             </tr>
             <tr>
-              <td className="label"></td>
-              <td></td>
               <td className="label">TEL</td>
               <td>(02)2611-4597</td>
             </tr>
             <tr>
-              <td className="label"></td>
-              <td></td>
               <td className="label">FAX</td>
               <td>(02)2611-4595</td>
             </tr>
             <tr>
-              <td className="label"></td>
-              <td></td>
               <td className="label">홈페이지</td>
               <td>http://www.ssmake.com</td>
             </tr>
