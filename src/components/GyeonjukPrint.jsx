@@ -1,4 +1,5 @@
 import React from 'react';
+import stampImage from '/public/images/도장.png';
 
 const GyeonjukPrint = ({ data }) => {
   return (
@@ -8,16 +9,16 @@ const GyeonjukPrint = ({ data }) => {
       </div>
       
       <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-      <img className="stamp" src="/images/도장.png" alt="도장" />
+      <img className="stamp" src={stampImage} alt="도장" />
 
-      {/* 상단 정보 - 좌우 2분할 */}
+      {/* 상단 정보 - 엑셀 양식과 동일한 구조 */}
       <table className="print-table info-table">
         <tbody>
           <tr>
-            <td className="label">견적일자</td>
-            <td>{data?.date || ''}</td>
-            <td className="label">사업자등록번호</td>
-            <td>232-81-01750</td>
+            <td className="label" style={{width: '15%'}}>견적일자</td>
+            <td style={{width: '20%'}}>{data?.date || ''}</td>
+            <td className="label" style={{width: '15%'}}>사업자등록번호</td>
+            <td style={{width: '20%'}}>232-81-01750</td>
           </tr>
           <tr>
             <td className="label">상호명</td>
