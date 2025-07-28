@@ -17,6 +17,8 @@ const PurchaseOrderForm = () => {
     orderNumber: '',
     customerName: '',
     contactInfo: '',
+    companyName: '', // 공급받는 쪽 상호명
+    contactPerson: '', // 공급받는 쪽 담당자
     notes: ''
   });
 
@@ -46,7 +48,7 @@ const PurchaseOrderForm = () => {
       
       {/* Customer Information Form */}
       <div className="mb-6 p-4 border rounded">
-        <h3 className="text-xl font-semibold mb-3">발주 정보</h3>
+        <h3 className="text-xl font-semibold mb-3">발주서 정보</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">발주일자</label>
@@ -66,6 +68,28 @@ const PurchaseOrderForm = () => {
               value={formData.orderNumber}
               onChange={handleInputChange}
               placeholder="자동 생성됩니다"
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">상호명 (공급받는 쪽)</label>
+            <input
+              type="text"
+              name="companyName"
+              value={formData.companyName}
+              onChange={handleInputChange}
+              placeholder="예: (주)테스트고객"
+              className="w-full p-2 border rounded"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">담당자</label>
+            <input
+              type="text"
+              name="contactPerson"
+              value={formData.contactPerson}
+              onChange={handleInputChange}
+              placeholder="예: 홍길동"
               className="w-full p-2 border rounded"
             />
           </div>
