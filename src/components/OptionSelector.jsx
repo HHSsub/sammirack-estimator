@@ -1,5 +1,6 @@
 import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
+import { validateRate } from '../utils/priceUtils';
 
 function OptionSelector() {
   const { loading, productsData, selections, setSelections, availableOptions } = useProducts();
@@ -22,6 +23,9 @@ function OptionSelector() {
       }
       if (name === 'quantity') {
         newSelections.quantity = parseInt(value, 10) || 1;
+      }
+      if (name === 'applyRate') {
+        newSelections.applyRate = validateRate(value);
       }
       return newSelections;
     });
@@ -86,6 +90,24 @@ function OptionSelector() {
       <div className="form-group">
         <label>수량:</label>
         <input type="number" name="quantity" min="1" value={selections.quantity} onChange={handleChange} />
+      </div>
+
+      {/* 4행 - 적용률 추가 */}
+      <div className="form-group">
+        <label>적용률 (%):</label>
+        <input 
+          type="number" 
+          name="applyRate" 
+          min="0" 
+          max="100" 
+          step="0.1"
+          value={selections.applyRate || 100} 
+          onChange={handleChange}
+          placeholder="100"
+        />
+      </div>
+      <div className="form-group">
+        {/* 빈 공간 또는 추가 정보 표시 */}
       </div>
     </div>
   );
