@@ -21,37 +21,43 @@ const BaljuPrint = ({ data }) => {
         <table className="print-table info-table">
           <tbody>
             <tr>
-              <td className="label" style={{ width: '15%' }}>발주일자</td>
-              <td style={{ width: '20%' }}>{data?.date || ''}</td>
+              <td className="label" style={{ width: '12%' }}>발주일자</td>
+              <td style={{ width: '18%' }}>{data?.date || ''}</td>
               <td className="label" style={{ width: '15%' }}>발주번호</td>
               <td style={{ width: '20%' }}>{data?.orderNumber || ''}</td>
             </tr>
             <tr>
               <td className="label">상호명</td>
-              <td colSpan="2">{data?.companyName || ''}</td>
+              <td>{data?.companyName || ''}</td>
+              <td colSpan="2" rowSpan="2" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                아래와 같이 발주합니다.
+              </td>
               <td className="label">상호</td>
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
               <td className="label">담당자</td>
-              <td colSpan="2">{data?.contactPerson || ''}</td>
+              <td>{data?.contactPerson || ''}</td>
               <td className="label">대표자</td>
               <td>박이삭</td>
             </tr>
             <tr>
-              <td className="label" rowSpan="4" colSpan="3"></td>
+              <td className="label" colSpan="3" />
               <td className="label">소재지</td>
               <td>경기도 광명시 원노온사로 39, 제1동</td>
             </tr>
             <tr>
+              <td colSpan="3" />
               <td className="label">TEL</td>
               <td>(02)2611-4597</td>
             </tr>
             <tr>
+              <td colSpan="3" />
               <td className="label">FAX</td>
               <td>(02)2611-4595</td>
             </tr>
             <tr>
+              <td colSpan="3" />
               <td className="label">홈페이지</td>
               <td>http://www.ssmake.com</td>
             </tr>
@@ -145,7 +151,6 @@ const BaljuPrint = ({ data }) => {
         </div>
       )}
 
-      {/* 하단 합계 및 비고 */}
       <div className="print-footer">
         <table className="print-table">
           <tbody>
