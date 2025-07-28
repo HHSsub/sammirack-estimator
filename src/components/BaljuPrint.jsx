@@ -14,7 +14,7 @@ const BaljuPrint = ({ data }) => {
       </div>
 
       <div className="print-header">
-        <h1>거래명세서(발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서)</h1>
+        <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
         <img className="stamp" src={stampImage} alt="도장" />
 
         {/* 상단 고객/공급자 정보 테이블 */}
