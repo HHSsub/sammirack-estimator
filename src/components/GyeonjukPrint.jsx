@@ -1,5 +1,4 @@
 import React from 'react';
-import stampImage from '/images/도장.png'; // 이미지 import 추가
 
 const GyeonjukPrint = ({ data }) => {
   return (
@@ -9,9 +8,9 @@ const GyeonjukPrint = ({ data }) => {
       </div>
       
       <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-      <img className="stamp" src={stampImage} alt="도장" />
+      <img className="stamp" src="/images/도장.png" alt="도장" />
 
-      {/* 상단 정보 */}
+      {/* 상단 정보 - 좌우 2분할 */}
       <table className="print-table info-table">
         <tbody>
           <tr>
@@ -22,23 +21,39 @@ const GyeonjukPrint = ({ data }) => {
           </tr>
           <tr>
             <td className="label">상호명</td>
+            <td>{data?.companyName || ''}</td>
+            <td className="label">상호</td>
             <td>삼미앵글랙산업</td>
+          </tr>
+          <tr>
+            <td className="label">담당자</td>
+            <td>{data?.contactPerson || ''}</td>
             <td className="label">대표자</td>
             <td>박이삭</td>
           </tr>
           <tr>
+            <td className="label"></td>
+            <td></td>
             <td className="label">소재지</td>
-            <td colSpan="3">경기도 광명시 원노온사로 39, 제1동</td>
+            <td>경기도 광명시 원노온사로 39, 제1동</td>
           </tr>
           <tr>
+            <td className="label"></td>
+            <td></td>
             <td className="label">TEL</td>
             <td>(02)2611-4597</td>
+          </tr>
+          <tr>
+            <td className="label"></td>
+            <td></td>
             <td className="label">FAX</td>
             <td>(02)2611-4595</td>
           </tr>
           <tr>
+            <td className="label"></td>
+            <td></td>
             <td className="label">홈페이지</td>
-            <td colSpan="3">http://www.ssmake.com</td>
+            <td>http://www.ssmake.com</td>
           </tr>
         </tbody>
       </table>
@@ -72,19 +87,19 @@ const GyeonjukPrint = ({ data }) => {
             </tr>
           )) || []}
           
-        {/* 빈 행들로 18행 채우기 - 15행에서 18행으로 확대 */}
-        {Array.from({ length: Math.max(0, 18 - (data?.items?.length || 0)) }, (_, index) => (
-          <tr key={`empty-${index}`}>
-            <td>{(data?.items?.length || 0) + index + 1}</td>
-            <td className="left">&nbsp;</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-        ))}
+          {/* 빈 행들로 15행 채우기 */}
+          {Array.from({ length: Math.max(0, 15 - (data?.items?.length || 0)) }, (_, index) => (
+            <tr key={`empty-${index}`}>
+              <td>{(data?.items?.length || 0) + index + 1}</td>
+              <td className="left">&nbsp;</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
