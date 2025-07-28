@@ -17,7 +17,6 @@ const BaljuPrint = ({ data }) => {
         <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
         <img className="stamp" src={stampImage} alt="도장" />
 
-        {/* 상단 고객/공급자 정보 테이블 */}
         <table className="print-table info-table">
           <tbody>
             <tr>
@@ -25,39 +24,36 @@ const BaljuPrint = ({ data }) => {
               <td style={{ width: '18%' }}>{data?.date || ''}</td>
               <td className="label" style={{ width: '15%' }}>발주번호</td>
               <td style={{ width: '20%' }}>{data?.orderNumber || ''}</td>
-            </tr>
-            <tr>
-              <td className="label">상호명</td>
-              <td>{data?.companyName || ''}</td>
-              <td colSpan="2" rowSpan="2" style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                아래와 같이 발주합니다.
-              </td>
-              <td className="label">상호</td>
+              <td className="label" style={{ width: '12%' }}>상호</td>
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
+              <td className="label">상호명</td>
+              <td colSpan="1">{data?.companyName || ''}</td>
               <td className="label">담당자</td>
-              <td>{data?.contactPerson || ''}</td>
+              <td colSpan="1">{data?.contactPerson || ''}</td>
               <td className="label">대표자</td>
               <td>박이삭</td>
             </tr>
             <tr>
-              <td className="label" colSpan="3" />
+              <td colSpan="4" style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                아래와 같이 발주합니다.
+              </td>
               <td className="label">소재지</td>
               <td>경기도 광명시 원노온사로 39, 제1동</td>
             </tr>
             <tr>
-              <td colSpan="3" />
+              <td colSpan="4"></td>
               <td className="label">TEL</td>
               <td>(02)2611-4597</td>
             </tr>
             <tr>
-              <td colSpan="3" />
+              <td colSpan="4"></td>
               <td className="label">FAX</td>
               <td>(02)2611-4595</td>
             </tr>
             <tr>
-              <td colSpan="3" />
+              <td colSpan="4"></td>
               <td className="label">홈페이지</td>
               <td>http://www.ssmake.com</td>
             </tr>
