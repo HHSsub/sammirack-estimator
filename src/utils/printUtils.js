@@ -40,6 +40,8 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   return {
     date: currentDate,
     estimateNumber,
+    companyName: formData?.companyName || '', // 공급받는 쪽 상호명
+    contactPerson: formData?.contactPerson || '', // 공급받는 쪽 담당자
     customerName: formData?.customerName || '',
     contactInfo: formData?.contactInfo || '',
     items,
@@ -102,6 +104,8 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
   return {
     date: formData?.date || currentDate,
     orderNumber,
+    companyName: formData?.companyName || '', // 공급받는 쪽 상호명
+    contactPerson: formData?.contactPerson || '', // 공급받는 쪽 담당자
     customerName: formData?.customerName || '',
     contactInfo: formData?.contactInfo || '',
     items,
