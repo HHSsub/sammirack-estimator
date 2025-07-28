@@ -12,53 +12,55 @@ const GyeonjukPrint = ({ data }) => {
       <img className="stamp" src={stampImage} alt="도장" />
 
       {/* 상단 정보 - 좌우 2분할 */}
-    <table className="print-table info-table">
-      <tbody>
-        <tr>
-          <td className="label">견적일자</td>
-          <td>{data?.date || ''}</td>
-          <td className="label">사업자등록번호</td>
-          <td>232-81-01750</td>
-        </tr>
-        <tr>
-          <td className="label">상호명</td>
-          <td>{data?.companyName || ''}</td>
-          <td className="label">상호</td>
-          <td>삼미앵글랙산업</td>
-        </tr>
-        <tr>
-          <td className="label">담당자</td>
-          <td>{data?.contactPerson || ''}</td>
-          <td className="label">대표자</td>
-          <td>박이삭</td>
-        </tr>
-        {/* 마지막 문구 행 */}
-        <tr>
-          {/* 좌측 2칸 병합 후 문구 삽입 */}
-          <td colSpan={2} style={{ textAlign: 'center', fontWeight: 'bold', padding: '8px 0' }}>
-            아래와 같이 견적합니다
-          </td>
-          <td className="label">소재지</td>
-          <td>경기도 광명시 원노온사로 39, 제1동</td>
-        </tr>
-        <tr>
-          {/* 좌측 2칸 빈칸 처리 (병합된 셀과 겹치지 않도록) */}
-          <td colSpan={2} style={{ border: 'none' }}></td>
-          <td className="label">TEL</td>
-          <td>(02)2611-4597</td>
-        </tr>
-        <tr>
-          <td colSpan={2} style={{ border: 'none' }}></td>
-          <td className="label">FAX</td>
-          <td>(02)2611-4595</td>
-        </tr>
-        <tr>
-          <td colSpan={2} style={{ border: 'none' }}></td>
-          <td className="label">홈페이지</td>
-          <td>http://www.ssmake.com</td>
-        </tr>
-      </tbody>
-    </table>
+      <table className="print-table info-table">
+        <tbody>
+          <tr>
+            <td className="label">견적일자</td>
+            <td>{data?.date || ''}</td>
+            <td className="label">사업자등록번호</td>
+            <td>232-81-01750</td>
+          </tr>
+          <tr>
+            <td className="label">상호명</td>
+            <td>{data?.companyName || ''}</td>
+            <td className="label">상호</td>
+            <td>삼미앵글랙산업</td>
+          </tr>
+          <tr>
+            <td className="label">담당자</td>
+            <td>{data?.contactPerson || ''}</td>
+            <td className="label">대표자</td>
+            <td>박이삭</td>
+          </tr>
+          <tr>
+            <td colSpan={2} rowSpan={4} style={{
+              textAlign: 'center',
+              fontWeight: 'bold',
+              fontSize: 15,
+              verticalAlign: 'middle',
+              padding: '16px 0',
+              background: '#fff',
+              border: '1px solid #ddd'
+            }}>
+              아래와 같이 견적합니다
+            </td>
+            <td className="label">소재지</td>
+            <td>경기도 광명시 원노온사로 39, 제1동</td>
+          </tr>
+          <tr>
+            <td className="label">TEL</td>
+            <td>(02)2611-4597</td>
+          </tr>
+          <tr>
+            <td className="label">FAX</td>
+            <td>(02)2611-4595</td>
+          </tr>
+          <tr>
+            <td className="label">홈페이지</td>
+            <td>http://www.ssmake.com</td>
+          </tr>
+        </tbody>
+      </table>
 
       {/* 견적 명세 */}
       <table className="print-table quote-table">
