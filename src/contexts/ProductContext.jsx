@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { BOMCalculator } from '../utils/BOMCalculator';
+import { applyRateToPrice } from '../utils/priceUtils';
 
 const ProductContext = createContext();
 const bomCalculator = new BOMCalculator();
@@ -10,7 +11,7 @@ export const ProductProvider = ({ children }) => {
   const [cart, setCart] = useState([]); // 1. 장바구니 상태 추가
 
   const [selections, setSelections] = useState({
-    type: '', version: '', color: '', size: '', height: '', level: '', quantity: 1,
+    type: '', version: '', color: '', size: '', height: '', level: '', quantity: 1, applyRate: 100,
   });
 
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -24,7 +25,7 @@ export const ProductProvider = ({ children }) => {
 
   useEffect(() => {
     if (!productsData) return;
-    const { type, version, color, size, height, level, quantity } = selections;
+    const { type, version, color, size, height, level, quantity, applyRate } = selections;
     const product = productsData[type];
 
     let unitPrice = 0;
@@ -40,7 +41,10 @@ export const ProductProvider = ({ children }) => {
       }
     } catch (e) { unitPrice = 0; }
     
-    setCurrentPrice(unitPrice * (quantity || 1));
+    // 적용률을 반영한 단가 계산
+    const adjustedUnitPrice = applyRateToPrice(unitPrice, applyRate || 100);
+    setCurrentPrice(adjustedUnitPrice * (quantity || 1));
+    
     // 2. BOM 계산 시 수량(quantity)을 인자로 전달
     setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
 
@@ -49,10 +53,31 @@ export const ProductProvider = ({ children }) => {
   // 3. 장바구니 관리 함수
   const addToCart = () => {
     if (currentPrice > 0) {
+      const { type, version, color, size, height, level, quantity, applyRate } = selections;
+      
+      // 원래 가격 계산 (적용률 적용 전)
+      const product = productsData[type];
+      let originalUnitPrice = 0;
+      try {
+        if (type === '스텐랙' && version && size && height && level) {
+          const baseOptionPrice = product.기본가격[size][height][level];
+          const versionBasePrice = product.버전[version].기본가;
+          const v1BasePrice = product.버전['기본형 V1'].기본가;
+          const priceDifference = versionBasePrice - v1BasePrice;
+          originalUnitPrice = baseOptionPrice + priceDifference;
+        } else if (type === '하이랙' && color && size && height && level) {
+          originalUnitPrice = product.기본가격[color][size][height][level];
+        }
+      } catch (e) { originalUnitPrice = 0; }
+      
       const newItem = {
         id: Date.now(), // 고유 ID
         selections,
-        price: currentPrice,
+        price: currentPrice, // 적용률이 반영된 최종 가격
+        originalPrice: originalUnitPrice * (quantity || 1), // 원래 가격
+        unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100), // 적용률이 반영된 단가
+        originalUnitPrice, // 원래 단가
+        applyRate: applyRate || 100, // 적용률
         bom: currentBom,
       };
       setCart(prevCart => [...prevCart, newItem]);
