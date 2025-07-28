@@ -92,3 +92,120 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
+
+        {/* 이하 기존 코드 유지 */}
+        <table className="print-table order-table">
+          <thead>
+            <tr>
+              <th style={{ width: '8%' }}>NO</th>
+              <th style={{ width: '25%' }}>품명</th>
+              <th style={{ width: '18%' }}>규격</th>
+              <th style={{ width: '8%' }}>단위</th>
+              <th style={{ width: '8%' }}>수량</th>
+              <th style={{ width: '12%' }}>단가</th>
+              <th style={{ width: '12%' }}>공급가</th>
+              <th style={{ width: '9%' }}>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.items?.slice(0, 6).map((item, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td className="left">{item.name || ''}</td>
+                <td>{item.specification || ''}</td>
+                <td>{item.unit || ''}</td>
+                <td>{item.quantity || ''}</td>
+                <td className="right">{item.unitPrice?.toLocaleString() || ''}</td>
+                <td className="right">{item.totalPrice?.toLocaleString() || ''}</td>
+                <td>{item.note || ''}</td>
+              </tr>
+            ))}
+            {Array.from({ length: Math.max(0, 6 - (data?.items?.length || 0)) }, (_, index) => (
+              <tr key={`empty-${index}`}>
+                <td>{(data?.items?.length || 0) + index + 1}</td>
+                <td className="left">&nbsp;</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 원자재 명세서 */}
+      {shouldShowMaterials && (
+        <div className="print-materials">
+          <h2>원자재 명세서</h2>
+          <table className="print-table material-table">
+            <thead>
+              <tr>
+                <th style={{ width: '8%' }}>NO</th>
+                <th style={{ width: '30%' }}>원자재명</th>
+                <th style={{ width: '20%' }}>규격</th>
+                <th style={{ width: '8%' }}>단위</th>
+                <th style={{ width: '10%' }}>수량</th>
+                <th style={{ width: '12%' }}>단가</th>
+                <th style={{ width: '12%' }}>공급가</th>
+              </tr>
+            </thead>
+            <tbody>
+              {materialData.slice(0, maxMaterialRows).map((material, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td className="left">{material.name || ''}</td>
+                  <td>{material.specification || ''}</td>
+                  <td>{material.unit || ''}</td>
+                  <td>{material.quantity || ''}</td>
+                  <td className="right">{material.unitPrice?.toLocaleString() || ''}</td>
+                  <td className="right">{material.totalPrice?.toLocaleString() || ''}</td>
+                </tr>
+              ))}
+              {Array.from({ length: emptyMaterialRows }, (_, index) => (
+                <tr key={`empty-${index}`}>
+                  <td>{materialData.length + index + 1}</td>
+                  <td className="left">&nbsp;</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="print-footer">
+        <table className="print-table">
+          <tbody>
+            <tr>
+              <td className="label" style={{ width: '20%' }}>소계</td>
+              <td className="right" style={{ width: '80%' }}>{data?.subtotal?.toLocaleString() || '0'}</td>
+            </tr>
+            <tr>
+              <td className="label">부가세</td>
+              <td className="right">{data?.tax?.toLocaleString() || '0'}</td>
+            </tr>
+            <tr>
+              <td className="label"><strong>합계</strong></td>
+              <td className="right"><strong>{data?.totalAmount?.toLocaleString() || '0'}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        {data?.notes?.trim() && (
+          <div className="print-notes">
+            <strong>비고:</strong> {data.notes}
+          </div>
+        )}
+        <div className="print-company">(주)삼미앵글랙산업</div>
+      </div>
+    </div>
+  );
+};
+
+export default BaljuPrint;
