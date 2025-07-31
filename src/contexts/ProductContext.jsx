@@ -68,8 +68,7 @@ const addToCart = () => {
     // ✅ displayName 생성
     const displayName = (() => {
       if (type === '스텐랙') {
-        const versionLabel = version === 'v1' ? '기본형 V1' : version;
-        return `스텐랙 (${versionLabel}) - ${size} / ${height} / ${level}단`;
+        return `스텐랙 - ${size}x${height} / ${level}단`;
       }
       if (type === '하이랙') {
         return `하이랙 (${color}) - ${size} / ${height} / ${level}단`;
