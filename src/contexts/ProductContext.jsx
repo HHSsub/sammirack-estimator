@@ -30,7 +30,7 @@ export const ProductProvider = ({ children }) => {
 
     let unitPrice = 0;
     try {
-      if (type === '스텐랙' && size && height && level) {
+      if (type === '스텐랙' && selections.version && size && height && level) {
         const baseOptionPrice = product.기본가격[size][height][level];
         const versionBasePrice = product.버전['v1'].기본가;
         const v1BasePrice = product.버전['기본형 V1'].기본가;
@@ -59,7 +59,7 @@ export const ProductProvider = ({ children }) => {
       const product = productsData[type];
       let originalUnitPrice = 0;
       try {
-        if (type === '스텐랙' && size && height && level) {
+        if (type === '스텐랙' && selections.version && size && height && level) {
           const baseOptionPrice = product.기본가격[size][height][level];
           const versionBasePrice = product.버전['v1'].기본가;
           const v1BasePrice = product.버전['기본형 V1'].기본가;
