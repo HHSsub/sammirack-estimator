@@ -10,7 +10,7 @@ function OptionSelector() {
     setSelections(prev => {
       const newSelections = { ...prev, [name]: value };
       if (name === 'type') {
-        return { ...newSelections, version: '', color: '', size: '', height: '', level: '' };
+        return { ...newSelections, version: value === '스텐랙' ? 'v1' : '', color: '', size: '', height: '', level: '' };
       }
       if (name === 'color') {
         return { ...newSelections, size: '', height: '', level: '' };
@@ -44,15 +44,7 @@ function OptionSelector() {
         </select>
       </div>
       
-      {selections.type === '스텐랙' && (
-        <div className="form-group">
-          <label>버전:</label>
-          <select name="version" value={selections.version} onChange={handleChange} disabled={!selections.type}>
-            <option value="">선택하세요</option>
-            {availableOptions.versions.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        </div>
-      )}
+
       {selections.type === '하이랙' && (
         <div className="form-group">
           <label>색상/타입:</label>
