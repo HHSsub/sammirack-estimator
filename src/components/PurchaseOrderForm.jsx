@@ -140,7 +140,7 @@ const PurchaseOrderForm = () => {
             {cart.map(item => (
               <tr key={item.id}>
                 <td className="border-b p-2">
-                  {item.selections.type} ({item.selections.version || item.selections.color}) - {item.selections.size} / {item.selections.height} / {item.selections.level} x {item.selections.quantity}개
+                  {item.displayName} x {item.selections.quantity}개
                 </td>
                 <td className="border-b p-2 text-right">{item.price.toLocaleString()}원</td>
               </tr>
