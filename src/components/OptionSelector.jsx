@@ -10,7 +10,7 @@ function OptionSelector() {
     setSelections(prev => {
       const newSelections = { ...prev, [name]: value };
       if (name === 'type') {
-        return { ...newSelections, version: value === '스텐랙' ? 'v1' : '', color: '', size: '', height: '', level: '' };
+        return { ...newSelections, version: value === '스텐랙' ? '기본형 V1' : '', color: '', size: '', height: '', level: '' };
       }
       if (name === 'color') {
         return { ...newSelections, size: '', height: '', level: '' };
