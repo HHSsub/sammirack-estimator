@@ -8,7 +8,7 @@ const bomCalculator = new BOMCalculator();
 export const ProductProvider = ({ children }) => {
   const [productsData, setProductsData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState([]); // 1. 장바구니 상태 추가
+  const [cart, setCart] = useState([]);
 
   const [selections, setSelections] = useState({
     type: '', version: '', color: '', size: '', height: '', level: '', quantity: 1, applyRate: 100,
@@ -30,54 +30,49 @@ export const ProductProvider = ({ children }) => {
 
     let unitPrice = 0;
     try {
-      if (type === '스텐랙' && selections.version && size && height && level) {
+      if (type === '스텐랙' && version && size && height && level) {
         const baseOptionPrice = product.기본가격[size][height][level];
-        const versionBasePrice = product.버전['v1'].기본가;
-        const v1BasePrice = product.버전['기본형 V1'].기본가;
-        const priceDifference = versionBasePrice - v1BasePrice;
-        unitPrice = baseOptionPrice + priceDifference;
+        const versionBasePrice = product.버전[version]?.기본가 || 0;
+        unitPrice = baseOptionPrice + versionBasePrice;
       } else if (type === '하이랙' && color && size && height && level) {
         unitPrice = product.기본가격[color][size][height][level];
       }
-    } catch (e) { unitPrice = 0; }
-    
-    // 적용률을 반영한 단가 계산
+    } catch (e) {
+      unitPrice = 0;
+    }
+
     const adjustedUnitPrice = applyRateToPrice(unitPrice, applyRate || 100);
     setCurrentPrice(adjustedUnitPrice * (quantity || 1));
-    
-    // 2. BOM 계산 시 수량(quantity)을 인자로 전달
-    setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
 
+    setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
   }, [productsData, selections]);
 
-  // 3. 장바구니 관리 함수
   const addToCart = () => {
     if (currentPrice > 0) {
       const { type, version, color, size, height, level, quantity, applyRate } = selections;
-      
-      // 원래 가격 계산 (적용률 적용 전)
       const product = productsData[type];
+
       let originalUnitPrice = 0;
       try {
-        if (type === '스텐랙' && selections.version && size && height && level) {
+        if (type === '스텐랙' && version && size && height && level) {
           const baseOptionPrice = product.기본가격[size][height][level];
-          const versionBasePrice = product.버전['v1'].기본가;
-          const v1BasePrice = product.버전['기본형 V1'].기본가;
-          const priceDifference = versionBasePrice - v1BasePrice;
-          originalUnitPrice = baseOptionPrice + priceDifference;
+          const versionBasePrice = product.버전[version]?.기본가 || 0;
+          originalUnitPrice = baseOptionPrice + versionBasePrice;
         } else if (type === '하이랙' && color && size && height && level) {
           originalUnitPrice = product.기본가격[color][size][height][level];
         }
-      } catch (e) { originalUnitPrice = 0; }
-      
+      } catch (e) {
+        originalUnitPrice = 0;
+      }
+
       const newItem = {
-        id: Date.now(), // 고유 ID
+        id: Date.now(),
         selections,
-        price: currentPrice, // 적용률이 반영된 최종 가격
-        originalPrice: originalUnitPrice * (quantity || 1), // 원래 가격
-        unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100), // 적용률이 반영된 단가
-        originalUnitPrice, // 원래 단가
-        applyRate: applyRate || 100, // 적용률
+        price: currentPrice,
+        originalPrice: originalUnitPrice * (quantity || 1),
+        unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100),
+        originalUnitPrice,
+        applyRate: applyRate || 100,
         bom: currentBom,
       };
       setCart(prevCart => [...prevCart, newItem]);
@@ -95,47 +90,56 @@ export const ProductProvider = ({ children }) => {
   const cartTotal = cart.reduce((total, item) => total + item.price, 0);
 
   const value = {
-    loading, productsData, selections, setSelections, availableOptions: getAvailableOptions(productsData, selections),
-    currentPrice, currentBom,
-    cart, addToCart, removeFromCart, clearCart, cartTotal
+    loading,
+    productsData,
+    selections,
+    setSelections,
+    availableOptions: getAvailableOptions(productsData, selections),
+    currentPrice,
+    currentBom,
+    cart,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    cartTotal
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;
 };
 
-// 옵션 계산 로직을 컨텍스트 외부의 헬퍼 함수로 분리
 const getAvailableOptions = (productsData, selections) => {
-    if (!productsData) return { versions: [], sizes: [], heights: [], levels: [], colors: [] };
-    
-    const { type, color, size, height } = selections;
-    const product = productsData[type];
-    const newOptions = { versions: [], sizes: [], heights: [], levels: [], colors: [] };
+  if (!productsData) return { versions: [], sizes: [], heights: [], levels: [], colors: [] };
 
-    if (product) {
-        if (product.버전) newOptions.versions = Object.keys(product.버전);
-        if (product.색상) newOptions.colors = product.색상;
+  const { type, color, size, height } = selections;
+  const product = productsData[type];
+  const newOptions = { versions: [], sizes: [], heights: [], levels: [], colors: [] };
 
-        const priceDataSource = product.기본가격;
-        if (type === '스텐랙' && priceDataSource) {
-            newOptions.sizes = Object.keys(priceDataSource);
-            if (size && priceDataSource[size]) {
-                newOptions.heights = Object.keys(priceDataSource[size]);
-                if (height && priceDataSource[size][height]) {
-                    newOptions.levels = Object.keys(priceDataSource[size][height]);
-                }
-            }
-        } else if (type === '하이랙' && color && priceDataSource[color]) {
-            const sizeSource = priceDataSource[color];
-            newOptions.sizes = Object.keys(sizeSource);
-            if (size && sizeSource[size]) {
-                newOptions.heights = Object.keys(sizeSource[size]);
-                if (height && sizeSource[size][height]) {
-                    newOptions.levels = Object.keys(sizeSource[size][height]);
-                }
-            }
+  if (product) {
+    if (product.버전) newOptions.versions = Object.keys(product.버전);
+    if (product.색상) newOptions.colors = product.색상;
+
+    const priceDataSource = product.기본가격;
+    if (type === '스텐랙' && priceDataSource) {
+      newOptions.sizes = Object.keys(priceDataSource);
+      if (size && priceDataSource[size]) {
+        newOptions.heights = Object.keys(priceDataSource[size]);
+        if (height && priceDataSource[size][height]) {
+          newOptions.levels = Object.keys(priceDataSource[size][height]);
         }
+      }
+    } else if (type === '하이랙' && color && priceDataSource[color]) {
+      const sizeSource = priceDataSource[color];
+      newOptions.sizes = Object.keys(sizeSource);
+      if (size && sizeSource[size]) {
+        newOptions.heights = Object.keys(sizeSource[size]);
+        if (height && sizeSource[size][height]) {
+          newOptions.levels = Object.keys(sizeSource[size][height]);
+        }
+      }
     }
-    return newOptions;
+  }
+
+  return newOptions;
 };
 
 export const useProducts = () => useContext(ProductContext);
