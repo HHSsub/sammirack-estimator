@@ -47,39 +47,53 @@ export const ProductProvider = ({ children }) => {
     setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
   }, [productsData, selections]);
 
-  const addToCart = () => {
-    if (currentPrice > 0) {
-      const { type, version, color, size, height, level, quantity, applyRate } = selections;
-      const product = productsData[type];
+const addToCart = () => {
+  if (currentPrice > 0) {
+    const { type, version, color, size, height, level, quantity, applyRate } = selections;
+    const product = productsData[type];
 
-      let originalUnitPrice = 0;
-      try {
-        if (type === '스텐랙' && version && size && height && level) {
-          const baseOptionPrice = product.기본가격[size][height][level];
-          const versionBasePrice = product.버전[version]?.기본가 || 0;
-          originalUnitPrice = baseOptionPrice + versionBasePrice;
-        } else if (type === '하이랙' && color && size && height && level) {
-          originalUnitPrice = product.기본가격[color][size][height][level];
-        }
-      } catch (e) {
-        originalUnitPrice = 0;
+    let originalUnitPrice = 0;
+    try {
+      if (type === '스텐랙' && version && size && height && level) {
+        const baseOptionPrice = product.기본가격[size][height][level];
+        const versionBasePrice = product.버전[version]?.기본가 || 0;
+        originalUnitPrice = baseOptionPrice + versionBasePrice;
+      } else if (type === '하이랙' && color && size && height && level) {
+        originalUnitPrice = product.기본가격[color][size][height][level];
       }
-
-      const newItem = {
-        id: Date.now(),
-        selections,
-        price: currentPrice,
-        originalPrice: originalUnitPrice * (quantity || 1),
-        unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100),
-        originalUnitPrice,
-        applyRate: applyRate || 100,
-        bom: currentBom,
-      };
-      setCart(prevCart => [...prevCart, newItem]);
-    } else {
-      alert("가격을 계산할 수 없는 항목은 추가할 수 없습니다.");
+    } catch (e) {
+      originalUnitPrice = 0;
     }
-  };
+
+    // ✅ displayName 생성
+    const displayName = (() => {
+      if (type === '스텐랙') {
+        const versionLabel = version === 'v1' ? '기본형 V1' : version;
+        return `스텐랙 (${versionLabel}) - ${size} / ${height} / ${level}단`;
+      }
+      if (type === '하이랙') {
+        return `하이랙 (${color}) - ${size} / ${height} / ${level}단`;
+      }
+      return `${type}`;
+    })();
+
+    const newItem = {
+      id: Date.now(),
+      selections,
+      displayName, // 👈 표시용 항목명
+      price: currentPrice,
+      originalPrice: originalUnitPrice * (quantity || 1),
+      unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100),
+      originalUnitPrice,
+      applyRate: applyRate || 100,
+      bom: currentBom,
+    };
+
+    setCart(prevCart => [...prevCart, newItem]);
+  } else {
+    alert("가격을 계산할 수 없는 항목은 추가할 수 없습니다.");
+  }
+};
 
   const removeFromCart = (id) => {
     setCart(prevCart => prevCart.filter(item => item.id !== id));
