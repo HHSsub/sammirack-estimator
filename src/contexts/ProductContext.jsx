@@ -5,16 +5,27 @@ import { applyRateToPrice } from '../utils/priceUtils';
 const ProductContext = createContext();
 const bomCalculator = new BOMCalculator();
 
+// ★ 추가 옵션은 여기 분명히 명시함 (중복방지! 이미 json에 있으면 자동으로 중복제거)
+const EXTRA_OPTIONS = {
+  스텐랙: {
+    sizes: ["50x210"],
+    heights: ["210"],
+    levels: ["5단", "6단"]
+  },
+  하이랙: {
+    sizes: ["45x150", "80x108"],
+    heights: ["250"],
+    levels: ["5단", "6단"]
+  }
+};
+
 export const ProductProvider = ({ children }) => {
   const [productsData, setProductsData] = useState(null);
   const [loading, setLoading] = useState(true);
-
   const [cart, setCart] = useState([]);
-
-  // selections 상태. version은 스텐랙 고정 '기본형 V1', 외부 노출 UI 없음
   const [selections, setSelectionsRaw] = useState({
     type: '',
-    version: '', // 내부에서 강제 세팅
+    version: '',
     color: '',
     size: '',
     height: '',
@@ -24,32 +35,83 @@ export const ProductProvider = ({ children }) => {
     customPrice: null,
   });
 
-  // selections setter 래퍼: 스텐랙 선택 시 version 자동 고정
   const setSelections = (updater) => {
     setSelectionsRaw(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
       if (updated.type === '스텐랙') {
         return { ...updated, version: '기본형 V1' };
+      } else {
+        return { ...updated, version: '' };
       }
-      return { ...updated, version: '' };
     });
   };
 
   const [currentPrice, setCurrentPrice] = useState(0);
   const [currentBom, setCurrentBom] = useState([]);
 
-  // 데이터 로드
   useEffect(() => {
     fetch('/sammirack-estimator/data.json')
       .then(res => res.json())
-      .then(data => {
-        setProductsData(data);
-        setLoading(false);
-      })
+      .then(data => { setProductsData(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  // JSON 내 선택 옵션 존재 판단
+  // 핵심: 옵션 병합!
+  const getAvailableOptions = () => {
+    if (!productsData) return {
+      versions: [],
+      colors: [],
+      sizes: [],
+      heights: [],
+      levels: []
+    };
+
+    const { type, color, size, height } = selections;
+    const product = productsData[type];
+    let opt = {
+      versions: [],
+      colors: [],
+      sizes: [],
+      heights: [],
+      levels: [],
+    };
+
+    if (type === '스텐랙' && product?.기본가격) {
+      opt.sizes = Object.keys(product.기본가격);
+      if (size && product.기본가격[size]) {
+        opt.heights = Object.keys(product.기본가격[size]);
+        if (height && product.기본가격[size][height]) {
+          opt.levels = Object.keys(product.기본가격[size][height]);
+        }
+      }
+      // 버전은 항상 고정이라 사용 X
+    }
+    if (type === '하이랙' && color && product?.기본가격 && product.기본가격[color]) {
+      opt.sizes = Object.keys(product.기본가격[color]);
+      if (size && product.기본가격[color][size]) {
+        opt.heights = Object.keys(product.기본가격[color][size]);
+        if (height && product.기본가격[color][size][height]) {
+          opt.levels = Object.keys(product.기본가격[color][size][height]);
+        }
+      }
+    }
+    // 하이랙 색상
+    if (type === '하이랙' && product?.색상) {
+      opt.colors = product.색상;
+    }
+    // option 병합!(JSON+EXTRA 옵션)
+    const uniq = (list) => [...new Set(list)];
+    if (EXTRA_OPTIONS[type]) {
+      opt.sizes = uniq([...(opt.sizes ?? []), ...EXTRA_OPTIONS[type].sizes]);
+      opt.heights = uniq([...(opt.heights ?? []), ...EXTRA_OPTIONS[type].heights]);
+      opt.levels = uniq([...(opt.levels ?? []), ...EXTRA_OPTIONS[type].levels]);
+    }
+    return opt;
+  };
+
+  const availableOptions = getAvailableOptions();
+
+  // JSON에 없는 옵션 조합인지 판별 (기존 코드와 동일!)
   const isOptionInJson = () => {
     if (!productsData) return false;
     try {
@@ -84,15 +146,11 @@ export const ProductProvider = ({ children }) => {
     return false;
   };
 
-  // 가격 및 BOM 계산
   useEffect(() => {
     if (!productsData) return;
-
     const { type, version, color, size, height, level, quantity, applyRate, customPrice } = selections;
     const product = productsData[type];
-
     let unitPrice = 0;
-
     if (customPrice !== null && customPrice !== undefined) {
       unitPrice = Number(customPrice);
     } else {
@@ -108,7 +166,6 @@ export const ProductProvider = ({ children }) => {
         unitPrice = 0;
       }
     }
-
     const adjustedUnitPrice = applyRateToPrice(unitPrice, applyRate || 100);
     setCurrentPrice(adjustedUnitPrice * (quantity || 1));
     setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
