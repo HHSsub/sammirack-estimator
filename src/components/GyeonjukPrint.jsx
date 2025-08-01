@@ -42,7 +42,7 @@ const GyeonjukPrint = ({ data }) => {
               background: '#fff',
               border: '1px solid #ddd'
             }}>
-              아래와 같이 견적합니다
+              아래와 같이 견적합니다 (부가세, 운임비 별도)
             </td>
             <td className="label">소재지</td>
             <td>경기도 광명시 원노온사로 39, 제1동</td>
