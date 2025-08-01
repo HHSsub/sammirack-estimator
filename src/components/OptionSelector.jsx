@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { useProducts } from '../contexts/ProductContext';
-import { validateRate } from '../utils/priceUtils';
+import React, { useEffect } from "react";
+import { useProducts } from "../contexts/ProductContext";
+import { validateRate } from "../utils/priceUtils";
 
 const OptionSelector = () => {
   const {
@@ -8,59 +8,56 @@ const OptionSelector = () => {
     selections,
     setSelections,
     availableOptions,
-    isCustomPriceMode
+    isCustomPriceMode,
   } = useProducts();
 
-  // 스텐랙 선택 시 version은 항상 '기본형 V1' 고정 (UI 노출 없음)
+  // 스텐랙 version '기본형 V1' 강제 고정 (UI 노출 없음)
   useEffect(() => {
-    if (selections.type === '스텐랙' && selections.version !== '기본형 V1') {
-      setSelections(prev => ({ ...prev, version: '기본형 V1' }));
+    if (
+      selections.type === "스텐랙" &&
+      selections.version !== "기본형 V1"
+    ) {
+      setSelections((prev) => ({ ...prev, version: "기본형 V1" }));
     }
-    if (selections.type !== '스텐랙' && selections.version !== '') {
-      setSelections(prev => ({ ...prev, version: '' }));
+    if (selections.type !== "스텐랙" && selections.version !== "") {
+      setSelections((prev) => ({ ...prev, version: "" }));
     }
   }, [selections.type, selections.version, setSelections]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setSelections(prev => {
+    setSelections((prev) => {
       let newSelections = { ...prev, [name]: value };
 
-      // type 변경 시 관련 필드 초기화
-      if (name === 'type') {
+      if (name === "type") {
         newSelections = {
           ...newSelections,
-          color: '',
-          size: '',
-          height: '',
-          level: '',
+          color: "",
+          size: "",
+          height: "",
+          level: "",
           customPrice: null,
         };
       }
 
-      // color, size, height 변경 시 level 및 customPrice 초기화
-      if (['color', 'size', 'height'].includes(name)) {
-        newSelections = { ...newSelections, level: '', customPrice: null };
+      if (["color", "size", "height"].includes(name)) {
+        newSelections = { ...newSelections, level: "", customPrice: null };
       }
 
-      // level 변경 시 customPrice 초기화
-      if (name === 'level') {
+      if (name === "level") {
         newSelections = { ...newSelections, customPrice: null };
       }
 
-      // 수량 숫자 변환
-      if (name === 'quantity') {
+      if (name === "quantity") {
         newSelections.quantity = parseInt(value, 10) || 1;
       }
 
-      // 적용률 검증
-      if (name === 'applyRate') {
+      if (name === "applyRate") {
         newSelections.applyRate = validateRate(value);
       }
 
-      // customPrice 숫자 변환, 빈값은 null로 처리
-      if (name === 'customPrice') {
-        newSelections.customPrice = value === '' ? null : Number(value);
+      if (name === "customPrice") {
+        newSelections.customPrice = value === "" ? null : Number(value);
       }
 
       return newSelections;
@@ -74,29 +71,39 @@ const OptionSelector = () => {
       {/* 제품 유형 */}
       <div className="form-group">
         <label htmlFor="type">제품 유형:</label>
-        <select name="type" id="type" value={selections.type} onChange={handleChange}>
+        <select
+          name="type"
+          id="type"
+          value={selections.type}
+          onChange={handleChange}
+        >
           <option value="">선택하세요</option>
           <option value="스텐랙">스텐랙</option>
           <option value="하이랙">하이랙</option>
         </select>
       </div>
 
-      {/* 스텐랙은 version UI 없음, 내부 고정 */}
-
       {/* 하이랙 색상 */}
-      {selections.type === '하이랙' && (
+      {selections.type === "하이랙" && (
         <div className="form-group">
           <label htmlFor="color">색상/타입:</label>
-          <select name="color" id="color" value={selections.color} onChange={handleChange}>
+          <select
+            name="color"
+            id="color"
+            value={selections.color}
+            onChange={handleChange}
+          >
             <option value="">선택하세요</option>
-            {availableOptions.colors.map(color => (
-              <option key={color} value={color}>{color}</option>
+            {availableOptions.colors.map((color) => (
+              <option key={color} value={color}>
+                {color}
+              </option>
             ))}
           </select>
         </div>
       )}
 
-      {/* 규격 (size) */}
+      {/* 규격 */}
       <div className="form-group">
         <label htmlFor="size">규격:</label>
         <select
@@ -107,8 +114,10 @@ const OptionSelector = () => {
           disabled={!selections.type}
         >
           <option value="">선택하세요</option>
-          {availableOptions.sizes.map(size => (
-            <option key={size} value={size}>{size}</option>
+          {availableOptions.sizes.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
           ))}
         </select>
       </div>
@@ -124,8 +133,10 @@ const OptionSelector = () => {
           disabled={!selections.size}
         >
           <option value="">선택하세요</option>
-          {availableOptions.heights.map(height => (
-            <option key={height} value={height}>{height}</option>
+          {availableOptions.heights.map((height) => (
+            <option key={height} value={height}>
+              {height}
+            </option>
           ))}
         </select>
       </div>
@@ -141,8 +152,10 @@ const OptionSelector = () => {
           disabled={!selections.height}
         >
           <option value="">선택하세요</option>
-          {availableOptions.levels.map(level => (
-            <option key={level} value={level}>{level}</option>
+          {availableOptions.levels.map((level) => (
+            <option key={level} value={level}>
+              {level}
+            </option>
           ))}
         </select>
       </div>
@@ -176,7 +189,7 @@ const OptionSelector = () => {
         />
       </div>
 
-      {/* JSON에 없는 옵션 선택 시 사용자 직접 가격 입력란 노출 */}
+      {/* 직접가격 입력란 (JSON에 옵션 없을 때만) */}
       {isCustomPriceMode && (
         <div className="form-group">
           <label htmlFor="customPrice">직접 입력 가격 (원):</label>
@@ -185,7 +198,7 @@ const OptionSelector = () => {
             id="customPrice"
             name="customPrice"
             min="0"
-            value={selections.customPrice ?? ''}
+            value={selections.customPrice ?? ""}
             onChange={handleChange}
             placeholder="가격을 입력하세요"
           />
