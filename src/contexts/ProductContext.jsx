@@ -5,10 +5,18 @@ import { applyRateToPrice } from "../utils/priceUtils";
 const ProductContext = createContext();
 const bomCalculator = new BOMCalculator();
 
+// EXTRA 옵션 리스트 (JSON 옵션 외 사용자 직접 선택 가능)
 const EXTRA_OPTIONS = {
-  sizes: ["50x210", "45x150", "80x108"],
-  heights: ["210", "250"],
-  levels: ["2단", "3단", "4단", "5단", "6단"],
+  스텐랙: {
+    sizes: ["50x210"],
+    heights: ["210"],
+    levels: ["2단", "3단", "4단", "5단", "6단"],
+  },
+  하이랙: {
+    sizes: ["45x150", "80x108"],
+    heights: ["250"],
+    levels: ["2단", "3단", "4단", "5단", "6단"],
+  },
 };
 
 export const ProductProvider = ({ children }) => {
@@ -18,7 +26,7 @@ export const ProductProvider = ({ children }) => {
 
   const [selections, setSelectionsRaw] = useState({
     type: "",
-    version: "",
+    version: "", // 스텐랙 고정 ‘기본형 V1’
     color: "",
     size: "",
     height: "",
@@ -28,7 +36,7 @@ export const ProductProvider = ({ children }) => {
     customPrice: null,
   });
 
-  // selections setter 강제 version '기본형 V1' 고정 (스텐랙)
+  // selections setter: 스텐랙이면 version 강제 고정
   const setSelections = (updater) => {
     setSelectionsRaw((prev) => {
       const updated = typeof updater === "function" ? updater(prev) : updater;
@@ -52,7 +60,7 @@ export const ProductProvider = ({ children }) => {
       .catch(() => setLoading(false));
   }, []);
 
-  // JSON 옵션만 추출 (기본가용)
+  // JSON 내 옵션만 추출
   const getOptionsFromJson = () => {
     if (!productsData) {
       return {
@@ -100,9 +108,9 @@ export const ProductProvider = ({ children }) => {
     return opts;
   };
 
-  // 중복 제거 병합
+  // 옵션 병합 및 중복 제거
   const mergeOptions = (baseOpts, extraOpts) => {
-    const uniq = (array) => [...new Set(array.filter(Boolean))];
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))];
     return {
       versions: uniq([...(baseOpts.versions || []), ...(extraOpts.versions || [])]),
       colors: uniq([...(baseOpts.colors || []), ...(extraOpts.colors || [])]),
@@ -113,9 +121,40 @@ export const ProductProvider = ({ children }) => {
   };
 
   const baseOptions = getOptionsFromJson();
-  const extraOptions = { versions: [], colors: [], ...EXTRA_OPTIONS };
+
+  // 스텐랙 / 하이랙 타입별 extra 옵션만 병합 (버전은 스텐랙 고정 하나라 제외)
+  const extraOptions = {
+    versions: [],
+    colors: [],
+    sizes: [],
+    heights: [],
+    levels: [],
+  };
+
+  if (selections.type && EXTRA_OPTIONS[selections.type]) {
+    extraOptions.sizes = EXTRA_OPTIONS[selections.type].sizes;
+    extraOptions.heights = EXTRA_OPTIONS[selections.type].heights;
+    extraOptions.levels = EXTRA_OPTIONS[selections.type].levels;
+  }
+
   const availableOptions = mergeOptions(baseOptions, extraOptions);
 
+  // selections 안에 EXTRA 옵션 중 하나라도 포함되었는지 확인
+  const isExtraOptionSelected = () => {
+    if (!selections.type) return false;
+    const extra = EXTRA_OPTIONS[selections.type];
+    if (!extra) return false;
+    return (
+      extra.sizes.includes(selections.size) ||
+      extra.heights.includes(selections.height) ||
+      extra.levels.includes(selections.level)
+    );
+  };
+
+  // 전체 옵션 자유 개방 상태 (disabled 안할 상태)
+  const isOptionFullyOpen = isExtraOptionSelected();
+
+  // 선택 조합이 JSON에 있는지 판단
   const isOptionInJson = () => {
     if (!productsData) return false;
     try {
@@ -165,6 +204,7 @@ export const ProductProvider = ({ children }) => {
     } = selections;
     const product = productsData[type];
     let unitPrice = 0;
+
     if (customPrice !== null && customPrice !== undefined) {
       unitPrice = Number(customPrice);
     } else {
@@ -186,6 +226,7 @@ export const ProductProvider = ({ children }) => {
         unitPrice = 0;
       }
     }
+
     const adjustedUnitPrice = applyRateToPrice(unitPrice, applyRate || 100);
     setCurrentPrice(adjustedUnitPrice * (quantity || 1));
     setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
@@ -196,6 +237,7 @@ export const ProductProvider = ({ children }) => {
       alert("가격을 계산할 수 없는 항목은 추가할 수 없습니다.");
       return;
     }
+
     const {
       type,
       version,
@@ -207,8 +249,8 @@ export const ProductProvider = ({ children }) => {
       applyRate,
       customPrice,
     } = selections;
-
     const product = productsData[type];
+
     let originalUnitPrice = 0;
 
     if (customPrice !== null && customPrice !== undefined) {
@@ -262,6 +304,7 @@ export const ProductProvider = ({ children }) => {
   const clearCart = () => setCart([]);
   const cartTotal = cart.reduce((acc, item) => acc + item.price, 0);
 
+  // 직접 가격 입력란 활성화 조건
   const isCustomPriceMode =
     !isOptionInJson() &&
     selections.type !== "" &&
@@ -287,6 +330,8 @@ export const ProductProvider = ({ children }) => {
         clearCart,
         cartTotal,
         isCustomPriceMode,
+        isOptionFullyOpen, // 추가 옵션 선택 시 완전 개방 여부
+        isExtraOptionSelected: isExtraOptionSelected(),
       }}
     >
       {children}
