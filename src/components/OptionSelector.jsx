@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import { validateRate } from '../utils/priceUtils';
 
+const STAINLESS_VERSION_FIXED = '기본형 V1';
+
 // 스텐랙 전용 옵션
-const STAINLESS_VERSIONS = ['기본형 V1', '기본형 V2', '기본형 V3'];
 const STAINLESS_SIZES = ['50x75', '50x90', '50x120', '50x150', '50x180'];
 const STAINLESS_HEIGHTS = ['75', '90', '120', '150', '180', '200', '210'];
 const STAINLESS_LEVELS = ['1단', '2단', '3단', '4단', '5단', '6단'];
@@ -23,20 +24,31 @@ const HIGHRACK_LEVELS = ['5단', '6단', '7단'];
 function OptionSelector() {
   const { loading, selections, setSelections, isCustomPriceMode } = useProducts();
 
+  // 스텐랙 선택 시 항상 version을 '기본형 V1'로 강제 고정
+  useEffect(() => {
+    if (selections.type === '스텐랙' && selections.version !== STAINLESS_VERSION_FIXED) {
+      setSelections(prev => ({ ...prev, version: STAINLESS_VERSION_FIXED }));
+    }
+    // 하이랙 또는 기타 타입에서는 version 초기화 (빈 문자열)
+    if (selections.type !== '스텐랙' && selections.version !== '') {
+      setSelections(prev => ({ ...prev, version: '' }));
+    }
+  }, [selections.type]); // type 변경에만 반응
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSelections(prev => {
       let newSelections = { ...prev, [name]: value };
 
       if (name === 'type') {
+        // type 변경 시 초기화, 단 version은 스텐랙이면 위 useEffect에서 강제로 세팅됨
         newSelections = {
           ...newSelections,
-          version: '',
           color: '',
           size: '',
           height: '',
           level: '',
-          customPrice: null
+          customPrice: null,
         };
       }
       if (['color', 'size', 'height'].includes(name)) {
@@ -73,16 +85,10 @@ function OptionSelector() {
         </select>
       </div>
 
-      {/* 스텐랙일 때 버전, 하이랙일 때 색상 */}
-      {selections.type === '스텐랙' && (
-        <div className="form-group">
-          <label>버전:</label>
-          <select name="version" value={selections.version} onChange={handleChange}>
-            <option value="">선택하세요</option>
-            {STAINLESS_VERSIONS.map(v => <option key={v} value={v}>{v}</option>)}
-          </select>
-        </div>
-      )}
+      {/* 버전 선택 UI 완전 제거 (스텐랙 버전 고정) */}
+      {/* 하이랙은 version이 없으므로 UI에서 렌더링하지 않음 */}
+
+      {/* 색상 (하이랙만) */}
       {selections.type === '하이랙' && (
         <div className="form-group">
           <label>색상/타입:</label>
