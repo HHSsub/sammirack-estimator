@@ -9,9 +9,10 @@ const OptionSelector = () => {
     setSelections,
     availableOptions,
     isCustomPriceMode,
+    isOptionFullyOpen,
   } = useProducts();
 
-  // 스텐랙 version '기본형 V1' 강제 고정 (UI 노출 없음)
+  // 스텐랙 version ‘기본형 V1’ 무조건 고정 + UI 노출 없음
   useEffect(() => {
     if (
       selections.type === "스텐랙" &&
@@ -19,7 +20,7 @@ const OptionSelector = () => {
     ) {
       setSelections((prev) => ({ ...prev, version: "기본형 V1" }));
     }
-    if (selections.type !== "스텐랙" && selections.version !== "") {
+    else if (selections.type !== "스텐랙" && selections.version !== "") {
       setSelections((prev) => ({ ...prev, version: "" }));
     }
   }, [selections.type, selections.version, setSelections]);
@@ -29,6 +30,7 @@ const OptionSelector = () => {
     setSelections((prev) => {
       let newSelections = { ...prev, [name]: value };
 
+      // type 변경 시 다른 선택 초기화
       if (name === "type") {
         newSelections = {
           ...newSelections,
@@ -40,10 +42,12 @@ const OptionSelector = () => {
         };
       }
 
+      // color, size, height 변경 시 level과 customPrice 초기화
       if (["color", "size", "height"].includes(name)) {
         newSelections = { ...newSelections, level: "", customPrice: null };
       }
 
+      // level 변경 시 customPrice 초기화
       if (name === "level") {
         newSelections = { ...newSelections, customPrice: null };
       }
@@ -59,7 +63,6 @@ const OptionSelector = () => {
       if (name === "customPrice") {
         newSelections.customPrice = value === "" ? null : Number(value);
       }
-
       return newSelections;
     });
   };
@@ -72,8 +75,8 @@ const OptionSelector = () => {
       <div className="form-group">
         <label htmlFor="type">제품 유형:</label>
         <select
-          name="type"
           id="type"
+          name="type"
           value={selections.type}
           onChange={handleChange}
         >
@@ -83,13 +86,13 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 하이랙 색상 */}
+      {/* 하이랙 색상만 노출 */}
       {selections.type === "하이랙" && (
         <div className="form-group">
           <label htmlFor="color">색상/타입:</label>
           <select
-            name="color"
             id="color"
+            name="color"
             value={selections.color}
             onChange={handleChange}
           >
@@ -103,12 +106,12 @@ const OptionSelector = () => {
         </div>
       )}
 
-      {/* 규격 */}
+      {/* 규격: 항상 열림 */}
       <div className="form-group">
         <label htmlFor="size">규격:</label>
         <select
-          name="size"
           id="size"
+          name="size"
           value={selections.size}
           onChange={handleChange}
           disabled={!selections.type}
@@ -122,15 +125,15 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 높이 */}
+      {/* 높이: isOptionFullyOpen이 true면 완전히 풀림 */}
       <div className="form-group">
         <label htmlFor="height">높이:</label>
         <select
-          name="height"
           id="height"
+          name="height"
           value={selections.height}
           onChange={handleChange}
-          disabled={!selections.size}
+          disabled={!selections.size && !isOptionFullyOpen}
         >
           <option value="">선택하세요</option>
           {availableOptions.heights.map((height) => (
@@ -141,15 +144,15 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 단수 */}
+      {/* 단수: isOptionFullyOpen일 때 완전히 열림 */}
       <div className="form-group">
         <label htmlFor="level">단수:</label>
         <select
-          name="level"
           id="level"
+          name="level"
           value={selections.level}
           onChange={handleChange}
-          disabled={!selections.height}
+          disabled={!selections.height && !isOptionFullyOpen}
         >
           <option value="">선택하세요</option>
           {availableOptions.levels.map((level) => (
@@ -189,7 +192,7 @@ const OptionSelector = () => {
         />
       </div>
 
-      {/* 직접가격 입력란 (JSON에 옵션 없을 때만) */}
+      {/* 직접가격 입력란 (JSON에 없는 옵션 조합 시만) */}
       {isCustomPriceMode && (
         <div className="form-group">
           <label htmlFor="customPrice">직접 입력 가격 (원):</label>
