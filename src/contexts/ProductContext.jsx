@@ -5,7 +5,7 @@ import { applyRateToPrice } from '../utils/priceUtils';
 const ProductContext = createContext();
 const bomCalculator = new BOMCalculator();
 
-// ★ 추가 옵션은 여기 분명히 명시함 (중복방지! 이미 json에 있으면 자동으로 중복제거)
+// 추가 옵션은 JSON 옵션에 없는 "직접 선택 가능" 항목들 (중복 자동 제거됨)
 const EXTRA_OPTIONS = {
   스텐랙: {
     sizes: ["50x210"],
@@ -23,6 +23,7 @@ export const ProductProvider = ({ children }) => {
   const [productsData, setProductsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
+
   const [selections, setSelectionsRaw] = useState({
     type: '',
     version: '',
@@ -35,6 +36,7 @@ export const ProductProvider = ({ children }) => {
     customPrice: null,
   });
 
+  // selections setter: 스텐랙은 version 무조건 '기본형 V1' 고정
   const setSelections = (updater) => {
     setSelectionsRaw(prev => {
       const updated = typeof updater === 'function' ? updater(prev) : updater;
@@ -56,7 +58,7 @@ export const ProductProvider = ({ children }) => {
       .catch(() => setLoading(false));
   }, []);
 
-  // 핵심: 옵션 병합!
+  // JSON 옵션 + EXTRA_OPTIONS 병합하여 중복 제거하고 반환
   const getAvailableOptions = () => {
     if (!productsData) return {
       versions: [],
@@ -84,8 +86,11 @@ export const ProductProvider = ({ children }) => {
           opt.levels = Object.keys(product.기본가격[size][height]);
         }
       }
-      // 버전은 항상 고정이라 사용 X
+      if (product?.버전) {
+        opt.versions = Object.keys(product.버전);
+      }
     }
+
     if (type === '하이랙' && color && product?.기본가격 && product.기본가격[color]) {
       opt.sizes = Object.keys(product.기본가격[color]);
       if (size && product.기본가격[color][size]) {
@@ -95,23 +100,26 @@ export const ProductProvider = ({ children }) => {
         }
       }
     }
-    // 하이랙 색상
+
     if (type === '하이랙' && product?.색상) {
       opt.colors = product.색상;
     }
-    // option 병합!(JSON+EXTRA 옵션)
+
+    // 병합 함수 (중복제거)
     const uniq = (list) => [...new Set(list)];
+
     if (EXTRA_OPTIONS[type]) {
       opt.sizes = uniq([...(opt.sizes ?? []), ...EXTRA_OPTIONS[type].sizes]);
       opt.heights = uniq([...(opt.heights ?? []), ...EXTRA_OPTIONS[type].heights]);
       opt.levels = uniq([...(opt.levels ?? []), ...EXTRA_OPTIONS[type].levels]);
     }
+
     return opt;
   };
 
   const availableOptions = getAvailableOptions();
 
-  // JSON에 없는 옵션 조합인지 판별 (기존 코드와 동일!)
+  // 선택한 조합이 JSON에 있는지 판단 (가격 조회 가능 여부)
   const isOptionInJson = () => {
     if (!productsData) return false;
     try {
@@ -146,11 +154,14 @@ export const ProductProvider = ({ children }) => {
     return false;
   };
 
+  // 가격 계산 및 BOM 계산
   useEffect(() => {
     if (!productsData) return;
     const { type, version, color, size, height, level, quantity, applyRate, customPrice } = selections;
     const product = productsData[type];
+
     let unitPrice = 0;
+
     if (customPrice !== null && customPrice !== undefined) {
       unitPrice = Number(customPrice);
     } else {
@@ -166,12 +177,13 @@ export const ProductProvider = ({ children }) => {
         unitPrice = 0;
       }
     }
+
     const adjustedUnitPrice = applyRateToPrice(unitPrice, applyRate || 100);
     setCurrentPrice(adjustedUnitPrice * (quantity || 1));
     setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
   }, [productsData, selections]);
 
-  // 장바구니 추가
+  // 장바구니 관련 함수
   const addToCart = () => {
     if (currentPrice <= 0) {
       alert("가격을 계산할 수 없는 항목은 추가할 수 없습니다.");
@@ -182,6 +194,7 @@ export const ProductProvider = ({ children }) => {
     const product = productsData[type];
 
     let originalUnitPrice = 0;
+
     if (customPrice !== null && customPrice !== undefined) {
       originalUnitPrice = Number(customPrice);
     } else {
@@ -223,67 +236,15 @@ export const ProductProvider = ({ children }) => {
     setCart(prev => [...prev, newItem]);
   };
 
-  // 장바구니 항목 삭제
-  const removeFromCart = (id) => {
-    setCart(prev => prev.filter(item => item.id !== id));
-  };
-
-  // 장바구니 초기화
+  const removeFromCart = (id) => setCart(prev => prev.filter(item => item.id !== id));
   const clearCart = () => setCart([]);
+  const cartTotal = cart.reduce((acc, item) => acc + item.price, 0);
 
-  // 장바구니 총합 계산
-  const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
-
-  // OptionSelector에 공급할 옵션 목록 생성 (JSON 옵션만 사용)
-  const getAvailableOptions = () => {
-    if (!productsData) return {
-      versions: [],
-      colors: [],
-      sizes: [],
-      heights: [],
-      levels: []
-    };
-
-    const { type, color, size, height } = selections;
-    const product = productsData[type];
-    const options = {
-      versions: type === '스텐랙' && product?.버전 ? Object.keys(product.버전) : [],
-      colors: type === '하이랙' && product?.색상 ? product.색상 : [],
-      sizes: [],
-      heights: [],
-      levels: []
-    };
-
-    if (type === '스텐랙' && product?.기본가격) {
-      options.sizes = Object.keys(product.기본가격);
-      if (size && product.기본가격[size]) {
-        options.heights = Object.keys(product.기본가격[size]);
-        if (height && product.기본가격[size][height]) {
-          options.levels = Object.keys(product.기본가격[size][height]);
-        }
-      }
-    }
-
-    if (type === '하이랙' && color && product?.기본가격 && product.기본가격[color]) {
-      options.sizes = Object.keys(product.기본가격[color]);
-      if (size && product.기본가격[color][size]) {
-        options.heights = Object.keys(product.기본가격[color][size]);
-        if (height && product.기본가격[color][size][height]) {
-          options.levels = Object.keys(product.기본가격[color][size][height]);
-        }
-      }
-    }
-
-    return options;
-  };
-
-  const availableOptions = getAvailableOptions();
-
-  // JSON에 없는 옵션 선택 및 필수값 선택 완료 여부 판단
+  // 직접 가격 입력란 노출 여부
   const isCustomPriceMode = !isOptionInJson()
     && selections.type !== ''
     && ((selections.type === '스텐랙' && selections.version === '기본형 V1')
-        || selections.type === '하이랙')
+      || selections.type === '하이랙')
     && selections.size !== ''
     && selections.height !== ''
     && selections.level !== '';
@@ -303,7 +264,7 @@ export const ProductProvider = ({ children }) => {
         removeFromCart,
         clearCart,
         cartTotal,
-        isCustomPriceMode,
+        isCustomPriceMode
       }}
     >
       {children}
