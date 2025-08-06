@@ -30,10 +30,10 @@ const OptionSelector = () => {
     setSelections((prev) => {
       let newSelections = { ...prev, [name]: value };
 
-      // type 변경 시 다른 선택 초기화
       if (name === "type") {
         newSelections = {
           ...newSelections,
+          format: "",
           color: "",
           size: "",
           height: "",
@@ -42,12 +42,10 @@ const OptionSelector = () => {
         };
       }
 
-      // color, size, height 변경 시 level과 customPrice 초기화
-      if (["color", "size", "height"].includes(name)) {
+      if (["format", "color", "size", "height"].includes(name)) {
         newSelections = { ...newSelections, level: "", customPrice: null };
       }
 
-      // level 변경 시 customPrice 초기화
       if (name === "level") {
         newSelections = { ...newSelections, customPrice: null };
       }
@@ -83,8 +81,31 @@ const OptionSelector = () => {
           <option value="">선택하세요</option>
           <option value="스텐랙">스텐랙</option>
           <option value="하이랙">하이랙</option>
+          <option value="경량랙">경량랙</option>
+          <option value="중량랙">중량랙</option>
+          <option value="파렛트랙">파렛트랙</option>
         </select>
       </div>
+
+      {/* 형식: 경량/중량/파렛트랙에만 표시 */}
+      {["경량랙", "중량랙", "파렛트랙"].includes(selections.type) && (
+        <div className="form-group">
+          <label htmlFor="format">형식:</label>
+          <select
+            id="format"
+            name="format"
+            value={selections.format || ""}
+            onChange={handleChange}
+          >
+            <option value="">선택하세요</option>
+            {availableOptions.formats.map((format) => (
+              <option key={format} value={format}>
+                {format}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* 하이랙 색상만 노출 */}
       {selections.type === "하이랙" && (
@@ -106,7 +127,7 @@ const OptionSelector = () => {
         </div>
       )}
 
-      {/* 규격: 항상 열림 */}
+      {/* 규격 */}
       <div className="form-group">
         <label htmlFor="size">규격:</label>
         <select
@@ -125,7 +146,7 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 높이: isOptionFullyOpen이 true면 완전히 풀림 */}
+      {/* 높이 */}
       <div className="form-group">
         <label htmlFor="height">높이:</label>
         <select
@@ -144,7 +165,7 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 단수: isOptionFullyOpen일 때 완전히 열림 */}
+      {/* 단수 */}
       <div className="form-group">
         <label htmlFor="level">단수:</label>
         <select
@@ -192,7 +213,7 @@ const OptionSelector = () => {
         />
       </div>
 
-      {/* 직접가격 입력란 (JSON에 없는 옵션 조합 시만) */}
+      {/* 직접가격 입력란 */}
       {isCustomPriceMode && (
         <div className="form-group">
           <label htmlFor="customPrice">직접 입력 가격 (원):</label>
