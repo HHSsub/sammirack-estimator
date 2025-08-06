@@ -8,9 +8,9 @@ const bomCalculator = new BOMCalculator();
 const EXTRA_OPTIONS = {
   스텐랙: { sizes: ["50x210"], heights: ["210"], levels: ["2단", "3단", "4단", "5단", "6단"] },
   하이랙: { sizes: ["45x150", "80x108"], heights: ["250"], levels: ["2단", "3단", "4단", "5단", "6단"] },
-  파렛트랙: { formats: [], sizes: [], heights: [], levels: [] },
-  경량랙: { formats: [], sizes: [], heights: [], levels: [] },
-  중량랙: { formats: [], sizes: [], heights: [], levels: [] },
+  경량랙: { formTypes: ["독립형", "연결형"] },
+  중량랙: { formTypes: ["독립형", "연결형"] },
+  파렛트랙: { formTypes: ["독립형", "연결형"] },
 };
 
 export const ProductProvider = ({ children }) => {
@@ -22,7 +22,7 @@ export const ProductProvider = ({ children }) => {
     type: "",
     version: "",
     color: "",
-    format: "",
+    formType: "", // ← 신설됨
     size: "",
     height: "",
     level: "",
@@ -53,43 +53,45 @@ export const ProductProvider = ({ children }) => {
   }, []);
 
   const getOptionsFromJson = () => {
-    if (!productsData) {
-      return {
-        versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [],
-      };
-    }
+    if (!productsData) return { versions: [], colors: [], formTypes: [], sizes: [], heights: [], levels: [] };
 
-    const { type, color, version, format, size, height } = selections;
+    const { type, color, size, height, formType } = selections;
     const product = productsData[type];
-    let opts = { versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [] };
+    const opts = { versions: [], colors: [], formTypes: [], sizes: [], heights: [], levels: [] };
 
-    if (type === "스텐랙") {
-      opts.sizes = Object.keys(product?.기본가격 || {});
-      if (size) {
-        opts.heights = Object.keys(product.기본가격[size] || {});
-        if (height) opts.levels = Object.keys(product.기본가격[size][height] || {});
+    if (type === "스텐랙" && product?.기본가격) {
+      opts.sizes = Object.keys(product.기본가격);
+      if (size && product.기본가격[size]) {
+        opts.heights = Object.keys(product.기본가격[size]);
+        if (height && product.기본가격[size][height]) {
+          opts.levels = Object.keys(product.기본가격[size][height]);
+        }
       }
-      opts.versions = Object.keys(product?.버전 || {});
+      opts.versions = product.버전 ? Object.keys(product.버전) : [];
     }
 
-    if (type === "하이랙") {
-      opts.colors = product?.색상 || [];
-      if (color && product.기본가격[color]) {
-        opts.sizes = Object.keys(product.기본가격[color] || {});
-        if (size) {
-          opts.heights = Object.keys(product.기본가격[color][size] || {});
-          if (height) opts.levels = Object.keys(product.기본가격[color][size][height] || {});
+    if (type === "하이랙" && product) {
+      opts.colors = product.색상 || [];
+      if (color && product.기본가격?.[color]) {
+        opts.sizes = Object.keys(product.기본가격[color]);
+        if (size && product.기본가격[color][size]) {
+          opts.heights = Object.keys(product.기본가격[color][size]);
+          if (height && product.기본가격[color][size][height]) {
+            opts.levels = Object.keys(product.기본가격[color][size][height]);
+          }
         }
       }
     }
 
     if (["경량랙", "중량랙", "파렛트랙"].includes(type)) {
-      opts.formats = Object.keys(product?.기본가격 || {});
-      if (format) {
-        opts.sizes = Object.keys(product.기본가격[format] || {});
-        if (size) {
-          opts.heights = Object.keys(product.기본가격[format][size] || {});
-          if (height) opts.levels = Object.keys(product.기본가격[format][size][height] || {});
+      opts.formTypes = Object.keys(product);
+      if (formType && product[formType]) {
+        opts.sizes = Object.keys(product[formType]);
+        if (size && product[formType][size]) {
+          opts.heights = Object.keys(product[formType][size]);
+          if (height && product[formType][size][height]) {
+            opts.levels = Object.keys(product[formType][size][height]);
+          }
         }
       }
     }
@@ -97,56 +99,115 @@ export const ProductProvider = ({ children }) => {
     return opts;
   };
 
-  const mergeOptions = (baseOpts, extraOpts) => {
-    const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+  const baseOptions = getOptionsFromJson();
+  const extraOptions = { versions: [], colors: [], formTypes: [], sizes: [], heights: [], levels: [] };
+
+  if (selections.type && EXTRA_OPTIONS[selections.type]) {
+    Object.assign(extraOptions, EXTRA_OPTIONS[selections.type]);
+  }
+
+  const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+  const mergeOptions = (a, b) => {
     return {
-      versions: uniq([...(baseOpts.versions || []), ...(extraOpts.versions || [])]),
-      colors: uniq([...(baseOpts.colors || []), ...(extraOpts.colors || [])]),
-      formats: uniq([...(baseOpts.formats || []), ...(extraOpts.formats || [])]),
-      sizes: uniq([...(baseOpts.sizes || []), ...(extraOpts.sizes || [])]),
-      heights: uniq([...(baseOpts.heights || []), ...(extraOpts.heights || [])]),
-      levels: uniq([...(baseOpts.levels || []), ...(extraOpts.levels || [])]),
+      versions: uniq([...a.versions, ...b.versions]),
+      colors: uniq([...a.colors, ...b.colors]),
+      formTypes: uniq([...a.formTypes, ...b.formTypes]),
+      sizes: uniq([...a.sizes, ...b.sizes]),
+      heights: uniq([...a.heights, ...b.heights]),
+      levels: uniq([...a.levels, ...b.levels]),
     };
   };
 
-  const baseOptions = getOptionsFromJson();
-  const extraOptions = EXTRA_OPTIONS[selections.type] || { versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [] };
   const availableOptions = mergeOptions(baseOptions, extraOptions);
 
-  const isExtraOptionSelected = () => {
-    if (!selections.type) return false;
-    const extra = EXTRA_OPTIONS[selections.type];
-    if (!extra) return false;
-    return (
-      extra.sizes.includes(selections.size) ||
-      extra.heights.includes(selections.height) ||
-      extra.levels.includes(selections.level)
-    );
-  };
-
-  const isOptionFullyOpen = isExtraOptionSelected();
-
   const isOptionInJson = () => {
-    if (!productsData) return false;
     try {
-      const { type, version, color, format, size, height, level } = selections;
-      const product = productsData[type];
-      if (!product) return false;
+      const { type, version, color, size, height, level, formType } = selections;
+      const p = productsData[type];
+      if (!p) return false;
 
-      if (type === "스텐랙") {
-        return !!(version && product?.버전?.[version] && product?.기본가격?.[size]?.[height]?.[level] !== undefined);
-      }
-      if (type === "하이랙") {
-        return !!(color && product?.기본가격?.[color]?.[size]?.[height]?.[level] !== undefined);
-      }
+      if (type === "스텐랙") return !!(version && p.버전?.[version] && p.기본가격?.[size]?.[height]?.[level] !== undefined);
+      if (type === "하이랙") return !!(color && p.기본가격?.[color]?.[size]?.[height]?.[level] !== undefined);
       if (["경량랙", "중량랙", "파렛트랙"].includes(type)) {
-        return !!(format && product?.기본가격?.[format]?.[size]?.[height]?.[level] !== undefined);
+        return !!(formType && p[formType]?.[size]?.[height]?.[level] !== undefined);
       }
     } catch {
       return false;
     }
     return false;
   };
+
+  useEffect(() => {
+    if (!productsData) return;
+    const { type, version, color, size, height, level, quantity, applyRate, customPrice, formType } = selections;
+    const p = productsData[type];
+    let unitPrice = 0;
+
+    if (customPrice !== null) unitPrice = Number(customPrice);
+    else {
+      try {
+        if (type === "스텐랙") unitPrice = p.기본가격[size][height][level] + (p.버전[version]?.기본가 || 0);
+        else if (type === "하이랙") unitPrice = p.기본가격[color][size][height][level];
+        else if (["경량랙", "중량랙", "파렛트랙"].includes(type)) unitPrice = p[formType][size][height][level];
+      } catch {
+        unitPrice = 0;
+      }
+    }
+
+    const adjusted = applyRateToPrice(unitPrice, applyRate || 100);
+    setCurrentPrice(adjusted * (quantity || 1));
+    setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
+  }, [productsData, selections]);
+
+  const addToCart = () => {
+    if (currentPrice <= 0) return alert("가격 계산 불가 항목입니다.");
+
+    const { type, version, color, size, height, level, quantity, applyRate, customPrice, formType } = selections;
+    const p = productsData[type];
+    let originalUnitPrice = 0;
+
+    try {
+      if (customPrice !== null) originalUnitPrice = Number(customPrice);
+      else {
+        if (type === "스텐랙") originalUnitPrice = p.기본가격[size][height][level] + (p.버전[version]?.기본가 || 0);
+        else if (type === "하이랙") originalUnitPrice = p.기본가격[color][size][height][level];
+        else if (["경량랙", "중량랙", "파렛트랙"].includes(type)) originalUnitPrice = p[formType][size][height][level];
+      }
+    } catch {
+      originalUnitPrice = 0;
+    }
+
+    const displayName = (() => {
+      if (type === "스텐랙") return `스텐랙 - ${size}x${height} / ${level} / ${version}`;
+      if (type === "하이랙") return `하이랙 (${color}) - ${size} / ${height} / ${level}단`;
+      if (["경량랙", "중량랙", "파렛트랙"].includes(type)) return `${type} (${formType}) - ${size} / ${height} / ${level}`;
+      return type;
+    })();
+
+    const newItem = {
+      id: Date.now(),
+      selections,
+      displayName,
+      price: currentPrice,
+      originalPrice: originalUnitPrice * (quantity || 1),
+      unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100),
+      originalUnitPrice,
+      applyRate: applyRate || 100,
+      bom: currentBom,
+    };
+
+    setCart((prev) => [...prev, newItem]);
+  };
+
+  const removeFromCart = (id) => setCart((prev) => prev.filter((item) => item.id !== id));
+  const clearCart = () => setCart([]);
+  const cartTotal = cart.reduce((acc, item) => acc + item.price, 0);
+
+  const isCustomPriceMode =
+    !isOptionInJson() && selections.type !== "" &&
+    ((selections.type === "스텐랙" && selections.version === "기본형 V1") ||
+     selections.type === "하이랙" || ["경량랙", "중량랙", "파렛트랙"].includes(selections.type)) &&
+    selections.size && selections.height && selections.level;
 
   return (
     <ProductContext.Provider
@@ -159,13 +220,13 @@ export const ProductProvider = ({ children }) => {
         currentPrice,
         currentBom,
         cart,
-        addToCart: () => {},
-        removeFromCart: (id) => setCart((prev) => prev.filter((item) => item.id !== id)),
-        clearCart: () => setCart([]),
-        cartTotal: cart.reduce((acc, item) => acc + item.price, 0),
-        isCustomPriceMode: !isOptionInJson() && selections.type && selections.size && selections.height && selections.level,
-        isOptionFullyOpen,
-        isExtraOptionSelected: isExtraOptionSelected(),
+        addToCart,
+        removeFromCart,
+        clearCart,
+        cartTotal,
+        isCustomPriceMode,
+        isOptionFullyOpen: false,
+        isExtraOptionSelected: false,
       }}
     >
       {children}
