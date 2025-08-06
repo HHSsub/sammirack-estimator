@@ -1,239 +1,176 @@
-import React, { useEffect } from "react";
-import { useProducts } from "../contexts/ProductContext";
-import { validateRate } from "../utils/priceUtils";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { BOMCalculator } from "../utils/BOMCalculator";
+import { applyRateToPrice } from "../utils/priceUtils";
 
-const OptionSelector = () => {
-  const {
-    loading,
-    selections,
-    setSelections,
-    availableOptions,
-    isCustomPriceMode,
-    isOptionFullyOpen,
-  } = useProducts();
+const ProductContext = createContext();
+const bomCalculator = new BOMCalculator();
 
-  useEffect(() => {
-    if (
-      selections.type === "스텐랙" &&
-      selections.version !== "기본형 V1"
-    ) {
-      setSelections((prev) => ({ ...prev, version: "기본형 V1" }));
-    } else if (selections.type !== "스텐랙" && selections.version !== "") {
-      setSelections((prev) => ({ ...prev, version: "" }));
-    }
-  }, [selections.type, selections.version, setSelections]);
+const EXTRA_OPTIONS = {
+  스텐랙: { sizes: ["50x210"], heights: ["210"], levels: ["2단", "3단", "4단", "5단", "6단"] },
+  하이랙: { sizes: ["45x150", "80x108"], heights: ["250"], levels: ["2단", "3단", "4단", "5단", "6단"] },
+  파렛트랙: { formats: [], sizes: [], heights: [], levels: [] },
+  경량랙: { formats: [], sizes: [], heights: [], levels: [] },
+  중량랙: { formats: [], sizes: [], heights: [], levels: [] },
+};
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setSelections((prev) => {
-      let newSelections = { ...prev, [name]: value };
+export const ProductProvider = ({ children }) => {
+  const [productsData, setProductsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState([]);
 
-      if (name === "type") {
-        newSelections = {
-          type: value,
-          version: value === "스텐랙" ? "기본형 V1" : "",
-          format: "",
-          color: "",
-          size: "",
-          height: "",
-          level: "",
-          quantity: 1,
-          applyRate: 100,
-          customPrice: null,
-        };
-      }
+  const [selections, setSelectionsRaw] = useState({
+    type: "",
+    version: "",
+    color: "",
+    format: "",
+    size: "",
+    height: "",
+    level: "",
+    quantity: 1,
+    applyRate: 100,
+    customPrice: null,
+  });
 
-      if (["format", "color", "size", "height"].includes(name)) {
-        newSelections = { ...newSelections, level: "", customPrice: null };
-      }
-
-      if (name === "level") {
-        newSelections = { ...newSelections, customPrice: null };
-      }
-
-      if (name === "quantity") {
-        newSelections.quantity = parseInt(value, 10) || 1;
-      }
-
-      if (name === "applyRate") {
-        newSelections.applyRate = validateRate(value);
-      }
-
-      if (name === "customPrice") {
-        newSelections.customPrice = value === "" ? null : Number(value);
-      }
-
-      return newSelections;
+  const setSelections = (updater) => {
+    setSelectionsRaw((prev) => {
+      const updated = typeof updater === "function" ? updater(prev) : updater;
+      if (updated.type === "스텐랙") return { ...updated, version: "기본형 V1" };
+      return { ...updated, version: "" };
     });
   };
 
-  if (loading) return <p>데이터를 불러오는 중...</p>;
+  const [currentPrice, setCurrentPrice] = useState(0);
+  const [currentBom, setCurrentBom] = useState([]);
+
+  useEffect(() => {
+    fetch("/sammirack-estimator/data.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setProductsData(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const getOptionsFromJson = () => {
+    if (!productsData) {
+      return {
+        versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [],
+      };
+    }
+
+    const { type, color, version, format, size, height } = selections;
+    const product = productsData[type];
+    let opts = { versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [] };
+
+    if (type === "스텐랙") {
+      opts.sizes = Object.keys(product?.기본가격 || {});
+      if (size) {
+        opts.heights = Object.keys(product.기본가격[size] || {});
+        if (height) opts.levels = Object.keys(product.기본가격[size][height] || {});
+      }
+      opts.versions = Object.keys(product?.버전 || {});
+    }
+
+    if (type === "하이랙") {
+      opts.colors = product?.색상 || [];
+      if (color && product.기본가격[color]) {
+        opts.sizes = Object.keys(product.기본가격[color] || {});
+        if (size) {
+          opts.heights = Object.keys(product.기본가격[color][size] || {});
+          if (height) opts.levels = Object.keys(product.기본가격[color][size][height] || {});
+        }
+      }
+    }
+
+    if (["경량랙", "중량랙", "파렛트랙"].includes(type)) {
+      opts.formats = Object.keys(product?.기본가격 || {});
+      if (format) {
+        opts.sizes = Object.keys(product.기본가격[format] || {});
+        if (size) {
+          opts.heights = Object.keys(product.기본가격[format][size] || {});
+          if (height) opts.levels = Object.keys(product.기본가격[format][size][height] || {});
+        }
+      }
+    }
+
+    return opts;
+  };
+
+  const mergeOptions = (baseOpts, extraOpts) => {
+    const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+    return {
+      versions: uniq([...(baseOpts.versions || []), ...(extraOpts.versions || [])]),
+      colors: uniq([...(baseOpts.colors || []), ...(extraOpts.colors || [])]),
+      formats: uniq([...(baseOpts.formats || []), ...(extraOpts.formats || [])]),
+      sizes: uniq([...(baseOpts.sizes || []), ...(extraOpts.sizes || [])]),
+      heights: uniq([...(baseOpts.heights || []), ...(extraOpts.heights || [])]),
+      levels: uniq([...(baseOpts.levels || []), ...(extraOpts.levels || [])]),
+    };
+  };
+
+  const baseOptions = getOptionsFromJson();
+  const extraOptions = EXTRA_OPTIONS[selections.type] || { versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [] };
+  const availableOptions = mergeOptions(baseOptions, extraOptions);
+
+  const isExtraOptionSelected = () => {
+    if (!selections.type) return false;
+    const extra = EXTRA_OPTIONS[selections.type];
+    if (!extra) return false;
+    return (
+      extra.sizes.includes(selections.size) ||
+      extra.heights.includes(selections.height) ||
+      extra.levels.includes(selections.level)
+    );
+  };
+
+  const isOptionFullyOpen = isExtraOptionSelected();
+
+  const isOptionInJson = () => {
+    if (!productsData) return false;
+    try {
+      const { type, version, color, format, size, height, level } = selections;
+      const product = productsData[type];
+      if (!product) return false;
+
+      if (type === "스텐랙") {
+        return !!(version && product?.버전?.[version] && product?.기본가격?.[size]?.[height]?.[level] !== undefined);
+      }
+      if (type === "하이랙") {
+        return !!(color && product?.기본가격?.[color]?.[size]?.[height]?.[level] !== undefined);
+      }
+      if (["경량랙", "중량랙", "파렛트랙"].includes(type)) {
+        return !!(format && product?.기본가격?.[format]?.[size]?.[height]?.[level] !== undefined);
+      }
+    } catch {
+      return false;
+    }
+    return false;
+  };
 
   return (
-    <div className="product-selection grid grid-cols-2 gap-4">
-      {/* 제품 유형 */}
-      <div className="form-group">
-        <label htmlFor="type">제품 유형:</label>
-        <select
-          id="type"
-          name="type"
-          value={selections.type}
-          onChange={handleChange}
-        >
-          <option value="">선택하세요</option>
-          <option value="경량랙">경량랙</option>
-          <option value="중량랙">중량랙</option>
-          <option value="스텐랙">스텐랙</option>
-          <option value="하이랙">하이랙</option>
-          <option value="파렛트랙">파렛트랙</option>
-        </select>
-      </div>
-
-      {/* 형식: 경량, 중량, 파렛트랙 */}
-      {["경량랙", "중량랙", "파렛트랙"].includes(selections.type) && (
-        <div className="form-group">
-          <label htmlFor="format">형식:</label>
-          <select
-            id="format"
-            name="format"
-            value={selections.format || ""}
-            onChange={handleChange}
-          >
-            <option value="">선택하세요</option>
-            {availableOptions.formats.map((format) => (
-              <option key={format} value={format}>
-                {format}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* 색상: 하이랙만 */}
-      {selections.type === "하이랙" && (
-        <div className="form-group">
-          <label htmlFor="color">색상/타입:</label>
-          <select
-            id="color"
-            name="color"
-            value={selections.color}
-            onChange={handleChange}
-          >
-            <option value="">선택하세요</option>
-            {availableOptions.colors.map((color) => (
-              <option key={color} value={color}>
-                {color}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* 규격 (공통) */}
-      <div className="form-group">
-        <label htmlFor="size">규격:</label>
-        <select
-          id="size"
-          name="size"
-          value={selections.size}
-          onChange={handleChange}
-          disabled={!selections.type}
-        >
-          <option value="">선택하세요</option>
-          {availableOptions.sizes.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* 높이 (공통) */}
-      <div className="form-group">
-        <label htmlFor="height">높이:</label>
-        <select
-          id="height"
-          name="height"
-          value={selections.height}
-          onChange={handleChange}
-          disabled={!selections.size && !isOptionFullyOpen}
-        >
-          <option value="">선택하세요</option>
-          {availableOptions.heights.map((height) => (
-            <option key={height} value={height}>
-              {height}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* 단수: 스텐랙/하이랙/경량랙/중량랙만 (파렛트랙 제외 가능) */}
-      {["스텐랙", "하이랙", "경량랙", "중량랙"].includes(selections.type) && (
-        <div className="form-group">
-          <label htmlFor="level">단수:</label>
-          <select
-            id="level"
-            name="level"
-            value={selections.level}
-            onChange={handleChange}
-            disabled={!selections.height && !isOptionFullyOpen}
-          >
-            <option value="">선택하세요</option>
-            {availableOptions.levels.map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* 수량 */}
-      <div className="form-group">
-        <label htmlFor="quantity">수량:</label>
-        <input
-          type="number"
-          id="quantity"
-          name="quantity"
-          min="1"
-          value={selections.quantity || 1}
-          onChange={handleChange}
-        />
-      </div>
-
-      {/* 적용률 */}
-      <div className="form-group">
-        <label htmlFor="applyRate">적용률 (%):</label>
-        <input
-          type="number"
-          id="applyRate"
-          name="applyRate"
-          min="0"
-          max="100"
-          step="0.1"
-          value={selections.applyRate ?? 100}
-          onChange={handleChange}
-          placeholder="100"
-        />
-      </div>
-
-      {/* 직접 가격 입력 */}
-      {isCustomPriceMode && (
-        <div className="form-group">
-          <label htmlFor="customPrice">직접 입력 가격 (원):</label>
-          <input
-            type="number"
-            id="customPrice"
-            name="customPrice"
-            min="0"
-            value={selections.customPrice ?? ""}
-            onChange={handleChange}
-            placeholder="가격을 입력하세요"
-          />
-        </div>
-      )}
-    </div>
+    <ProductContext.Provider
+      value={{
+        loading,
+        productsData,
+        selections,
+        setSelections,
+        availableOptions,
+        currentPrice,
+        currentBom,
+        cart,
+        addToCart: () => {},
+        removeFromCart: (id) => setCart((prev) => prev.filter((item) => item.id !== id)),
+        clearCart: () => setCart([]),
+        cartTotal: cart.reduce((acc, item) => acc + item.price, 0),
+        isCustomPriceMode: !isOptionInJson() && selections.type && selections.size && selections.height && selections.level,
+        isOptionFullyOpen,
+        isExtraOptionSelected: isExtraOptionSelected(),
+      }}
+    >
+      {children}
+    </ProductContext.Provider>
   );
 };
 
-export default OptionSelector;
+export const useProducts = () => useContext(ProductContext);
