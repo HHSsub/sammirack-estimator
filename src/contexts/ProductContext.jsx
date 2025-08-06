@@ -5,18 +5,10 @@ import { applyRateToPrice } from "../utils/priceUtils";
 const ProductContext = createContext();
 const bomCalculator = new BOMCalculator();
 
-// EXTRA 옵션 리스트 (JSON 옵션 외 사용자 직접 선택 가능)
 const EXTRA_OPTIONS = {
-  스텐랙: {
-    sizes: ["50x210"],
-    heights: ["210"],
-    levels: ["2단", "3단", "4단", "5단", "6단"],
-  },
-  하이랙: {
-    sizes: ["45x150", "80x108"],
-    heights: ["250"],
-    levels: ["2단", "3단", "4단", "5단", "6단"],
-  },
+  스텐랙: { sizes: ["50x210"], heights: ["210"], levels: ["2단", "3단", "4단", "5단", "6단"] },
+  하이랙: { sizes: ["45x150", "80x108"], heights: ["250"], levels: ["2단", "3단", "4단", "5단", "6단"] },
+  파렛트랙: { sizes: [], heights: [], levels: [] } // 필요시 확장
 };
 
 export const ProductProvider = ({ children }) => {
@@ -26,8 +18,9 @@ export const ProductProvider = ({ children }) => {
 
   const [selections, setSelectionsRaw] = useState({
     type: "",
-    version: "", // 스텐랙 고정 ‘기본형 V1’
+    version: "",
     color: "",
+    format: "",  // ⬅ 추가됨
     size: "",
     height: "",
     level: "",
@@ -36,13 +29,10 @@ export const ProductProvider = ({ children }) => {
     customPrice: null,
   });
 
-  // selections setter: 스텐랙이면 version 강제 고정
   const setSelections = (updater) => {
     setSelectionsRaw((prev) => {
       const updated = typeof updater === "function" ? updater(prev) : updater;
-      if (updated.type === "스텐랙") {
-        return { ...updated, version: "기본형 V1" };
-      }
+      if (updated.type === "스텐랙") return { ...updated, version: "기본형 V1" };
       return { ...updated, version: "" };
     });
   };
@@ -60,23 +50,24 @@ export const ProductProvider = ({ children }) => {
       .catch(() => setLoading(false));
   }, []);
 
-  // JSON 내 옵션만 추출
   const getOptionsFromJson = () => {
     if (!productsData) {
       return {
         versions: [],
         colors: [],
+        formats: [],
         sizes: [],
         heights: [],
         levels: [],
       };
     }
 
-    const { type, color, size, height } = selections;
+    const { type, color, version, format, size, height } = selections;
     const product = productsData[type];
     let opts = {
       versions: [],
       colors: [],
+      formats: [],
       sizes: [],
       heights: [],
       levels: [],
@@ -95,7 +86,7 @@ export const ProductProvider = ({ children }) => {
 
     if (type === "하이랙" && product) {
       opts.colors = product.색상 || [];
-      if (color && product.기본가격 && product.기본가격[color]) {
+      if (color && product.기본가격[color]) {
         opts.sizes = Object.keys(product.기본가격[color]);
         if (size && product.기본가격[color][size]) {
           opts.heights = Object.keys(product.기본가격[color][size]);
@@ -105,15 +96,26 @@ export const ProductProvider = ({ children }) => {
         }
       }
     }
+
+    if (type === "파렛트랙" && product) {
+      opts.formats = Object.keys(product.기본가격);
+      if (format && product.기본가격[format]) {
+        opts.sizes = Object.keys(product.기본가격[format]);
+        if (size && product.기본가격[format][size]) {
+          opts.heights = Object.keys(product.기본가격[format][size]);
+        }
+      }
+    }
+
     return opts;
   };
 
-  // 옵션 병합 및 중복 제거
   const mergeOptions = (baseOpts, extraOpts) => {
     const uniq = (arr) => [...new Set(arr.filter(Boolean))];
     return {
       versions: uniq([...(baseOpts.versions || []), ...(extraOpts.versions || [])]),
       colors: uniq([...(baseOpts.colors || []), ...(extraOpts.colors || [])]),
+      formats: uniq([...(baseOpts.formats || [])]),
       sizes: uniq([...(baseOpts.sizes || []), ...(extraOpts.sizes || [])]),
       heights: uniq([...(baseOpts.heights || []), ...(extraOpts.heights || [])]),
       levels: uniq([...(baseOpts.levels || []), ...(extraOpts.levels || [])]),
@@ -121,25 +123,14 @@ export const ProductProvider = ({ children }) => {
   };
 
   const baseOptions = getOptionsFromJson();
-
-  // 스텐랙 / 하이랙 타입별 extra 옵션만 병합 (버전은 스텐랙 고정 하나라 제외)
-  const extraOptions = {
-    versions: [],
-    colors: [],
-    sizes: [],
-    heights: [],
-    levels: [],
-  };
+  const extraOptions = { versions: [], colors: [], formats: [], sizes: [], heights: [], levels: [] };
 
   if (selections.type && EXTRA_OPTIONS[selections.type]) {
-    extraOptions.sizes = EXTRA_OPTIONS[selections.type].sizes;
-    extraOptions.heights = EXTRA_OPTIONS[selections.type].heights;
-    extraOptions.levels = EXTRA_OPTIONS[selections.type].levels;
+    Object.assign(extraOptions, EXTRA_OPTIONS[selections.type]);
   }
 
   const availableOptions = mergeOptions(baseOptions, extraOptions);
 
-  // selections 안에 EXTRA 옵션 중 하나라도 포함되었는지 확인
   const isExtraOptionSelected = () => {
     if (!selections.type) return false;
     const extra = EXTRA_OPTIONS[selections.type];
@@ -151,14 +142,12 @@ export const ProductProvider = ({ children }) => {
     );
   };
 
-  // 전체 옵션 자유 개방 상태 (disabled 안할 상태)
   const isOptionFullyOpen = isExtraOptionSelected();
 
-  // 선택 조합이 JSON에 있는지 판단
   const isOptionInJson = () => {
     if (!productsData) return false;
     try {
-      const { type, version, color, size, height, level } = selections;
+      const { type, version, color, format, size, height, level } = selections;
       const product = productsData[type];
       if (!product) return false;
 
@@ -167,7 +156,6 @@ export const ProductProvider = ({ children }) => {
           version &&
           product.버전 &&
           product.버전[version] &&
-          product.기본가격 &&
           product.기본가격[size] &&
           product.기본가격[size][height] &&
           product.기본가격[size][height][level] !== undefined
@@ -176,59 +164,46 @@ export const ProductProvider = ({ children }) => {
       if (type === "하이랙") {
         return (
           color &&
-          product.기본가격 &&
-          product.기본가격[color] &&
-          product.기본가격[color][size] &&
-          product.기본가격[color][size][height] &&
-          product.기본가격[color][size][height][level] !== undefined
+          product.기본가격[color]?.[size]?.[height]?.[level] !== undefined
+        );
+      }
+      if (type === "파렛트랙") {
+        return (
+          format &&
+          product.기본가격[format]?.[size]?.[height] !== undefined
         );
       }
     } catch {
       return false;
     }
-    return false;
   };
 
   useEffect(() => {
     if (!productsData) return;
-    const {
-      type,
-      version,
-      color,
-      size,
-      height,
-      level,
-      quantity,
-      applyRate,
-      customPrice,
-    } = selections;
+    const { type, version, color, format, size, height, level, quantity, applyRate, customPrice } = selections;
     const product = productsData[type];
     let unitPrice = 0;
 
-    if (customPrice !== null && customPrice !== undefined) {
+    if (customPrice !== null) {
       unitPrice = Number(customPrice);
     } else {
       try {
-        if (type === "스텐랙" && version && size && height && level) {
-          const basePrice = product.기본가격[size][height][level];
-          const versionPrice = product.버전[version]?.기본가 || 0;
-          unitPrice = basePrice + versionPrice;
-        } else if (
-          type === "하이랙" &&
-          color &&
-          size &&
-          height &&
-          level
-        ) {
-          unitPrice = product.기본가격[color][size][height][level];
+        if (type === "스텐랙") {
+          const base = product.기본가격[size]?.[height]?.[level] || 0;
+          const ver = product.버전?.[version]?.기본가 || 0;
+          unitPrice = base + ver;
+        } else if (type === "하이랙") {
+          unitPrice = product.기본가격[color]?.[size]?.[height]?.[level] || 0;
+        } else if (type === "파렛트랙") {
+          unitPrice = product.기본가격[format]?.[size]?.[height] || 0;
         }
       } catch {
         unitPrice = 0;
       }
     }
 
-    const adjustedUnitPrice = applyRateToPrice(unitPrice, applyRate || 100);
-    setCurrentPrice(adjustedUnitPrice * (quantity || 1));
+    const adjusted = applyRateToPrice(unitPrice, applyRate || 100);
+    setCurrentPrice(adjusted * (quantity || 1));
     setCurrentBom(bomCalculator.calculateBOM(type, selections, quantity || 1));
   }, [productsData, selections]);
 
@@ -238,61 +213,43 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
-    const {
-      type,
-      version,
-      color,
-      size,
-      height,
-      level,
-      quantity,
-      applyRate,
-      customPrice,
-    } = selections;
+    const { type, version, color, format, size, height, level, quantity, applyRate, customPrice } = selections;
     const product = productsData[type];
+    let unit = 0;
 
-    let originalUnitPrice = 0;
-
-    if (customPrice !== null && customPrice !== undefined) {
-      originalUnitPrice = Number(customPrice);
+    if (customPrice !== null) {
+      unit = Number(customPrice);
     } else {
       try {
-        if (type === "스텐랙" && version && size && height && level) {
-          const basePrice = product.기본가격[size][height][level];
-          const versionPrice = product.버전[version]?.기본가 || 0;
-          originalUnitPrice = basePrice + versionPrice;
-        } else if (
-          type === "하이랙" &&
-          color &&
-          size &&
-          height &&
-          level
-        ) {
-          originalUnitPrice = product.기본가격[color][size][height][level];
+        if (type === "스텐랙") {
+          const base = product.기본가격[size]?.[height]?.[level] || 0;
+          const ver = product.버전?.[version]?.기본가 || 0;
+          unit = base + ver;
+        } else if (type === "하이랙") {
+          unit = product.기본가격[color]?.[size]?.[height]?.[level] || 0;
+        } else if (type === "파렛트랙") {
+          unit = product.기본가격[format]?.[size]?.[height] || 0;
         }
       } catch {
-        originalUnitPrice = 0;
+        unit = 0;
       }
     }
 
-    const displayName = (() => {
-      if (type === "스텐랙") {
-        return `스텐랙 - ${size}x${height} / ${level} / ${version}`;
-      }
-      if (type === "하이랙") {
-        return `하이랙 (${color}) - ${size} / ${height} / ${level}단`;
-      }
+    const name = (() => {
+      if (type === "스텐랙") return `스텐랙 - ${size}x${height} / ${level} / ${version}`;
+      if (type === "하이랙") return `하이랙 (${color}) - ${size} / ${height} / ${level}단`;
+      if (type === "파렛트랙") return `파렛트랙 (${format}) - ${size} / ${height}`;
       return type;
     })();
 
     const newItem = {
       id: Date.now(),
       selections,
-      displayName,
+      displayName: name,
       price: currentPrice,
-      originalPrice: originalUnitPrice * (quantity || 1),
-      unitPrice: applyRateToPrice(originalUnitPrice, applyRate || 100),
-      originalUnitPrice,
+      originalPrice: unit * (quantity || 1),
+      unitPrice: applyRateToPrice(unit, applyRate || 100),
+      originalUnitPrice: unit,
       applyRate: applyRate || 100,
       bom: currentBom,
     };
@@ -304,15 +261,12 @@ export const ProductProvider = ({ children }) => {
   const clearCart = () => setCart([]);
   const cartTotal = cart.reduce((acc, item) => acc + item.price, 0);
 
-  // 직접 가격 입력란 활성화 조건
   const isCustomPriceMode =
     !isOptionInJson() &&
-    selections.type !== "" &&
-    ((selections.type === "스텐랙" && selections.version === "기본형 V1") ||
-      selections.type === "하이랙") &&
-    selections.size !== "" &&
-    selections.height !== "" &&
-    selections.level !== "";
+    selections.type &&
+    (selections.type === "스텐랙" || selections.type === "하이랙" || selections.type === "파렛트랙") &&
+    selections.size &&
+    selections.height;
 
   return (
     <ProductContext.Provider
@@ -330,7 +284,7 @@ export const ProductProvider = ({ children }) => {
         clearCart,
         cartTotal,
         isCustomPriceMode,
-        isOptionFullyOpen, // 추가 옵션 선택 시 완전 개방 여부
+        isOptionFullyOpen,
         isExtraOptionSelected: isExtraOptionSelected(),
       }}
     >
