@@ -12,15 +12,13 @@ const OptionSelector = () => {
     isOptionFullyOpen,
   } = useProducts();
 
-  // 스텐랙 version ‘기본형 V1’ 무조건 고정 + UI 노출 없음
   useEffect(() => {
     if (
       selections.type === "스텐랙" &&
       selections.version !== "기본형 V1"
     ) {
       setSelections((prev) => ({ ...prev, version: "기본형 V1" }));
-    }
-    else if (selections.type !== "스텐랙" && selections.version !== "") {
+    } else if (selections.type !== "스텐랙" && selections.version !== "") {
       setSelections((prev) => ({ ...prev, version: "" }));
     }
   }, [selections.type, selections.version, setSelections]);
@@ -32,12 +30,15 @@ const OptionSelector = () => {
 
       if (name === "type") {
         newSelections = {
-          ...newSelections,
+          type: value,
+          version: value === "스텐랙" ? "기본형 V1" : "",
           format: "",
           color: "",
           size: "",
           height: "",
           level: "",
+          quantity: 1,
+          applyRate: 100,
           customPrice: null,
         };
       }
@@ -61,6 +62,7 @@ const OptionSelector = () => {
       if (name === "customPrice") {
         newSelections.customPrice = value === "" ? null : Number(value);
       }
+
       return newSelections;
     });
   };
@@ -79,15 +81,15 @@ const OptionSelector = () => {
           onChange={handleChange}
         >
           <option value="">선택하세요</option>
-          <option value="스텐랙">스텐랙</option>
-          <option value="하이랙">하이랙</option>
           <option value="경량랙">경량랙</option>
           <option value="중량랙">중량랙</option>
+          <option value="스텐랙">스텐랙</option>
+          <option value="하이랙">하이랙</option>
           <option value="파렛트랙">파렛트랙</option>
         </select>
       </div>
 
-      {/* 형식: 경량/중량/파렛트랙에만 표시 */}
+      {/* 형식: 경량, 중량, 파렛트랙 */}
       {["경량랙", "중량랙", "파렛트랙"].includes(selections.type) && (
         <div className="form-group">
           <label htmlFor="format">형식:</label>
@@ -107,7 +109,7 @@ const OptionSelector = () => {
         </div>
       )}
 
-      {/* 하이랙 색상만 노출 */}
+      {/* 색상: 하이랙만 */}
       {selections.type === "하이랙" && (
         <div className="form-group">
           <label htmlFor="color">색상/타입:</label>
@@ -127,7 +129,7 @@ const OptionSelector = () => {
         </div>
       )}
 
-      {/* 규격 */}
+      {/* 규격 (공통) */}
       <div className="form-group">
         <label htmlFor="size">규격:</label>
         <select
@@ -146,7 +148,7 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 높이 */}
+      {/* 높이 (공통) */}
       <div className="form-group">
         <label htmlFor="height">높이:</label>
         <select
@@ -165,24 +167,26 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 단수 */}
-      <div className="form-group">
-        <label htmlFor="level">단수:</label>
-        <select
-          id="level"
-          name="level"
-          value={selections.level}
-          onChange={handleChange}
-          disabled={!selections.height && !isOptionFullyOpen}
-        >
-          <option value="">선택하세요</option>
-          {availableOptions.levels.map((level) => (
-            <option key={level} value={level}>
-              {level}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* 단수: 스텐랙/하이랙/경량랙/중량랙만 (파렛트랙 제외 가능) */}
+      {["스텐랙", "하이랙", "경량랙", "중량랙"].includes(selections.type) && (
+        <div className="form-group">
+          <label htmlFor="level">단수:</label>
+          <select
+            id="level"
+            name="level"
+            value={selections.level}
+            onChange={handleChange}
+            disabled={!selections.height && !isOptionFullyOpen}
+          >
+            <option value="">선택하세요</option>
+            {availableOptions.levels.map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* 수량 */}
       <div className="form-group">
@@ -213,7 +217,7 @@ const OptionSelector = () => {
         />
       </div>
 
-      {/* 직접가격 입력란 */}
+      {/* 직접 가격 입력 */}
       {isCustomPriceMode && (
         <div className="form-group">
           <label htmlFor="customPrice">직접 입력 가격 (원):</label>
