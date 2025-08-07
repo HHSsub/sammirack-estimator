@@ -90,8 +90,8 @@ const OptionSelector = () => {
         </>
       )}
 
-      {/* 경량/중량/조립식앵글 */}
-      {['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && (
+      {/* 경량/중량/파렛트랙 */}
+      {['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && (
         <>
           {renderOptionSelect('size', '사이즈', availableOptions.sizes)}
           {renderOptionSelect('height', '높이', filteredOptions.heights)}
@@ -125,7 +125,7 @@ const OptionSelector = () => {
       </div>
 
       {/* 가격 수동 입력 (Excel 기반 제품이거나 invalid 조합일 때) */}
-      {((['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && 
+      {((['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && 
          selectedOptions.size && selectedOptions.height && selectedOptions.level) ||
         (!isValidCombination && selectedType && Object.values(selectedOptions).some(val => val))) && (
         <div className="option-group">
