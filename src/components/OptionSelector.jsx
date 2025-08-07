@@ -26,25 +26,21 @@ const OptionSelector = () => {
 
   if (loading) return <p>데이터 불러오는 중...</p>;
 
-  // 드롭다운 렌더링 공통 함수
   const renderOptionSelect = (optionName, label, options) => {
-    // Only render if we have options
-    if (!options || options.length === 0) return null;
+    if (!options) return null;
 
-    // Check if this option should be enabled
     let isDisabled = !selectedType;
-    
-    // Special handling based on product type and option hierarchy
+
     if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
-      if (optionName === 'height' && !selectedOptions.size) isDisabled = true;
-      if (optionName === 'level' && !selectedOptions.height) isDisabled = true;
+      if (optionName === 'height') isDisabled = !selectedOptions.size;
+      if (optionName === 'level') isDisabled = !selectedOptions.height;
     } else if (selectedType === '하이랙') {
-      if (['size', 'height', 'level'].includes(optionName) && !selectedOptions.color) isDisabled = true;
-      if (optionName === 'height' && !selectedOptions.size) isDisabled = true;
-      if (optionName === 'level' && !selectedOptions.height) isDisabled = true;
+      if (optionName === 'size') isDisabled = !selectedOptions.color;
+      if (optionName === 'height') isDisabled = !selectedOptions.size;
+      if (optionName === 'level') isDisabled = !selectedOptions.height;
     } else if (selectedType === '스탠랙') {
-      if (optionName === 'height' && !selectedOptions.size) isDisabled = true;
-      if (optionName === 'level' && !selectedOptions.height) isDisabled = true;
+      if (optionName === 'height') isDisabled = !selectedOptions.size;
+      if (optionName === 'level') isDisabled = !selectedOptions.height;
     }
 
     return (
@@ -87,8 +83,8 @@ const OptionSelector = () => {
         </select>
       </div>
 
-      {/* 스텐랙 */}
-      {selectedType === '스텐랙' && (
+      {/* 스탠랙 */}
+      {selectedType === '스탠랙' && (
         <>
           {renderOptionSelect('version', '버전', availableOptions.versions)}
           {renderOptionSelect('size', '사이즈', filteredOptions.sizes)}
@@ -141,8 +137,8 @@ const OptionSelector = () => {
         />
       </div>
 
-      {/* 가격 수동 입력 (Excel 기반 제품이거나 invalid 조합일 때) */}
-      {((['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && 
+      {/* 수동 가격 입력 */}
+      {((['경량랙', '중량랙', '파렛트랙'].includes(selectedType) &&
          selectedOptions.size && selectedOptions.height && selectedOptions.level) ||
         (!isValidCombination && selectedType && Object.values(selectedOptions).some(val => val))) && (
         <div className="option-group">
