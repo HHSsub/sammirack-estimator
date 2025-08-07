@@ -148,6 +148,7 @@ export const ProductProvider = ({ children }) => {
           (p) => p.version === selectedOptions.version
         );
         ['colors', 'sizes', 'heights', 'levels'].forEach((k) => {
+          if (!filtered[k]) filtered[k] = [];  // ✅ 이 라인도 k 스코프 안에서 써야 함
           filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
         });
       }
