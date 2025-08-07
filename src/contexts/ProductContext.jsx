@@ -201,18 +201,45 @@ export const ProductProvider = ({ children }) => {
   }, [data, bomData, selectedType, selectedOptions, availableOptions]);
 
   const isValidCombination = useMemo(() => {
+    // If no data or no selected type, return false
     if (!data || !selectedType) return false;
+    
+    // For Excel-based products, use a different validation method
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+      if (!bomData) return false;
+      const { size, height, level } = selectedOptions;
+      
+      // Check if the options exist in bomData
+      const productData = bomData[selectedType];
+      if (!productData) return false;
+      
+      if (!size || !productData[size]) return false;
+      
+      const sizeData = productData[size];
+      if (!height || !sizeData[height]) return false;
+      
+      const heightData = sizeData[height];
+      const levelKey = level ? `L${level}` : null;
+      if (!levelKey || !heightData[levelKey]) return false;
+      
+      return true;
+    }
+    
+    // For data.json based products (스텐랙, 하이랙)
     const { version, color, size, height, level } = selectedOptions;
+    if (!data.products) return false;
+    
     return data.products.some(
       (p) =>
         p.type === selectedType &&
-        p.version === version &&
-        p.color === color &&
+        (selectedType === '스탠랙' || p.version === version) &&
+        (p.color === color || !color) &&
         p.size === size &&
         p.height === height &&
         p.level === level
     );
-  }, [data, selectedType, selectedOptions]);
+  }, [data, bomData, selectedType, selectedOptions]);
+
 
   const price = useMemo(() => {
     if (isCustomPrice) return Number(customPrice) * quantity * (applyRate / 100);
@@ -276,21 +303,25 @@ export const ProductProvider = ({ children }) => {
   };
 
   const bom = useMemo(() => {
-    if (!selectedType || (!isValidCombination && !isCustomPrice)) return [];
+    if (!selectedType) return [];
     
-    // For 하이랙 and 스탠랙, use internal calculation
-    if (['하이랙', '스탠랙'].includes(selectedType)) {
-      const calculator = new BOMCalculator();
-      return calculator.calculateBOM(selectedType, selectedOptions, quantity);
+    // For Excel-based products (경량랙, 중량랙, 파렛트랙)
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+      // Check if we have the required data and options
+      if (bomData && selectedOptions.size && selectedOptions.height && selectedOptions.level) {
+        return getBOMFromExcelData(selectedType, selectedOptions, quantity);
+      }
+      return [];
     }
     
-    // For 경량랙, 중량랙, 파렛트랙, use Excel-based BOM data
-    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && bomData) {
-      return getBOMFromExcelData(selectedType, selectedOptions, quantity);
-    }
+    // For 스탠랙 and 하이랙
+    // Only calculate if we have a valid combination or custom price
+    if (!isValidCombination && !isCustomPrice) return [];
     
-    return [];
+    const calculator = new BOMCalculator();
+    return calculator.calculateBOM(selectedType, selectedOptions, quantity);
   }, [selectedType, selectedOptions, quantity, isValidCombination, isCustomPrice, bomData]);
+
 
   const getBOMFromExcelData = (type, options, quantity) => {
     if (!bomData || !options.size || !options.height || !options.level) return [];
