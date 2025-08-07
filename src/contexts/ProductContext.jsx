@@ -15,7 +15,7 @@ export const ProductProvider = ({ children }) => {
   const [isCustomPrice, setIsCustomPrice] = useState(false);
 
   useEffect(() => {
-    fetch('/sammirack-estimator/data.json')
+    fetch('/data.json')
       .then((res) => res.json())
       .then((json) => {
         setData(json);
