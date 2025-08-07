@@ -1,7 +1,5 @@
 import React from 'react';
-import { useProduct } from '../contexts/ProductContext';
-
-// 왜 안되냐
+import { useProducts } from '../contexts/ProductContext';
 
 const OptionSelector = () => {
   const {
@@ -21,9 +19,10 @@ const OptionSelector = () => {
     isCustomPrice,
     setIsCustomPrice,
     isValidCombination,
-    price,
+    currentPrice,
+    safePrice,
     loading
-  } = useProduct();
+  } = useProducts();
 
   if (loading) return <p>데이터 불러오는 중...</p>;
 
@@ -55,7 +54,21 @@ const OptionSelector = () => {
     <div className="option-selector">
 
       {/* 제품 유형 */}
-      {renderOptionSelect('type', '제품 유형', allOptions.types)}
+      <div className="option-group">
+        <label htmlFor="type">제품 유형</label>
+        <select
+          id="type"
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+        >
+          <option value="">선택</option>
+          {allOptions.types?.map(type => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* 스텐랙 */}
       {selectedType === '스텐랙' && (
@@ -77,8 +90,8 @@ const OptionSelector = () => {
         </>
       )}
 
-      {/* 경량/중량/파렛트랙 */}
-      {['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && (
+      {/* 경량/중량/조립식앵글 */}
+      {['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && (
         <>
           {renderOptionSelect('size', '사이즈', availableOptions.sizes)}
           {renderOptionSelect('height', '높이', filteredOptions.heights)}
@@ -111,20 +124,21 @@ const OptionSelector = () => {
         />
       </div>
 
-      {/* 가격 수동 입력 (EXTRA or invalid 조합일 때) */}
-      {(!isValidCombination &&
-        selectedType &&
-        Object.values(selectedOptions).some(val => val)) && (
+      {/* 가격 수동 입력 (Excel 기반 제품이거나 invalid 조합일 때) */}
+      {((['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && 
+         selectedOptions.size && selectedOptions.height && selectedOptions.level) ||
+        (!isValidCombination && selectedType && Object.values(selectedOptions).some(val => val))) && (
         <div className="option-group">
-          <label htmlFor="customPrice">가격 직접입력</label>
+          <label htmlFor="customPrice">가격 직접입력 (선택사항)</label>
           <input
             type="number"
             id="customPrice"
             min="0"
             value={customPrice}
+            placeholder="자동 계산됩니다"
             onChange={(e) => {
               setCustomPrice(parseInt(e.target.value) || 0);
-              setIsCustomPrice(true);
+              setIsCustomPrice(!!e.target.value);
             }}
           />
         </div>
@@ -132,7 +146,10 @@ const OptionSelector = () => {
 
       {/* 가격 표시 */}
       <div className="price-display">
-        <h3>계산된 가격: {typeof price === 'number' ? price.toLocaleString() : '0'}원</h3>
+        <h3>계산된 가격: {safePrice(currentPrice)}원</h3>
+        {isCustomPrice && (
+          <p className="text-sm text-gray-600">* 수동 입력된 가격</p>
+        )}
       </div>
     </div>
   );
