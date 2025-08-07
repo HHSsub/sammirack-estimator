@@ -15,7 +15,7 @@ export const ProductProvider = ({ children }) => {
   const [isCustomPrice, setIsCustomPrice] = useState(false);
 
   useEffect(() => {
-    fetch('/data.json')
+    fetch('/sammirack-estimator/data.json')
       .then((res) => res.json())
       .then((json) => {
         setData(json);
@@ -121,8 +121,8 @@ export const ProductProvider = ({ children }) => {
   }, [data, selectedType, selectedOptions]);
 
   const price = useMemo(() => {
-    if (isCustomPrice) return customPrice * quantity * (applyRate / 100);
-    if (!data || !isValidCombination) return 0;
+    if (isCustomPrice) return Number(customPrice) * quantity * (applyRate / 100);
+    if (!data?.products || !isValidCombination) return 0;
 
     const product = data.products.find(p =>
       p.type === selectedType &&
