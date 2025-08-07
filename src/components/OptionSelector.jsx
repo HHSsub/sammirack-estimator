@@ -1,5 +1,5 @@
 import React from 'react';
-import { useProduct } from './ProductContext';
+import { useProduct } from '../contexts/ProductContext';
 
 const OptionSelector = () => {
   const {
