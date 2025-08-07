@@ -1,7 +1,17 @@
 const nameMap = {
-  'upright_frame_st': '스텐랙 기둥',
-  'shelf_st': '스텐랙 선반',
+  // 스탠랙 부품
+  'upright_frame_st': '스탠랙 기둥',
+  'shelf_st': '스탠랙 선반',
+  'bracket_st': '스탠랙 브라켓',
   'bolt_set_st': '고정볼트 세트',
+  
+  // 하이랙 부품
+  'upright_frame_hr': '하이랙 기둥',
+  'beam_hr': '하이랙 빔',
+  'deck_panel_hr': '하이랙 데크판넬',
+  'bracing_hr': '하이랙 브레이싱',
+  
+  // 기존 하이랙 부품 (호환성)
   'upright_frame_hr_200': '하이랙 기둥 (200kg)',
   'shelf_hr_200': '하이랙 선반 (200kg)',
   'cross_beam_hr': '하이랙 가로대',
@@ -13,12 +23,18 @@ const nameMap = {
 };
 
 export const getKoreanName = (item) => {
-  const baseName = nameMap[item.code] || item.code;
-  const { height, size } = item.options || {};
+  // If item has no code (Excel-based BOM), return the name directly
+  if (!item.code && item.name) {
+    return item.name;
+  }
+  
+  const baseName = nameMap[item.code] || item.code || item.name || '알 수 없는 부품';
+  const { height, size, color } = item.options || {};
 
   let finalName = baseName;
   if (height) finalName += ` ${height}`;
   if (size) finalName += ` ${size}`;
+  if (color) finalName += ` ${color}`;
 
   return finalName;
 };
