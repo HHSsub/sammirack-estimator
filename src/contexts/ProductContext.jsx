@@ -14,7 +14,6 @@ export const ProductProvider = ({ children }) => {
   const [customPrice, setCustomPrice] = useState(0);
   const [isCustomPrice, setIsCustomPrice] = useState(false);
 
-  // public/data.json 비동기 fetch
   useEffect(() => {
     fetch('/sammirack-estimator/data.json')
       .then((res) => res.json())
@@ -28,7 +27,6 @@ export const ProductProvider = ({ children }) => {
       });
   }, []);
 
-  // 모든 가능한 옵션 추출
   const allOptions = useMemo(() => {
     const options = { types: [] };
     if (!data?.products) return options;
@@ -42,7 +40,6 @@ export const ProductProvider = ({ children }) => {
     return options;
   }, [data]);
 
-  // 선택된 타입에 따른 가능한 옵션 조합
   const availableOptions = useMemo(() => {
     if (!data || !selectedType) return {};
 
@@ -55,33 +52,19 @@ export const ProductProvider = ({ children }) => {
     };
 
     const productsOfType = data.products.filter(p => p.type === selectedType);
-
     productsOfType.forEach(product => {
-      if (product.version && !options.versions.includes(product.version)) {
-        options.versions.push(product.version);
-      }
-      if (product.color && !options.colors.includes(product.color)) {
-        options.colors.push(product.color);
-      }
-      if (product.size && !options.sizes.includes(product.size)) {
-        options.sizes.push(product.size);
-      }
-      if (product.height && !options.heights.includes(product.height)) {
-        options.heights.push(product.height);
-      }
-      if (product.level && !options.levels.includes(product.level)) {
-        options.levels.push(product.level);
-      }
+      if (product.version) options.versions.push(product.version);
+      if (product.color) options.colors.push(product.color);
+      if (product.size) options.sizes.push(product.size);
+      if (product.height) options.heights.push(product.height);
+      if (product.level) options.levels.push(product.level);
     });
 
-    // EXTRA_OPTIONS 병합 (스텐랙/하이랙)
     if (['스텐랙', '하이랙'].includes(selectedType)) {
-      const extraOptions = data.EXTRA_OPTIONS?.[selectedType] || {};
-      Object.keys(extraOptions).forEach(key => {
-        extraOptions[key].forEach(option => {
-          if (!options[key].includes(option)) {
-            options[key].push(option);
-          }
+      const extra = data.EXTRA_OPTIONS?.[selectedType] || {};
+      Object.keys(extra).forEach(key => {
+        extra[key].forEach(opt => {
+          if (!options[key].includes(opt)) options[key].push(opt);
         });
       });
     }
@@ -93,32 +76,32 @@ export const ProductProvider = ({ children }) => {
     if (!data || !selectedType) return {};
 
     const filtered = JSON.parse(JSON.stringify(availableOptions));
-    const currentProducts = data.products.filter(p => p.type === selectedType);
+    const products = data.products.filter(p => p.type === selectedType);
 
     if (selectedOptions.version) {
-      const versionProducts = currentProducts.filter(p => p.version === selectedOptions.version);
-      ['colors', 'sizes', 'heights', 'levels'].forEach(key => {
-        filtered[key] = Array.from(new Set(versionProducts.map(p => p[key]).filter(Boolean)));
+      const targets = products.filter(p => p.version === selectedOptions.version);
+      ['colors', 'sizes', 'heights', 'levels'].forEach(k => {
+        filtered[k] = [...new Set(targets.map(p => p[k]).filter(Boolean))];
       });
     }
 
     if (selectedOptions.color) {
-      const colorProducts = currentProducts.filter(p => p.color === selectedOptions.color);
-      ['sizes', 'heights', 'levels'].forEach(key => {
-        filtered[key] = Array.from(new Set(colorProducts.map(p => p[key]).filter(Boolean)));
+      const targets = products.filter(p => p.color === selectedOptions.color);
+      ['sizes', 'heights', 'levels'].forEach(k => {
+        filtered[k] = [...new Set(targets.map(p => p[k]).filter(Boolean))];
       });
     }
 
     if (selectedOptions.size) {
-      const sizeProducts = currentProducts.filter(p => p.size === selectedOptions.size);
-      ['heights', 'levels'].forEach(key => {
-        filtered[key] = Array.from(new Set(sizeProducts.map(p => p[key]).filter(Boolean)));
+      const targets = products.filter(p => p.size === selectedOptions.size);
+      ['heights', 'levels'].forEach(k => {
+        filtered[k] = [...new Set(targets.map(p => p[k]).filter(Boolean))];
       });
     }
 
     if (selectedOptions.height) {
-      const heightProducts = currentProducts.filter(p => p.height === selectedOptions.height);
-      filtered.levels = Array.from(new Set(heightProducts.map(p => p.level).filter(Boolean)));
+      const targets = products.filter(p => p.height === selectedOptions.height);
+      filtered.levels = [...new Set(targets.map(p => p.level).filter(Boolean))];
     }
 
     return filtered;
@@ -126,65 +109,55 @@ export const ProductProvider = ({ children }) => {
 
   const isValidCombination = useMemo(() => {
     if (!data || !selectedType) return false;
-
     const { version, color, size, height, level } = selectedOptions;
-    const products = data.products.filter(p => p.type === selectedType);
-
-    return products.some(product => (
-      product.version === version &&
-      product.color === color &&
-      product.size === size &&
-      product.height === height &&
-      product.level === level
-    ));
+    return data.products.some(p =>
+      p.type === selectedType &&
+      p.version === version &&
+      p.color === color &&
+      p.size === size &&
+      p.height === height &&
+      p.level === level
+    );
   }, [data, selectedType, selectedOptions]);
 
   const price = useMemo(() => {
     if (isCustomPrice) return customPrice * quantity * (applyRate / 100);
     if (!data || !isValidCombination) return 0;
 
-    const product = data.products.find(p => (
+    const product = data.products.find(p =>
       p.type === selectedType &&
       p.version === selectedOptions.version &&
       p.color === selectedOptions.color &&
       p.size === selectedOptions.size &&
       p.height === selectedOptions.height &&
       p.level === selectedOptions.level
-    ));
+    );
 
     return product ? product.price * quantity * (applyRate / 100) : 0;
   }, [data, selectedType, selectedOptions, quantity, applyRate, customPrice, isCustomPrice, isValidCombination]);
 
   const bom = useMemo(() => {
     if (!selectedType || !isValidCombination) return null;
-
-    return BOMCalculator.calculateBOM({
-      type: selectedType,
-      ...selectedOptions
-    });
+    return BOMCalculator.calculateBOM({ type: selectedType, ...selectedOptions });
   }, [selectedType, selectedOptions, isValidCombination]);
 
-  const handleOptionChange = (optionName, value) => {
+  const handleOptionChange = (key, value) => {
     setSelectedOptions(prev => {
-      const newOptions = { ...prev, [optionName]: value };
-      const optionHierarchy = ['type', 'version', 'color', 'size', 'height', 'level'];
-      const changedIndex = optionHierarchy.indexOf(optionName);
-
-      if (changedIndex >= 0) {
-        for (let i = changedIndex + 1; i < optionHierarchy.length; i++) {
-          newOptions[optionHierarchy[i]] = '';
+      const next = { ...prev, [key]: value };
+      const hierarchy = ['type', 'version', 'color', 'size', 'height', 'level'];
+      const index = hierarchy.indexOf(key);
+      if (index >= 0) {
+        for (let i = index + 1; i < hierarchy.length; i++) {
+          next[hierarchy[i]] = '';
         }
       }
-      return newOptions;
+      return next;
     });
-
-    if (optionName !== 'customPrice') {
-      setIsCustomPrice(false);
-    }
+    if (key !== 'customPrice') setIsCustomPrice(false);
   };
 
   const addToCart = () => {
-    const cartItem = {
+    const item = {
       type: selectedType,
       options: { ...selectedOptions },
       quantity,
@@ -194,9 +167,8 @@ export const ProductProvider = ({ children }) => {
       bom,
       timestamp: Date.now()
     };
-
-    console.log('Added to cart:', cartItem);
-    return cartItem;
+    console.log('Added to cart:', item);
+    return item;
   };
 
   const value = {
@@ -229,6 +201,7 @@ export const ProductProvider = ({ children }) => {
   );
 };
 
+// ✅ 올바른 훅 이름으로 export
 export const useProduct = () => {
   const context = useContext(ProductContext);
   if (!context) {
@@ -236,3 +209,6 @@ export const useProduct = () => {
   }
   return context;
 };
+
+// ✅ 이전 구조와 호환되도록 alias export 추가
+export const useProducts = useProduct;
