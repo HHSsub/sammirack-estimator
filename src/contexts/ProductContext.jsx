@@ -76,10 +76,12 @@ export const ProductProvider = ({ children }) => {
     if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && bomData) {
       const productKey = selectedType;
       const productData = bomData[productKey];
-  
-      if (productData) {
+    
+      if (!productData) {
+        console.error(`No product data found for ${selectedType} in bomData`);
+      } else {
         options.sizes = Object.keys(productData);
-  
+    
         const sizeKey = selectedOptions.size || options.sizes[0];
         const sizeData = productData[sizeKey];
         if (sizeData) {
@@ -89,7 +91,7 @@ export const ProductProvider = ({ children }) => {
           if (heightData) {
             const levelKeys = Object.keys(heightData);
             options.levels = levelKeys.map(k => k.replace('L', ''));
-  
+    
             const levelKey = selectedOptions.level ? `L${selectedOptions.level}` : levelKeys[0];
             const levelData = heightData[levelKey];
             if (levelData) {
@@ -98,11 +100,6 @@ export const ProductProvider = ({ children }) => {
           }
         }
       }
-
-      } else {
-        console.error(`No product data found for ${selectedType} in bomData`);
-      }
-      // Don't return early - allow processing to continue for other data sources
     }
 
     // For data.json based products
