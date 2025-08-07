@@ -28,7 +28,24 @@ const OptionSelector = () => {
 
   // 드롭다운 렌더링 공통 함수
   const renderOptionSelect = (optionName, label, options) => {
+    // Only render if we have options
     if (!options || options.length === 0) return null;
+
+    // Check if this option should be enabled
+    let isDisabled = !selectedType;
+    
+    // Special handling based on product type and option hierarchy
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+      if (optionName === 'height' && !selectedOptions.size) isDisabled = true;
+      if (optionName === 'level' && !selectedOptions.height) isDisabled = true;
+    } else if (selectedType === '하이랙') {
+      if (['size', 'height', 'level'].includes(optionName) && !selectedOptions.color) isDisabled = true;
+      if (optionName === 'height' && !selectedOptions.size) isDisabled = true;
+      if (optionName === 'level' && !selectedOptions.height) isDisabled = true;
+    } else if (selectedType === '스탠랙') {
+      if (optionName === 'height' && !selectedOptions.size) isDisabled = true;
+      if (optionName === 'level' && !selectedOptions.height) isDisabled = true;
+    }
 
     return (
       <div className="option-group">
@@ -37,7 +54,7 @@ const OptionSelector = () => {
           id={optionName}
           value={selectedOptions[optionName] || ''}
           onChange={(e) => handleOptionChange(optionName, e.target.value)}
-          disabled={!selectedType}
+          disabled={isDisabled}
         >
           <option value="">선택</option>
           {options.map(option => (
