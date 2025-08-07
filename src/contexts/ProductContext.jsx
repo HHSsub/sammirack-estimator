@@ -77,24 +77,29 @@ export const ProductProvider = ({ children }) => {
       if (productData) {
         // Get sizes
         options.sizes = Object.keys(productData);
+        console.log(`Found sizes for ${selectedType}:`, options.sizes);
         
         // Get heights from first size
         if (options.sizes.length > 0) {
           const firstSizeData = productData[options.sizes[0]];
           if (firstSizeData) {
             options.heights = Object.keys(firstSizeData);
+            console.log(`Found heights for ${selectedType}:`, options.heights);
             
             // Get levels from first height
             if (options.heights.length > 0) {
               const firstHeightData = firstSizeData[options.heights[0]];
               if (firstHeightData) {
                 options.levels = Object.keys(firstHeightData).map(k => k.replace('L', ''));
+                console.log(`Found levels for ${selectedType}:`, options.levels);
               }
             }
           }
         }
+      } else {
+        console.error(`No product data found for ${selectedType} in bomData`);
       }
-      return options;
+      // Don't return early - allow processing to continue for other data sources
     }
 
     // For data.json based products
@@ -129,49 +134,71 @@ export const ProductProvider = ({ children }) => {
   }, [data, bomData, selectedType]);
 
   const filteredOptions = useMemo(() => {
-    if (!data || !selectedType) return {};
+    if (!selectedType) return {};
 
+    // Start with a copy of availableOptions
     const filtered = JSON.parse(JSON.stringify(availableOptions));
-    const products = data.products.filter((p) => p.type === selectedType);
+    
+    // Only do product-based filtering for data.json products
+    if (data?.products && !['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+      const products = data.products.filter((p) => p.type === selectedType);
 
-    if (selectedOptions.version) {
-      const targets = products.filter(
-        (p) => p.version === selectedOptions.version
-      );
-      ['colors', 'sizes', 'heights', 'levels'].forEach((k) => {
-        filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
-      });
-    }
+      if (selectedOptions.version) {
+        const targets = products.filter(
+          (p) => p.version === selectedOptions.version
+        );
+        ['colors', 'sizes', 'heights', 'levels'].forEach((k) => {
+          filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
+        });
+      }
 
-    if (selectedOptions.color) {
-      const targets = products.filter(
-        (p) => p.color === selectedOptions.color
-      );
-      ['sizes', 'heights', 'levels'].forEach((k) => {
-        filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
-      });
-    }
+      if (selectedOptions.color) {
+        const targets = products.filter(
+          (p) => p.color === selectedOptions.color
+        );
+        ['sizes', 'heights', 'levels'].forEach((k) => {
+          filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
+        });
+      }
 
-    if (selectedOptions.size) {
-      const targets = products.filter(
-        (p) => p.size === selectedOptions.size
-      );
-      ['heights', 'levels'].forEach((k) => {
-        filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
-      });
-    }
+      if (selectedOptions.size) {
+        const targets = products.filter(
+          (p) => p.size === selectedOptions.size
+        );
+        ['heights', 'levels'].forEach((k) => {
+          filtered[k] = [...new Set(targets.map((p) => p[k]).filter(Boolean))];
+        });
+      }
 
-    if (selectedOptions.height) {
-      const targets = products.filter(
-        (p) => p.height === selectedOptions.height
-      );
-      filtered.levels = [
-        ...new Set(targets.map((p) => p.level).filter(Boolean))
-      ];
+      if (selectedOptions.height) {
+        const targets = products.filter(
+          (p) => p.height === selectedOptions.height
+        );
+        filtered.levels = [
+          ...new Set(targets.map((p) => p.level).filter(Boolean))
+        ];
+      }
+    } 
+    // For Excel-based products, filter based on selectedOptions
+    else if (bomData && ['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+      const productData = bomData[selectedType];
+      
+      if (productData && selectedOptions.size) {
+        const sizeData = productData[selectedOptions.size];
+        if (sizeData) {
+          filtered.heights = Object.keys(sizeData);
+          
+          if (selectedOptions.height && sizeData[selectedOptions.height]) {
+            const heightData = sizeData[selectedOptions.height];
+            filtered.levels = Object.keys(heightData).map(k => k.replace('L', ''));
+          }
+        }
+      }
+      console.log('Filtered options for Excel product:', filtered);
     }
 
     return filtered;
-  }, [data, selectedType, selectedOptions, availableOptions]);
+  }, [data, bomData, selectedType, selectedOptions, availableOptions]);
 
   const isValidCombination = useMemo(() => {
     if (!data || !selectedType) return false;
@@ -303,7 +330,20 @@ export const ProductProvider = ({ children }) => {
   const handleOptionChange = (key, value) => {
     setSelectedOptions((prev) => {
       const next = { ...prev, [key]: value };
-      const hierarchy = ['type', 'version', 'color', 'size', 'height', 'level'];
+      
+      // If changing the product type, reset all selections
+      if (key === 'type') {
+        return { 
+          version: '',
+          color: '',
+          size: '',
+          height: '',
+          level: ''
+        };
+      }
+      
+      // For other options, follow hierarchy
+      const hierarchy = ['version', 'color', 'size', 'height', 'level'];
       const index = hierarchy.indexOf(key);
       if (index >= 0) {
         for (let i = index + 1; i < hierarchy.length; i++) {
@@ -312,7 +352,11 @@ export const ProductProvider = ({ children }) => {
       }
       return next;
     });
+    
+    // Reset custom price when changing options
     if (key !== 'customPrice') setIsCustomPrice(false);
+    
+    console.log(`Option changed: ${key} = ${value}`);
   };
 
   const addToCart = () => {
@@ -354,7 +398,17 @@ export const ProductProvider = ({ children }) => {
     filteredOptions,
     selectedType,
     selectedOptions,
-    setSelectedType: (type) => handleOptionChange('type', type),
+    setSelectedType: (type) => {
+      setSelectedOptions({
+        version: '',
+        color: '',
+        size: '',
+        height: '',
+        level: ''
+      });
+      setSelectedType(type);
+      console.log(`Product type changed to: ${type}`);
+    },
     handleOptionChange,
     quantity,
     setQuantity,
