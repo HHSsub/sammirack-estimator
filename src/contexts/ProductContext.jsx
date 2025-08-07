@@ -92,8 +92,8 @@ export const ProductProvider = ({ children }) => {
               const heightKey = selectedOptions.height || options.heights[0];
               const firstHeightData = firstSizeData[heightKey];
               if (firstHeightData) {
-                options.levels = Object.keys(firstHeightData).map(k => k.replace('L', ''));
-                console.log(`Found levels for ${selectedType}:`, options.levels);
+                const levelKeys = Object.keys(firstHeightData);
+                options.levels = levelKeys.map((levelKey) => levelKey.replace('L', ''));
               }
             }
           }
@@ -192,7 +192,8 @@ export const ProductProvider = ({ children }) => {
         const heightKey = selectedOptions.height || filtered.heights[0];
         const heightData = sizeData[heightKey];
         if (heightData) {
-          filtered.levels = Object.keys(heightData).map(k => k.replace('L', ''));
+          const levelKeys = Object.keys(heightData);
+          filtered.levels = levelKeys.map((levelKey) => levelKey.replace('L', ''));
         }
       }
       console.log('Filtered options for Excel product:', filtered);
