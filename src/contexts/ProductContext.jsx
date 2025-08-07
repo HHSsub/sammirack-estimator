@@ -29,8 +29,8 @@ export const ProductProvider = ({ children }) => {
 
   useEffect(() => {
     Promise.all([
-      fetch('/sammirack-estimator/data.json').then(res => res.json()),
-      fetch('/sammirack-estimator/bom_data.json').then(res => res.json())
+      fetch('./data.json').then(res => res.json()),
+      fetch('./bom_data.json').then(res => res.json())
     ])
     .then(([dataJson, bomJson]) => {
       setData(dataJson);
