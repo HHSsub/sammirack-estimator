@@ -4,7 +4,10 @@ import { useProducts } from '../contexts/ProductContext';
 function CartDisplay() {
   const { cart, removeFromCart, cartTotal } = useProducts();
 
-  if (cart.length === 0) return null;
+  const safePrice = (value) =>
+    typeof value === 'number' && !isNaN(value) ? value.toLocaleString() : '0';
+
+  if (!Array.isArray(cart) || cart.length === 0) return null;
 
   return (
     <div className="cart-section mt-6">
@@ -18,14 +21,21 @@ function CartDisplay() {
           </tr>
         </thead>
         <tbody>
-          {cart.map(item => (
+          {cart.map((item) => (
             <tr key={item.id}>
               <td className="border-b p-2">
-                  {item.displayName} x {item.selections.quantity}개
+                {item.displayName} x {item.selections?.quantity ?? 1}개
               </td>
-              <td className="border-b p-2 text-right">{item.price.toLocaleString()}원</td>
+              <td className="border-b p-2 text-right">
+                {safePrice(item.price)}원
+              </td>
               <td className="border-b p-2 text-center">
-                <button onClick={() => removeFromCart(item.id)} className="text-red-500">삭제</button>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-red-500"
+                >
+                  삭제
+                </button>
               </td>
             </tr>
           ))}
@@ -33,7 +43,9 @@ function CartDisplay() {
         <tfoot>
           <tr>
             <td className="p-2 font-bold">총 합계</td>
-            <td className="p-2 text-right font-bold">{cartTotal.toLocaleString()}원</td>
+            <td className="p-2 text-right font-bold">
+              {safePrice(cartTotal)}원
+            </td>
             <td></td>
           </tr>
         </tfoot>
