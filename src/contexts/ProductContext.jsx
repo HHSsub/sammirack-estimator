@@ -27,6 +27,35 @@ export const ProductProvider = ({ children }) => {
       });
   }, []);
 
+    const [cart, setCart] = useState([]);
+
+  const addToCart = () => {
+    const item = {
+      id: Date.now(),
+      displayName: `${selectedType} (${selectedOptions.version || ''} ${selectedOptions.color || ''} ${selectedOptions.size || ''} ${selectedOptions.height || ''} ${selectedOptions.level || ''})`,
+      type: selectedType,
+      options: { ...selectedOptions },
+      selections: {
+        quantity,
+        applyRate
+      },
+      price,
+      isCustomPrice,
+      bom,
+      timestamp: Date.now()
+    };
+    setCart(prev => [...prev, item]);
+    return item;
+  };
+
+  const removeFromCart = (id) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const cartTotal = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price, 0);
+  }, [cart]);
+
   const allOptions = useMemo(() => {
     const options = { types: [] };
     if (!data?.products) return options;
@@ -191,6 +220,10 @@ export const ProductProvider = ({ children }) => {
     price,
     bom,
     addToCart,
+    cart,
+    setCart,
+    removeFromCart,
+    cartTotal,
     loading
   };
 
