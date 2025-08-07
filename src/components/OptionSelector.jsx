@@ -24,59 +24,58 @@ const OptionSelector = () => {
     loading
   } = useProducts();
 
-  // ✅ 스탠랙 선택 시 자동으로 version = 'V1' 지정
+  // ✅ 스탠랙 선택 시 version 자동 지정
   useEffect(() => {
-    if (selectedType === '스탠랙' && selectedOptions.version !== 'V1') {
+    if (
+      selectedType === '스탠랙' &&
+      (!selectedOptions?.version || selectedOptions.version !== 'V1')
+    ) {
       handleOptionChange('version', 'V1');
     }
-  }, [selectedType]);
+  }, [selectedType, selectedOptions, handleOptionChange]);
 
   if (loading) return <p>데이터 불러오는 중...</p>;
-  
-const renderOptionSelect = (optionName, label, options) => {
-  if (!options || !Array.isArray(options) || options.length === 0) return null;
 
-  // ✅ 스탠랙일 때 version 드롭다운 숨김
-  if (selectedType === '스탠랙' && optionName === 'version') return null;
+  const renderOptionSelect = (optionName, label, options) => {
+    if (!options || !Array.isArray(options) || options.length === 0) return null;
 
-  let isDisabled = !selectedType;
+    // ✅ 스탠랙은 version 고정이므로 드롭다운 숨김
+    if (selectedType === '스탠랙' && optionName === 'version') return null;
 
-  // Determine if this dropdown should be disabled based on option hierarchy
-  if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
-    // For Excel-based products
-    if (optionName === 'height') isDisabled = !selectedOptions.size;
-    if (optionName === 'level') isDisabled = !selectedOptions.height;
-  } else if (selectedType === '하이랙') {
-    // For 하이랙
-    if (optionName === 'size') isDisabled = !selectedOptions.color;
-    if (optionName === 'height') isDisabled = !selectedOptions.size;
-    if (optionName === 'level') isDisabled = !selectedOptions.height;
-  } else if (selectedType === '스탠랙') {
-    // For 스탠랙
-    if (optionName === 'height') isDisabled = !selectedOptions.size;
-    if (optionName === 'level') isDisabled = !selectedOptions.height;
-  }
+    let isDisabled = !selectedType;
 
-  return (
-    <div className="option-group">
-      <label htmlFor={optionName}>{label}</label>
-      <select
-        id={optionName}
-        value={selectedOptions[optionName] || ''}
-        onChange={(e) => handleOptionChange(optionName, e.target.value)}
-        disabled={isDisabled}
-      >
-        <option value="">선택</option>
-        {options.map(option => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-};
+    // 옵션 활성화 조건
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+      if (optionName === 'height') isDisabled = !selectedOptions.size;
+      if (optionName === 'level') isDisabled = !selectedOptions.height;
+    } else if (selectedType === '하이랙') {
+      if (optionName === 'size') isDisabled = !selectedOptions.color;
+      if (optionName === 'height') isDisabled = !selectedOptions.size;
+      if (optionName === 'level') isDisabled = !selectedOptions.height;
+    } else if (selectedType === '스탠랙') {
+      if (optionName === 'height') isDisabled = !selectedOptions.size;
+      if (optionName === 'level') isDisabled = !selectedOptions.height;
+    }
 
+    return (
+      <div className="option-group">
+        <label htmlFor={optionName}>{label}</label>
+        <select
+          id={optionName}
+          value={selectedOptions[optionName] || ''}
+          onChange={(e) => handleOptionChange(optionName, e.target.value)}
+          disabled={isDisabled}
+        >
+          <option value="">선택</option>
+          {options.map(option => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
 
   return (
     <div className="option-selector">
@@ -100,29 +99,28 @@ const renderOptionSelect = (optionName, label, options) => {
       {/* 스탠랙 */}
       {selectedType === '스탠랙' && (
         <>
-          {/* version 드롭다운은 자동 설정되고 숨김 */}
-          {renderOptionSelect('size', '사이즈', filteredOptions.sizes)}
-          {renderOptionSelect('height', '높이', filteredOptions.heights)}
-          {renderOptionSelect('level', '단수', filteredOptions.levels)}
+          {renderOptionSelect('size', '사이즈', filteredOptions?.sizes)}
+          {renderOptionSelect('height', '높이', filteredOptions?.heights)}
+          {renderOptionSelect('level', '단수', filteredOptions?.levels)}
         </>
       )}
 
       {/* 하이랙 */}
       {selectedType === '하이랙' && (
         <>
-          {renderOptionSelect('color', '색상', availableOptions.colors)}
-          {renderOptionSelect('size', '사이즈', filteredOptions.sizes)}
-          {renderOptionSelect('height', '높이', filteredOptions.heights)}
-          {renderOptionSelect('level', '단수', filteredOptions.levels)}
+          {renderOptionSelect('color', '색상', availableOptions?.colors)}
+          {renderOptionSelect('size', '사이즈', filteredOptions?.sizes)}
+          {renderOptionSelect('height', '높이', filteredOptions?.heights)}
+          {renderOptionSelect('level', '단수', filteredOptions?.levels)}
         </>
       )}
 
       {/* 경량/중량/파렛트랙 */}
       {['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && (
         <>
-          {renderOptionSelect('size', '사이즈', availableOptions.sizes)}
-          {renderOptionSelect('height', '높이', filteredOptions.heights)}
-          {renderOptionSelect('level', '단수', filteredOptions.levels)}
+          {renderOptionSelect('size', '사이즈', availableOptions?.sizes)}
+          {renderOptionSelect('height', '높이', filteredOptions?.heights)}
+          {renderOptionSelect('level', '단수', filteredOptions?.levels)}
         </>
       )}
 
