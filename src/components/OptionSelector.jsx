@@ -19,13 +19,16 @@ const OptionSelector = () => {
     isCustomPrice,
     setIsCustomPrice,
     isValidCombination,
-    price
+    price,
+    loading
   } = useProduct();
 
-  // 옵션 렌더링 함수
+  if (loading) return <p>데이터 불러오는 중...</p>;
+
+  // 드롭다운 렌더링 공통 함수
   const renderOptionSelect = (optionName, label, options) => {
     if (!options || options.length === 0) return null;
-    
+
     return (
       <div className="option-group">
         <label htmlFor={optionName}>{label}</label>
@@ -48,10 +51,11 @@ const OptionSelector = () => {
 
   return (
     <div className="option-selector">
-      {/* 제품 유형 선택 */}
+
+      {/* 제품 유형 */}
       {renderOptionSelect('type', '제품 유형', allOptions.types)}
-      
-      {/* 스텐랙/하이랙에 따른 옵션 표시 */}
+
+      {/* 스텐랙 */}
       {selectedType === '스텐랙' && (
         <>
           {renderOptionSelect('version', '버전', availableOptions.versions)}
@@ -60,7 +64,8 @@ const OptionSelector = () => {
           {renderOptionSelect('level', '단수', filteredOptions.levels)}
         </>
       )}
-      
+
+      {/* 하이랙 */}
       {selectedType === '하이랙' && (
         <>
           {renderOptionSelect('color', '색상', availableOptions.colors)}
@@ -69,8 +74,8 @@ const OptionSelector = () => {
           {renderOptionSelect('level', '단수', filteredOptions.levels)}
         </>
       )}
-      
-      {/* 경량랙, 중량랙, 파렛트랙 */}
+
+      {/* 경량/중량/파렛트랙 */}
       {['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && (
         <>
           {renderOptionSelect('size', '사이즈', availableOptions.sizes)}
@@ -78,8 +83,8 @@ const OptionSelector = () => {
           {renderOptionSelect('level', '단수', filteredOptions.levels)}
         </>
       )}
-      
-      {/* 수량 및 적용률 */}
+
+      {/* 수량 */}
       <div className="option-group">
         <label htmlFor="quantity">수량</label>
         <input
@@ -90,7 +95,8 @@ const OptionSelector = () => {
           onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
         />
       </div>
-      
+
+      {/* 적용률 */}
       <div className="option-group">
         <label htmlFor="applyRate">적용률 (%)</label>
         <input
@@ -102,9 +108,11 @@ const OptionSelector = () => {
           onChange={(e) => setApplyRate(parseInt(e.target.value) || 100)}
         />
       </div>
-      
-      {/* 유효하지 않은 조합이거나 EXTRA_OPTIONS 선택 시 가격 직접 입력 */}
-      {(!isValidCombination && selectedType && Object.values(selectedOptions).some(Boolean)) && (
+
+      {/* 가격 수동 입력 (EXTRA or invalid 조합일 때) */}
+      {(!isValidCombination &&
+        selectedType &&
+        Object.values(selectedOptions).some(val => val)) && (
         <div className="option-group">
           <label htmlFor="customPrice">가격 직접입력</label>
           <input
@@ -119,7 +127,7 @@ const OptionSelector = () => {
           />
         </div>
       )}
-      
+
       {/* 가격 표시 */}
       <div className="price-display">
         <h3>계산된 가격: {price.toLocaleString()}원</h3>
