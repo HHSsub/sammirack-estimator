@@ -81,14 +81,16 @@ export const ProductProvider = ({ children }) => {
         
         // Get heights from first size
         if (options.sizes.length > 0) {
-          const firstSizeData = productData[options.sizes[0]];
+          const sizeKey = selectedOptions.size || options.sizes[0];
+          const firstSizeData = productData[sizeKey];
           if (firstSizeData) {
             options.heights = Object.keys(firstSizeData);
             console.log(`Found heights for ${selectedType}:`, options.heights);
             
             // Get levels from first height
             if (options.heights.length > 0) {
-              const firstHeightData = firstSizeData[options.heights[0]];
+              const heightKey = selectedOptions.height || options.heights[0];
+              const firstHeightData = firstSizeData[heightKey];
               if (firstHeightData) {
                 options.levels = Object.keys(firstHeightData).map(k => k.replace('L', ''));
                 console.log(`Found levels for ${selectedType}:`, options.levels);
@@ -183,15 +185,14 @@ export const ProductProvider = ({ children }) => {
     else if (bomData && ['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
       const productData = bomData[selectedType];
       
-      if (productData && selectedOptions.size) {
-        const sizeData = productData[selectedOptions.size];
-        if (sizeData) {
-          filtered.heights = Object.keys(sizeData);
-          
-          if (selectedOptions.height && sizeData[selectedOptions.height]) {
-            const heightData = sizeData[selectedOptions.height];
-            filtered.levels = Object.keys(heightData).map(k => k.replace('L', ''));
-          }
+      const sizeKey = selectedOptions.size || Object.keys(productData)[0];
+      const sizeData = productData[sizeKey];
+      if (sizeData) {
+        filtered.heights = Object.keys(sizeData);
+        const heightKey = selectedOptions.height || filtered.heights[0];
+        const heightData = sizeData[heightKey];
+        if (heightData) {
+          filtered.levels = Object.keys(heightData).map(k => k.replace('L', ''));
         }
       }
       console.log('Filtered options for Excel product:', filtered);
@@ -290,9 +291,11 @@ export const ProductProvider = ({ children }) => {
     const heightData = sizeData[options.height];
     if (!heightData) return 0;
     
-    const levelKey = `L${options.level}`;
+    const levelKey = options.level ? `L${options.level}` : null;
     const levelData = heightData[levelKey];
     if (!levelData) return 0;
+
+    if (!levelKey || !heightData[levelKey]) return 0;
     
     // Get the first configuration (독립형 or 연결형)
     const configKeys = Object.keys(levelData);
