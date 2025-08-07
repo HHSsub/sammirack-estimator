@@ -132,7 +132,7 @@ const OptionSelector = () => {
 
       {/* 가격 표시 */}
       <div className="price-display">
-        <h3>계산된 가격: {Number(price || 0).toLocaleString()}원</h3>
+        <h3>계산된 가격: {typeof price === 'number' ? price.toLocaleString() : '0'}원</h3>
       </div>
     </div>
   );
