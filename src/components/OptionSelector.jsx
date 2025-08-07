@@ -32,46 +32,51 @@ const OptionSelector = () => {
   }, [selectedType]);
 
   if (loading) return <p>데이터 불러오는 중...</p>;
+  
+const renderOptionSelect = (optionName, label, options) => {
+  if (!options || !Array.isArray(options) || options.length === 0) return null;
 
-  const renderOptionSelect = (optionName, label, options) => {
-    if (!options) return null;
+  // ✅ 스탠랙일 때 version 드롭다운 숨김
+  if (selectedType === '스탠랙' && optionName === 'version') return null;
 
-    // ✅ 스탠랙일 때 version 드롭다운 숨김
-    if (selectedType === '스탠랙' && optionName === 'version') return null;
+  let isDisabled = !selectedType;
 
-    let isDisabled = !selectedType;
+  // Determine if this dropdown should be disabled based on option hierarchy
+  if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
+    // For Excel-based products
+    if (optionName === 'height') isDisabled = !selectedOptions.size;
+    if (optionName === 'level') isDisabled = !selectedOptions.height;
+  } else if (selectedType === '하이랙') {
+    // For 하이랙
+    if (optionName === 'size') isDisabled = !selectedOptions.color;
+    if (optionName === 'height') isDisabled = !selectedOptions.size;
+    if (optionName === 'level') isDisabled = !selectedOptions.height;
+  } else if (selectedType === '스탠랙') {
+    // For 스탠랙
+    if (optionName === 'height') isDisabled = !selectedOptions.size;
+    if (optionName === 'level') isDisabled = !selectedOptions.height;
+  }
 
-    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
-      if (optionName === 'height') isDisabled = !selectedOptions.size;
-      if (optionName === 'level') isDisabled = !selectedOptions.height;
-    } else if (selectedType === '하이랙') {
-      if (optionName === 'size') isDisabled = !selectedOptions.color;
-      if (optionName === 'height') isDisabled = !selectedOptions.size;
-      if (optionName === 'level') isDisabled = !selectedOptions.height;
-    } else if (selectedType === '스탠랙') {
-      if (optionName === 'height') isDisabled = !selectedOptions.size;
-      if (optionName === 'level') isDisabled = !selectedOptions.height;
-    }
+  return (
+    <div className="option-group">
+      <label htmlFor={optionName}>{label}</label>
+      <select
+        id={optionName}
+        value={selectedOptions[optionName] || ''}
+        onChange={(e) => handleOptionChange(optionName, e.target.value)}
+        disabled={isDisabled}
+      >
+        <option value="">선택</option>
+        {options.map(option => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
 
-    return (
-      <div className="option-group">
-        <label htmlFor={optionName}>{label}</label>
-        <select
-          id={optionName}
-          value={selectedOptions[optionName] || ''}
-          onChange={(e) => handleOptionChange(optionName, e.target.value)}
-          disabled={isDisabled}
-        >
-          <option value="">선택</option>
-          {options.map(option => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  };
 
   return (
     <div className="option-selector">
