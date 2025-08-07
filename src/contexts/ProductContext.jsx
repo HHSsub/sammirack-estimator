@@ -44,7 +44,7 @@ export const ProductProvider = ({ children }) => {
   }, []);
 
   const allOptions = useMemo(() => {
-    const options = { types: ['스탠랙', '하이랙', '경량랙', '중량랙', '조립식앵글'] };
+    const options = { types: ['스탠랙', '하이랙', '경량랙', '중량랙', '파렛트랙'] };
     
     // Also add types from data.json if available
     if (data?.products) {
@@ -70,8 +70,8 @@ export const ProductProvider = ({ children }) => {
     };
 
     // For Excel-based products, get options from BOM data
-    if (['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && bomData) {
-      const productKey = selectedType === '조립식앵글' ? '파렛트랙' : selectedType;
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && bomData) {
+      const productKey = selectedType;
       const productData = bomData[productKey];
       
       if (productData) {
@@ -191,7 +191,7 @@ export const ProductProvider = ({ children }) => {
     if (isCustomPrice) return Number(customPrice) * quantity * (applyRate / 100);
     
     // For Excel-based products, calculate price from BOM data
-    if (['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && bomData) {
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && bomData) {
       const bomPrice = getBOMPriceFromExcelData(selectedType, selectedOptions, quantity);
       return bomPrice * (applyRate / 100);
     }
@@ -225,7 +225,7 @@ export const ProductProvider = ({ children }) => {
   const getBOMPriceFromExcelData = (type, options, quantity) => {
     if (!bomData || !options.size || !options.height || !options.level) return 0;
     
-    const productKey = type === '조립식앵글' ? '파렛트랙' : type;
+    const productKey = type;
     const productData = bomData[productKey];
     
     if (!productData) return 0;
@@ -257,8 +257,8 @@ export const ProductProvider = ({ children }) => {
       return calculator.calculateBOM(selectedType, selectedOptions, quantity);
     }
     
-    // For 경량랙, 중량랙, 조립식앵글, use Excel-based BOM data
-    if (['경량랙', '중량랙', '조립식앵글'].includes(selectedType) && bomData) {
+    // For 경량랙, 중량랙, 파렛트랙, use Excel-based BOM data
+    if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && bomData) {
       return getBOMFromExcelData(selectedType, selectedOptions, quantity);
     }
     
@@ -268,7 +268,7 @@ export const ProductProvider = ({ children }) => {
   const getBOMFromExcelData = (type, options, quantity) => {
     if (!bomData || !options.size || !options.height || !options.level) return [];
     
-    const productKey = type === '조립식앵글' ? '파렛트랙' : type;
+    const productKey = type;
     const productData = bomData[productKey];
     
     if (!productData) return [];
