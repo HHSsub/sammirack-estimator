@@ -95,6 +95,36 @@
   font-size: 14px;
 }
 
+/* Option Selector Styling */
+.option-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.option-group {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 15px;
+}
+
+.option-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.option-group select,
+.option-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
 /* Price Display */
 .price-display {
   background-color: #f8f9fa;
