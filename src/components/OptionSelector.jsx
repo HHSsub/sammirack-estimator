@@ -1,6 +1,8 @@
 import React from 'react';
 import { useProduct } from '../contexts/ProductContext';
 
+// 왜 안되냐
+
 const OptionSelector = () => {
   const {
     allOptions,
