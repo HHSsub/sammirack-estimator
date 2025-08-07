@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
 const OptionSelector = () => {
@@ -24,10 +24,20 @@ const OptionSelector = () => {
     loading
   } = useProducts();
 
+  // ✅ 스탠랙 선택 시 자동으로 version = 'V1' 지정
+  useEffect(() => {
+    if (selectedType === '스탠랙' && selectedOptions.version !== 'V1') {
+      handleOptionChange('version', 'V1');
+    }
+  }, [selectedType]);
+
   if (loading) return <p>데이터 불러오는 중...</p>;
 
   const renderOptionSelect = (optionName, label, options) => {
     if (!options) return null;
+
+    // ✅ 스탠랙일 때 version 드롭다운 숨김
+    if (selectedType === '스탠랙' && optionName === 'version') return null;
 
     let isDisabled = !selectedType;
 
@@ -65,7 +75,6 @@ const OptionSelector = () => {
 
   return (
     <div className="option-selector">
-
       {/* 제품 유형 */}
       <div className="option-group">
         <label htmlFor="type">제품 유형</label>
@@ -86,7 +95,7 @@ const OptionSelector = () => {
       {/* 스탠랙 */}
       {selectedType === '스탠랙' && (
         <>
-          {renderOptionSelect('version', '버전', availableOptions.versions)}
+          {/* version 드롭다운은 자동 설정되고 숨김 */}
           {renderOptionSelect('size', '사이즈', filteredOptions.sizes)}
           {renderOptionSelect('height', '높이', filteredOptions.heights)}
           {renderOptionSelect('level', '단수', filteredOptions.levels)}
