@@ -66,38 +66,39 @@ export const ProductProvider = ({ children }) => {
       colors: [],
       sizes: [],
       heights: [],
-      levels: []
+      levels: [],
+      formTypes: []  // ✅ 추가
     };
 
     // For Excel-based products, get options from BOM data
+    // ✅ [BLOCK A] 'availableOptions' useMemo 내부 수정
+    
     if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && bomData) {
       const productKey = selectedType;
       const productData = bomData[productKey];
-      
+  
       if (productData) {
-        // Get sizes
         options.sizes = Object.keys(productData);
-        console.log(`Found sizes for ${selectedType}:`, options.sizes);
-        
-        // Get heights from first size
-        if (options.sizes.length > 0) {
-          const sizeKey = selectedOptions.size || options.sizes[0];
-          const firstSizeData = productData[sizeKey];
-          if (firstSizeData) {
-            options.heights = Object.keys(firstSizeData);
-            console.log(`Found heights for ${selectedType}:`, options.heights);
-            
-            // Get levels from first height
-            if (options.heights.length > 0) {
-              const heightKey = selectedOptions.height || options.heights[0];
-              const firstHeightData = firstSizeData[heightKey];
-              if (firstHeightData) {
-                const levelKeys = Object.keys(firstHeightData);
-                options.levels = levelKeys.map((levelKey) => levelKey.replace('L', ''));
-              }
+  
+        const sizeKey = selectedOptions.size || options.sizes[0];
+        const sizeData = productData[sizeKey];
+        if (sizeData) {
+          options.heights = Object.keys(sizeData);
+          const heightKey = selectedOptions.height || options.heights[0];
+          const heightData = sizeData[heightKey];
+          if (heightData) {
+            const levelKeys = Object.keys(heightData);
+            options.levels = levelKeys.map(k => k.replace('L', ''));
+  
+            const levelKey = selectedOptions.level ? `L${selectedOptions.level}` : levelKeys[0];
+            const levelData = heightData[levelKey];
+            if (levelData) {
+              options.formTypes = Object.keys(levelData);  // ✅ 여기
             }
           }
         }
+      }
+
       } else {
         console.error(`No product data found for ${selectedType} in bomData`);
       }
@@ -184,7 +185,7 @@ export const ProductProvider = ({ children }) => {
     // For Excel-based products, filter based on selectedOptions
     else if (bomData && ['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
       const productData = bomData[selectedType];
-      
+    
       const sizeKey = selectedOptions.size || Object.keys(productData)[0];
       const sizeData = productData[sizeKey];
       if (sizeData) {
@@ -194,9 +195,14 @@ export const ProductProvider = ({ children }) => {
         if (heightData) {
           const levelKeys = Object.keys(heightData);
           filtered.levels = levelKeys.map((levelKey) => levelKey.replace('L', ''));
+    
+          const levelKey = selectedOptions.level ? `L${selectedOptions.level}` : levelKeys[0];
+          const levelData = heightData[levelKey];
+          if (levelData) {
+            filtered.formTypes = Object.keys(levelData); // ✅ 추가
+          }
         }
       }
-      console.log('Filtered options for Excel product:', filtered);
     }
 
     return filtered;
@@ -295,14 +301,12 @@ export const ProductProvider = ({ children }) => {
     const levelKey = options.level ? `L${options.level}` : null;
     const levelData = heightData[levelKey];
     if (!levelData) return 0;
-
+    
     if (!levelKey || !heightData[levelKey]) return 0;
     
-    // Get the first configuration (독립형 or 연결형)
-    const configKeys = Object.keys(levelData);
-    if (configKeys.length === 0) return 0;
-    
-    const config = levelData[configKeys[0]];
+    // ✅ formType 처리
+    const formKey = options.formType || Object.keys(levelData)[0];
+    const config = levelData[formKey];
     return (config.total_price || 0) * quantity;
   };
 
@@ -344,12 +348,16 @@ export const ProductProvider = ({ children }) => {
     const levelKey = `L${options.level}`;
     const levelData = heightData[levelKey];
     if (!levelData) return [];
+
+    // ✅ formType 처리
+    const formKey = options.formType || Object.keys(levelData)[0];
+    const config = levelData[formKey];
+    if (!config?.components) return [];
     
     // Get the first configuration (독립형 or 연결형)
     const configKeys = Object.keys(levelData);
     if (configKeys.length === 0) return [];
     
-    const config = levelData[configKeys[0]];
     if (!config.components) return [];
     
     return config.components.map(component => ({
@@ -373,12 +381,13 @@ export const ProductProvider = ({ children }) => {
           color: '',
           size: '',
           height: '',
-          level: ''
+          level: '',
+          formType: ''  // ✅ 추가
         };
       }
       
       // For other options, follow hierarchy
-      const hierarchy = ['version', 'color', 'size', 'height', 'level'];
+      const hierarchy = ['version', 'color', 'size', 'height', 'level', 'formType'];
       const index = hierarchy.indexOf(key);
       if (index >= 0) {
         for (let i = index + 1; i < hierarchy.length; i++) {
@@ -439,7 +448,8 @@ export const ProductProvider = ({ children }) => {
         color: '',
         size: '',
         height: '',
-        level: ''
+        level: '',
+        formType: '' // ✅ 누락되어 있던 항목
       });
       setSelectedType(type);
       console.log(`Product type changed to: ${type}`);
