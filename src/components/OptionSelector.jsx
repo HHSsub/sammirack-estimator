@@ -15,7 +15,6 @@ const OptionSelector = () => {
     safePrice, addToCart
   } = useProducts();
 
-  // 적용률 입력 편의 개선
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
 
   useEffect(() => {
@@ -104,7 +103,6 @@ const OptionSelector = () => {
           )}
         </>
       )}
-
       <div className="option-group">
         <label>수량</label>
         <input
@@ -129,7 +127,10 @@ const OptionSelector = () => {
           type="number"
           min="0"
           value={customPrice}
-          onChange={e => { setCustomPrice(Number(e.target.value) || 0); setIsCustomPrice(!!e.target.value); }}
+          onChange={e => {
+            setCustomPrice(Number(e.target.value) || 0);
+            setIsCustomPrice(!!e.target.value);
+          }}
         />
       </div>
 
@@ -140,7 +141,6 @@ const OptionSelector = () => {
 
       <button onClick={addToCart} disabled={!selectedType}>목록 추가</button>
 
-      {/* 현재 BOM 미리보기 */}
       {currentBOM.length > 0 && (
         <div className="current-bom-preview">
           <h4>현재 BOM</h4>
@@ -155,7 +155,6 @@ const OptionSelector = () => {
         </div>
       )}
 
-      {/* 전체 BOM 미리보기 */}
       {cartBOM.length > 0 && (
         <div className="cart-bom-preview">
           <h4>전체 BOM (모든 장바구니 누적)</h4>
