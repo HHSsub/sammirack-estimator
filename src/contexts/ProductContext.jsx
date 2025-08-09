@@ -7,7 +7,7 @@ const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
 // 옵션값 변환 함수
 const sizeToBom = size => size ? (size.startsWith('W') ? size : 'W' + size.replace('x', 'xD')) : '';
 const heightToBom = height => height ? (height.startsWith('H') ? height : 'H' + height) : '';
-const levelToBom = level => level ? (level.startsWith('L') ? level : 'L' + level.replace('단','')) : '';
+const levelToBom = level => level ? (level.startsWith('L') ? level : 'L' + level.replace('단', '')) : '';
 
 export const ProductProvider = ({ children }) => {
   const [data, setData] = useState(null);
@@ -73,9 +73,7 @@ export const ProductProvider = ({ children }) => {
         opts.height = heights;
       }
       if (selectedOptions.size && selectedOptions.height) {
-        const levels = Object.keys(
-          rackData['기본가격'][selectedOptions.size][selectedOptions.height] || {}
-        );
+        const levels = Object.keys(rackData['기본가격'][selectedOptions.size][selectedOptions.height] || {});
         opts.level = levels;
       }
       opts.version = ['V1'];
@@ -89,9 +87,7 @@ export const ProductProvider = ({ children }) => {
           const heights = Object.keys(rackData['기본가격'][selectedOptions.color][selectedOptions.size] || {});
           opts.height = heights;
           if (selectedOptions.height) {
-            const levels = Object.keys(
-              rackData['기본가격'][selectedOptions.color][selectedOptions.size][selectedOptions.height] || {}
-            );
+            const levels = Object.keys(rackData['기본가격'][selectedOptions.color][selectedOptions.size][selectedOptions.height] || {});
             opts.level = levels;
           }
         }
@@ -104,16 +100,13 @@ export const ProductProvider = ({ children }) => {
         if (selectedOptions.size) {
           opts.height = Object.keys(rackData['기본가격'][selectedOptions.formType][selectedOptions.size] || {});
           if (selectedOptions.height) {
-            opts.level = Object.keys(
-              rackData['기본가격'][selectedOptions.formType][selectedOptions.size][selectedOptions.height] || {}
-            );
+            opts.level = Object.keys(rackData['기본가격'][selectedOptions.formType][selectedOptions.size][selectedOptions.height] || {});
           }
         }
       }
     }
     setAvailableOptions(opts);
-    // 디버깅: 옵션 세팅 로그
-    // console.log('[DEBUG] availableOptions:', opts);
+    console.log('[DEBUG] availableOptions:', opts);
   }, [selectedType, selectedOptions, data]);
 
   // 가격 계산
@@ -158,12 +151,12 @@ export const ProductProvider = ({ children }) => {
       const level = levelToBom(selectedOptions.level);
       const bom =
         bomData?.[selectedType]?.[size]?.[height]?.[level]?.[formType];
-      if (bom && bom.components) {
+      if (bom && Array.isArray(bom.components)) {
         return bom.components.map(c => ({
           name: c.name,
           quantity: c.quantity * quantity,
           unitPrice: c.unit_price,
-          unit: c.unit ?? '', // 혹시 단위 없을 때 방어
+          unit: c.unit ?? '',
         }));
       }
       return [];
@@ -187,7 +180,7 @@ export const ProductProvider = ({ children }) => {
     return [];
   }, [selectedType, selectedOptions, quantity, bomData, data]);
 
-  // 장바구니 BOM (전체 BOM 보기용)
+  // 전체 BOM
   const calculateCartBOM = useCallback(() => {
     if (!cart || !bomData) return [];
     const bomMap = {};
@@ -209,24 +202,14 @@ export const ProductProvider = ({ children }) => {
         }
       } else if (item.type === '스텐랙' || item.type === '하이랙') {
         let levelCount = parseInt((item.options.level || '').replace('단', '')) || 0;
-        if (item.type === '스텐랙') {
-          components = [
-            { name: '기둥 4개', quantity: 4 * item.quantity },
-            { name: `선반 ${levelCount}개`, quantity: levelCount * item.quantity },
-            { name: '고정볼트세트', quantity: 1 * item.quantity },
-          ];
-        } else if (item.type === '하이랙') {
-          components = [
-            { name: '기둥 4개', quantity: 4 * item.quantity },
-            { name: '가로대', quantity: levelCount * item.quantity },
-            { name: '선반', quantity: levelCount * item.quantity },
-            { name: '고정볼트세트', quantity: 1 * item.quantity },
-          ];
-        }
+        components = [
+          { name: '기둥 4개', quantity: 4 * item.quantity },
+          { name: '선반', quantity: levelCount * item.quantity },
+          { name: '고정볼트세트', quantity: 1 * item.quantity },
+        ];
       }
-      // BOM 항목 누적 합산
       components.forEach(c => {
-        const key = `${c.name}`;
+        const key = c.name;
         if (bomMap[key]) {
           bomMap[key].quantity += c.quantity;
         } else {
@@ -234,7 +217,6 @@ export const ProductProvider = ({ children }) => {
         }
       });
     });
-    // object → array
     return Object.values(bomMap);
   }, [cart, bomData]);
 
@@ -243,14 +225,15 @@ export const ProductProvider = ({ children }) => {
     setCurrentPrice(calculatePrice());
     setCurrentBOM(calculateCurrentBOM());
   }, [calculatePrice, calculateCurrentBOM]);
+
   useEffect(() => {
     setCartBOM(calculateCartBOM());
   }, [cart, calculateCartBOM]);
 
-  // 옵션 변경 핸들러
+  // 옵션 변경
   const handleOptionChange = (key, value) => {
     if (key === 'type') {
-      setSelectedType(value); // <-- 랙 종류 변경
+      setSelectedType(value);
       setSelectedOptions(value === '스텐랙' ? { version: 'V1' } : {});
       return;
     }
@@ -281,28 +264,17 @@ export const ProductProvider = ({ children }) => {
   return (
     <ProductContext.Provider
       value={{
-        allOptions,
-        availableOptions,
-        filteredOptions,
-        selectedType,
-        selectedOptions,
-        setSelectedType,
-        handleOptionChange,
-        quantity,
-        setQuantity,
-        applyRate,
-        setApplyRate,
-        customPrice,
-        setCustomPrice,
-        isCustomPrice,
-        setIsCustomPrice,
-        currentPrice,
-        currentBOM,
-        cart,
-        cartBOM,
+        allOptions, availableOptions, filteredOptions,
+        selectedType, selectedOptions,
+        setSelectedType, handleOptionChange,
+        quantity, setQuantity,
+        applyRate, setApplyRate,
+        customPrice, setCustomPrice,
+        isCustomPrice, setIsCustomPrice,
+        currentPrice, currentBOM,
+        cart, cartBOM,
         loading,
-        addToCart,
-        safePrice,
+        addToCart, safePrice
       }}
     >
       {children}
