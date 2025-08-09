@@ -19,17 +19,15 @@ const OptionSelector = () => {
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
 
   useEffect(() => {
-    setApplyRateInput(applyRate); // 외부에서 값 바뀔 때 싱크
+    setApplyRateInput(applyRate);
   }, [applyRate]);
 
-  // 스텐랙 버전 자동 설정 (V1 고정)
   useEffect(() => {
     if (selectedType === '스텐랙' && selectedOptions.version !== 'V1') {
       handleOptionChange('version', 'V1');
     }
   }, [selectedType, selectedOptions, handleOptionChange]);
 
-  // 적용률 입력 핸들러
   const onApplyRateChange = (e) => {
     const value = e.target.value;
     if (value === '' || /^[0-9]{1,3}$/.test(value)) {
@@ -52,7 +50,6 @@ const OptionSelector = () => {
       'formType': availableOptions.formType || [],
     }[optionName] || [];
 
-    // 디버그 로그
     console.log(`[DEBUG] renderOptionSelect(${optionName}) →`, options);
 
     if (selectedType === '스텐랙' && optionName === 'version') return null;
@@ -80,7 +77,6 @@ const OptionSelector = () => {
   return (
     <div className="option-selector">
       {renderOptionSelect('type', '제품 유형')}
-
       {selectedType && (
         <>
           {selectedType === '스텐랙' && (
