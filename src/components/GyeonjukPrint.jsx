@@ -8,7 +8,7 @@ const GyeonjukPrint = ({ data }) => {
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
 
-      {/* 불필요한 사이트명 제거 */}
+      {/* 사이트명 등 불필요 항목 제거, 제목과 도장만 유지 */}
       <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       <img className="stamp" src={stampImage} alt="도장" />
 
