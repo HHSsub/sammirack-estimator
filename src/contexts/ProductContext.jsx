@@ -201,6 +201,11 @@ export const ProductProvider = ({ children }) => {
             quantity: c.quantity * item.quantity,
             unitPrice: c.unit_price,
           }));
+          } else {
+          // 경고 로그 추가 (디버깅용)
+          console.warn('BOM 데이터 누락:', item);
+          return [];
+          }
         }
         return [];
       }
@@ -253,6 +258,7 @@ export const ProductProvider = ({ children }) => {
   // 장바구니 추가
   const addToCart = () => {
     if (!selectedType || !selectedOptions) return;
+    const bomComponents = calculateCurrentBOM(); // 현재 BOM 계산
     setCart(prev => [
       ...prev,
       {
@@ -260,6 +266,7 @@ export const ProductProvider = ({ children }) => {
         options: { ...selectedOptions },
         quantity,
         price: currentPrice,
+        bom: bomComponents,  // 추가
       }
     ]);
   };
