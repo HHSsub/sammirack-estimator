@@ -3,6 +3,7 @@ function extractLast4Digits(contactStr) {
   const nums = String(contactStr).replace(/\D/g, '');
   return nums.slice(-4) || '';
 }
+
 function random4digits() {
   return Math.floor(1000 + Math.random() * 9000).toString();
 }
@@ -129,4 +130,40 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
   };
 };
 
-// navigateToPrintPage, checkPrintSupport 등은 기존 그대로 유지
+// 프린트 페이지로 이동
+export const navigateToPrintPage = (type, data, navigate) => {
+  try {
+    const encodedData = encodeURIComponent(JSON.stringify(data));
+    const printUrl = `/print?type=${type}&data=${encodedData}`;
+    const openInNewWindow = false;
+    if (openInNewWindow) {
+      const printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
+      if (!printWindow) navigate(printUrl);
+    } else {
+      navigate(printUrl);
+    }
+  } catch (error) {
+    console.error('프린트 페이지 이동 오류:', error);
+    alert('프린트 페이지로 이동하는 중 오류가 발생했습니다.');
+  }
+};
+
+export const checkPrintSupport = () => {
+  return typeof window !== 'undefined' && 'print' in window;
+};
+
+export const optimizePrintSettings = () => {
+  if (typeof window !== 'undefined') {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        * {
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+};
