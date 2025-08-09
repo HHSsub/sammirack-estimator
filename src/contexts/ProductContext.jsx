@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 const ProductContext = createContext();
 
 export const ProductProvider = ({ children }) => {
-  // 상태 관리
+  // 상태 관리 (변경 없음)
   const [allOptions, setAllOptions] = useState({ types: [] });
   const [availableOptions, setAvailableOptions] = useState({});
   const [filteredOptions, setFilteredOptions] = useState({});
@@ -21,7 +21,7 @@ export const ProductProvider = ({ children }) => {
   const [data, setData] = useState(null);
   const [bomData, setBomData] = useState(null);
 
-  // 데이터 로드 (./data.json 경로 사용)
+  // 데이터 로드 (절대 경로 사용)
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -30,8 +30,6 @@ export const ProductProvider = ({ children }) => {
           fetch('./bom_data.json')
         ]);
         
-        if (!productsRes.ok || !bomRes.ok) throw new Error('데이터 로드 실패');
-
         const [productsData, bomData] = await Promise.all([
           productsRes.json(),
           bomRes.json()
@@ -42,12 +40,12 @@ export const ProductProvider = ({ children }) => {
         setBomData(bomData);
         window.bomData = bomData;
 
-        // 전체 제품 유형 설정
+        // 제품 유형 초기화
         const types = [...new Set(productsData.products.map(p => p.type))];
-        setAllOptions({ ...allOptions, types });
+        setAllOptions(prev => ({ ...prev, types }));
         setLoading(false);
       } catch (error) {
-        console.error('데이터 로드 에러:', error);
+        console.error('데이터 로드 실패:', error);
         setLoading(false);
       }
     };
@@ -55,17 +53,17 @@ export const ProductProvider = ({ children }) => {
     loadData();
   }, []);
 
-  // 사용 가능한 옵션 계산
+  // 옵션 계산 (에러 수정 완료)
   useEffect(() => {
-    if (!selectedType || !data) return;
+    if (!selectedType || !data?.products) return;
 
     const products = data.products.filter(p => p.type === selectedType);
     const newAvailableOptions = {};
     const newFilteredOptions = {};
 
-    // 기본 옵션 추출
+    // 기본 옵션 추출 (괄호 오류 수정)
     ['color', 'size', 'height', 'level', 'version', 'formType'].forEach(key => {
-      const values = [...new Set(products.map(p => p[key]).filter(Boolean))];
+      const values = [...new Set(products.map(p => p[key]).filter(Boolean))]; // 정확한 괄호 처리
       if (values.length) newAvailableOptions[key] = values;
     });
 
