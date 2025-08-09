@@ -4,6 +4,7 @@ const ProductContext = createContext();
 
 const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
 
+// 옵션값 변환 함수 (json 키와 완벽 일치하도록 변환)
 const sizeToBom = size => size ? (size.startsWith('W') ? size : 'W' + size.replace('x', 'xD')) : '';
 const heightToBom = height => height ? (height.startsWith('H') ? height : 'H' + height) : '';
 const levelToBom = level => level ? (level.startsWith('L') ? level : 'L' + level.replace('단', '')) : '';
@@ -31,6 +32,7 @@ export const ProductProvider = ({ children }) => {
   const [customPrice, setCustomPrice] = useState(0);
   const [isCustomPrice, setIsCustomPrice] = useState(false);
 
+  // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -57,6 +59,7 @@ export const ProductProvider = ({ children }) => {
     fetchData();
   }, []);
 
+  // 옵션 세팅 useEffect
   useEffect(() => {
     console.log('[DEBUG] useEffect 옵션 세팅 실행');
     console.log('[DEBUG] selectedType:', selectedType);
@@ -105,6 +108,7 @@ export const ProductProvider = ({ children }) => {
     setAvailableOptions(opts);
   }, [selectedType, selectedOptions, data]);
 
+  // 가격 계산 (적용률 포함)
   const calculatePrice = useCallback(() => {
     console.log('[DEBUG] 가격 계산 호출 - type:', selectedType, ', options:', selectedOptions, ', applyRate:', applyRate);
     if (!selectedType || !selectedOptions || !quantity) return 0;
@@ -138,6 +142,7 @@ export const ProductProvider = ({ children }) => {
     return 0;
   }, [selectedType, selectedOptions, quantity, isCustomPrice, customPrice, applyRate, data, bomData]);
 
+  // 현재 BOM 계산
   const calculateCurrentBOM = useCallback(() => {
     console.log('[DEBUG] BOM 계산 호출 - type:', selectedType, ', options:', selectedOptions);
     if (!selectedType || !selectedOptions || !quantity) return [];
@@ -177,6 +182,7 @@ export const ProductProvider = ({ children }) => {
     return [];
   }, [selectedType, selectedOptions, quantity, bomData, data]);
 
+  // 전체 BOM 집계 (forEach/map 오류 방지)
   const calculateCartBOM = useCallback(() => {
     console.log('[DEBUG] 전체 BOM 합산 호출 - cart:', cart);
     if (!cart || !bomData) return [];
@@ -238,6 +244,7 @@ export const ProductProvider = ({ children }) => {
     setCartBOM(calculateCartBOM());
   }, [cart, calculateCartBOM]);
 
+  // 옵션 변경 (하위 옵션 자동 초기화 포함)
   const handleOptionChange = (key, value) => {
     console.log(`[DEBUG] handleOptionChange: ${key} = ${value}`);
     if (key === 'type') {
@@ -255,6 +262,7 @@ export const ProductProvider = ({ children }) => {
     }));
   };
 
+  // 장바구니에 추가
   const addToCart = () => {
     console.log('[DEBUG] addToCart - 선택:', selectedType, selectedOptions, '가격:', currentPrice);
     if (!selectedType || !selectedOptions) return;
