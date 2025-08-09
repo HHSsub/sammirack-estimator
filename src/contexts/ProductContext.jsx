@@ -123,6 +123,7 @@ export const ProductProvider = ({ children }) => {
       }
     }
     setAvailableOptions(opts);
+    console.log('[DEBUG] availableOptions:', opts);
   }, [selectedType, selectedOptions, data]);
 
   // 가격 계산
