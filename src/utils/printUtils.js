@@ -2,32 +2,30 @@
 export const formatEstimateData = (formData, cart, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const estimateNumber = `EST-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-  
-  // cart 데이터를 올바르게 매핑
+
   const items = cart.map((cartItem, index) => {
-    const { selections } = cartItem;
-    
+    const { type, options } = cartItem;
+
     // 제품명 생성
-    let productName = selections.type || '';
-    if (selections.version) productName += ` (${selections.version})`;
-    if (selections.color) productName += ` (${selections.color})`;
-    
+    let productName = type || '';
+    if (options.version) productName += ` (${options.version})`;
+    if (options.color) productName += ` (${options.color})`;
+
     // 규격 생성
     let specification = '';
-    if (selections.size) specification += selections.size;
-    if (selections.height) specification += ` × ${selections.height}`;
-    if (selections.level) specification += ` × ${selections.level}`;
-    
-    // 단가 계산 (총 가격을 수량으로 나눔)
-    const quantity = selections.quantity || 1;
-    const unitPrice = Math.floor(cartItem.price / quantity);
-    
+    if (options.size) specification += options.size;
+    if (options.height) specification += ` × ${options.height}`;
+    if (options.level) specification += ` × ${options.level}`;
+
+    const quantity = cartItem.quantity || 1;
+    const unitPrice = quantity ? Math.floor(cartItem.price / quantity) : 0;
+
     return {
       name: productName,
-      specification: specification,
+      specification,
       unit: 'set',
-      quantity: quantity,
-      unitPrice: unitPrice,
+      quantity,
+      unitPrice,
       totalPrice: cartItem.price,
       note: ''
     };
@@ -40,8 +38,8 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   return {
     date: currentDate,
     estimateNumber,
-    companyName: formData?.companyName || '', // 공급받는 쪽 상호명
-    contactPerson: formData?.contactPerson || '', // 공급받는 쪽 담당자
+    companyName: formData?.companyName || '',
+    contactPerson: formData?.contactPerson || '',
     customerName: formData?.customerName || '',
     contactInfo: formData?.contactInfo || '',
     items,
@@ -56,32 +54,28 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
 export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const orderNumber = formData?.orderNumber || `PO-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-  
-  // cart 데이터를 올바르게 매핑
+
   const items = cart.map((cartItem, index) => {
-    const { selections } = cartItem;
-    
-    // 제품명 생성
-    let productName = selections.type || '';
-    if (selections.version) productName += ` (${selections.version})`;
-    if (selections.color) productName += ` (${selections.color})`;
-    
-    // 규격 생성
+    const { type, options } = cartItem;
+
+    let productName = type || '';
+    if (options.version) productName += ` (${options.version})`;
+    if (options.color) productName += ` (${options.color})`;
+
     let specification = '';
-    if (selections.size) specification += selections.size;
-    if (selections.height) specification += ` × ${selections.height}`;
-    if (selections.level) specification += ` × ${selections.level}`;
-    
-    // 단가 계산 (총 가격을 수량으로 나눔)
-    const quantity = selections.quantity || 1;
-    const unitPrice = Math.floor(cartItem.price / quantity);
-    
+    if (options.size) specification += options.size;
+    if (options.height) specification += ` × ${options.height}`;
+    if (options.level) specification += ` × ${options.level}`;
+
+    const quantity = cartItem.quantity || 1;
+    const unitPrice = quantity ? Math.floor(cartItem.price / quantity) : 0;
+
     return {
       name: productName,
-      specification: specification,
+      specification,
       unit: 'set',
-      quantity: quantity,
-      unitPrice: unitPrice,
+      quantity,
+      unitPrice,
       totalPrice: cartItem.price,
       note: ''
     };
@@ -104,8 +98,8 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
   return {
     date: formData?.date || currentDate,
     orderNumber,
-    companyName: formData?.companyName || '', // 공급받는 쪽 상호명
-    contactPerson: formData?.contactPerson || '', // 공급받는 쪽 담당자
+    companyName: formData?.companyName || '',
+    contactPerson: formData?.contactPerson || '',
     customerName: formData?.customerName || '',
     contactInfo: formData?.contactInfo || '',
     items,
@@ -122,14 +116,12 @@ export const navigateToPrintPage = (type, data, navigate) => {
   try {
     const encodedData = encodeURIComponent(JSON.stringify(data));
     const printUrl = `/print?type=${type}&data=${encodedData}`;
-    
-    // 새 창에서 프린트 페이지 열기 (선택사항)
-    const openInNewWindow = false; // 필요에 따라 true로 변경
-    
+
+    const openInNewWindow = false;
+
     if (openInNewWindow) {
       const printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
       if (!printWindow) {
-        // 팝업 차단 시 현재 창에서 이동
         navigate(printUrl);
       }
     } else {
@@ -148,7 +140,6 @@ export const checkPrintSupport = () => {
 
 // 브라우저별 프린트 최적화 설정
 export const optimizePrintSettings = () => {
-  // Chrome/Edge에서 배경 그래픽 인쇄 활성화
   if (typeof window !== 'undefined') {
     const style = document.createElement('style');
     style.textContent = `
