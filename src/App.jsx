@@ -1,43 +1,4 @@
-import React, { useState } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import './App.css';
-import { useProducts } from './contexts/ProductContext';
-import OptionSelector from './components/OptionSelector';
-import CartDisplay from './components/CartDisplay';
-import BOMDisplay from './components/BOMDisplay';
-import PurchaseOrderForm from './components/PurchaseOrderForm';
-import EstimateForm from './components/EstimateForm';
-import HistoryPage from './components/HistoryPage';
-import PrintPage from './components/PrintPage';
-import { getKoreanName } from './utils/nameMap';
-
-function App() {
-  return (
-    <div className="app">
-      <nav className="main-nav">
-        <div className="nav-logo"><h1>(주)삼미앵글</h1></div>
-        <div className="nav-links">
-          <Link to="/" className="nav-link">홈</Link>
-          <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
-          <Link to="/purchase-order/new" className="nav-link">거래명세서(발주서) 작성</Link>
-          <Link to="/history" className="nav-link">문서 관리</Link>
-        </div>
-      </nav>
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/estimate/new" element={<EstimateForm />} />
-          <Route path="/purchase-order/new" element={<PurchaseOrderForm />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/print" element={<PrintPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-      <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
-    </div>
-  );
-}
-
+// ... import 생략
 const HomePage = () => {
   const { currentPrice, currentBOM, addToCart, cart, cartTotal } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(false);
@@ -46,7 +7,7 @@ const HomePage = () => {
   const canAddItem = currentPrice > 0;
   const canProceed = cart.length > 0;
 
-  // 전체 BOM 합산 – 방어코드 적용
+  // 전체 BOM 합산 (bom이 배열인지 체크)
   const totalBom = cart.reduce((acc, item) => {
     if (Array.isArray(item.bom)) {
       item.bom.forEach(bomItem => {
@@ -89,10 +50,10 @@ const HomePage = () => {
           <button onClick={() => setShowTotalBOM(!showTotalBOM)}>
             {showTotalBOM ? '전체 BOM 숨기기' : '전체 BOM 보기'}
           </button>
-          <Link to="/estimate/new" state={{ cart, cartTotal, totalBom: totalBomForDisplay }} className={`create-estimate-button ${!canProceed && 'disabled'}`}>
+          <Link to="/estimate/new" state={{ cart, cartTotal, totalBom: totalBomForDisplay }}>
             견적서 작성
           </Link>
-          <Link to="/purchase-order/new" state={{ cart, cartTotal, totalBom: totalBomForDisplay }} className={`create-order-button ${!canProceed && 'disabled'}`}>
+          <Link to="/purchase-order/new" state={{ cart, cartTotal, totalBom: totalBomForDisplay }}>
             발주서 작성
           </Link>
         </div>
@@ -102,5 +63,3 @@ const HomePage = () => {
     </div>
   );
 };
-
-export default App;
