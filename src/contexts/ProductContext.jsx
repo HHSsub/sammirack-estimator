@@ -234,7 +234,7 @@ export const ProductProvider = ({ children }) => {
     }));
   };
 
-  // 🛠 수정된 addToCart (BOM 저장)
+  // addToCart에서 BOM 저장
   const addToCart = () => {
     if (!selectedType || !selectedOptions) return;
     setCart(prev => [
@@ -244,7 +244,7 @@ export const ProductProvider = ({ children }) => {
         options: { ...selectedOptions },
         quantity,
         price: currentPrice,
-        bom: currentBOM   // 현재 BOM도 같이 저장
+        bom: currentBOM
       }
     ]);
   };
@@ -253,7 +253,7 @@ export const ProductProvider = ({ children }) => {
 
   return (
     <ProductContext.Provider value={{
-      allOptions, availableOptions, filteredOptions,
+      allOptions, availableOptions,
       selectedType, selectedOptions,
       setSelectedType, handleOptionChange,
       quantity, setQuantity,
