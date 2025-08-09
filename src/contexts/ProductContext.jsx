@@ -65,7 +65,7 @@ export const ProductProvider = ({ children }) => {
 
     // 기본 옵션 추출
     ['color', 'size', 'height', 'level', 'version', 'formType'].forEach(key => {
-      const values = [...new Set(products.map(p => p[key]).filter(Boolean)];
+      const values = [...new Set(products.map(p => p[key]).filter(Boolean))];
       if (values.length) newAvailableOptions[key] = values;
     });
 
