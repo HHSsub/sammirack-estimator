@@ -7,7 +7,13 @@ function CartDisplay() {
   const safePrice = (value) =>
     typeof value === 'number' && !isNaN(value) ? value.toLocaleString() : '0';
 
-  if (!Array.isArray(cart) || cart.length === 0) return null;
+  if (!Array.isArray(cart) || cart.length === 0)
+    return (
+      <div className="cart-section mt-6">
+        <h3 className="text-xl font-semibold mb-2">견적 목록</h3>
+        <div>목록이 비어 있습니다.</div>
+      </div>
+    );
 
   return (
     <div className="cart-section mt-6">
@@ -24,7 +30,7 @@ function CartDisplay() {
           {cart.map((item) => (
             <tr key={item.id}>
               <td className="border-b p-2">
-                {item.displayName} x {item.selections?.quantity ?? 1}개
+                {item.displayName}
               </td>
               <td className="border-b p-2 text-right">
                 {safePrice(item.price)}원
