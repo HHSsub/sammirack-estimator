@@ -181,7 +181,7 @@ export const ProductProvider = ({ children }) => {
     return [];
   }, [selectedType, selectedOptions, quantity, bomData, data]);
 
-  // 전체 BOM 집계 (더 강하게 방어, throw방지!)
+  // 전체 BOM 집계 (forEach/map 오류 방지!)
   const calculateCartBOM = useCallback(() => {
     console.log('[DEBUG] 전체 BOM 합산 호출 - cart:', cart);
     if (!cart || !bomData) return [];
@@ -243,6 +243,7 @@ export const ProductProvider = ({ children }) => {
     setCartBOM(calculateCartBOM());
   }, [cart, calculateCartBOM]);
 
+  // 옵션 변경 (★ 핵심: 하위 옵션 단계별 초기화/연계)
   const handleOptionChange = (key, value) => {
     console.log(`[DEBUG] handleOptionChange: ${key} = ${value}`);
     if (key === 'type') {
@@ -253,6 +254,8 @@ export const ProductProvider = ({ children }) => {
     setSelectedOptions(prev => ({
       ...prev,
       [key]: value,
+      ...(key === 'color' && { size: undefined, height: undefined, level: undefined }),
+      ...(key === 'formType' && { size: undefined, height: undefined, level: undefined }),
       ...(key === 'size' && { height: undefined, level: undefined }),
       ...(key === 'height' && { level: undefined }),
     }));
