@@ -1,9 +1,7 @@
 // 견적서 데이터 포맷팅
 export const formatEstimateData = (formData, cart, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
-  const estimateNumber = `EST-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000)
-    .toString()
-    .padStart(4, '0')}`;
+  const estimateNumber = `EST-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
 
   const items = (cart || []).map(cartItem => {
     const { type, options, quantity, price } = cartItem;
@@ -13,9 +11,9 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
     if (options?.color) productName += ` (${options.color})`;
 
     let specification = '';
-    if (options?.size) specification += options.size;
+    if (options?.size)   specification += options.size;
     if (options?.height) specification += ` × ${options.height}`;
-    if (options?.level) specification += ` × ${options.level}`;
+    if (options?.level)  specification += ` × ${options.level}`;
 
     const qty = quantity ?? 1;
     const unitPrice = qty > 0 ? Math.floor(price / qty) : 0;
@@ -25,7 +23,7 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
       specification,
       unit: 'set',
       quantity: qty,
-      unitPrice,
+      unitPrice: unitPrice,
       totalPrice: price,
       note: ''
     };
@@ -50,14 +48,11 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   };
 };
 
-// 발주서 데이터 포맷팅
+// 발주서 데이터 포맷팅 (규격 조건부 추출)
 export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
-  const orderNumber =
-    formData?.orderNumber ||
-    `PO-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, '0')}`;
+  const orderNumber = formData?.orderNumber ||
+    `PO-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
 
   const items = (cart || []).map(cartItem => {
     const { type, options, quantity, price } = cartItem;
@@ -67,9 +62,9 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
     if (options?.color) productName += ` (${options.color})`;
 
     let specification = '';
-    if (options?.size) specification += options.size;
+    if (options?.size)   specification += options.size;
     if (options?.height) specification += ` × ${options.height}`;
-    if (options?.level) specification += ` × ${options.level}`;
+    if (options?.level)  specification += ` × ${options.level}`;
 
     const qty = quantity ?? 1;
     const unitPrice = qty > 0 ? Math.floor(price / qty) : 0;
@@ -79,19 +74,21 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
       specification,
       unit: 'set',
       quantity: qty,
-      unitPrice,
+      unitPrice: unitPrice,
       totalPrice: price,
       note: ''
     };
   });
 
-  // ✅ 규격 자동 추출 로직 추가
+  // ✅ 규격에 괄호가 있고, 괄호 안에 숫자(및 기호)가 포함된 경우만 넣기
   const materialItems = (materials || []).map(material => {
     let specification = material.specification || '';
-    // 규격이 없고 이름에 괄호가 있는 경우, 괄호 안을 규격으로 자동 채움
     if (!specification && typeof material.name === 'string') {
       const match = material.name.match(/\(([^)]+)\)/);
-      if (match) specification = match[1];
+      // 괄호 안에 숫자 또는 숫자+기호만 있으면 규격 칼럼에 넣기 (예: 900, 900*900, 1200×300)
+      if (match && /[\d]/.test(match[1])) {
+        specification = match[1];
+      }
     }
     return {
       name: material.name || '',
@@ -124,18 +121,15 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
   };
 };
 
-// 프린트 페이지로 이동
+// 프린트 페이지로 이동 등 아래 부분은 그대로 사용
 export const navigateToPrintPage = (type, data, navigate) => {
   try {
     const encodedData = encodeURIComponent(JSON.stringify(data));
     const printUrl = `/print?type=${type}&data=${encodedData}`;
-
     const openInNewWindow = false;
     if (openInNewWindow) {
       const printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
-      if (!printWindow) {
-        navigate(printUrl);
-      }
+      if (!printWindow) navigate(printUrl);
     } else {
       navigate(printUrl);
     }
