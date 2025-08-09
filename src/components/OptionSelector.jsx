@@ -35,12 +35,12 @@ const OptionSelector = () => {
   // 모든 옵션 즉시 표시 (종속성 제거)
   const renderOptionSelect = (optionName, label) => {
     const options = {
-      'type': allOptions.types,
-      'color': availableOptions.colors || [],
-      'size': availableOptions.sizes || [],
+      'type': allOptions.types || [],
+      'color': availableOptions.color || [],
+      'size': availableOptions.size || [],
       'height': filteredOptions.heights || [],
       'level': filteredOptions.levels || [],
-      'version': availableOptions.versions || [],
+      'version': availableOptions.version || [],
       'formType': ['독립형', '연결형']
     }[optionName];
 
