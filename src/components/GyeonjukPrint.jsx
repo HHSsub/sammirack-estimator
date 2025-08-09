@@ -7,7 +7,8 @@ const GyeonjukPrint = ({ data }) => {
       <div className="print-preview-notice">
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
-      
+
+      {/* 불필요한 사이트명 제거 */}
       <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       <img className="stamp" src={stampImage} alt="도장" />
 
@@ -77,7 +78,6 @@ const GyeonjukPrint = ({ data }) => {
           </tr>
         </thead>
         <tbody>
-          {/* 데이터 행들 */}
           {data?.items?.map((item, index) => (
             <tr key={index}>
               <td>{index + 1}</td>
@@ -90,7 +90,7 @@ const GyeonjukPrint = ({ data }) => {
               <td>{item.note || ''}</td>
             </tr>
           )) || []}
-          
+
           {/* 빈 행들로 20행 채우기 */}
           {Array.from({ length: Math.max(0, 20 - (data?.items?.length || 0)) }, (_, index) => (
             <tr key={`empty-${index}`}>
