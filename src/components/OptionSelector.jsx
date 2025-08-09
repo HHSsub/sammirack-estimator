@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
 const OptionSelector = () => {
   const {
     allOptions, availableOptions, filteredOptions,
     selectedType, selectedOptions,
-    setSelectedType, handleOptionChange,
+    handleOptionChange,
     quantity, setQuantity,
     applyRate, setApplyRate,
     customPrice, setCustomPrice,
@@ -15,11 +15,31 @@ const OptionSelector = () => {
     safePrice, addToCart
   } = useProducts();
 
+  // 적용률 입력 편의 개선
+  const [applyRateInput, setApplyRateInput] = useState(applyRate);
+
+  useEffect(() => {
+    setApplyRateInput(applyRate); // 외부에서 값 바뀔 때 싱크
+  }, [applyRate]);
+
+  // 스텐랙 버전 자동 설정 (V1 고정)
   useEffect(() => {
     if (selectedType === '스텐랙' && selectedOptions.version !== 'V1') {
       handleOptionChange('version', 'V1');
     }
   }, [selectedType, selectedOptions, handleOptionChange]);
+
+  // 적용률 입력 핸들러
+  const onApplyRateChange = (e) => {
+    const value = e.target.value;
+    if (value === '' || /^[0-9]{1,3}$/.test(value)) {
+      setApplyRateInput(value);
+      const num = Number(value);
+      if (!isNaN(num) && num >= 0 && num <= 200) {
+        setApplyRate(num);
+      }
+    }
+  };
 
   const renderOptionSelect = (optionName, label) => {
     const options = {
@@ -31,6 +51,9 @@ const OptionSelector = () => {
       'version': availableOptions.version || [],
       'formType': availableOptions.formType || [],
     }[optionName] || [];
+
+    // 디버그 로그
+    console.log(`[DEBUG] renderOptionSelect(${optionName}) →`, options);
 
     if (selectedType === '스텐랙' && optionName === 'version') return null;
     if (!Array.isArray(options) || options.length === 0) return null;
@@ -60,40 +83,58 @@ const OptionSelector = () => {
 
       {selectedType && (
         <>
-          {selectedType === '스텐랙' && <>
-            {renderOptionSelect('size', '규격')}
-            {renderOptionSelect('height', '높이')}
-            {renderOptionSelect('level', '단수')}
-          </>}
-          {selectedType === '하이랙' && <>
-            {renderOptionSelect('color', '색상')}
-            {renderOptionSelect('size', '규격')}
-            {renderOptionSelect('height', '높이')}
-            {renderOptionSelect('level', '단수')}
-          </>}
-          {['경량랙','중량랙','파렛트랙'].includes(selectedType) && <>
-            {renderOptionSelect('formType', '구성형태')}
-            {renderOptionSelect('size', '규격')}
-            {renderOptionSelect('height', '높이')}
-            {renderOptionSelect('level', '단수')}
-          </>}
+          {selectedType === '스텐랙' && (
+            <>
+              {renderOptionSelect('size', '규격')}
+              {renderOptionSelect('height', '높이')}
+              {renderOptionSelect('level', '단수')}
+            </>
+          )}
+          {selectedType === '하이랙' && (
+            <>
+              {renderOptionSelect('color', '색상')}
+              {renderOptionSelect('size', '규격')}
+              {renderOptionSelect('height', '높이')}
+              {renderOptionSelect('level', '단수')}
+            </>
+          )}
+          {['경량랙', '중량랙', '파렛트랙'].includes(selectedType) && (
+            <>
+              {renderOptionSelect('formType', '구성형태')}
+              {renderOptionSelect('size', '규격')}
+              {renderOptionSelect('height', '높이')}
+              {renderOptionSelect('level', '단수')}
+            </>
+          )}
         </>
       )}
 
       <div className="option-group">
         <label>수량</label>
-        <input type="number" min="1" value={quantity}
-          onChange={e => setQuantity(Math.max(1, Number(e.target.value)))} />
+        <input
+          type="number"
+          min="1"
+          value={quantity}
+          onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
+        />
       </div>
       <div className="option-group">
         <label>적용률 (%)</label>
-        <input type="number" min="0" max="200" value={applyRate}
-          onChange={e => setApplyRate(Math.max(0, Math.min(200, Number(e.target.value) || 100)))} />
+        <input
+          type="text"
+          maxLength={3}
+          value={applyRateInput}
+          onChange={onApplyRateChange}
+        />
       </div>
       <div className="option-group">
         <label>가격 직접입력</label>
-        <input type="number" min="0" value={customPrice}
-          onChange={e => { setCustomPrice(Number(e.target.value) || 0); setIsCustomPrice(!!e.target.value); }} />
+        <input
+          type="number"
+          min="0"
+          value={customPrice}
+          onChange={e => { setCustomPrice(Number(e.target.value) || 0); setIsCustomPrice(!!e.target.value); }}
+        />
       </div>
 
       <div className="price-display">
@@ -103,23 +144,31 @@ const OptionSelector = () => {
 
       <button onClick={addToCart} disabled={!selectedType}>목록 추가</button>
 
+      {/* 현재 BOM 미리보기 */}
       {currentBOM.length > 0 && (
         <div className="current-bom-preview">
           <h4>현재 BOM</h4>
           <ul>
             {currentBOM.map((item, idx) => (
-              <li key={idx}>{item.name} × {item.quantity} {item.unit} {item.unitPrice && `(단가: ${item.unitPrice.toLocaleString()}원)`}</li>
+              <li key={idx}>
+                {item.name} × {item.quantity} {item.unit}
+                {item.unitPrice && ` (단가: ${item.unitPrice.toLocaleString()}원)`}
+              </li>
             ))}
           </ul>
         </div>
       )}
 
+      {/* 전체 BOM 미리보기 */}
       {cartBOM.length > 0 && (
         <div className="cart-bom-preview">
-          <h4>전체 BOM</h4>
+          <h4>전체 BOM (모든 장바구니 누적)</h4>
           <ul>
             {cartBOM.map((item, idx) => (
-              <li key={idx}>{item.name} × {item.quantity} {item.unit} {item.unitPrice && `(단가: ${item.unitPrice.toLocaleString()}원)`}</li>
+              <li key={idx}>
+                {item.name} × {item.quantity} {item.unit}
+                {item.unitPrice && ` (단가: ${item.unitPrice.toLocaleString()}원)`}
+              </li>
             ))}
           </ul>
         </div>
