@@ -53,8 +53,8 @@ export const ProductProvider = ({ children }) => {
       setLoading(true);
       try {
         const [dRes, bRes] = await Promise.all([
-          fetch('/data.json'), // public 폴더 배포 기준 경로
-          fetch('/bom_data.json')
+          fetch('./data.json'), // public 폴더 배포 기준 경로
+          fetch('./bom_data.json')
         ]);
         const d = await dRes.json();
         const b = await bRes.json();
