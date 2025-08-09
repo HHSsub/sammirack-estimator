@@ -1,5 +1,5 @@
 import React from 'react';
-import stampImage from '/public/images/도장.png';
+import stampImage from '/public/images/도장.png'; 
 
 const BaljuPrint = ({ data }) => {
   const materialData = data?.materials || [];
