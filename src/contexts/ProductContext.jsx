@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 const ProductContext = createContext();
 
 export const ProductProvider = ({ children }) => {
-  // 상태 관리 (변경 없음)
+  // 상태 관리
   const [allOptions, setAllOptions] = useState({ types: [] });
   const [availableOptions, setAvailableOptions] = useState({});
   const [filteredOptions, setFilteredOptions] = useState({});
@@ -21,7 +21,7 @@ export const ProductProvider = ({ children }) => {
   const [data, setData] = useState(null);
   const [bomData, setBomData] = useState(null);
 
-  // 데이터 로드 (절대 경로 사용)
+  // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -53,7 +53,7 @@ export const ProductProvider = ({ children }) => {
     loadData();
   }, []);
 
-  // 옵션 계산 (에러 수정 완료)
+  // 옵션 계산
   useEffect(() => {
     if (!selectedType || !data?.products) return;
 
@@ -61,9 +61,9 @@ export const ProductProvider = ({ children }) => {
     const newAvailableOptions = {};
     const newFilteredOptions = {};
 
-    // 기본 옵션 추출 (괄호 오류 수정)
+    // 기본 옵션 추출 (문법 오류 수정)
     ['color', 'size', 'height', 'level', 'version', 'formType'].forEach(key => {
-      const values = [...new Set(products.map(p => p[key]).filter(Boolean))]; // 정확한 괄호 처리
+      const values = [...new Set(products.map(p => p[key]).filter(Boolean))];
       if (values.length) newAvailableOptions[key] = values;
     });
 
@@ -85,14 +85,14 @@ export const ProductProvider = ({ children }) => {
     setFilteredOptions(newFilteredOptions);
   }, [selectedType, selectedOptions, data]);
 
-  // 현재 가격 계산
+  // 가격 계산
   const calculatePrice = useCallback(() => {
     if (!selectedType || !selectedOptions || !quantity) return 0;
 
     // 수동 가격 입력 시
     if (isCustomPrice) return customPrice * quantity * (applyRate / 100);
 
-    // BOM 기반 제품 (경량랙, 중량랙, 파렛트랙)
+    // BOM 기반 제품
     if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
       const bom = bomData?.[selectedType]?.find(item => 
         item.size === selectedOptions.size &&
@@ -103,7 +103,7 @@ export const ProductProvider = ({ children }) => {
       return bom ? bom.total_price * quantity : 0;
     }
 
-    // 일반 제품 (스탠랙, 하이랙)
+    // 일반 제품
     const product = data?.products?.find(p => 
       p.type === selectedType &&
       Object.keys(selectedOptions).every(key => p[key] === selectedOptions[key])
@@ -111,11 +111,11 @@ export const ProductProvider = ({ children }) => {
     return product ? product.price * quantity : 0;
   }, [selectedType, selectedOptions, quantity, isCustomPrice, customPrice, applyRate, data, bomData]);
 
-  // 현재 BOM 계산
+  // BOM 계산
   const calculateCurrentBOM = useCallback(() => {
     if (!selectedType || !selectedOptions) return [];
 
-    // BOM 기반 제품 처리
+    // BOM 기반 제품
     if (['경량랙', '중량랙', '파렛트랙'].includes(selectedType)) {
       const bom = bomData?.[selectedType]?.find(item => 
         item.size === selectedOptions.size &&
@@ -129,38 +129,31 @@ export const ProductProvider = ({ children }) => {
       })) : [];
     }
 
-    // 스탠랙 BOM 계산
-    if (selectedType === '스탠랙') {
-      const levelCount = parseInt(selectedOptions.level?.replace('단', '')) || 0;
-      return [
-        { code: 'ST-FRAME', name: '스탠드 프레임', quantity: 4, unit: '개', unitPrice: 15000 },
-        { code: 'ST-SHELF', name: '스탠드 선반', quantity: levelCount, unit: '개', unitPrice: 8000 },
-        { code: 'ST-BOLT', name: '스탠드 볼트세트', quantity: 1, unit: '세트', unitPrice: 5000 }
-      ];
-    }
+    // 스탠랙/하이랙 BOM 계산
+    const levelCount = parseInt(selectedOptions.level?.replace('단', '')) || 0;
+    const is700kg = selectedOptions.color?.includes('700kg');
 
-    // 하이랙 BOM 계산
-    if (selectedType === '하이랙') {
-      const levelCount = parseInt(selectedOptions.level?.replace('단', '')) || 0;
-      const is700kg = selectedOptions.color?.includes('700kg');
-      
-      if (is700kg) {
+    switch(selectedType) {
+      case '스탠랙':
         return [
+          { code: 'ST-FRAME', name: '스탠드 프레임', quantity: 4, unit: '개', unitPrice: 15000 },
+          { code: 'ST-SHELF', name: '스탠드 선반', quantity: levelCount, unit: '개', unitPrice: 8000 },
+          { code: 'ST-BOLT', name: '스탠드 볼트세트', quantity: 1, unit: '세트', unitPrice: 5000 }
+        ];
+      case '하이랙':
+        return is700kg ? [
           { code: 'HR-FRAME-700', name: '하이랙 프레임(700kg)', quantity: 2, unit: '개', unitPrice: 30000 },
           { code: 'HR-BEAM-700', name: '하이랙 빔(700kg)', quantity: levelCount * 2, unit: '개', unitPrice: 12000 },
           { code: 'HR-PIN', name: '하이랙 안전핀', quantity: levelCount * 4, unit: '개', unitPrice: 2000 }
-        ];
-      } else {
-        return [
+        ] : [
           { code: 'HR-FRAME', name: '하이랙 프레임', quantity: 4, unit: '개', unitPrice: 25000 },
           { code: 'HR-SHELF', name: '하이랙 선반', quantity: levelCount, unit: '개', unitPrice: 10000 },
           { code: 'HR-BEAM', name: '하이랙 빔', quantity: levelCount * 2, unit: '개', unitPrice: 8000 },
           { code: 'HR-PIN', name: '하이랙 안전핀', quantity: levelCount * 4, unit: '개', unitPrice: 2000 }
         ];
-      }
+      default:
+        return [];
     }
-
-    return [];
   }, [selectedType, selectedOptions, quantity, bomData]);
 
   // 장바구니 BOM 계산
@@ -174,56 +167,46 @@ export const ProductProvider = ({ children }) => {
   // 개별 아이템 BOM 계산
   const calculateItemBOM = (type, options, qty) => {
     if (!type || !options) return [];
+    const levelCount = parseInt(options.level?.replace('단', '')) || 0;
+    const is700kg = options.color?.includes('700kg');
 
-    // BOM 기반 제품 처리
-    if (['경량랙', '중량랙', '파렛트랙'].includes(type)) {
-      const bom = bomData?.[type]?.find(item => 
-        item.size === options.size &&
-        item.height === options.height &&
-        item.level === options.level &&
-        item.formType === options.formType
-      );
-      return bom ? bom.components.map(comp => ({
-        ...comp,
-        quantity: comp.quantity * qty
-      })) : [];
-    }
-
-    // 스탠랙 BOM 계산
-    if (type === '스탠랙') {
-      const levelCount = parseInt(options.level?.replace('단', '')) || 0;
-      return [
-        { code: 'ST-FRAME', name: '스탠드 프레임', quantity: 4 * qty, unit: '개', unitPrice: 15000 },
-        { code: 'ST-SHELF', name: '스탠드 선반', quantity: levelCount * qty, unit: '개', unitPrice: 8000 },
-        { code: 'ST-BOLT', name: '스탠드 볼트세트', quantity: 1 * qty, unit: '세트', unitPrice: 5000 }
-      ];
-    }
-
-    // 하이랙 BOM 계산
-    if (type === '하이랙') {
-      const levelCount = parseInt(options.level?.replace('단', '')) || 0;
-      const is700kg = options.color?.includes('700kg');
-      
-      if (is700kg) {
+    switch(type) {
+      case '경량랙':
+      case '중량랙':
+      case '파렛트랙':
+        const bom = bomData?.[type]?.find(item => 
+          item.size === options.size &&
+          item.height === options.height &&
+          item.level === options.level &&
+          item.formType === options.formType
+        );
+        return bom ? bom.components.map(comp => ({
+          ...comp,
+          quantity: comp.quantity * qty
+        })) : [];
+      case '스탠랙':
         return [
+          { code: 'ST-FRAME', name: '스탠드 프레임', quantity: 4 * qty, unit: '개', unitPrice: 15000 },
+          { code: 'ST-SHELF', name: '스탠드 선반', quantity: levelCount * qty, unit: '개', unitPrice: 8000 },
+          { code: 'ST-BOLT', name: '스탠드 볼트세트', quantity: 1 * qty, unit: '세트', unitPrice: 5000 }
+        ];
+      case '하이랙':
+        return is700kg ? [
           { code: 'HR-FRAME-700', name: '하이랙 프레임(700kg)', quantity: 2 * qty, unit: '개', unitPrice: 30000 },
           { code: 'HR-BEAM-700', name: '하이랙 빔(700kg)', quantity: levelCount * 2 * qty, unit: '개', unitPrice: 12000 },
           { code: 'HR-PIN', name: '하이랙 안전핀', quantity: levelCount * 4 * qty, unit: '개', unitPrice: 2000 }
-        ];
-      } else {
-        return [
+        ] : [
           { code: 'HR-FRAME', name: '하이랙 프레임', quantity: 4 * qty, unit: '개', unitPrice: 25000 },
           { code: 'HR-SHELF', name: '하이랙 선반', quantity: levelCount * qty, unit: '개', unitPrice: 10000 },
           { code: 'HR-BEAM', name: '하이랙 빔', quantity: levelCount * 2 * qty, unit: '개', unitPrice: 8000 },
           { code: 'HR-PIN', name: '하이랙 안전핀', quantity: levelCount * 4 * qty, unit: '개', unitPrice: 2000 }
         ];
-      }
+      default:
+        return [];
     }
-
-    return [];
   };
 
-  // 상태 업데이트 효과
+  // 상태 업데이트
   useEffect(() => {
     setCurrentPrice(calculatePrice());
     setCurrentBOM(calculateCurrentBOM());
@@ -233,66 +216,51 @@ export const ProductProvider = ({ children }) => {
     setCartBOM(calculateCartBOM());
   }, [cart, calculateCartBOM]);
 
-  // 장바구니 추가 함수
+  // 장바구니 추가
   const addToCart = () => {
     if (!selectedType || !selectedOptions) return;
-
-    const newItem = {
+    setCart([...cart, {
       type: selectedType,
       options: { ...selectedOptions },
       quantity,
       price: currentPrice,
       bom: calculateCurrentBOM()
-    };
-
-    setCart([...cart, newItem]);
+    }]);
   };
 
   // 컨텍스트 값
-  const contextValue = {
-    // 상태
-    allOptions,
-    availableOptions,
-    filteredOptions,
-    selectedType,
-    selectedOptions,
-    quantity,
-    applyRate,
-    customPrice,
-    isCustomPrice,
-    currentPrice,
-    currentBOM,
-    cart,
-    cartBOM,
-    loading,
-
-    // 핸들러
-    setSelectedType,
-    handleOptionChange: (key, value) => {
-      setSelectedOptions(prev => {
-        const newOptions = { ...prev, [key]: value };
-        
-        // 종속성 처리
-        if (key === 'size') {
-          delete newOptions.height;
-          delete newOptions.level;
-        } else if (key === 'height') {
-          delete newOptions.level;
-        }
-        
-        return newOptions;
-      });
-    },
-    setQuantity,
-    setApplyRate,
-    setCustomPrice,
-    setIsCustomPrice,
-    addToCart,
-    safePrice: (price) => Math.round(price).toLocaleString()
-  };
-
   return (
-    <ProductContext.Provider value={contextValue}>
+    <ProductContext.Provider value={{
+      allOptions,
+      availableOptions,
+      filteredOptions,
+      selectedType,
+      selectedOptions,
+      quantity,
+      applyRate,
+      customPrice,
+      isCustomPrice,
+      currentPrice,
+      currentBOM,
+      cart,
+      cartBOM,
+      loading,
+      setSelectedType,
+      handleOptionChange: (key, value) => {
+        setSelectedOptions(prev => ({
+          ...prev,
+          [key]: value,
+          ...(key === 'size' && { height: undefined, level: undefined }),
+          ...(key === 'height' && { level: undefined })
+        }));
+      },
+      setQuantity,
+      setApplyRate,
+      setCustomPrice,
+      setIsCustomPrice,
+      addToCart,
+      safePrice: (price) => Math.round(price).toLocaleString()
+    }}>
       {children}
     </ProductContext.Provider>
   );
