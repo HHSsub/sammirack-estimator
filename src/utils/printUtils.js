@@ -3,30 +3,30 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const estimateNumber = `EST-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
 
-  const items = cart.map((cartItem, index) => {
-    const { type, options } = cartItem;
+  const items = (cart || []).map(cartItem => {
+    const { type, options, quantity, price } = cartItem;
 
-    // 제품명 생성
+    // 제품명 생성 (type + version/color)
     let productName = type || '';
-    if (options.version) productName += ` (${options.version})`;
-    if (options.color) productName += ` (${options.color})`;
+    if (options?.version) productName += ` (${options.version})`;
+    if (options?.color)   productName += ` (${options.color})`;
 
-    // 규격 생성
+    // 규격
     let specification = '';
-    if (options.size) specification += options.size;
-    if (options.height) specification += ` × ${options.height}`;
-    if (options.level) specification += ` × ${options.level}`;
+    if (options?.size)   specification += options.size;
+    if (options?.height) specification += ` × ${options.height}`;
+    if (options?.level)  specification += ` × ${options.level}`;
 
-    const quantity = cartItem.quantity || 1;
-    const unitPrice = quantity ? Math.floor(cartItem.price / quantity) : 0;
+    const qty = quantity ?? 1;
+    const unitPrice = qty > 0 ? Math.floor(price / qty) : 0;
 
     return {
       name: productName,
-      specification,
+      specification: specification,
       unit: 'set',
-      quantity,
-      unitPrice,
-      totalPrice: cartItem.price,
+      quantity: qty,
+      unitPrice: unitPrice,
+      totalPrice: price,
       note: ''
     };
   });
@@ -36,7 +36,7 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   const totalAmount = subtotal + tax;
 
   return {
-    date: currentDate,
+    date: formData?.date || currentDate,
     estimateNumber,
     companyName: formData?.companyName || '',
     contactPerson: formData?.contactPerson || '',
@@ -55,28 +55,28 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
   const currentDate = new Date().toISOString().split('T')[0];
   const orderNumber = formData?.orderNumber || `PO-${currentDate.replace(/-/g, '')}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
 
-  const items = cart.map((cartItem, index) => {
-    const { type, options } = cartItem;
+  const items = (cart || []).map(cartItem => {
+    const { type, options, quantity, price } = cartItem;
 
     let productName = type || '';
-    if (options.version) productName += ` (${options.version})`;
-    if (options.color) productName += ` (${options.color})`;
+    if (options?.version) productName += ` (${options.version})`;
+    if (options?.color)   productName += ` (${options.color})`;
 
     let specification = '';
-    if (options.size) specification += options.size;
-    if (options.height) specification += ` × ${options.height}`;
-    if (options.level) specification += ` × ${options.level}`;
+    if (options?.size)   specification += options.size;
+    if (options?.height) specification += ` × ${options.height}`;
+    if (options?.level)  specification += ` × ${options.level}`;
 
-    const quantity = cartItem.quantity || 1;
-    const unitPrice = quantity ? Math.floor(cartItem.price / quantity) : 0;
+    const qty = quantity ?? 1;
+    const unitPrice = qty > 0 ? Math.floor(price / qty) : 0;
 
     return {
       name: productName,
-      specification,
+      specification: specification,
       unit: 'set',
-      quantity,
-      unitPrice,
-      totalPrice: cartItem.price,
+      quantity: qty,
+      unitPrice: unitPrice,
+      totalPrice: price,
       note: ''
     };
   });
@@ -116,9 +116,7 @@ export const navigateToPrintPage = (type, data, navigate) => {
   try {
     const encodedData = encodeURIComponent(JSON.stringify(data));
     const printUrl = `/print?type=${type}&data=${encodedData}`;
-
     const openInNewWindow = false;
-
     if (openInNewWindow) {
       const printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
       if (!printWindow) {
