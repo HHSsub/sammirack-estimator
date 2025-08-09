@@ -39,37 +39,34 @@ function App() {
 }
 
 const HomePage = () => {
-  const { currentPrice, currentBom, addToCart, cart, cartTotal } = useProducts();
+  const { currentPrice, currentBOM, addToCart, cart, cartTotal } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(false);
   const [showTotalBOM, setShowTotalBOM] = useState(false);
 
   const canAddItem = currentPrice > 0;
   const canProceed = cart.length > 0;
 
-  // 장바구니 전체의 BOM을 합산하는 로직
+  // 전체 BOM 합산 – 방어코드 적용
   const totalBom = cart.reduce((acc, item) => {
-    item.bom.forEach(bomItem => {
-      const key = getKoreanName(bomItem);
-      if (acc[key]) {
-        acc[key] += bomItem.quantity;
-      } else {
-        acc[key] = bomItem.quantity;
-      }
-    });
+    if (Array.isArray(item.bom)) {
+      item.bom.forEach(bomItem => {
+        const key = getKoreanName(bomItem);
+        if (acc[key]) acc[key] += bomItem.quantity;
+        else acc[key] = bomItem.quantity;
+      });
+    }
     return acc;
   }, {});
 
-  // 합산된 BOM을 BOMDisplay가 이해하는 형태로 변환
   const totalBomForDisplay = Object.entries(totalBom).map(([name, quantity]) => ({
-    name, // getKoreanName이 이미 적용된 이름
-    quantity,
+    name, quantity
   }));
 
   return (
     <div className="app-container">
       <h2>랙 제품 견적</h2>
       <OptionSelector />
-      
+
       <div className="price-display">
         <h3>현재 항목 예상 가격</h3>
         <p className="price">{currentPrice.toLocaleString()}원</p>
@@ -84,13 +81,12 @@ const HomePage = () => {
         </button>
       </div>
 
-      {showCurrentBOM && <BOMDisplay bom={currentBom} title="현재 항목 부품 목록 (BOM)" />}
-
+      {showCurrentBOM && <BOMDisplay bom={currentBOM} title="현재 항목 부품 목록 (BOM)" />}
       <CartDisplay />
 
       {canProceed && (
         <div className="action-buttons mt-4">
-           <button onClick={() => setShowTotalBOM(!showTotalBOM)}>
+          <button onClick={() => setShowTotalBOM(!showTotalBOM)}>
             {showTotalBOM ? '전체 BOM 숨기기' : '전체 BOM 보기'}
           </button>
           <Link to="/estimate/new" state={{ cart, cartTotal, totalBom: totalBomForDisplay }} className={`create-estimate-button ${!canProceed && 'disabled'}`}>
