@@ -12,19 +12,30 @@ export const ProductProvider = ({ children }) => {
   const [price, setPrice] = useState(0);
   const [data, setData] = useState(null);
   const [bomData, setBomData] = useState(null);
-  const [currentBOM, setCurrentBOM] = useState(null);
 
-  // JSON 데이터 로드
+  // JSON 데이터 로드 (public/data/ 경로에서 직접 로드)
   useEffect(() => {
-    fetch('./data.json')
-      .then(res => res.json())
-      .then(setData)
-      .catch(console.error);
+    const loadData = async () => {
+      try {
+        const [dataRes, bomDataRes] = await Promise.all([
+          fetch('/data/data.json'),
+          fetch('/data/bom_data.json')
+        ]);
+        
+        const [dataJson, bomDataJson] = await Promise.all([
+          dataRes.json(),
+          bomDataRes.json()
+        ]);
 
-    fetch('./bom_data.json')
-      .then(res => res.json())
-      .then(setBomData)
-      .catch(console.error);
+        setData(dataJson);
+        setBomData(bomDataJson);
+        window.bomData = bomDataJson; // BOMCalculator에서 접근 가능하도록 전역 설정
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+      }
+    };
+
+    loadData();
   }, []);
 
   // 옵션 필터링
@@ -147,7 +158,6 @@ export const ProductProvider = ({ children }) => {
         setCustomPrice,
         applyRate,
         setApplyRate,
-        currentBOM,
         bomData
       }}
     >
