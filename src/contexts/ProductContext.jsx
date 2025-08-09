@@ -8,43 +8,43 @@ const heightToBom = h => h ? (h.startsWith('H') ? h : 'H' + h) : '';
 const levelToBom = l => l ? (l.startsWith('L') ? l : 'L' + l.replace('단', '')) : '';
 
 export const ProductProvider = ({ children }) => {
-  const [data,setData] = useState(null);
-  const [bomData,setBomData] = useState(null);
-  const [loading,setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [bomData, setBomData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [selectedType,setSelectedType] = useState('');
-  const [selectedOptions,setSelectedOptions] = useState({});
-  const [quantity,setQuantity] = useState(1);
+  const [selectedType, setSelectedType] = useState('');
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [quantity, setQuantity] = useState(1);
 
-  const [allOptions,setAllOptions] = useState({ types: [] });
-  const [availableOptions,setAvailableOptions] = useState({});
+  const [allOptions, setAllOptions] = useState({ types: [] });
+  const [availableOptions, setAvailableOptions] = useState({});
 
-  const [currentPrice,setCurrentPrice] = useState(0);
-  const [currentBOM,setCurrentBOM] = useState([]);
+  const [currentPrice, setCurrentPrice] = useState(0);
+  const [currentBOM, setCurrentBOM] = useState([]);
 
-  const [cart,setCart] = useState([]);
-  const [cartBOM,setCartBOM] = useState([]);
+  const [cart, setCart] = useState([]);
+  const [cartBOM, setCartBOM] = useState([]);
+  const [cartTotal, setCartTotal] = useState(0); // 총합계
 
-  const [applyRate,setApplyRate] = useState(100);
-  const [customPrice,setCustomPrice] = useState(0);
-  const [isCustomPrice,setIsCustomPrice] = useState(false);
+  const [applyRate, setApplyRate] = useState(100);
+  const [customPrice, setCustomPrice] = useState(0);
+  const [isCustomPrice, setIsCustomPrice] = useState(false);
 
   // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [d,b] = await Promise.all([
+        const [dRes, bRes] = await Promise.all([
           fetch('./data.json'),
           fetch('./bom_data.json')
         ]);
-        const dj = await d.json();
-        const bj = await b.json();
+        const dj = await dRes.json();
+        const bj = await bRes.json();
         setData(dj);
         setBomData(bj);
         setAllOptions({ types: Object.keys(dj) });
-      } catch(e) {
-        console.error(e);
+      } catch (err) {
         setData({});
         setBomData({});
       } finally {
@@ -52,7 +52,7 @@ export const ProductProvider = ({ children }) => {
       }
     };
     fetchData();
-  },[]);
+  }, []);
 
   // 옵션 세팅
   useEffect(() => {
@@ -95,13 +95,13 @@ export const ProductProvider = ({ children }) => {
       }
     }
     setAvailableOptions(opts);
-  },[selectedType,selectedOptions,data]);
+  }, [selectedType, selectedOptions, data]);
 
   // 가격 계산
   const calculatePrice = useCallback(() => {
     if (!selectedType || !selectedOptions || !quantity) return 0;
     if (isCustomPrice) {
-      return Math.round(customPrice * quantity * (applyRate/100));
+      return Math.round(customPrice * quantity * (applyRate / 100));
     }
     let price = 0;
     if (formTypeRacks.includes(selectedType)) {
@@ -112,26 +112,23 @@ export const ProductProvider = ({ children }) => {
       const bomPrice = bomData?.[selectedType]?.[size]?.[height]?.[level]?.[formType]?.total_price;
       if (bomPrice) price = bomPrice * quantity;
       else {
-        const base = data?.[selectedType]?.['기본가격']?.[formType]
-          ?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-        if (base) price = base * quantity;
+        const basePrice = data?.[selectedType]?.['기본가격']?.[formType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+        if (basePrice) price = basePrice * quantity;
       }
-      return Math.round(price * (applyRate/100));
+      return Math.round(price * (applyRate / 100));
     }
     if (selectedType === '스텐랙') {
-      const base = data?.스텐랙?.['기본가격']?.[selectedOptions.size]
-        ?.[selectedOptions.height]?.[selectedOptions.level];
-      if (base) price = base * quantity;
-      return Math.round(price * (applyRate/100));
+      const basePrice = data?.스텐랙?.['기본가격']?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      price = basePrice ? basePrice * quantity : 0;
+      return Math.round(price * (applyRate / 100));
     }
     if (selectedType === '하이랙') {
-      const base = data?.하이랙?.['기본가격']?.[selectedOptions.color]
-        ?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-      if (base) price = base * quantity;
-      return Math.round(price * (applyRate/100));
+      const basePrice = data?.하이랙?.['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      price = basePrice ? basePrice * quantity : 0;
+      return Math.round(price * (applyRate / 100));
     }
     return 0;
-  },[selectedType,selectedOptions,quantity,isCustomPrice,customPrice,applyRate,data,bomData]);
+  }, [selectedType, selectedOptions, quantity, isCustomPrice, customPrice, applyRate, data, bomData]);
 
   // 현재 BOM 계산
   const calculateCurrentBOM = useCallback(() => {
@@ -152,24 +149,24 @@ export const ProductProvider = ({ children }) => {
       }
       return [];
     }
-    let levelCount = parseInt((selectedOptions.level || '').replace('단','')) || 0;
+    let levelCount = parseInt((selectedOptions.level || '').replace('단', '')) || 0;
     if (selectedType === '스텐랙') {
       return [
-        { name: '기둥 4개', quantity: 4*quantity },
-        { name: `선반 ${levelCount}개`, quantity: levelCount*quantity },
-        { name: '고정볼트세트', quantity: 1*quantity }
+        { name: '기둥 4개', quantity: 4 * quantity },
+        { name: `선반 ${levelCount}개`, quantity: levelCount * quantity },
+        { name: '고정볼트세트', quantity: 1 * quantity }
       ];
     }
     if (selectedType === '하이랙') {
       return [
-        { name: '기둥 4개', quantity: 4*quantity },
-        { name: '가로대', quantity: levelCount*quantity },
-        { name: '선반', quantity: levelCount*quantity },
-        { name: '고정볼트세트', quantity: 1*quantity }
+        { name: '기둥 4개', quantity: 4 * quantity },
+        { name: '가로대', quantity: levelCount * quantity },
+        { name: '선반', quantity: levelCount * quantity },
+        { name: '고정볼트세트', quantity: 1 * quantity }
       ];
     }
     return [];
-  },[selectedType,selectedOptions,quantity,bomData,data]);
+  }, [selectedType, selectedOptions, quantity, bomData, data]);
 
   // 전체 BOM
   const calculateCartBOM = useCallback(() => {
@@ -195,30 +192,34 @@ export const ProductProvider = ({ children }) => {
             }));
           }
         }
-      } catch(e) {
+      } catch (e) {
         console.error(e);
       }
       if (Array.isArray(components)) {
         components.forEach(c => {
           const key = c.name;
           if (bomMap[key]) bomMap[key].quantity += c.quantity;
-          else bomMap[key] = {...c};
+          else bomMap[key] = { ...c };
         });
       }
     });
     return Object.values(bomMap);
-  },[cart,bomData]);
+  }, [cart, bomData]);
 
+  // cartTotal 계산
   useEffect(() => {
     setCurrentPrice(calculatePrice());
     setCurrentBOM(calculateCurrentBOM());
-  },[calculatePrice,calculateCurrentBOM]);
+  }, [calculatePrice, calculateCurrentBOM]);
 
   useEffect(() => {
     setCartBOM(calculateCartBOM());
-  },[cart,calculateCartBOM]);
+    // cart 총합계
+    setCartTotal(cart.reduce((sum, item) => sum + (item.price || 0), 0));
+  }, [cart, calculateCartBOM]);
 
-  const handleOptionChange = (key,value) => {
+  // 항목 옵션변경
+  const handleOptionChange = (key, value) => {
     if (key === 'type') {
       setSelectedType(value);
       setSelectedOptions(value === '스텐랙' ? { version: 'V1' } : {});
@@ -227,29 +228,51 @@ export const ProductProvider = ({ children }) => {
     setSelectedOptions(prev => ({
       ...prev,
       [key]: value,
-      ...(key==='color' && {size: undefined, height: undefined, level: undefined}),
-      ...(key==='formType' && {size: undefined, height: undefined, level: undefined}),
-      ...(key==='size' && {height: undefined, level: undefined}),
-      ...(key==='height' && {level: undefined})
+      ...(key === 'color' && { size: undefined, height: undefined, level: undefined }),
+      ...(key === 'formType' && { size: undefined, height: undefined, level: undefined }),
+      ...(key === 'size' && { height: undefined, level: undefined }),
+      ...(key === 'height' && { level: undefined })
     }));
   };
 
-  // addToCart에서 BOM 저장
+  // displayName 생성 함수 (카트 정보 표시용)
+  const makeDisplayName = (type, options, quantity) =>
+    [
+      type,
+      options.formType,
+      options.size,
+      options.height,
+      options.level
+    ].filter(Boolean).join(' ') + ` x ${quantity}개`;
+
+  // 고유 id 생성기
+  function generateId() {
+    return `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+  }
+
+  // 장바구니 추가
   const addToCart = () => {
     if (!selectedType || !selectedOptions) return;
     setCart(prev => [
       ...prev,
       {
+        id: generateId(), // 고유 id로 삭제 가능!
         type: selectedType,
         options: { ...selectedOptions },
         quantity,
         price: currentPrice,
-        bom: currentBOM
+        bom: currentBOM,
+        displayName: makeDisplayName(selectedType, selectedOptions, quantity)
       }
     ]);
   };
 
-  const safePrice = price => Math.round(price).toLocaleString();
+  // 장바구니에서 삭제
+  const removeFromCart = (id) => {
+    setCart(prev => prev.filter(item => item.id !== id));
+  };
+
+  const safePrice = value => typeof value === 'number' && !isNaN(value) ? value : 0;
 
   return (
     <ProductContext.Provider value={{
@@ -261,7 +284,8 @@ export const ProductProvider = ({ children }) => {
       customPrice, setCustomPrice,
       isCustomPrice, setIsCustomPrice,
       currentPrice, currentBOM,
-      cart, cartBOM,
+      cart, setCart, removeFromCart, cartTotal,
+      cartBOM,
       loading,
       addToCart, safePrice
     }}>
