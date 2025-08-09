@@ -112,7 +112,8 @@ export const ProductProvider = ({ children }) => {
       }
     }
     setAvailableOptions(opts);
-    console.log('[DEBUG] availableOptions:', opts);
+    // 디버깅: 옵션 세팅 로그
+    // console.log('[DEBUG] availableOptions:', opts);
   }, [selectedType, selectedOptions, data]);
 
   // 가격 계산
@@ -162,6 +163,7 @@ export const ProductProvider = ({ children }) => {
           name: c.name,
           quantity: c.quantity * quantity,
           unitPrice: c.unit_price,
+          unit: c.unit ?? '', // 혹시 단위 없을 때 방어
         }));
       }
       return [];
@@ -185,50 +187,55 @@ export const ProductProvider = ({ children }) => {
     return [];
   }, [selectedType, selectedOptions, quantity, bomData, data]);
 
-  // 장바구니 BOM
+  // 장바구니 BOM (전체 BOM 보기용)
   const calculateCartBOM = useCallback(() => {
-    const bom = cart.flatMap(item => {
+    if (!cart || !bomData) return [];
+    const bomMap = {};
+    cart.forEach(item => {
+      let components = [];
       if (formTypeRacks.includes(item.type)) {
         const size = sizeToBom(item.options.size);
         const height = heightToBom(item.options.height);
         const level = levelToBom(item.options.level);
         const formType = item.options.formType;
-        const found =
-          bomData?.[item.type]?.[size]?.[height]?.[level]?.[formType];
-        if (found && found.components) {
-          return found.components.map(c => ({
+        const found = bomData?.[item.type]?.[size]?.[height]?.[level]?.[formType];
+        if (found && Array.isArray(found.components)) {
+          components = found.components.map(c => ({
             name: c.name,
-            quantity: c.quantity * item.quantity,
+            unit: c.unit ?? '',
             unitPrice: c.unit_price,
+            quantity: c.quantity * item.quantity,
           }));
-          } else {
-          // 경고 로그 추가 (디버깅용)
-          console.warn('BOM 데이터 누락:', item);
-          return [];
-          }
         }
-        return [];
+      } else if (item.type === '스텐랙' || item.type === '하이랙') {
+        let levelCount = parseInt((item.options.level || '').replace('단', '')) || 0;
+        if (item.type === '스텐랙') {
+          components = [
+            { name: '기둥 4개', quantity: 4 * item.quantity },
+            { name: `선반 ${levelCount}개`, quantity: levelCount * item.quantity },
+            { name: '고정볼트세트', quantity: 1 * item.quantity },
+          ];
+        } else if (item.type === '하이랙') {
+          components = [
+            { name: '기둥 4개', quantity: 4 * item.quantity },
+            { name: '가로대', quantity: levelCount * item.quantity },
+            { name: '선반', quantity: levelCount * item.quantity },
+            { name: '고정볼트세트', quantity: 1 * item.quantity },
+          ];
+        }
       }
-      let levelCount =
-        parseInt((item.options.level || '').replace('단', '')) || 0;
-      if (item.type === '스텐랙') {
-        return [
-          { name: '기둥 4개', quantity: 4 * item.quantity },
-          { name: `선반 ${levelCount}개`, quantity: levelCount * item.quantity },
-          { name: '고정볼트세트', quantity: 1 * item.quantity },
-        ];
-      }
-      if (item.type === '하이랙') {
-        return [
-          { name: '기둥 4개', quantity: 4 * item.quantity },
-          { name: '가로대', quantity: levelCount * item.quantity },
-          { name: '선반', quantity: levelCount * item.quantity },
-          { name: '고정볼트세트', quantity: 1 * item.quantity },
-        ];
-      }
-      return [];
+      // BOM 항목 누적 합산
+      components.forEach(c => {
+        const key = `${c.name}`;
+        if (bomMap[key]) {
+          bomMap[key].quantity += c.quantity;
+        } else {
+          bomMap[key] = { ...c };
+        }
+      });
     });
-    return bom;
+    // object → array
+    return Object.values(bomMap);
   }, [cart, bomData]);
 
   // 상태 업데이트
@@ -240,10 +247,10 @@ export const ProductProvider = ({ children }) => {
     setCartBOM(calculateCartBOM());
   }, [cart, calculateCartBOM]);
 
-  // 옵션 변경 핸들러 ★ 수정 포인트
+  // 옵션 변경 핸들러
   const handleOptionChange = (key, value) => {
     if (key === 'type') {
-      setSelectedType(value); // <-- type state 직접 갱신
+      setSelectedType(value); // <-- 랙 종류 변경
       setSelectedOptions(value === '스텐랙' ? { version: 'V1' } : {});
       return;
     }
@@ -258,7 +265,6 @@ export const ProductProvider = ({ children }) => {
   // 장바구니 추가
   const addToCart = () => {
     if (!selectedType || !selectedOptions) return;
-    const bomComponents = calculateCurrentBOM(); // 현재 BOM 계산
     setCart(prev => [
       ...prev,
       {
@@ -266,7 +272,6 @@ export const ProductProvider = ({ children }) => {
         options: { ...selectedOptions },
         quantity,
         price: currentPrice,
-        bom: bomComponents,  // 추가
       }
     ]);
   };
