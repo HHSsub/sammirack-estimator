@@ -2,9 +2,9 @@ import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
 function CartDisplay() {
-  const { cart, removeFromCart, cartTotal } = useProducts();
+  const { cart, removeFromCart, updateCartQuantity, cartTotal } = useProducts();
 
-  const safePrice = (value) =>
+  const safePrice = value =>
     typeof value === 'number' && !isNaN(value) ? value.toLocaleString() : '0';
 
   if (!Array.isArray(cart) || cart.length === 0)
@@ -22,6 +22,7 @@ function CartDisplay() {
         <thead>
           <tr>
             <th className="border-b p-2">항목</th>
+            <th className="border-b p-2 text-center">수량</th>
             <th className="border-b p-2 text-right">금액</th>
             <th className="border-b p-2"></th>
           </tr>
@@ -31,6 +32,18 @@ function CartDisplay() {
             <tr key={item.id}>
               <td className="border-b p-2">
                 {item.displayName}
+              </td>
+              <td className="border-b p-2 text-center">
+                <input
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  style={{ width: 50 }}
+                  onChange={e =>
+                    updateCartQuantity(item.id, Math.max(1, Number(e.target.value)))
+                  }
+                />
+                개
               </td>
               <td className="border-b p-2 text-right">
                 {safePrice(item.price)}원
@@ -48,7 +61,7 @@ function CartDisplay() {
         </tbody>
         <tfoot>
           <tr>
-            <td className="p-2 font-bold">총 합계</td>
+            <td className="p-2 font-bold" colSpan={2}>총 합계</td>
             <td className="p-2 text-right font-bold">
               {safePrice(cartTotal)}원
             </td>
