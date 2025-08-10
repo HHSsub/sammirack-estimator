@@ -7,17 +7,18 @@ function CartDisplay() {
   const safePrice = value =>
     typeof value === 'number' && !isNaN(value) ? value.toLocaleString() : '0';
 
-  if (!Array.isArray(cart) || cart.length === 0)
+  if (!Array.isArray(cart) || cart.length === 0) {
     return (
       <div className="cart-section mt-6">
         <h3 className="text-xl font-semibold mb-2">견적 목록</h3>
-        <div>장바구니가 비어 있습니다.</div>
+        <div>목록이 비어 있습니다.</div>
       </div>
     );
+  }
 
   return (
     <div className="cart-section mt-6">
-      <h3 className="text-xl font-semibold mb-2">견적 목록</h3>
+      <h3 className="text-xl font-semibold mb-3">견적 목록</h3>
       <table className="w-full text-left border-collapse">
         <thead>
           <tr>
@@ -28,11 +29,9 @@ function CartDisplay() {
           </tr>
         </thead>
         <tbody>
-          {cart.map((item) => (
+          {cart.map(item => (
             <tr key={item.id}>
-              <td className="border-b p-2">
-                {item.displayName}
-              </td>
+              <td className="border-b p-2">{item.displayName}</td>
               <td className="border-b p-2 text-center">
                 <input
                   type="number"
@@ -42,8 +41,7 @@ function CartDisplay() {
                   onChange={e =>
                     updateCartQuantity(item.id, Math.max(1, Number(e.target.value)))
                   }
-                />
-                개
+                /> 개
               </td>
               <td className="border-b p-2 text-right">
                 {safePrice(item.price)}원
@@ -51,7 +49,7 @@ function CartDisplay() {
               <td className="border-b p-2 text-center">
                 <button
                   onClick={() => removeFromCart(item.id)}
-                  className="text-red-500"
+                  className="text-red-500 hover:underline"
                 >
                   삭제
                 </button>
@@ -61,7 +59,9 @@ function CartDisplay() {
         </tbody>
         <tfoot>
           <tr>
-            <td className="p-2 font-bold" colSpan={2}>총 합계</td>
+            <td className="p-2 font-bold" colSpan={2}>
+              총 합계
+            </td>
             <td className="p-2 text-right font-bold">
               {safePrice(cartTotal)}원
             </td>
