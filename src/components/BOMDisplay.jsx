@@ -23,7 +23,7 @@ function BOMDisplay({ bom, title, onQuantityChange }) {
           {bom.map((item, idx) => (
             <tr key={idx}>
               <td className="border-b p-2">
-                {item.rackType || ''} {item.size || ''} {item.name}
+                {item.rackType} {item.size} {item.name}
               </td>
               <td className="border-b p-2 text-center">
                 <input
@@ -31,13 +31,8 @@ function BOMDisplay({ bom, title, onQuantityChange }) {
                   min={0}
                   value={item.quantity}
                   style={{ width: 50 }}
-                  onChange={e =>
-                    onQuantityChange
-                      ? onQuantityChange(idx, Math.max(0, Number(e.target.value)))
-                      : undefined
-                  }
-                />
-                개
+                  onChange={e => onQuantityChange && onQuantityChange(idx, Math.max(0, Number(e.target.value)))}
+                /> 개
               </td>
             </tr>
           ))}
@@ -46,5 +41,4 @@ function BOMDisplay({ bom, title, onQuantityChange }) {
     </div>
   );
 }
-
 export default BOMDisplay;
