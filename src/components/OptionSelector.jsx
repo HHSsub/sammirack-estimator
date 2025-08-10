@@ -11,8 +11,8 @@ export default function OptionSelector() {
     extraProducts, customMaterialName, setCustomMaterialName,
     customMaterialPrice, setCustomMaterialPrice,
     quantity, setQuantity, applyRate, setApplyRate,
-    customPrice, setCustomPrice, isCustomPrice,
-    currentPrice, addToCart, loading
+    customPrice, setCustomPrice, currentPrice,
+    addToCart, loading
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
@@ -48,19 +48,14 @@ export default function OptionSelector() {
   };
 
   let extraCatList = [];
-  if (extraProducts[selectedType]) {
-    extraCatList = Object.entries(extraProducts[selectedType]);
-  }
-
+  if (extraProducts[selectedType]) extraCatList = Object.entries(extraProducts[selectedType]);
   const toggleExtra = id => {
-    if (extraOptions.includes(id)) {
-      handleExtraOptionChange(extraOptions.filter(e => e !== id));
-    } else {
-      handleExtraOptionChange([...extraOptions, id]);
-    }
+    if (extraOptions.includes(id)) handleExtraOptionChange(extraOptions.filter(e => e !== id));
+    else handleExtraOptionChange([...extraOptions, id]);
   };
 
   if (loading) return <div>데이터 로드 중...</div>;
+  const canAddItem = customPrice > 0 || currentPrice > 0;
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
@@ -72,7 +67,6 @@ export default function OptionSelector() {
             {allOptions.types.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
-
         {formTypeRacks.includes(selectedType) && <>
           {renderOptionSelect('size', '규격')}
           {renderOptionSelect('height', '높이', !!selectedOptions.size)}
@@ -90,18 +84,16 @@ export default function OptionSelector() {
           {renderOptionSelect('height', '높이', !!selectedOptions.size)}
           {renderOptionSelect('level', '단수', !!selectedOptions.size && !!selectedOptions.height)}
         </>}
-
         <div><label>수량</label><input type="number" min={0} value={quantity} onChange={e => setQuantity(Math.max(0, Number(e.target.value)))} /></div>
         <div><label>적용률(%)</label><input value={applyRateInput} onChange={onApplyRateChange} maxLength={3} /></div>
         <div><label>가격 직접입력</label><input type="number" value={customPrice} onChange={e => setCustomPrice(Number(e.target.value) || 0)} /></div>
       </div>
-
       {extraCatList.length > 0 && (
         <>
           <button onClick={() => setExtraOpen(o => !o)}>{extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}</button>
           {extraOpen && extraCatList.map(([cat, arr]) => (
             <div key={cat}>
-              <div>{cat}</div>
+              <div style={{fontWeight:600}}>{cat}</div>
               {arr.map(opt => {
                 const checked = extraOptions.includes(opt.id);
                 return (
@@ -123,11 +115,9 @@ export default function OptionSelector() {
           ))}
         </>
       )}
-
       <div style={{ marginTop: 12 }}>
-        <span>계산 가격: {currentPrice.toLocaleString()}원</span>
-        {isCustomPrice && <span>* 수동 입력</span>}
-        <button onClick={addToCart} disabled={!selectedType}>목록 추가</button>
+        <span>계산 가격: {customPrice > 0 ? customPrice.toLocaleString() : currentPrice.toLocaleString()}원</span>
+        <button onClick={addToCart} disabled={!canAddItem}>목록 추가</button>
       </div>
     </div>
   );
