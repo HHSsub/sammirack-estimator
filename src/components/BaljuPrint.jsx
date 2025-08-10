@@ -1,11 +1,16 @@
 import React from 'react';
 import stampImage from '/public/images/도장.png';
 
+// 무게명칭 변환
+function kgLabelFix(str) {
+  if (!str) return '';
+  return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
+}
+
 const BaljuPrint = ({ data }) => {
   const itemData = data?.items || [];
   const materialDataRaw = data?.materials || [];
 
-  // 가격정보 보강
   const materialData = materialDataRaw.map(mat => ({
     ...mat,
     unitPrice: mat.unitPrice ?? mat.unit_price ?? 0,
@@ -15,7 +20,6 @@ const BaljuPrint = ({ data }) => {
       (mat.unitPrice ?? mat.unit_price ?? 0) * (mat.quantity ?? 0)
   }));
 
-  // 품목 8행 고정
   const filledItemRows = [
     ...itemData,
     ...Array.from({ length: Math.max(0, 8 - itemData.length) }, () => ({
@@ -29,7 +33,6 @@ const BaljuPrint = ({ data }) => {
     }))
   ];
 
-  // 원자재 30행 고정
   const filledMaterialRows = [
     ...materialData,
     ...Array.from({ length: Math.max(0, 30 - materialData.length) }, () => ({
@@ -44,16 +47,12 @@ const BaljuPrint = ({ data }) => {
 
   return (
     <div className="print-container balju-print print-only">
-
-      {/* ===== 헤더 ===== */}
       <div className="print-preview-notice">
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
       <div className="print-header">
         <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
         <img className="stamp" src={stampImage} alt="도장" />
-
-        {/* 발주 정보 */}
         <table className="print-table info-table">
           <tbody>
             <tr>
@@ -103,8 +102,6 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
-
-        {/* ===== 상단: 발주명세 ===== */}
         <h3 style={{ marginTop: '12px', fontWeight: 'bold' }}>발주 명세</h3>
         <table className="print-table order-table">
           <thead>
@@ -123,9 +120,9 @@ const BaljuPrint = ({ data }) => {
             {filledItemRows.map((item, index) => (
               <tr key={index}>
                 <td>{index + 1}</td>
-                <td className="left">{item.name || ''}</td>
-                <td>{item.specification || ''}</td>
-                <td>{item.unit || ''}</td>
+                <td className="left">{kgLabelFix(item.name || '')}</td>
+                <td>{kgLabelFix(item.specification || '')}</td>
+                <td>{kgLabelFix(item.unit || '')}</td>
                 <td className="right">{item.quantity || ''}</td>
                 <td className="right">{item.unitPrice ? Number(item.unitPrice).toLocaleString() : ''}</td>
                 <td className="right">{item.totalPrice ? Number(item.totalPrice).toLocaleString() : ''}</td>
@@ -134,8 +131,6 @@ const BaljuPrint = ({ data }) => {
             ))}
           </tbody>
         </table>
-
-        {/* ===== 하단: 원자재 명세서 ===== */}
         <h3 style={{ marginTop: '24px', fontWeight: 'bold' }}>원자재 명세서</h3>
         <table className="print-table material-table" style={{ width: '100%' }}>
           <thead>
@@ -153,8 +148,8 @@ const BaljuPrint = ({ data }) => {
             {filledMaterialRows.map((row, idx) => (
               <tr key={idx}>
                 <td>{idx + 1}</td>
-                <td style={{ textAlign: 'left' }}>{row.name || ''}</td>
-                <td>{row.specification || ''}</td>
+                <td style={{ textAlign: 'left' }}>{kgLabelFix(row.name || '')}</td>
+                <td>{kgLabelFix(row.specification || '')}</td>
                 <td className="right">{row.quantity || ''}</td>
                 <td className="right">{row.unitPrice ? Number(row.unitPrice).toLocaleString() : ''}</td>
                 <td className="right">{row.totalPrice ? Number(row.totalPrice).toLocaleString() : ''}</td>
@@ -164,8 +159,6 @@ const BaljuPrint = ({ data }) => {
           </tbody>
         </table>
       </div>
-
-      {/* ===== 푸터: 합계 / 비고 / 회사명 ===== */}
       <div className="print-footer">
         <table className="print-table">
           <tbody>
@@ -183,12 +176,11 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
-
         {data?.notes && data.notes.trim() && (
           <div className="print-notes">
-            <strong>비고:</strong> {data.notes}</div>
+            <strong>비고:</strong> {data.notes}
+          </div>
         )}
-
         <div className="print-company">(주)삼미앵글랙산업</div>
       </div>
     </div>
