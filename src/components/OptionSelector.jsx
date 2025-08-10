@@ -3,26 +3,45 @@ import { useProducts } from '../contexts/ProductContext';
 
 const OptionSelector = () => {
   const {
-    allOptions, availableOptions, colorLabelMap,
-    selectedType, selectedOptions,
-    handleOptionChange, quantity, setQuantity,
-    applyRate, setApplyRate, customPrice, setCustomPrice,
-    isCustomPrice, setIsCustomPrice, currentPrice, addToCart, loading
+    allOptions,
+    availableOptions,
+    colorLabelMap,
+    selectedType,
+    selectedOptions,
+    handleOptionChange,
+    quantity,
+    setQuantity,
+    applyRate,
+    setApplyRate,
+    customPrice,
+    setCustomPrice,
+    isCustomPrice,
+    setIsCustomPrice,
+    currentPrice,
+    addToCart,
+    loading
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
-  useEffect(() => { setApplyRateInput(applyRate); }, [applyRate]);
+
+  useEffect(() => {
+    setApplyRateInput(applyRate);
+  }, [applyRate]);
+
   useEffect(() => {
     if (selectedType === '스텐랙' && selectedOptions.version !== 'V1') {
       handleOptionChange('version', 'V1');
     }
   }, [selectedType, selectedOptions, handleOptionChange]);
-  const onApplyRateChange = e => {
+
+  const onApplyRateChange = (e) => {
     const v = e.target.value;
     if (v === '' || /^[0-9]{1,3}$/.test(v)) {
       setApplyRateInput(v);
       const num = Number(v);
-      if (!isNaN(num) && num >= 0 && num <= 200) setApplyRate(num);
+      if (!isNaN(num) && num >= 0 && num <= 200) {
+        setApplyRate(num);
+      }
     }
   };
 
@@ -36,21 +55,37 @@ const OptionSelector = () => {
       version: availableOptions.version || [],
       formType: availableOptions.formType || []
     }[optionName] || [];
+
     if (selectedType === '스텐랙' && optionName === 'version') return null;
     if (!Array.isArray(opts) || opts.length === 0) return null;
 
     return (
-      <div className="option-group" style={{ minWidth: 140 }}>
+      <div className="option-group" style={{ minWidth: 150 }}>
         <label style={{ fontSize: '13px', fontWeight: 500 }}>{label}</label>
         <select
+          style={{
+            minWidth: 150,
+            height: 38,
+            fontSize: 14,
+            lineHeight: 'normal',
+            padding: '6px 8px',
+            boxSizing: 'border-box'
+          }}
           value={optionName === 'type' ? selectedType : (selectedOptions[optionName] || '')}
-          onChange={e => handleOptionChange(optionName, e.target.value)}
+          onChange={(e) => handleOptionChange(optionName, e.target.value)}
           disabled={loading}
-          style={{ minWidth: 110, height: 29 }}
         >
           <option value="">{label} 선택</option>
-          {opts.map(o => (
-            <option key={o} value={o}>
+          {opts.map((o) => (
+            <option
+              key={o}
+              value={o}
+              style={{
+                fontSize: 14,
+                padding: '4px 6px',
+                boxSizing: 'border-box'
+              }}
+            >
               {optionName === 'color' ? (colorLabelMap[o] || o) : o}
             </option>
           ))}
@@ -63,13 +98,14 @@ const OptionSelector = () => {
 
   return (
     <div className="option-selector" style={{ maxWidth: 760, margin: '0 auto' }}>
+      {/* 옵션 선택부: 가로 배치 */}
       <div
         className="options-row"
         style={{
           display: 'flex',
           gap: 18,
           flexWrap: 'wrap',
-          alignItems: 'center',
+          alignItems: 'flex-end',
           marginBottom: 22
         }}
       >
@@ -103,7 +139,7 @@ const OptionSelector = () => {
             type="number"
             min="0"
             value={quantity}
-            onChange={e => setQuantity(Math.max(0, Number(e.target.value)))}
+            onChange={(e) => setQuantity(Math.max(0, Number(e.target.value)))}
             style={{ width: 60 }}
           />
         </div>
@@ -114,7 +150,7 @@ const OptionSelector = () => {
             value={applyRateInput}
             onChange={onApplyRateChange}
             maxLength={3}
-            style={{ width: 45 }}
+            style={{ width: 50 }}
           />
         </div>
         <div className="option-group" style={{ minWidth: 110 }}>
@@ -123,32 +159,23 @@ const OptionSelector = () => {
             type="number"
             min="0"
             value={customPrice}
-            onChange={e => {
+            onChange={(e) => {
               setCustomPrice(Number(e.target.value) || 0);
               setIsCustomPrice(!!e.target.value);
             }}
-            style={{ width: 70 }}
+            style={{ width: 80 }}
           />
         </div>
       </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: 16,
-          gap: 18
-        }}
-      >
+
+      {/* 가격 및 버튼 */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 18 }}>
         <div>
           <h3 style={{ margin: 0, fontWeight: 600, fontSize: '18px' }}>
             계산 가격: {currentPrice.toLocaleString()}원
           </h3>
           {isCustomPrice && (
-            <p style={{
-              color: '#406dc1',
-              fontWeight: 500,
-              margin: 0
-            }}>
+            <p style={{ color: '#406dc1', fontWeight: 500, margin: 0 }}>
               * 수동 입력 가격 적용
             </p>
           )}
@@ -166,7 +193,6 @@ const OptionSelector = () => {
           목록 추가
         </button>
       </div>
-      {/* 아래 BOMDisplay 등은 여기에 포함하지 않음 */}
     </div>
   );
 };
