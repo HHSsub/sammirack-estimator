@@ -83,9 +83,11 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
+    /** 하이랙 안전 접근 + 비표준 level 항상 2~6단 */
     if(selectedType==='하이랙' && data?.하이랙){
       const rd = data['하이랙'];
       const opts = { color: rd['색상'] || [] };
+      const COMMON_LEVELS = ['2단','3단','4단','5단','6단'];
 
       if(selectedOptions.color){
         const sizeListSafe = Object.keys(rd['기본가격']?.[selectedOptions.color] || {});
@@ -96,12 +98,11 @@ export const ProductProvider = ({ children }) => {
             rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size] || {}
           );
           opts.height = [...heightListSafe, ...(extra.height || [])];
-
           if(selectedOptions.height){
             const levelListSafe = Object.keys(
               rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
             );
-            opts.level = [...levelListSafe, ...(extra.level || [])];
+            opts.level = [...new Set([...levelListSafe, ...(extra.level || []), ...COMMON_LEVELS])];
           }
         }
       }
@@ -282,26 +283,6 @@ export const ProductProvider = ({ children }) => {
 
   const removeFromCart = id => setCart(prev=>prev.filter(i=>i.id!==id));
 
-  const updateCurrentBOMQuantity = (idx,newQty) => {
-    setCurrentBOM(b=>{
-      const copy=[...b];
-      copy[idx] = {...copy[idx], quantity:newQty};
-      return copy;
-    });
-  };
-  const updateCartBOMQuantity = (idx,newQty) => {
-    if(!cartBOM[idx])return;
-    const target = cartBOM[idx];
-    setCart(prev=>prev.map(item=>({
-      ...item,
-      bom: item.bom.map(b=>
-        b.rackType===target.rackType && b.size===target.size && b.name===target.name
-          ? {...b, quantity:newQty}
-          : b
-      )
-    })));
-  };
-
   useEffect(()=>{
     setCurrentPrice(calculatePrice());
     setCurrentBOM(customPrice>0 ? getFallbackBOM() : calculateCurrentBOM());
@@ -330,7 +311,6 @@ export const ProductProvider = ({ children }) => {
       customPrice, setCustomPrice,
       currentPrice, currentBOM, cart, cartTotal, cartBOM, loading,
       addToCart, removeFromCart,
-      updateCurrentBOMQuantity, updateCartBOMQuantity,
       extraProducts, customMaterialName, setCustomMaterialName,
       customMaterialPrice, setCustomMaterialPrice
     }}>
