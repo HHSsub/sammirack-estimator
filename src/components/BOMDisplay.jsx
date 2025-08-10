@@ -37,12 +37,11 @@ function BOMDisplay({ bom, title, onQuantityChange }) {
         </thead>
         <tbody>
           {bom.map((item, idx) => (
-            <tr key={idx}>
+            <tr key={item.rackType + '-' + item.size + '-' + item.name}>
               <td style={{
                 borderBottom: '1px solid #e5e3e3', padding: '6px 8px',
                 wordBreak: 'break-all', whiteSpace: 'normal',
               }}>
-                {/* 랙종류, 규격, 부품명 */}
                 {[item.rackType, item.size, item.name].filter(Boolean).join(' ')}
               </td>
               <td style={{ borderBottom: '1px solid #e5e3e3', textAlign: 'center' }}>
