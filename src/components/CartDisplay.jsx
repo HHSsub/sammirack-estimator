@@ -11,7 +11,7 @@ function CartDisplay() {
     return (
       <div className="cart-section mt-6">
         <h3 className="text-xl font-semibold mb-2">견적 목록</h3>
-        <div>목록이 비어 있습니다.</div>
+        <div>장바구니가 비어 있습니다.</div>
       </div>
     );
 
