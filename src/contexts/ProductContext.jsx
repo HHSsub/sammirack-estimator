@@ -204,6 +204,32 @@ export const ProductProvider = ({ children }) => {
     setCart(prev => prev.filter(item => item.id !== id));
   };
 
+  // 💡 수량 수정 핸들러 추가 부분
+  const updateCurrentBOMQuantity = (idx, newQty) => {
+    setCurrentBOM(prev => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], quantity: newQty };
+      return copy;
+    });
+  };
+
+  const updateCartBOMQuantity = (idx, newQty) => {
+    if (!cartBOM[idx]) return;
+    const target = cartBOM[idx];
+    setCart(prev =>
+      prev.map(item => ({
+        ...item,
+        bom: item.bom.map(b =>
+          b.rackType === target.rackType &&
+          b.size === target.size &&
+          b.name === target.name
+            ? { ...b, quantity: newQty }
+            : b
+        ),
+      }))
+    );
+  };
+
   return (
     <ProductContext.Provider value={{
       allOptions, availableOptions, colorLabelMap,
@@ -211,7 +237,8 @@ export const ProductProvider = ({ children }) => {
       quantity, setQuantity, applyRate, setApplyRate,
       customPrice, setCustomPrice, isCustomPrice, setIsCustomPrice,
       currentPrice, currentBOM, cart, cartTotal, cartBOM,
-      loading, addToCart, removeFromCart
+      loading, addToCart, removeFromCart,
+      updateCurrentBOMQuantity, updateCartBOMQuantity
     }}>
       {children}
     </ProductContext.Provider>
