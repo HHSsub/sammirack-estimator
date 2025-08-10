@@ -2,7 +2,6 @@ import React from 'react';
 import stampImage from '/public/images/도장.png';
 
 const BaljuPrint = ({ data }) => {
-  // 발주 품목/원자재 데이터 준비
   const itemData = data?.items || [];
   const materialDataRaw = data?.materials || [];
 
@@ -187,8 +186,7 @@ const BaljuPrint = ({ data }) => {
 
         {data?.notes && data.notes.trim() && (
           <div className="print-notes">
-            <strong>비고:</strong> {data.notes}
-          </div>
+            <strong>비고:</strong> {data.notes}</div>
         )}
 
         <div className="print-company">(주)삼미앵글랙산업</div>
