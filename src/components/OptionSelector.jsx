@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
-const formTypeRacks = ['경량랙','중량랙','파렛트랙'];
+const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
 
 export default function OptionSelector() {
   const {
@@ -20,24 +20,24 @@ export default function OptionSelector() {
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
   const [extraOpen, setExtraOpen] = useState(false);
 
-  useEffect(()=>setApplyRateInput(applyRate), [applyRate]);
+  useEffect(() => setApplyRateInput(applyRate), [applyRate]);
   const onApplyRateChange = e => {
     const v = e.target.value;
-    if(v === '' || /^[0-9]{1,3}$/.test(v)){
+    if (v === '' || /^[0-9]{1,3}$/.test(v)) {
       setApplyRateInput(v);
       const num = Number(v);
-      if(!isNaN(num) && num >= 0 && num <= 200) setApplyRate(num);
+      if (!isNaN(num) && num >= 0 && num <= 200) setApplyRate(num);
     }
   };
 
-  const renderOptionSelect = (name, label, enabled=true, map=null) => {
+  const renderOptionSelect = (name, label, enabled = true, map = null) => {
     const opts = availableOptions[name] || [];
-    if(!opts.length) return null;
+    if (!opts.length) return null;
     return (
-      <div style={{ minWidth:160 }}>
+      <div style={{ minWidth: 160 }}>
         <label>{label}</label>
         <select
-          disabled={!enabled||loading}
+          disabled={!enabled || loading}
           value={selectedOptions[name] || ''}
           onChange={e => handleOptionChange(name, e.target.value)}
         >
@@ -49,18 +49,21 @@ export default function OptionSelector() {
   };
 
   let extraCatList = [];
-  if(extraProducts[selectedType]) extraCatList = Object.entries(extraProducts[selectedType]);
+  if (extraProducts && extraProducts[selectedType]) {
+    extraCatList = Object.entries(extraProducts[selectedType]);
+  }
+
   const toggleExtra = id => {
-    if(extraOptionsSel.includes(id)) handleExtraOptionChange(extraOptionsSel.filter(e=>e!==id));
+    if (extraOptionsSel.includes(id)) handleExtraOptionChange(extraOptionsSel.filter(e => e !== id));
     else handleExtraOptionChange([...extraOptionsSel, id]);
   };
 
-  if(loading) return <div>데이터 로드 중...</div>;
+  if (loading) return <div>데이터 로드 중...</div>;
   const canAddItem = customPrice > 0 || currentPrice > 0;
 
   return (
-    <div style={{padding:20, background:'#f8fcff', borderRadius:8}}>
-      <div style={{display:'flex', flexWrap:'wrap', gap:16}}>
+    <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <label>제품 유형</label>
           <select value={selectedType} onChange={e => handleOptionChange('type', e.target.value)}>
@@ -71,23 +74,23 @@ export default function OptionSelector() {
         {formTypeRacks.includes(selectedType) && <>
           {renderOptionSelect('size', '규격')}
           {renderOptionSelect('height', '높이', !!selectedOptions.size)}
-          {renderOptionSelect('level', '단수', !!selectedOptions.size&&!!selectedOptions.height)}
-          {renderOptionSelect('formType', '형식', !!selectedOptions.size&&!!selectedOptions.height&&!!selectedOptions.level)}
+          {renderOptionSelect('level', '단수', !!selectedOptions.size && !!selectedOptions.height)}
+          {renderOptionSelect('formType', '형식', !!selectedOptions.size && !!selectedOptions.height && !!selectedOptions.level)}
         </>}
-        {selectedType==='하이랙' && <>
+        {selectedType === '하이랙' && <>
           {renderOptionSelect('color', '색상', true, colorLabelMap)}
           {renderOptionSelect('size', '규격', !!selectedOptions.color)}
-          {renderOptionSelect('height', '높이', !!selectedOptions.color&&!!selectedOptions.size)}
-          {renderOptionSelect('level', '단수', !!selectedOptions.color&&!!selectedOptions.size&&!!selectedOptions.height)}
+          {renderOptionSelect('height', '높이', !!selectedOptions.color && !!selectedOptions.size)}
+          {renderOptionSelect('level', '단수', !!selectedOptions.color && !!selectedOptions.size && !!selectedOptions.height)}
         </>}
-        {selectedType==='스텐랙' && <>
+        {selectedType === '스텐랙' && <>
           {renderOptionSelect('size', '규격')}
           {renderOptionSelect('height', '높이', !!selectedOptions.size)}
-          {renderOptionSelect('level', '단수', !!selectedOptions.size&&!!selectedOptions.height)}
+          {renderOptionSelect('level', '단수', !!selectedOptions.size && !!selectedOptions.height)}
         </>}
         <div>
           <label>수량</label>
-          <input type="number" min={0} value={quantity} onChange={e=>setQuantity(Math.max(0,Number(e.target.value)))} />
+          <input type="number" min={0} value={quantity} onChange={e => setQuantity(Math.max(0, Number(e.target.value)))} />
         </div>
         <div>
           <label>적용률(%)</label>
@@ -95,29 +98,29 @@ export default function OptionSelector() {
         </div>
         <div>
           <label>가격 직접입력</label>
-          <input type="number" value={customPrice} onChange={e => setCustomPrice(Number(e.target.value)||0)} />
+          <input type="number" value={customPrice} onChange={e => setCustomPrice(Number(e.target.value) || 0)} />
         </div>
       </div>
-      {extraCatList.length>0 &&
+      {extraCatList.length > 0 &&
         <>
-          <button onClick={()=>setExtraOpen(o=>!o)} style={{margin:'10px 0'}}>
-            {extraOpen?'기타 추가 옵션 닫기':'기타 추가 옵션 열기'}
+          <button onClick={() => setExtraOpen(o => !o)} style={{ margin: '10px 0' }}>
+            {extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}
           </button>
-          {extraOpen && extraCatList.map(([cat, arr])=>(
+          {extraOpen && extraCatList.map(([cat, arr]) => (
             <div key={cat}>
-              <div style={{fontWeight:600}}>{cat}</div>
-              {arr.map(opt=>{
+              <div style={{ fontWeight: 600 }}>{cat}</div>
+              {arr.map(opt => {
                 const checked = extraOptionsSel.includes(opt.id);
                 return (
                   <div key={opt.id}>
                     <label>
-                      <input type="checkbox" checked={checked} onChange={()=>toggleExtra(opt.id)} />
-                      {opt.name} {opt.price? `+${opt.price}원`:''}
+                      <input type="checkbox" checked={checked} onChange={() => toggleExtra(opt.id)} />
+                      {opt.name} {opt.price ? `+${opt.price}원` : ''}
                     </label>
-                    {selectedType==='경량랙' && opt.id==='l1-custom' && checked && (
+                    {selectedType === '경량랙' && opt.id === 'l1-custom' && checked && (
                       <div>
-                        <input placeholder="부품명" value={customMaterialName} onChange={e=>setCustomMaterialName(e.target.value)} />
-                        <input type="number" placeholder="금액" value={customMaterialPrice} onChange={e=>setCustomMaterialPrice(Number(e.target.value)||0)} />
+                        <input placeholder="부품명" value={customMaterialName} onChange={e => setCustomMaterialName(e.target.value)} />
+                        <input type="number" placeholder="금액" value={customMaterialPrice} onChange={e => setCustomMaterialPrice(Number(e.target.value) || 0)} />
                       </div>
                     )}
                   </div>
@@ -127,9 +130,9 @@ export default function OptionSelector() {
           ))}
         </>
       }
-      <div style={{marginTop:12}}>
-        <span>계산 가격: {customPrice>0? customPrice.toLocaleString(): currentPrice.toLocaleString()}원</span>
-        <button onClick={addToCart} disabled={!canAddItem} style={{marginLeft:10}}>목록 추가</button>
+      <div style={{ marginTop: 12 }}>
+        <span>계산 가격: {customPrice > 0 ? customPrice.toLocaleString() : currentPrice.toLocaleString()}원</span>
+        <button onClick={addToCart} disabled={!canAddItem} style={{ marginLeft: 10 }}>목록 추가</button>
       </div>
     </div>
   );
