@@ -22,7 +22,9 @@ export default function BOMDisplay({ bom, title, onQuantityChange }) {
         <tbody>
           {bom.map((item, idx) => (
             <tr key={item.rackType + '-' + item.size + '-' + item.name}>
-              <td style={{ borderBottom: '1px solid #e5e3e3', padding: '6px 8px', wordBreak: 'break-all' }}>
+              <td style={{
+                borderBottom: '1px solid #e5e3e3', padding: '6px 8px', wordBreak: 'break-all'
+              }}>
                 {[item.rackType, item.size, item.name].filter(Boolean).join(' ')}
               </td>
               <td style={{ borderBottom: '1px solid #e5e3e3', textAlign: 'center' }}>
@@ -30,9 +32,7 @@ export default function BOMDisplay({ bom, title, onQuantityChange }) {
                   type="number"
                   min={0}
                   value={item.quantity}
-                  onChange={e =>
-                    onQuantityChange && onQuantityChange(idx, Math.max(0, Number(e.target.value)))
-                  }
+                  onChange={e => onQuantityChange && onQuantityChange(idx, Math.max(0, Number(e.target.value)))}
                   style={{ width: 50, textAlign: 'right' }}
                 /> 개
               </td>
