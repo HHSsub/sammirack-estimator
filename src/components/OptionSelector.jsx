@@ -3,7 +3,7 @@ import { useProducts } from '../contexts/ProductContext';
 
 const OptionSelector = () => {
   const {
-    allOptions, availableOptions, filteredOptions,
+    allOptions, availableOptions,
     selectedType, selectedOptions,
     handleOptionChange,
     quantity, setQuantity,
@@ -12,7 +12,7 @@ const OptionSelector = () => {
     isCustomPrice, setIsCustomPrice,
     currentPrice, currentBOM,
     cartBOM, loading,
-    safePrice, addToCart
+    addToCart
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
@@ -48,8 +48,6 @@ const OptionSelector = () => {
       'version': availableOptions.version || [],
       'formType': availableOptions.formType || [],
     }[optionName] || [];
-
-    console.log(`[DEBUG] renderOptionSelect(${optionName}) →`, options);
 
     if (selectedType === '스텐랙' && optionName === 'version') return null;
     if (!Array.isArray(options) || options.length === 0) return null;
@@ -135,7 +133,7 @@ const OptionSelector = () => {
       </div>
 
       <div className="price-display">
-        <h3>계산 가격: {safePrice(currentPrice)}원</h3>
+        <h3>계산 가격: {typeof currentPrice === 'number' ? currentPrice.toLocaleString() : '0'}원</h3>
         {isCustomPrice && <p className="custom-price-notice">* 수동 입력 가격 적용</p>}
       </div>
 
@@ -147,7 +145,7 @@ const OptionSelector = () => {
           <ul>
             {currentBOM.map((item, idx) => (
               <li key={idx}>
-                {item.name} × {item.quantity} {item.unit}
+                {item.name} × {item.quantity} {item.unit || ''}
                 {item.unitPrice && ` (단가: ${item.unitPrice.toLocaleString()}원)`}
               </li>
             ))}
@@ -161,7 +159,7 @@ const OptionSelector = () => {
           <ul>
             {cartBOM.map((item, idx) => (
               <li key={idx}>
-                {item.name} × {item.quantity} {item.unit}
+                {item.name} × {item.quantity} {item.unit || ''}
                 {item.unitPrice && ` (단가: ${item.unitPrice.toLocaleString()}원)`}
               </li>
             ))}
