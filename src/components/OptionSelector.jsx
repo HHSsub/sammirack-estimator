@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
+const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
+
 const OptionSelector = () => {
   const {
     allOptions,
