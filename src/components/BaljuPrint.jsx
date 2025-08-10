@@ -1,11 +1,9 @@
 import React from 'react';
-import stampImage from '/public/images/도장.png'; 
+import stampImage from '/public/images/도장.png';
 
 const BaljuPrint = ({ data }) => {
+  const itemData = data?.items || [];
   const materialData = data?.materials || [];
-  const shouldShowMaterials = materialData.length > 0;
-  const maxMaterialRows = Math.min(materialData.length, 30);
-  const emptyMaterialRows = Math.max(0, 30 - materialData.length);
 
   return (
     <div className="print-container balju-print print-only">
@@ -13,17 +11,19 @@ const BaljuPrint = ({ data }) => {
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
 
+      {/* 헤더 */}
       <div className="print-header">
         <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
         <img className="stamp" src={stampImage} alt="도장" />
 
+        {/* 발주 정보 테이블 */}
         <table className="print-table info-table">
           <tbody>
             <tr>
-              <td className="label" style={{width: '12.5%'}}>발주일자</td>
-              <td style={{width: '12.5%'}}>{data?.date || ''}</td>
-              <td className="label" style={{width: '12.5%'}}>발주번호</td>
-              <td style={{width: '12.5%'}}>{data?.orderNumber || ''}</td>
+              <td className="label" style={{ width: '12.5%' }}>발주일자</td>
+              <td style={{ width: '12.5%' }}>{data?.date || ''}</td>
+              <td className="label" style={{ width: '12.5%' }}>발주번호</td>
+              <td style={{ width: '12.5%' }}>{data?.orderNumber || ''}</td>
             </tr>
             <tr>
               <td className="label">상호명</td>
@@ -67,36 +67,38 @@ const BaljuPrint = ({ data }) => {
           </tbody>
         </table>
 
+        {/* 위쪽: 발주명세 테이블 */}
+        <h3 style={{ marginTop: '12px', fontWeight: 'bold' }}>발주 명세</h3>
         <table className="print-table order-table">
           <thead>
             <tr>
-              <th style={{width: '8%'}}>NO</th>
-              <th style={{width: '25%'}}>품명</th>
-              <th style={{width: '18%'}}>규격</th>
-              <th style={{width: '8%'}}>단위</th>
-              <th style={{width: '10%'}}>수량</th>
-              <th style={{width: '12%'}}>단가</th>
-              <th style={{width: '12%'}}>공급가</th>
-              <th style={{width: '9%'}}>비고</th>
+              <th style={{ width: '8%' }}>NO</th>
+              <th style={{ width: '25%' }}>품명</th>
+              <th style={{ width: '18%' }}>규격</th>
+              <th style={{ width: '8%' }}>단위</th>
+              <th style={{ width: '10%' }}>수량</th>
+              <th style={{ width: '12%' }}>단가</th>
+              <th style={{ width: '12%' }}>공급가</th>
+              <th style={{ width: '9%' }}>비고</th>
             </tr>
           </thead>
           <tbody>
-            {data?.items?.slice(0, 6).map((item, index) => (
+            {itemData.slice(0, 8).map((item, index) => (
               <tr key={index}>
                 <td>{index + 1}</td>
                 <td className="left">{item.name || ''}</td>
                 <td>{item.specification || ''}</td>
                 <td>{item.unit || ''}</td>
-                <td>{item.quantity || ''}</td>
+                <td className="right">{item.quantity || ''}</td>
                 <td className="right">{item.unitPrice ? item.unitPrice.toLocaleString() : ''}</td>
                 <td className="right">{item.totalPrice ? item.totalPrice.toLocaleString() : ''}</td>
                 <td>{item.note || ''}</td>
               </tr>
-            )) || []}
-
-            {Array.from({ length: emptyMaterialRows }, (_, index) => (
-              <tr key={`empty-${index}`}>
-                <td>{materialData.length + index + 1}</td>
+            ))}
+            {/* 빈 행 채우기 */}
+            {Array.from({ length: Math.max(0, 8 - itemData.length) }).map((_, idx) => (
+              <tr key={`empty-item-${idx}`}>
+                <td>{itemData.length + idx + 1}</td>
                 <td className="left">&nbsp;</td>
                 <td></td>
                 <td></td>
@@ -106,11 +108,46 @@ const BaljuPrint = ({ data }) => {
                 <td></td>
               </tr>
             ))}
+          </tbody>
+        </table>
 
+        {/* 아래쪽: 원자재명세서 테이블 */}
+        <h3 style={{ marginTop: '24px', fontWeight: 'bold' }}>원자재 명세서</h3>
+        <table className="print-table material-table" style={{ width: '100%' }}>
+          <thead>
+            <tr>
+              <th style={{ width: '7%' }}>NO</th>
+              <th style={{ width: '24%' }}>부품명</th>
+              <th style={{ width: '17%' }}>규격/설명</th>
+              <th style={{ width: '8%' }}>수량</th>
+              <th style={{ width: '14%' }}>단가</th>
+              <th style={{ width: '13%' }}>금액</th>
+              <th style={{ width: '7%' }}>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            {materialData.length > 0 ? (
+              materialData.map((mat, idx) => (
+                <tr key={idx}>
+                  <td>{idx + 1}</td>
+                  <td style={{ textAlign: 'left' }}>{mat.name || ''}</td>
+                  <td>{mat.specification || ''}</td>
+                  <td className="right">{mat.quantity || ''}</td>
+                  <td className="right">{mat.unitPrice ? mat.unitPrice.toLocaleString() : ''}</td>
+                  <td className="right">{mat.totalPrice ? mat.totalPrice.toLocaleString() : ''}</td>
+                  <td>{mat.note || ''}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center' }}>원자재 정보 없음</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
+      {/* 푸터: 합계/비고 */}
       <div className="print-footer">
         <table className="print-table">
           <tbody>
