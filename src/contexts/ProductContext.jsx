@@ -14,7 +14,7 @@ export const ProductProvider = ({ children }) => {
 
   const [selectedType, setSelectedType] = useState('');
   const [selectedOptions, setSelectedOptions] = useState({});
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
 
   const [allOptions, setAllOptions] = useState({ types: [] });
   const [availableOptions, setAvailableOptions] = useState({});
