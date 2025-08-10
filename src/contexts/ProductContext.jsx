@@ -26,7 +26,6 @@ export const ProductProvider = ({ children }) => {
 
   const [currentPrice, setCurrentPrice] = useState(0);
   const [currentBOM, setCurrentBOM] = useState([]);
-
   const [cart, setCart] = useState([]);
   const [cartBOM, setCartBOM] = useState([]);
   const [cartTotal, setCartTotal] = useState(0);
@@ -87,12 +86,22 @@ export const ProductProvider = ({ children }) => {
     if(selectedType==='하이랙' && data?.하이랙){
       const rd = data['하이랙'];
       const opts = { color: rd['색상'] || [] };
+
       if(selectedOptions.color){
-        opts.size = [...Object.keys(rd['기본가격'][selectedOptions.color] || {}), ...(extra.size||[])];
+        const sizeListSafe = Object.keys(rd['기본가격']?.[selectedOptions.color] || {});
+        opts.size = [...sizeListSafe, ...(extra.size || [])];
+
         if(selectedOptions.size){
-          opts.height = [...Object.keys(rd['기본가격'][selectedOptions.color]?.[selectedOptions.size] || {}), ...(extra.height||[])];
+          const heightListSafe = Object.keys(
+            rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size] || {}
+          );
+          opts.height = [...heightListSafe, ...(extra.height || [])];
+
           if(selectedOptions.height){
-            opts.level = [...Object.keys(rd['기본가격'][selectedOptions.color][selectedOptions.size][selectedOptions.height]||{}), ...(extra.level||[])];
+            const levelListSafe = Object.keys(
+              rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
+            );
+            opts.level = [...levelListSafe, ...(extra.level || [])];
           }
         }
       }
@@ -171,25 +180,31 @@ export const ProductProvider = ({ children }) => {
       const baseSafetyLeftQty = 2 * quantity;
       const baseSafetyRightQty = form==='연결형'? 0 : 2 * quantity;
       return [
-        { rackType: selectedType, size: sz, name: `기둥(${ht})`, specification:`높이 ${ht}`, quantity: 2*quantity, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: '로드빔', specification:`규격 ${sz}`, quantity: 2*lvl*quantity, unitPrice:0, totalPrice:0 },
-        { rackType: selectedType, size: sz, name: '타이빔', specification:`규격 ${sz}`, quantity: 2*lvl*quantity, unitPrice:0, totalPrice:0 },
-        { rackType: selectedType, size: sz, name: '베이스(안전좌)', quantity: baseSafetyLeftQty, unitPrice:0, totalPrice:0 },
-        { rackType: selectedType, size: sz, name: '베이스(안전우)', quantity: baseSafetyRightQty, unitPrice:0, totalPrice:0 },
-        { rackType: selectedType, size: sz, name: '안전핀', quantity: 2*lvl*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:`기둥(${ht})`, specification:`높이 ${ht}`, quantity:2*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'로드빔', specification:`규격 ${sz}`, quantity:2*lvl*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'타이빔', specification:`규격 ${sz}`, quantity:2*lvl*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'베이스(안전좌)', specification:'', quantity:baseSafetyLeftQty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'베이스(안전우)', specification:'', quantity:baseSafetyRightQty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'안전핀', specification:'', quantity:2*lvl*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'수평브레싱', specification:'', quantity:1*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'경사브레싱', specification:'', quantity:1*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'앙카볼트', specification:'', quantity:4*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'베이스볼트', specification:'', quantity:4*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'브레싱볼트', specification:'', quantity:4*quantity, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'볼트세트', specification:'', quantity:1*quantity, unitPrice:0, totalPrice:0 },
         ...makeExtraOptionBOM()
       ];
     }
     if(selectedType==='하이랙'){
       return [
-        { rackType:selectedType, name:'기둥', specification:`높이 ${selectedOptions.height||''}`, quantity:4*quantity, unitPrice:0,totalPrice:0 },
+        { rackType:selectedType, name:'기둥', specification:`높이 ${selectedOptions.height||''}`, quantity:4*quantity, unitPrice:0, totalPrice:0 },
         { rackType:selectedType, name:'선반', specification:`사이즈 ${selectedOptions.size||''}`, quantity:(parseInt(selectedOptions.level)||5)*quantity, unitPrice:0, totalPrice:0 },
         ...makeExtraOptionBOM()
       ];
     }
     if(selectedType==='스텐랙'){
       return [
-        { rackType:selectedType, name:'기둥', specification:`높이 ${selectedOptions.height||''}`, quantity:4*quantity, unitPrice:0,totalPrice:0 },
+        { rackType:selectedType, name:'기둥', specification:`높이 ${selectedOptions.height||''}`, quantity:4*quantity, unitPrice:0, totalPrice:0 },
         { rackType:selectedType, name:'선반', specification:`사이즈 ${selectedOptions.size||''}`, quantity:(parseInt(selectedOptions.level)||5)*quantity, unitPrice:0, totalPrice:0 },
         ...makeExtraOptionBOM()
       ];
