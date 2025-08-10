@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
+import BOMDisplay from './BOMDisplay';
 
 const OptionSelector = () => {
   const {
     allOptions, availableOptions,
     selectedType, selectedOptions,
-    handleOptionChange,
-    quantity, setQuantity,
+    handleOptionChange, quantity, setQuantity,
     applyRate, setApplyRate,
     customPrice, setCustomPrice,
     isCustomPrice, setIsCustomPrice,
-    currentPrice, currentBOM,
-    cartBOM, loading,
-    addToCart
+    currentPrice, currentBOM, setCurrentBOM,
+    cartBOM, setCartBOM,
+    updateCurrentBOMQuantity, updateCartBOMQuantity,
+    addToCart, loading
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
 
-  useEffect(() => {
-    setApplyRateInput(applyRate);
-  }, [applyRate]);
-
+  useEffect(() => { setApplyRateInput(applyRate); }, [applyRate]);
   useEffect(() => {
     if (selectedType === '스텐랙' && selectedOptions.version !== 'V1') {
       handleOptionChange('version', 'V1');
@@ -32,9 +30,7 @@ const OptionSelector = () => {
     if (value === '' || /^[0-9]{1,3}$/.test(value)) {
       setApplyRateInput(value);
       const num = Number(value);
-      if (!isNaN(num) && num >= 0 && num <= 200) {
-        setApplyRate(num);
-      }
+      if (!isNaN(num) && num >= 0 && num <= 200) setApplyRate(num);
     }
   };
 
@@ -48,10 +44,8 @@ const OptionSelector = () => {
       'version': availableOptions.version || [],
       'formType': availableOptions.formType || [],
     }[optionName] || [];
-
     if (selectedType === '스텐랙' && optionName === 'version') return null;
     if (!Array.isArray(options) || options.length === 0) return null;
-
     return (
       <div className="option-group" key={optionName}>
         <label>{label}</label>
@@ -127,7 +121,7 @@ const OptionSelector = () => {
           value={customPrice}
           onChange={e => {
             setCustomPrice(Number(e.target.value) || 0);
-            setIsCustomPrice(!!e.target.value);
+            setIsCustomPrice(!!e.target.value && Number(e.target.value) > 0);
           }}
         />
       </div>
@@ -139,32 +133,14 @@ const OptionSelector = () => {
 
       <button onClick={addToCart} disabled={!selectedType}>목록 추가</button>
 
+      {/* 바로 보이는 현재 BOM, 수량 수정가능 */}
       {currentBOM.length > 0 && (
-        <div className="current-bom-preview">
-          <h4>현재 BOM</h4>
-          <ul>
-            {currentBOM.map((item, idx) => (
-              <li key={idx}>
-                {item.name} × {item.quantity} {item.unit || ''}
-                {item.unitPrice && ` (단가: ${item.unitPrice.toLocaleString()}원)`}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <BOMDisplay bom={currentBOM} title="현재 BOM" onQuantityChange={updateCurrentBOMQuantity} />
       )}
 
+      {/* 바로 보이는 전체 BOM, 수량 수정가능 */}
       {cartBOM.length > 0 && (
-        <div className="cart-bom-preview">
-          <h4>전체 BOM (모든 장바구니 누적)</h4>
-          <ul>
-            {cartBOM.map((item, idx) => (
-              <li key={idx}>
-                {item.name} × {item.quantity} {item.unit || ''}
-                {item.unitPrice && ` (단가: ${item.unitPrice.toLocaleString()}원)`}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <BOMDisplay bom={cartBOM} title="전체 BOM (모든 장바구니 누적)" onQuantityChange={updateCartBOMQuantity} />
       )}
     </div>
   );
