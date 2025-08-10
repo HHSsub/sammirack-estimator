@@ -24,9 +24,9 @@ export const ProductProvider = ({ children }) => {
   const [cartBOM, setCartBOM] = useState([]);
   const [cartTotal, setCartTotal] = useState(0);
 
-  // 하이랙 표기 표시만 바꿔줌 (실제 value는 JSON key! ex: "200kg")
   const colorLabelMap = { '200kg': '270kg', '350kg': '450kg' };
 
+  // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -41,6 +41,7 @@ export const ProductProvider = ({ children }) => {
         setBomData(bj);
         setAllOptions({ types: Object.keys(dj) });
       } catch (err) {
+        console.error(err);
         setData({});
         setBomData({});
       } finally {
@@ -50,30 +51,25 @@ export const ProductProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  // 옵션 생성 (종속성에 따라 key 생성)
+  // 옵션 목록 생성
   useEffect(() => {
     if (!selectedType) {
       setAvailableOptions({});
       return;
     }
 
-    // 경량/중량/파렛트랙 — bom_data.json 실제 키 기반
+    // 경/중/파렛트랙
     if (formTypeRacks.includes(selectedType) && bomData?.[selectedType]) {
       const bd = bomData[selectedType];
       const sizeKeys = Object.keys(bd);
-      const heightKeys =
-        selectedOptions.size && bd[selectedOptions.size]
-          ? Object.keys(bd[selectedOptions.size])
-          : [];
-      const levelKeys =
-        selectedOptions.size && selectedOptions.height && bd[selectedOptions.size]?.[selectedOptions.height]
-          ? Object.keys(bd[selectedOptions.size][selectedOptions.height])
-          : [];
-      const formTypeKeys =
-        selectedOptions.size && selectedOptions.height && selectedOptions.level &&
-        bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]
-          ? Object.keys(bd[selectedOptions.size][selectedOptions.height][selectedOptions.level])
-          : [];
+      const heightKeys = selectedOptions.size ? Object.keys(bd[selectedOptions.size] || {}) : [];
+      const levelKeys = selectedOptions.size && selectedOptions.height
+        ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {})
+        : [];
+      const formTypeKeys = selectedOptions.size && selectedOptions.height && selectedOptions.level
+        ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {})
+        : [];
+
       setAvailableOptions({
         size: sizeKeys,
         height: heightKeys,
@@ -87,27 +83,13 @@ export const ProductProvider = ({ children }) => {
     if (selectedType === '하이랙' && data?.하이랙) {
       const rackData = data[selectedType];
       let opts = {};
-      const originalColors = rackData['색상'] || [];
-      opts.color = originalColors;
+      opts.color = rackData['색상'] || [];
       if (selectedOptions.color) {
-        opts.size = [
-          ...Object.keys(rackData['기본가격'][selectedOptions.color] || {}),
-          '45x150',
-        ];
+        opts.size = Object.keys(rackData['기본가격'][selectedOptions.color] || {});
         if (selectedOptions.size) {
-          opts.height = [
-            ...Object.keys(
-              rackData['기본가격'][selectedOptions.color][selectedOptions.size] || {}
-            ),
-            '108',
-            '150',
-            '200',
-            '250',
-          ];
+          opts.height = Object.keys(rackData['기본가격'][selectedOptions.color]?.[selectedOptions.size] || {});
           if (selectedOptions.height) {
-            opts.level = Object.keys(
-              rackData['기본가격'][selectedOptions.color][selectedOptions.size][selectedOptions.height] || {}
-            );
+            opts.level = Object.keys(rackData['기본가격'][selectedOptions.color][selectedOptions.size][selectedOptions.height] || {});
           }
         }
       }
@@ -123,51 +105,43 @@ export const ProductProvider = ({ children }) => {
       if (selectedOptions.size)
         opts.height = Object.keys(rackData['기본가격'][selectedOptions.size] || {});
       if (selectedOptions.size && selectedOptions.height)
-        opts.level = [
-          ...Object.keys(rackData['기본가격'][selectedOptions.size][selectedOptions.height] || {}),
-          '5단',
-          '6단',
-        ];
+        opts.level = Object.keys(rackData['기본가격'][selectedOptions.size][selectedOptions.height] || {});
       opts.version = ['V1'];
       setAvailableOptions(opts);
       return;
     }
 
     setAvailableOptions({});
-  }, [selectedType, selectedOptions, bomData, data]);
+  }, [selectedType, selectedOptions, data, bomData]);
 
   // 가격 계산
   const calculatePrice = useCallback(() => {
     if (!selectedType || !selectedOptions || !quantity) return 0;
-    if (isCustomPrice) {
-      return Math.round(customPrice * quantity * (applyRate / 100));
-    }
+    if (isCustomPrice) return Math.round(customPrice * quantity * (applyRate / 100));
+
     let price = 0;
     if (formTypeRacks.includes(selectedType)) {
-      const p =
-        data[selectedType]?.['기본가격']?.[selectedOptions.formType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      const p = data[selectedType]?.['기본가격']?.[selectedOptions.formType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
       if (p) price = p * quantity;
       return Math.round(price * (applyRate / 100));
     }
     if (selectedType === '스텐랙') {
-      const p =
-        data?.스텐랙?.['기본가격']?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      const p = data?.스텐랙?.['기본가격']?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
       if (p) price = p * quantity;
       return Math.round(price * (applyRate / 100));
     }
     if (selectedType === '하이랙') {
-      const p =
-        data?.하이랙?.['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      const p = data?.하이랙?.['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
       if (p) price = p * quantity;
       return Math.round(price * (applyRate / 100));
     }
     return 0;
   }, [selectedType, selectedOptions, quantity, isCustomPrice, customPrice, applyRate, data]);
 
-  // BOM 계산 (종속성 다 선택됐을 때만!)
+  // BOM 생성
   const calculateCurrentBOM = useCallback(() => {
     if (!selectedType || !selectedOptions || !quantity) return [];
-    // 경/중/파렛트랙: 종속성 다 선택됐을 때만 BOM 생성
+
     if (formTypeRacks.includes(selectedType) && bomData) {
       const { size, height, level, formType } = selectedOptions;
       if (!size || !height || !level || !formType) return [];
@@ -185,7 +159,7 @@ export const ProductProvider = ({ children }) => {
         totalPrice: comp.total_price * quantity,
       }));
     }
-    // 스텐랙/하이랙 (간이)
+
     if (selectedType === '스텐랙' || selectedType === '하이랙') {
       const lvl = parseInt(selectedOptions.level || '') || 0;
       return [
@@ -194,6 +168,7 @@ export const ProductProvider = ({ children }) => {
         { rackType: selectedType, size: selectedOptions.size, name: '볼트세트', quantity: 1 * quantity },
       ];
     }
+
     return [];
   }, [selectedType, selectedOptions, quantity, bomData]);
 
@@ -216,34 +191,28 @@ export const ProductProvider = ({ children }) => {
     setCurrentPrice(calculatePrice());
     setCurrentBOM(calculateCurrentBOM());
   }, [calculatePrice, calculateCurrentBOM]);
+
   useEffect(() => {
     setCartBOM(calculateCartBOM());
     setCartTotal(cart.reduce((sum, i) => sum + (i.price || 0), 0));
   }, [cart, calculateCartBOM]);
 
-  // 옵션 change 핸들러: 부모가 바뀌면 하위 옵션을 자동 초기화
+  // 옵션 변경 시 종속성 리셋
   const handleOptionChange = (key, value) => {
     setSelectedOptions(prev => {
       let update = { ...prev, [key]: value };
       if (formTypeRacks.includes(selectedType)) {
-        if (key === 'size') {
-          update.height = undefined; update.level = undefined; update.formType = undefined;
-        } else if (key === 'height') {
-          update.level = undefined; update.formType = undefined;
-        } else if (key === 'level') {
-          update.formType = undefined;
-        }
-      } else if (selectedType === '하이랙' || selectedType === '스텐랙') {
-        if (key === 'color' || key === 'formType') {
-          update.size = undefined; update.height = undefined; update.level = undefined;
-        } else if (key === 'size') {
-          update.height = undefined; update.level = undefined;
-        } else if (key === 'height') {
-          update.level = undefined;
-        }
+        if (key === 'size') { update.height = undefined; update.level = undefined; update.formType = undefined; }
+        else if (key === 'height') { update.level = undefined; update.formType = undefined; }
+        else if (key === 'level') { update.formType = undefined; }
       }
       return update;
     });
+    if (key === 'type') {
+      setSelectedType(value);
+      setSelectedOptions({});
+      setQuantity(0);
+    }
   };
 
   const generateId = () => `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
@@ -272,12 +241,7 @@ export const ProductProvider = ({ children }) => {
     setCart(prev =>
       prev.map(item =>
         item.id === id
-          ? {
-              ...item,
-              quantity: newQty,
-              price: (item.price / item.quantity) * newQty,
-              displayName: makeDisplayName(item.type, item.options, newQty),
-            }
+          ? { ...item, quantity: newQty, price: (item.price / item.quantity) * newQty, displayName: makeDisplayName(item.type, item.options, newQty) }
           : item
       )
     );
@@ -309,31 +273,14 @@ export const ProductProvider = ({ children }) => {
   return (
     <ProductContext.Provider
       value={{
-        allOptions,
-        availableOptions,
-        colorLabelMap,
-        selectedType,
-        selectedOptions,
-        handleOptionChange,
-        quantity,
-        setQuantity,
-        applyRate,
-        setApplyRate,
-        customPrice,
-        setCustomPrice,
-        isCustomPrice,
-        setIsCustomPrice,
-        currentPrice,
-        currentBOM,
-        cart,
-        cartTotal,
-        cartBOM,
-        updateCurrentBOMQuantity,
-        updateCartBOMQuantity,
-        removeFromCart,
-        updateCartQuantity,
-        loading,
-        addToCart,
+        allOptions, availableOptions, colorLabelMap,
+        selectedType, selectedOptions, handleOptionChange,
+        quantity, setQuantity, applyRate, setApplyRate,
+        customPrice, setCustomPrice, isCustomPrice, setIsCustomPrice,
+        currentPrice, currentBOM, cart, cartTotal, cartBOM,
+        updateCurrentBOMQuantity, updateCartBOMQuantity,
+        removeFromCart, updateCartQuantity,
+        loading, addToCart
       }}
     >
       {children}
@@ -341,4 +288,4 @@ export const ProductProvider = ({ children }) => {
   );
 };
 
-export const useProducts = () => useContext(ProductContext;
+export const useProducts = () => useContext(ProductContext);
