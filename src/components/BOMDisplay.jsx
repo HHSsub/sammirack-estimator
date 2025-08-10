@@ -1,5 +1,11 @@
 import React from 'react';
 
+// 무게명칭 변환
+function kgLabelFix(str) {
+  if (!str) return '';
+  return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
+}
+
 export default function BOMDisplay({ bom, title, onQuantityChange }) {
   if (!bom || !bom.length) {
     return (
@@ -16,18 +22,27 @@ export default function BOMDisplay({ bom, title, onQuantityChange }) {
         <thead>
           <tr>
             <th style={{ borderBottom: '1px solid #c5e0fd', padding: '4px 6px', textAlign: 'left' }}>부품정보</th>
+            <th style={{ borderBottom: '1px solid #c5e0fd', padding: '4px 6px', textAlign: 'center' }}>규격</th>
             <th style={{ borderBottom: '1px solid #c5e0fd', padding: '4px 6px', textAlign: 'center' }}>수량</th>
+            <th style={{ borderBottom: '1px solid #c5e0fd', padding: '4px 6px', textAlign: 'center' }}>단가</th>
+            <th style={{ borderBottom: '1px solid #c5e0fd', padding: '4px 6px', textAlign: 'center' }}>금액</th>
           </tr>
         </thead>
         <tbody>
           {bom.map((item, idx) => (
-            <tr key={item.rackType + '-' + item.size + '-' + item.name}>
+            <tr key={item.rackType + '-' + (item.size || '') + '-' + item.name}>
               <td style={{
                 borderBottom: '1px solid #e5e3e3',
                 padding: '6px 8px',
                 wordBreak: 'break-all'
               }}>
-                {[item.rackType, item.size, item.name].filter(Boolean).join(' ')}
+                {kgLabelFix(item.name)}
+              </td>
+              <td style={{
+                borderBottom: '1px solid #e5e3e3',
+                textAlign: 'center'
+              }}>
+                {kgLabelFix(item.specification || '')}
               </td>
               <td style={{ borderBottom: '1px solid #e5e3e3', textAlign: 'center' }}>
                 <input
@@ -37,6 +52,12 @@ export default function BOMDisplay({ bom, title, onQuantityChange }) {
                   onChange={e => onQuantityChange && onQuantityChange(idx, Math.max(0, Number(e.target.value)))}
                   style={{ width: 50, textAlign: 'right' }}
                 /> 개
+              </td>
+              <td style={{ borderBottom: '1px solid #e5e3e3', textAlign: 'right' }}>
+                {item.unitPrice ? Number(item.unitPrice).toLocaleString() : '-'}
+              </td>
+              <td style={{ borderBottom: '1px solid #e5e3e3', textAlign: 'right' }}>
+                {item.totalPrice ? Number(item.totalPrice).toLocaleString() : '-'}
               </td>
             </tr>
           ))}
