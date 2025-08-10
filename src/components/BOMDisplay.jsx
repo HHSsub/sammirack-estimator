@@ -1,9 +1,6 @@
 import React from 'react';
-import { useProducts } from '../contexts/ProductContext';
 
-function BOMDisplay({ bom, title }) {
-  const { updateCartBOMQuantity } = useProducts();
-
+function BOMDisplay({ bom, title, onQuantityChange }) {
   if (!bom || bom.length === 0)
     return (
       <div className="bom-section mt-6">
@@ -35,7 +32,9 @@ function BOMDisplay({ bom, title }) {
                   value={item.quantity}
                   style={{ width: 50 }}
                   onChange={e =>
-                    updateCartBOMQuantity(idx, Math.max(0, Number(e.target.value)))
+                    onQuantityChange
+                      ? onQuantityChange(idx, Math.max(0, Number(e.target.value)))
+                      : undefined
                   }
                 />
                 개
