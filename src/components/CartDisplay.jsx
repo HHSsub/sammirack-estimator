@@ -3,7 +3,7 @@ import { useProducts } from '../contexts/ProductContext';
 
 export default function CartDisplay() {
   const { cart, removeFromCart, cartTotal } = useProducts();
-  const safePrice = v => typeof v === 'number' && !isNaN(v) ? v.toLocaleString() : '0';
+  const safePrice = v => (typeof v === 'number' && !isNaN(v) ? v.toLocaleString() : '0');
 
   if (!cart.length) {
     return (
@@ -32,14 +32,18 @@ export default function CartDisplay() {
               <td className="border-b p-2 text-center">{item.quantity} 개</td>
               <td className="border-b p-2 text-right">{safePrice(item.price)}원</td>
               <td className="border-b p-2 text-center">
-                <button onClick={() => removeFromCart(item.id)} className="text-red-500">삭제</button>
+                <button onClick={() => removeFromCart(item.id)} className="text-red-500">
+                  삭제
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={2} className="p-2 font-bold">총 합계</td>
+            <td colSpan={2} className="p-2 font-bold">
+              총 합계
+            </td>
             <td className="p-2 text-right font-bold">{safePrice(cartTotal)}원</td>
             <td></td>
           </tr>
