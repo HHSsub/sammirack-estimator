@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import BOMDisplay from './BOMDisplay';
 import { formatPurchaseOrderData, navigateToPrintPage } from '../utils/printUtils';
 
+function kgLabelFix(str) {
+  if (!str) return '';
+  return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
+}
+
 const PurchaseOrderForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,7 +46,6 @@ const PurchaseOrderForm = () => {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">거래명세서(발주서) 작성</h2>
-
       <div className="mb-6 p-4 border rounded">
         <h3 className="text-xl font-semibold mb-3">발주서 정보</h3>
         <div className="grid grid-cols-2 gap-4">
@@ -80,7 +84,6 @@ const PurchaseOrderForm = () => {
             className="w-full p-2 border rounded" />
         </div>
       </div>
-
       <div className="mb-4">
         <h3 className="text-xl font-semibold">발주 항목</h3>
         <table className="w-full text-left border-collapse">
@@ -92,7 +95,7 @@ const PurchaseOrderForm = () => {
             {cart.map(item => (
               <tr key={item.id}>
                 <td className="border-b p-2">
-                  {item.displayName} × {item.quantity}개
+                  {kgLabelFix(item.displayName)} × {item.quantity}개
                 </td>
                 <td className="border-b p-2 text-right">
                   {item.price?.toLocaleString()}원
@@ -102,14 +105,11 @@ const PurchaseOrderForm = () => {
           </tbody>
         </table>
       </div>
-
       <h3 className="text-xl font-semibold">총 발주 금액: {cartTotal.toLocaleString()} 원</h3>
-
       <div className="mb-4">
         <h3 className="text-xl font-semibold mb-2">원자재 명세서</h3>
         <BOMDisplay bom={totalBom} title="총 부품 목록 (BOM)" />
       </div>
-
       <div className="mt-6 flex gap-4">
         <button onClick={handlePrint}
           className="p-3 bg-red-500 text-white rounded">발주서 인쇄</button>
