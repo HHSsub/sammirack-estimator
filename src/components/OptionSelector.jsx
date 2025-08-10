@@ -107,9 +107,9 @@ const OptionSelector = () => {
         <label>수량</label>
         <input
           type="number"
-          min="1"
+          min="0"
           value={quantity}
-          onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
+          onChange={e => setQuantity(Math.max(0, Number(e.target.value)))}
         />
       </div>
       <div className="option-group">
