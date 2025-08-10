@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 const ProductContext = createContext();
 const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
 
-// 표기 통일: 파렛트랙 높이 → H4500 형식
+// 파렛트랙 추가높이 표기 통일
 const EXTRA_OPTIONS = {
   '파렛트랙': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
   '하이랙': { size: ['45x150'], height: ['108', '150', '200', '250'], level: ['5단', '6단'] },
@@ -14,7 +14,6 @@ export const ProductProvider = ({ children }) => {
   const [data, setData] = useState({});
   const [bomData, setBomData] = useState({});
   const [extraProducts, setExtraProducts] = useState({});
-
   const [loading, setLoading] = useState(true);
 
   const [allOptions, setAllOptions] = useState({ types: [] });
@@ -24,7 +23,6 @@ export const ProductProvider = ({ children }) => {
   const [quantity, setQuantity] = useState(0);
 
   const [customPrice, setCustomPrice] = useState(0);
-  const [isCustomPrice, setIsCustomPrice] = useState(false);
   const [applyRate, setApplyRate] = useState(100);
 
   const [currentPrice, setCurrentPrice] = useState(0);
@@ -35,13 +33,12 @@ export const ProductProvider = ({ children }) => {
   const [cartTotal, setCartTotal] = useState(0);
 
   const [extraOptions, setExtraOptions] = useState([]);
-
-  // 경량랙 기타자재 커스텀입력
   const [customMaterialName, setCustomMaterialName] = useState('');
   const [customMaterialPrice, setCustomMaterialPrice] = useState(0);
 
   const colorLabelMap = { '200kg': '270kg', '350kg': '450kg' };
 
+  // 데이터 로드
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
@@ -58,7 +55,6 @@ export const ProductProvider = ({ children }) => {
         const eRes = await fetch('./extra_options.json');
         const ej = await eRes.json();
         setExtraProducts(ej);
-
       } catch (err) {
         console.error('데이터 로드 실패', err);
         setData({});
@@ -70,6 +66,7 @@ export const ProductProvider = ({ children }) => {
     fetchAll();
   }, []);
 
+  // 옵션 목록 구성
   useEffect(() => {
     if (!selectedType) { setAvailableOptions({}); return; }
     const extra = EXTRA_OPTIONS[selectedType] || {};
@@ -109,7 +106,8 @@ export const ProductProvider = ({ children }) => {
     if (selectedType === '스텐랙' && data?.스텐랙) {
       const rd = data[selectedType];
       const opts = { size: Object.keys(rd['기본가격'] || {}) };
-      if (selectedOptions.size) opts.height = Object.keys(rd['기본가격'][selectedOptions.size] || {});
+      if (selectedOptions.size)
+        opts.height = Object.keys(rd['기본가격'][selectedOptions.size] || {});
       if (selectedOptions.size && selectedOptions.height)
         opts.level = [...Object.keys(rd['기본가격'][selectedOptions.size][selectedOptions.height] || {}), ...(extra.level || [])];
       opts.version = ['V1'];
@@ -119,11 +117,11 @@ export const ProductProvider = ({ children }) => {
     setAvailableOptions({});
   }, [selectedType, selectedOptions, data, bomData]);
 
+  // 가격 계산
   const calculatePrice = useCallback(() => {
-    if (!selectedType || !selectedOptions || !quantity) return 0;
-    if (isCustomPrice) return Math.round(customPrice * quantity * (applyRate / 100));
+    if (!selectedType || quantity <= 0) return 0;
+    if (customPrice > 0) return Math.round(customPrice * quantity * (applyRate / 100));
     let basePrice = 0;
-
     if (formTypeRacks.includes(selectedType)) {
       const { size, height, level, formType } = selectedOptions;
       const rec = bomData[selectedType]?.[size]?.[height]?.[level]?.[formType];
@@ -135,37 +133,55 @@ export const ProductProvider = ({ children }) => {
       const p = data[selectedType]['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
       if (p) basePrice = p * quantity;
     }
-
-    // extra 옵션 가격
     let extraPrice = 0;
     if (extraProducts[selectedType]) {
       Object.values(extraProducts[selectedType]).forEach(catArr =>
         catArr.forEach(opt => {
           if (extraOptions.includes(opt.id)) {
-            if (opt.id === 'l1-custom') {
-              extraPrice += customMaterialPrice;
-            } else {
-              extraPrice += opt.price;
-            }
+            if (opt.id === 'l1-custom') extraPrice += customMaterialPrice;
+            else extraPrice += opt.price;
           }
         })
       );
     }
-
     return Math.round((basePrice + extraPrice) * (applyRate / 100));
-  }, [selectedType, selectedOptions, quantity, isCustomPrice, customPrice, applyRate, bomData, data, extraProducts, extraOptions, customMaterialPrice]);
+  }, [selectedType, selectedOptions, quantity, customPrice, applyRate, bomData, data, extraProducts, extraOptions, customMaterialPrice]);
 
+  // BOM 추정 규칙
+  const getFallbackBOM = () => {
+    if (selectedType === '파렛트랙') {
+      const lvl = parseInt(selectedOptions.level || '') || 1;
+      const size = selectedOptions.size || '';
+      return [
+        { rackType: selectedType, size, name: '기둥', quantity: 2 * quantity },
+        { rackType: selectedType, size, name: '로드빔', quantity: 2 * lvl * quantity },
+        { rackType: selectedType, size, name: '타이빔', quantity: 2 * lvl * quantity },
+        { rackType: selectedType, size, name: '볼트세트', quantity: 1 * quantity }
+      ];
+    }
+    if (['하이랙', '스텐랙'].includes(selectedType)) {
+      const lvl = parseInt(selectedOptions.level || '') || 1;
+      return [
+        { rackType: selectedType, size: selectedOptions.size, name: '기둥', quantity: 4 * quantity },
+        { rackType: selectedType, size: selectedOptions.size, name: '선반', quantity: lvl * quantity },
+        { rackType: selectedType, size: selectedOptions.size, name: '볼트세트', quantity: 1 * quantity }
+      ];
+    }
+    return [{ rackType: selectedType, name: '비표준 랙', quantity }];
+  };
+
+  // BOM계산
   const calculateCurrentBOM = useCallback(() => {
-    if (!selectedType || !selectedOptions || !quantity) return [];
+    if (customPrice > 0) return getFallbackBOM();
+    if (!selectedType || quantity <= 0) return [];
     let baseBOM = [];
-
     if (formTypeRacks.includes(selectedType)) {
       const { size, height, level, formType } = selectedOptions;
       const rec = bomData[selectedType]?.[size]?.[height]?.[level]?.[formType];
       if (rec?.components) {
         baseBOM = rec.components.map(c => ({
           rackType: selectedType, size, name: c.name,
-          quantity: c.quantity * quantity, unitPrice: c.unit_price, totalPrice: c.total_price * quantity
+          quantity: c.quantity * quantity
         }));
       }
     } else if (['스텐랙', '하이랙'].includes(selectedType)) {
@@ -176,74 +192,75 @@ export const ProductProvider = ({ children }) => {
         { rackType: selectedType, size: selectedOptions.size, name: '볼트세트', quantity: 1 * quantity }
       ];
     }
-
-    let extraBOMs = [];
-    if (extraProducts[selectedType]) {
-      Object.values(extraProducts[selectedType]).forEach(catArr =>
-        catArr.forEach(opt => {
-          if (extraOptions.includes(opt.id) && opt.bom) {
-            if (opt.id === 'l1-custom') {
-              extraBOMs.push({ rackType: selectedType, size: '', name: customMaterialName, quantity: 1, unitPrice: customMaterialPrice, totalPrice: customMaterialPrice });
-            } else {
-              opt.bom.forEach(b =>
-                extraBOMs.push({
-                  rackType: selectedType, size: '', name: b.name,
-                  quantity: b.qty || b.quantity || 1,
-                  unitPrice: opt.price, totalPrice: opt.price
-                })
-              );
-            }
-          }
-        })
-      );
-    }
-
-    return [...baseBOM, ...extraBOMs];
-  }, [selectedType, selectedOptions, quantity, bomData, extraProducts, extraOptions, customMaterialName, customMaterialPrice]);
+    return baseBOM;
+  }, [selectedType, selectedOptions, quantity, customPrice, bomData]);
 
   const handleOptionChange = (key, value) => {
-    if (key === 'type') { setSelectedType(value); setSelectedOptions({}); setExtraOptions([]); setQuantity(0); return; }
+    if (key === 'type') {
+      setSelectedType(value);
+      setSelectedOptions({});
+      setExtraOptions([]);
+      setQuantity(0);
+      setCustomPrice(0);
+      return;
+    }
     setSelectedOptions(prev => ({ ...prev, [key]: value }));
   };
-
   const handleExtraOptionChange = ids => setExtraOptions(ids);
-  const updateCurrentBOMQuantity = (idx, newQty) => setCurrentBOM(p => { const c = [...p]; c[idx] = { ...c[idx], quantity: newQty }; return c; });
+
+  const updateCurrentBOMQuantity = (idx, newQty) => {
+    setCurrentBOM(p => {
+      const c = [...p];
+      c[idx] = { ...c[idx], quantity: newQty };
+      return c;
+    });
+  };
   const updateCartBOMQuantity = (idx, newQty) => {
     if (!cartBOM[idx]) return;
     const target = cartBOM[idx];
-    setCart(prev => prev.map(item => ({
-      ...item,
-      bom: item.bom.map(b =>
-        b.rackType === target.rackType && b.size === target.size && b.name === target.name
-          ? { ...b, quantity: newQty }
-          : b
-      )
-    })));
+    setCart(prev =>
+      prev.map(item => ({
+        ...item,
+        bom: item.bom.map(b =>
+          b.rackType === target.rackType &&
+          b.size === target.size &&
+          b.name === target.name
+            ? { ...b, quantity: newQty }
+            : b
+        )
+      }))
+    );
   };
 
   const addToCart = () => {
     if (!selectedType || quantity <= 0) return;
     setCart(prev => [...prev, {
-      id: `${Date.now()}`, type: selectedType,
+      id: `${Date.now()}`,
+      type: selectedType,
       options: { ...selectedOptions },
       extraOptions: [...extraOptions],
-      quantity, price: currentPrice, bom: calculateCurrentBOM(),
-      displayName: [selectedType, selectedOptions.formType, selectedOptions.size, selectedOptions.height, selectedOptions.level]
-        .filter(Boolean).join(' ') + ` x ${quantity}개`
+      quantity,
+      price: customPrice > 0 ? customPrice : currentPrice,
+      bom: customPrice > 0 ? getFallbackBOM() : calculateCurrentBOM(),
+      displayName: [selectedType, selectedOptions.formType, selectedOptions.size, selectedOptions.height, selectedOptions.level].filter(Boolean).join(' ') + ` x ${quantity}개`
     }]);
   };
+  const removeFromCart = id => setCart(prev => prev.filter(item => item.id !== id));
 
-  useEffect(() => { setCurrentPrice(calculatePrice()); setCurrentBOM(calculateCurrentBOM()); },
-    [calculatePrice, calculateCurrentBOM]);
+  useEffect(() => {
+    setCurrentPrice(calculatePrice());
+    setCurrentBOM(customPrice > 0 ? getFallbackBOM() : calculateCurrentBOM());
+  }, [calculatePrice, calculateCurrentBOM]);
 
   useEffect(() => {
     const map = {};
-    cart.forEach(item =>
+    cart.forEach(item => {
       item.bom?.forEach(c => {
         const key = `${c.rackType} ${c.size} ${c.name}`;
         if (map[key]) map[key].quantity += c.quantity;
         else map[key] = { ...c };
-      }));
+      });
+    });
     setCartBOM(Object.values(map));
     setCartTotal(cart.reduce((sum, i) => sum + (i.price || 0), 0));
   }, [cart]);
@@ -254,16 +271,16 @@ export const ProductProvider = ({ children }) => {
       selectedType, selectedOptions, handleOptionChange,
       extraOptions, handleExtraOptionChange,
       quantity, setQuantity, applyRate, setApplyRate,
-      customPrice, setCustomPrice, isCustomPrice,
-      currentPrice, currentBOM, cart, cartTotal, cartBOM,
-      loading, addToCart,
+      customPrice, setCustomPrice, currentPrice,
+      currentBOM, cart, cartTotal, cartBOM, loading,
+      addToCart, removeFromCart,
       updateCurrentBOMQuantity, updateCartBOMQuantity,
-      extraProducts,
-      customMaterialName, setCustomMaterialName,
+      extraProducts, customMaterialName, setCustomMaterialName,
       customMaterialPrice, setCustomMaterialPrice
     }}>
       {children}
     </ProductContext.Provider>
   );
 };
+
 export const useProducts = () => useContext(ProductContext);
