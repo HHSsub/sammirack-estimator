@@ -2,21 +2,59 @@ import React from 'react';
 import stampImage from '/public/images/도장.png';
 
 const BaljuPrint = ({ data }) => {
+  // 발주 품목/원자재 데이터 준비
   const itemData = data?.items || [];
-  const materialData = data?.materials || [];
+  const materialDataRaw = data?.materials || [];
+
+  // 가격정보 보강
+  const materialData = materialDataRaw.map(mat => ({
+    ...mat,
+    unitPrice: mat.unitPrice ?? mat.unit_price ?? 0,
+    totalPrice:
+      mat.totalPrice ??
+      mat.total_price ??
+      (mat.unitPrice ?? mat.unit_price ?? 0) * (mat.quantity ?? 0)
+  }));
+
+  // 품목 8행 고정
+  const filledItemRows = [
+    ...itemData,
+    ...Array.from({ length: Math.max(0, 8 - itemData.length) }, () => ({
+      name: '',
+      specification: '',
+      unit: '',
+      quantity: '',
+      unitPrice: '',
+      totalPrice: '',
+      note: ''
+    }))
+  ];
+
+  // 원자재 30행 고정
+  const filledMaterialRows = [
+    ...materialData,
+    ...Array.from({ length: Math.max(0, 30 - materialData.length) }, () => ({
+      name: '',
+      specification: '',
+      quantity: '',
+      unitPrice: '',
+      totalPrice: '',
+      note: ''
+    }))
+  ];
 
   return (
     <div className="print-container balju-print print-only">
+
+      {/* ===== 헤더 ===== */}
       <div className="print-preview-notice">
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
-
-      {/* 헤더 */}
       <div className="print-header">
         <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
         <img className="stamp" src={stampImage} alt="도장" />
 
-        {/* 발주 정보 테이블 */}
+        {/* 발주 정보 */}
         <table className="print-table info-table">
           <tbody>
             <tr>
@@ -67,7 +105,7 @@ const BaljuPrint = ({ data }) => {
           </tbody>
         </table>
 
-        {/* 위쪽: 발주명세 테이블 */}
+        {/* ===== 상단: 발주명세 ===== */}
         <h3 style={{ marginTop: '12px', fontWeight: 'bold' }}>발주 명세</h3>
         <table className="print-table order-table">
           <thead>
@@ -83,35 +121,22 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-            {itemData.slice(0, 8).map((item, index) => (
+            {filledItemRows.map((item, index) => (
               <tr key={index}>
                 <td>{index + 1}</td>
                 <td className="left">{item.name || ''}</td>
                 <td>{item.specification || ''}</td>
                 <td>{item.unit || ''}</td>
                 <td className="right">{item.quantity || ''}</td>
-                <td className="right">{item.unitPrice ? item.unitPrice.toLocaleString() : ''}</td>
-                <td className="right">{item.totalPrice ? item.totalPrice.toLocaleString() : ''}</td>
+                <td className="right">{item.unitPrice ? Number(item.unitPrice).toLocaleString() : ''}</td>
+                <td className="right">{item.totalPrice ? Number(item.totalPrice).toLocaleString() : ''}</td>
                 <td>{item.note || ''}</td>
-              </tr>
-            ))}
-            {/* 빈 행 채우기 */}
-            {Array.from({ length: Math.max(0, 8 - itemData.length) }).map((_, idx) => (
-              <tr key={`empty-item-${idx}`}>
-                <td>{itemData.length + idx + 1}</td>
-                <td className="left">&nbsp;</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* 아래쪽: 원자재명세서 테이블 */}
+        {/* ===== 하단: 원자재 명세서 ===== */}
         <h3 style={{ marginTop: '24px', fontWeight: 'bold' }}>원자재 명세서</h3>
         <table className="print-table material-table" style={{ width: '100%' }}>
           <thead>
@@ -126,28 +151,22 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </thead>
           <tbody>
-            {materialData.length > 0 ? (
-              materialData.map((mat, idx) => (
-                <tr key={idx}>
-                  <td>{idx + 1}</td>
-                  <td style={{ textAlign: 'left' }}>{mat.name || ''}</td>
-                  <td>{mat.specification || ''}</td>
-                  <td className="right">{mat.quantity || ''}</td>
-                  <td className="right">{mat.unitPrice ? mat.unitPrice.toLocaleString() : ''}</td>
-                  <td className="right">{mat.totalPrice ? mat.totalPrice.toLocaleString() : ''}</td>
-                  <td>{mat.note || ''}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={7} style={{ textAlign: 'center' }}>원자재 정보 없음</td>
+            {filledMaterialRows.map((row, idx) => (
+              <tr key={idx}>
+                <td>{idx + 1}</td>
+                <td style={{ textAlign: 'left' }}>{row.name || ''}</td>
+                <td>{row.specification || ''}</td>
+                <td className="right">{row.quantity || ''}</td>
+                <td className="right">{row.unitPrice ? Number(row.unitPrice).toLocaleString() : ''}</td>
+                <td className="right">{row.totalPrice ? Number(row.totalPrice).toLocaleString() : ''}</td>
+                <td>{row.note || ''}</td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* 푸터: 합계/비고 */}
+      {/* ===== 푸터: 합계 / 비고 / 회사명 ===== */}
       <div className="print-footer">
         <table className="print-table">
           <tbody>
@@ -165,11 +184,13 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
+
         {data?.notes && data.notes.trim() && (
           <div className="print-notes">
             <strong>비고:</strong> {data.notes}
           </div>
         )}
+
         <div className="print-company">(주)삼미앵글랙산업</div>
       </div>
     </div>
