@@ -1,13 +1,11 @@
 import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
-function CartDisplay() {
+export default function CartDisplay() {
   const { cart, removeFromCart, updateCartQuantity, cartTotal } = useProducts();
+  const safePrice = v => typeof v==='number'&&!isNaN(v)?v.toLocaleString():'0';
 
-  const safePrice = value =>
-    typeof value === 'number' && !isNaN(value) ? value.toLocaleString() : '0';
-
-  if (!Array.isArray(cart) || cart.length === 0) {
+  if (!cart.length) {
     return (
       <div className="cart-section mt-6">
         <h3 className="text-xl font-semibold mb-2">견적 목록</h3>
@@ -29,42 +27,24 @@ function CartDisplay() {
           </tr>
         </thead>
         <tbody>
-          {cart.map(item => (
+          {cart.map(item=>(
             <tr key={item.id}>
               <td className="border-b p-2">{item.displayName}</td>
               <td className="border-b p-2 text-center">
-                <input
-                  type="number"
-                  min={1}
-                  value={item.quantity}
-                  style={{ width: 50 }}
-                  onChange={e =>
-                    updateCartQuantity(item.id, Math.max(1, Number(e.target.value)))
-                  }
-                /> 개
+                <input type="number" min={1} value={item.quantity} style={{width:50}}
+                  onChange={e=>updateCartQuantity(item.id, Math.max(1,Number(e.target.value)))} /> 개
               </td>
-              <td className="border-b p-2 text-right">
-                {safePrice(item.price)}원
-              </td>
+              <td className="border-b p-2 text-right">{safePrice(item.price)}원</td>
               <td className="border-b p-2 text-center">
-                <button
-                  onClick={() => removeFromCart(item.id)}
-                  className="text-red-500 hover:underline"
-                >
-                  삭제
-                </button>
+                <button onClick={()=>removeFromCart(item.id)} className="text-red-500">삭제</button>
               </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td className="p-2 font-bold" colSpan={2}>
-              총 합계
-            </td>
-            <td className="p-2 text-right font-bold">
-              {safePrice(cartTotal)}원
-            </td>
+            <td colSpan={2} className="p-2 font-bold">총 합계</td>
+            <td className="p-2 text-right font-bold">{safePrice(cartTotal)}원</td>
             <td></td>
           </tr>
         </tfoot>
@@ -72,5 +52,3 @@ function CartDisplay() {
     </div>
   );
 }
-
-export default CartDisplay;
