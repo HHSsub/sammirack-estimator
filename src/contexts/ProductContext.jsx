@@ -30,8 +30,8 @@ export const ProductProvider = ({ children }) => {
       setLoading(true);
       try {
         const [dRes, bRes] = await Promise.all([
-          fetch(`${import.meta.env.BASE_URL}data.json`),
-          fetch(`${import.meta.env.BASE_URL}bom_data.json`),
+          fetch(`./data.json`),
+          fetch(`./bom_data.json`),
         ]);
         const dj = await dRes.json();
         const bj = await bRes.json();
