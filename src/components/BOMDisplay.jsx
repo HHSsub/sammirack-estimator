@@ -23,7 +23,9 @@ export default function BOMDisplay({ bom, title, onQuantityChange }) {
           {bom.map((item, idx) => (
             <tr key={item.rackType + '-' + item.size + '-' + item.name}>
               <td style={{
-                borderBottom: '1px solid #e5e3e3', padding: '6px 8px', wordBreak: 'break-all'
+                borderBottom: '1px solid #e5e3e3',
+                padding: '6px 8px',
+                wordBreak: 'break-all'
               }}>
                 {[item.rackType, item.size, item.name].filter(Boolean).join(' ')}
               </td>
