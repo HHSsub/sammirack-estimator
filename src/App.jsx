@@ -9,7 +9,6 @@ import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
 import PrintPage from './components/PrintPage';
-import { getKoreanName } from './utils/nameMap';
 
 function App() {
   return (
@@ -41,19 +40,15 @@ function App() {
 // ---------- HomePage ----------
 const HomePage = () => {
   const { currentPrice, currentBOM, addToCart, cart, cartBOM } = useProducts();
-  const [showCurrentBOM, setShowCurrentBOM] = useState(false);
-  const [showTotalBOM, setShowTotalBOM] = useState(false);
+  // 🔹 기본값 true → 항상 보이는 상태
+  const [showCurrentBOM, setShowCurrentBOM] = useState(true);
+  const [showTotalBOM, setShowTotalBOM] = useState(true);
 
   const canAddItem = currentPrice > 0;
   const canProceed = cart.length > 0;
 
-  // 전체 BOM 합산 (cartBOM에서 받아오기! 방어코드 필요 없음)
-  const totalBomForDisplay = cartBOM?.map(bom => ({
-    name: bom.name,
-    quantity: bom.quantity
-  })) || [];
+  const totalBomForDisplay = cartBOM || [];
 
-  // 견적서/발주서 작성으로 넘어갈 때 Link의 state에 반드시 cart/cartBOM 포함!
   return (
     <div className="app-container">
       <h2>랙 제품 견적</h2>
@@ -64,7 +59,7 @@ const HomePage = () => {
         <p className="price">{currentPrice.toLocaleString()}원</p>
       </div>
 
-      <div className="action-buttons">
+      <div className="action-buttons" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
         <button onClick={() => setShowCurrentBOM(!showCurrentBOM)} disabled={!canAddItem}>
           {showCurrentBOM ? '현재 BOM 숨기기' : '현재 BOM 보기'}
         </button>
@@ -77,11 +72,13 @@ const HomePage = () => {
         </button>
       </div>
 
+      {/* 🔹 항상 표시 + 숨기기 가능 */}
       {showCurrentBOM && <BOMDisplay bom={currentBOM} title="현재 항목 부품 목록 (BOM)" />}
+
       <CartDisplay />
 
       {canProceed && (
-        <div className="action-buttons mt-4">
+        <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           <button onClick={() => setShowTotalBOM(!showTotalBOM)}>
             {showTotalBOM ? '전체 BOM 숨기기' : '전체 BOM 보기'}
           </button>
@@ -102,6 +99,7 @@ const HomePage = () => {
         </div>
       )}
 
+      {/* 🔹 항상 표시 + 숨기기 가능 */}
       {showTotalBOM && <BOMDisplay bom={totalBomForDisplay} title="전체 부품 목록 (BOM)" />}
     </div>
   );
