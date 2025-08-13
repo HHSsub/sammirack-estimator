@@ -29,7 +29,22 @@ export default function CartDisplay() {
           {cart.map(item => (
             <tr key={item.id}>
               <td className="border-b p-2">{item.displayName}</td>
-              <td className="border-b p-2 text-center">{item.quantity} 개</td>
+              <td className="border-b p-2 text-center">
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.quantity}
+                    onChange={(e) => updateCartItemQuantity(item.id, e.target.value)}
+                    onBlur={(e) => {
+                      // 빈칸 방지: 비우고 포커스 아웃하면 0으로
+                      if (e.target.value === '') updateCartItemQuantity(item.id, 0);
+                    }}
+                    style={{ width: 64, textAlign: 'right' }}
+                  />
+                  <span>개</span>
+                </div>
+              </td>
               <td className="border-b p-2 text-right">{safePrice(item.price)}원</td>
               <td className="border-b p-2 text-center">
                 <button onClick={() => removeFromCart(item.id)} className="text-red-500">
