@@ -187,6 +187,23 @@ export const ProductProvider = ({ children }) => {
     );
   };
 
+// 🔹 사용자가 '전체 BOM'에서 수량을 직접 고친 값(오버라이드)을 보관
+const [bomOverrides, setBomOverrides] = useState({}); // key -> 수량
+
+// 🔹 표에서 보일 BOM = 집계(cartBOM) + 오버라이드 반영본
+const cartBOMView = React.useMemo(() => {
+  return (cartBOM || []).map(row => {
+    const key = `${row.rackType} ${row.size || ''} ${row.name}`;
+    const qty = bomOverrides[key];
+    return qty === undefined ? row : { ...row, quantity: qty };
+  });
+}, [cartBOM, bomOverrides]);
+
+// 🔹 '전체 BOM' 수량 직접 변경
+const setTotalBomQuantity = (key, nextQtyRaw) => {
+  const q = Math.max(0, Number(nextQtyRaw) || 0);
+  setBomOverrides(prev => ({ ...prev, [key]: q }));
+};
   
   const makeExtraOptionBOM = () => {
     if (!extraOptionsSel || !extraProducts[selectedType]) return [];
@@ -348,6 +365,7 @@ export const ProductProvider = ({ children }) => {
     });
     setCartBOM(Object.values(map));
     setCartTotal(cart.reduce((sum,i)=>sum+(i.price||0),0));
+    // 원천(cart)이 바뀌면, 기존 오버라이드는 남겨둠(사용자 편집 유지)
   },[cart]);
 
   return (
@@ -359,6 +377,7 @@ export const ProductProvider = ({ children }) => {
       quantity, setQuantity, applyRate, setApplyRate,
       customPrice, setCustomPrice,
       currentPrice, currentBOM, cart, cartTotal, cartBOM, loading,
+      cartBOMView, setTotalBomQuantity, // ⬅⬅ 추가 공개
       addToCart, removeFromCart,
       extraProducts, customMaterialName, setCustomMaterialName,
       customMaterialPrice, setCustomMaterialPrice,
