@@ -159,6 +159,35 @@ export const ProductProvider = ({ children }) => {
     return Math.round((basePrice + extraPrice) * (applyRate/100));
   },[selectedType,selectedOptions,quantity,customPrice,applyRate,data,bomData,extraProducts,extraOptionsSel,customMaterialPrice]);
 
+  // ▶ 장바구니 아이템 수량 변경 (가격·BOM까지 동기 업데이트)
+  const updateCartItemQuantity = (id, nextQtyRaw) => {
+    setCart(prev =>
+      prev.map(item => {
+        if (item.id !== id) return item;
+        const oldQty = item.quantity > 0 ? item.quantity : 1;
+        const nextQty = Math.max(0, Number(nextQtyRaw) || 0);
+
+        // 단가/부품수 per-qty 로 환산해 다시 곱해줌
+        const unitPrice = (item.price || 0) / oldQty;
+        const newPrice = Math.round(unitPrice * nextQty);
+
+        const newBOM = (item.bom || []).map(c => {
+          const perUnitQty = (c.quantity || 0) / oldQty;
+          const q = perUnitQty * nextQty;
+          const unit = c.unitPrice ?? c.unit_price ?? 0;
+          return {
+            ...c,
+            quantity: q,
+            totalPrice: unit ? unit * q : (c.total_price ? (c.total_price / oldQty) * nextQty : 0)
+          };
+        });
+
+        return { ...item, quantity: nextQty, price: newPrice, bom: newBOM };
+      })
+    );
+  };
+
+  
   const makeExtraOptionBOM = () => {
     if (!extraOptionsSel || !extraProducts[selectedType]) return [];
     const result = [];
@@ -332,7 +361,8 @@ export const ProductProvider = ({ children }) => {
       currentPrice, currentBOM, cart, cartTotal, cartBOM, loading,
       addToCart, removeFromCart,
       extraProducts, customMaterialName, setCustomMaterialName,
-      customMaterialPrice, setCustomMaterialPrice
+      customMaterialPrice, setCustomMaterialPrice,
+      updateCartItemQuantity
     }}>
       {children}
     </ProductContext.Provider>
