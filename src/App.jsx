@@ -60,9 +60,6 @@ const HomePage = () => {
       </div>
 
       <div className="action-buttons" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        //<button onClick={() => setShowCurrentBOM(!showCurrentBOM)} disabled={!canAddItem}>
-        //  {showCurrentBOM ? '현재 BOM 숨기기' : '현재 BOM 보기'}
-        //</button>
         <button 
           onClick={() => addToCart()} 
           disabled={!canAddItem}
@@ -73,8 +70,6 @@ const HomePage = () => {
       </div>
 
       {/* 🔹 항상 표시 + 숨기기 가능 */}
-      //{showCurrentBOM && <BOMDisplay bom={currentBOM} title="현재 항목 부품 목록 (BOM)" />}
-
       <CartDisplay />
 
       {canProceed && (
