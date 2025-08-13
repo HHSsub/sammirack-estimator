@@ -2,7 +2,7 @@ import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
 export default function CartDisplay() {
-  const { cart, removeFromCart, cartTotal } = useProducts();
+  const { cart, removeFromCart, cartTotal, updateCartItemQuantity } = useProducts();
   const safePrice = v => typeof v === 'number' && !isNaN(v) ? v.toLocaleString() : '0';
 
   if (!cart.length) {
