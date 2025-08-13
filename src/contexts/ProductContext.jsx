@@ -30,7 +30,7 @@ export const ProductProvider = ({ children }) => {
   const [availableOptions, setAvailableOptions] = useState({});
   const [selectedType, setSelectedType] = useState('');
   const [selectedOptions, setSelectedOptions] = useState({});
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(''); // 초기값을 빈 문자열로 (수량입력전엔 빈칸)
 
   const [customPrice, setCustomPrice] = useState(0);
   const [applyRate, setApplyRate] = useState(100);
