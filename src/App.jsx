@@ -39,7 +39,7 @@ function App() {
 
 // ---------- HomePage ----------
 const HomePage = () => {
-  const { currentPrice, currentBOM, addToCart, cart, cartBOM } = useProducts();
+  const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView } = useProducts();
   // 🔹 기본값 true → 항상 보이는 상태
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
@@ -47,7 +47,7 @@ const HomePage = () => {
   const canAddItem = currentPrice > 0;
   const canProceed = cart.length > 0;
 
-  const totalBomForDisplay = cartBOM || [];
+  const totalBomForDisplay = cartBOMView || [];
 
   return (
     <div className="app-container">
