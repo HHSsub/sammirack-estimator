@@ -271,8 +271,8 @@ export const ProductProvider = ({ children }) => {
       setSelectedType(v);
       setSelectedOptions({});
       setExtraOptionsSel([]);
-      setQuantity(0);
-      setCustomPrice(0);
+      setQuantity();
+      setCustomPrice();
       return;
     }
     setSelectedOptions(prev=>({...prev,[k]:v}));
