@@ -71,59 +71,63 @@ export const ProductProvider = ({ children }) => {
     if(!selectedType){ setAvailableOptions({}); return; }
     const extra = EXTRA_OPTIONS[selectedType] || {};
 
-    if(formTypeRacks.includes(selectedType) && bomData[selectedType]){
+
+    // 1) 폼타입 랙 (원래대로 끝에 return; 추가)
+    if (formTypeRacks.includes(selectedType) && bomData[selectedType]) {
       const bd = bomData[selectedType];
       setAvailableOptions({
         size: Object.keys(bd),
         height: selectedOptions.size
-          ? [...Object.keys(bd[selectedOptions.size] || {}), ...(extra.height||[])]
-          : [...(extra.height||[])],
+          ? [...Object.keys(bd[selectedOptions.size] || {}), ...(extra.height || [])]
+          : [...(extra.height || [])],
         level: selectedOptions.size && selectedOptions.height
           ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {})
           : [],
         formType: selectedOptions.size && selectedOptions.height && selectedOptions.level
           ? (
-            Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {}).length > 0
-              ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {})
-              : ['독립형','연결형']
-          )
+              Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {}).length > 0
+                ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {})
+                : ['독립형', '연결형']
+            )
           : []
       });
-        if(selectedType===\'하이랙\' && data?.하이랙){
-      const rd = data[\'하이랙\'];
-      const opts = { color: rd[\'색상\'] || [] };
-
+      return;          // ✅ 이 줄과
+    }                  // ✅ 이 중괄호가 필요
+    
+    // 2) 하이랙 (백슬래시 제거, 위치는 폼타입 블록 '바깥')
+    if (selectedType === '하이랙' && data?.하이랙) {
+      const rd = data['하이랙'];
+      const opts = { color: rd['색상'] || [] };
+    
       if (selectedOptions.color) {
-        const sizeListSafe = Object.keys(rd[\'기본가격\']?.[selectedOptions.color] || {});
-
-        // heaviest(500kg) 일 때는 EXTRA size(45x150) 제외
+        const sizeListSafe = Object.keys(rd['기본가격']?.[selectedOptions.color] || {});
+    
+        // 500kg(=구 700kg)면 EXTRA size(45x150) 제외
         const isHeaviest =
-          /500kg$/.test(selectedOptions.color) || /700kg$/.test(selectedOptions.color); // 안전장치
-
-        const extraSizes = EXTRA_OPTIONS[\'하이랙\']?.size || [];
+          /500kg$/.test(selectedOptions.color) || /700kg$/.test(selectedOptions.color);
+    
+        const extraSizes = EXTRA_OPTIONS['하이랙']?.size || [];
         opts.size = isHeaviest
           ? sizeListSafe
           : Array.from(new Set([...sizeListSafe, ...extraSizes]));
-
+    
         if (selectedOptions.size) {
           const heightListSafe = Object.keys(
-            rd[\'기본가격\']?.[selectedOptions.color]?.[selectedOptions.size] || {}
+            rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size] || {}
           );
-          // 높이는 기존처럼 EXTRA 병합 (150~250)
-          opts.height = [...heightListSafe, ...(EXTRA_OPTIONS[\'하이랙\'].height || [])];
-
+          // 높이는 기존처럼 EXTRA 병합
+          opts.height = [...heightListSafe, ...(EXTRA_OPTIONS['하이랙'].height || [])];
+    
           if (selectedOptions.height) {
             const levelsFromData = Object.keys(
-              rd[\'기본가격\']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
+              rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
             );
-
-            // ★ heaviest(500kg)면 데이터에 있는 레벨만 사용(보통 \'1단\'),
-            //   그 외에는 기존처럼 COMMON_LEVELS/EXTRA level까지 합침
+            // 500kg은 데이터 레벨만, 그 외는 기존대로 합침
             opts.level = isHeaviest
               ? levelsFromData
               : Array.from(new Set([
                   ...levelsFromData,
-                  ...(EXTRA_OPTIONS[\'하이랙\'].level || []),
+                  ...(EXTRA_OPTIONS['하이랙'].level || []),
                   ...COMMON_LEVELS
                 ]));
           }
@@ -132,6 +136,8 @@ export const ProductProvider = ({ children }) => {
       setAvailableOptions(opts);
       return;
     }
+
+    
     // ▶ 스텐랙
     if (selectedType === '스텐랙' && data?.스텐랙) {
       const rd = data['스텐랙'];
