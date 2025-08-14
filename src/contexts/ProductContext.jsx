@@ -63,7 +63,16 @@ export const ProductProvider = ({ children }) => {
         if (bj['파렛트랙'] && !bj2['파렛트랙 철판형']) bj2['파렛트랙 철판형'] = bj['파렛트랙'];
         setBomData(bj2);
 
-        setAllOptions({ types: Object.keys(dj2) });
+        // setAllOptions({ types: Object.keys(dj2) }); // 기존 코드 삭제 
+        {
+          const canonical = ['경량랙','중량랙','파렛트랙','파렛트랙 철판형','하이랙','스텐랙'];
+          const fromData = Object.keys(dj2 || {});
+          // 데이터에 있으면 그대로, 없으면 canonical로 보강. 중복 제거.
+          const types = Array.from(new Set([...fromData, ...canonical]))
+            .filter(Boolean);
+          setAllOptions({ types });
+        }
+      
         setExtraProducts(ej);
       }catch(e){
         console.error('데이터 로드 실패',e);
@@ -78,7 +87,8 @@ export const ProductProvider = ({ children }) => {
     if(!selectedType){ setAvailableOptions({}); return; }
     const extra =
       EXTRA_OPTIONS[selectedType]
-      || (['파렛트랙','파렛트랙 철판형'].includes(selectedType) ? (EXTRA_OPTIONS['파렛트랙 철판형'] || {}) : {})
+      // 파렛트랙/파렛트랙 철판형은 동일 옵션을 '파렛트랙' 키로 공통 사용
+      || (['파렛트랙','파렛트랙 철판형'].includes(selectedType) ? (EXTRA_OPTIONS['파렛트랙'] || {}) : {})
       || {};
 
     // 1) 폼타입 랙 (경량/중량/파렛트랙/파렛트랙 철판형)
