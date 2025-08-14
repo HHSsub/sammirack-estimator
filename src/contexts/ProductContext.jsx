@@ -118,23 +118,29 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
-    // ▶ 스텐랙 (이 블록만 교체)
+    // ▶ 스텐랙
     if (selectedType === '스텐랙' && data?.스텐랙) {
       const rd = data['스텐랙'];
-      const opts = { size: Object.keys(rd['기본가격'] || {}) };
+      const opts = { size: Object.keys(rd['기본가격'] || {}) };    
       if (selectedOptions.size) {
-        // data.json + EXTRA_OPTIONS 병합 → 210 항상 노출
+        // 높이: data + EXTRA(210)
         const heightsFromData  = Object.keys(rd['기본가격'][selectedOptions.size] || {});
-        const heightsFromExtra = EXTRA_OPTIONS['스텐랙']?.height || []; // ['210']
+        const heightsFromExtra = EXTRA_OPTIONS['스텐랙']?.height || [];
         opts.height = Array.from(new Set([...heightsFromData, ...heightsFromExtra]));
       }
       if (selectedOptions.size && selectedOptions.height) {
-        opts.level = [
-          ...Object.keys(rd['기본가격'][selectedOptions.size][selectedOptions.height] || {}),
-          ...(EXTRA_OPTIONS['스텐랙'].level || [])
-        ];
+        // 레벨: data + EXTRA(level) + COMMON_LEVELS(2~6단) → 210이어도 2~6단 전부 노출
+        const levelsFromData = Object.keys(
+          rd['기본가격']?.[selectedOptions.size]?.[selectedOptions.height] || {}
+        );
+        const levelsFromExtra = EXTRA_OPTIONS['스텐랙']?.level || [];
+        opts.level = Array.from(new Set([
+          ...levelsFromData,
+          ...levelsFromExtra,
+          ...COMMON_LEVELS
+        ]));
       }
-      opts.version = ['V1'];
+      opts.version = ['V1'];    
       setAvailableOptions(opts);
       return;
     }
