@@ -8,12 +8,12 @@ const COMPONENT_NAME_MAP = {
   'bolt_set_st': '스텐드 볼트세트',
   
   // 하이랙 부품
-  'upright_frame_hr_200': '하이랙 수직프레임(200kg)',
-  'upright_frame_hr_350': '하이랙 수직프레임(350kg)',
-  'upright_frame_hr_700': '하이랙 수직프레임(700kg)',
-  'shelf_hr_200': '하이랙 선반(200kg)',
-  'shelf_hr_350': '하이랙 선반(350kg)',
-  'load_beam_hr_700': '하이랙 로드빔(700kg)',
+  'upright_frame_hr_270': '하이랙 수직프레임(270kg)',
+  'upright_frame_hr_450': '하이랙 수직프레임(450kg)',
+  'upright_frame_hr_500': '하이랙 수직프레임(500kg)',
+  'shelf_hr_270': '하이랙 선반(270kg)',
+  'shelf_hr_450': '하이랙 선반(450kg)',
+  'load_beam_hr_500': '하이랙 로드빔(500kg)',
   'cross_beam_hr': '하이랙 크로스빔',
   'safety_pin_hr': '하이랙 안전핀'
 };
@@ -82,19 +82,19 @@ export class BOMCalculatorCore {
 
     const components = [];
     const levelCount = parseInt(level.replace('단', ''), 10) || 0;
-    const is700kg = color.includes('700kg');
-    const is350kg = color.includes('350kg');
+    const is500kg = color.includes('500kg');
+    const is450kg = color.includes('450kg');
 
-    if (is700kg) {
+    if (is500kg) {
       components.push({ 
-        code: 'upright_frame_hr_700',
+        code: 'upright_frame_hr_500',
         quantity: 2,
         options: { height },
         spec: `높이 ${height}`
       });
 
       components.push({ 
-        code: 'load_beam_hr_700',
+        code: 'load_beam_hr_500',
         quantity: levelCount * 2,
         options: { size },
         spec: `크기 ${size}`
@@ -107,8 +107,8 @@ export class BOMCalculatorCore {
         spec: '표준'
       });
     } else {
-      const poleCode = is350kg ? 'upright_frame_hr_350' : 'upright_frame_hr_200';
-      const shelfCode = is350kg ? 'shelf_hr_350' : 'shelf_hr_200';
+      const poleCode = is450kg ? 'upright_frame_hr_450' : 'upright_frame_hr_270';
+      const shelfCode = is450kg ? 'shelf_hr_450' : 'shelf_hr_270';
       
       components.push({ 
         code: poleCode,
