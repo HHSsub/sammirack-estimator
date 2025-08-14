@@ -6,6 +6,7 @@ const formTypeRacks = ['경량랙', '중량랙', '파렛트랙', '파렛트랙 �
 
 const EXTRA_OPTIONS = {
   '파렛트랙': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
+  '파렛트랙 철판형': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
   '하이랙': { size: ['45x150'], height: ['150','200','250'], level: ['5단','6단'] }, // 하이랙 필수높이노출 108제거 (150~250만)
   '스텐랙': { level: ['5단','6단'], height: ['210'] },
   '경량랙': { height: ['H750'] } 
@@ -46,42 +47,34 @@ export const ProductProvider = ({ children }) => {
   const [customMaterialName, setCustomMaterialName] = useState('');
   const [customMaterialPrice, setCustomMaterialPrice] = useState(0);
 
-  useEffect(()=>{
-    (async()=>{
+  useEffect(() => {
+    (async () => {
       setLoading(true);
-      try{
+      try {
         const dj = await (await fetch('./data.json')).json();
         const bj = await (await fetch('./bom_data.json')).json();
         const ej = await (await fetch('./extra_options.json')).json();
 
-        // ✅ 파렛트랙 철판형을 '파렛트랙'의 완전 복제로 메모리 내에서 추가
-        const dj2 = { ...dj };
-        if (dj['파렛트랙'] && !dj2['파렛트랙 철판형']) dj2['파렛트랙 철판형'] = dj['파렛트랙'];
-        setData(dj2);
-
-        const bj2 = { ...bj };
-        if (bj['파렛트랙'] && !bj2['파렛트랙 철판형']) bj2['파렛트랙 철판형'] = bj['파렛트랙'];
-        setBomData(bj2);
-
-        // setAllOptions({ types: Object.keys(dj2) }); // 기존 코드 삭제 
-        {
-          const canonical = ['경량랙','중량랙','파렛트랙','파렛트랙 철판형','하이랙','스텐랙'];
-          const fromData = Object.keys(dj2 || {});
-          // 데이터에 있으면 그대로, 없으면 canonical로 보강. 중복 제거.
-          const types = Array.from(new Set([...fromData, ...canonical]))
-            .filter(Boolean);
-          setAllOptions({ types });
-        }
-      
+        // ✅ 사용자가 data.json에 "파렛트랙 철판형"을 별도로 넣었으므로, 복제 금지 & 키 그대로 사용
+        setData(dj);
+        setBomData(bj);
         setExtraProducts(ej);
-      }catch(e){
-        console.error('데이터 로드 실패',e);
-        setAllOptions({types:[]});
-      }finally{
+
+        // 타입 목록: data.json의 실제 존재 키를 기준으로 하되, 원하는 순서(canonical)로 정렬
+        const canonical = ['경량랙','중량랙','파렛트랙','파렛트랙 철판형','하이랙','스텐랙'];
+        const fromData = Object.keys(dj || {});
+        const types = canonical.filter(t => fromData.includes(t));
+        // 만약 data.json에 추가 타입이 있으면 뒤에 붙임
+        const leftovers = fromData.filter(t => !types.includes(t));
+        setAllOptions({ types: [...types, ...leftovers] });
+      } catch (e) {
+        console.error('데이터 로드 실패', e);
+        setAllOptions({ types: [] });
+      } finally {
         setLoading(false);
       }
     })();
-  },[]);
+  }, []);
 
   useEffect(()=>{
     if(!selectedType){ setAvailableOptions({}); return; }
