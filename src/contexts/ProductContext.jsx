@@ -21,6 +21,40 @@ function kgLabelFix(str) {
   return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg').replace(/700kg/g, '500kg');
 }
 
+// 높이/사이즈 문자열 파서(가벼움)
+const parseSize = (sizeStr='') => {
+  const m = sizeStr.match(/W?(\d+)[xX]D?(\d+)/);
+  return m ? { w: m[1], d: m[2] } : { w: '', d: '' };
+};
+
+// ⬇️ 외부에서 내부 상태를 직접 안 쓰도록 파라미터로 받게 변경
+const makeLightRackH750BOM = (selectedType, selectedOptions, quantity, extraBOM=[]) => {
+  const { w, d } = parseSize(selectedOptions.size || '');
+  const lvl = parseInt(String(selectedOptions.level || '').replace(/[^\d]/g, ''), 10) || 5;
+  const isConn = selectedOptions.formType === '연결형';
+
+  const q = Number(quantity) || 1;
+  const pillarQty = (isConn ? 2 : 4) * q;
+  const connectBarQty = 4 * q;
+  const shelfQty = lvl * q;
+  const padTopQty = 2 * q;
+  const padBottomQty = (isConn ? 8 : 10) * q;
+  const seatQty = (isConn ? 2 : 4) * q;
+  const pinQty = 8 * q;
+
+  return [
+    { rackType: selectedType, size: selectedOptions.size, name: `기둥(750)`, specification: `높이 H750`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
+    { rackType: selectedType, size: selectedOptions.size, name: '연결대', specification: '', quantity: connectBarQty, unitPrice: 0, totalPrice: 0 },
+    { rackType: selectedType, size: selectedOptions.size, name: '선반', specification: (w && d) ? `사이즈 ${w}*${d}` : `사이즈 ${selectedOptions.size||''}`, quantity: shelfQty, unitPrice: 0, totalPrice: 0 },
+    { rackType: selectedType, size: selectedOptions.size, name: '받침(상)', specification: d ? `(${d})` : '', quantity: padTopQty, unitPrice: 0, totalPrice: 0 },
+    { rackType: selectedType, size: selectedOptions.size, name: '받침(하)', specification: d ? `(${d})` : '', quantity: padBottomQty, unitPrice: 0, totalPrice: 0 },
+    { rackType: selectedType, size: selectedOptions.size, name: '안전좌', specification: '', quantity: seatQty, unitPrice: 0, totalPrice: 0 },
+    { rackType: selectedType, size: selectedOptions.size, name: '안전핀', specification: '', quantity: pinQty, unitPrice: 0, totalPrice: 0 },
+    ...extraBOM
+  ];
+};
+
+
 export const ProductProvider = ({ children }) => {
   const [data, setData] = useState({});
   const [bomData, setBomData] = useState({});
@@ -76,21 +110,45 @@ export const ProductProvider = ({ children }) => {
     // 1) 폼타입 랙 (원래대로 끝에 return; 추가)
     if (formTypeRacks.includes(selectedType) && bomData[selectedType]) {
       const bd = bomData[selectedType];
-      setAvailableOptions({
-        size: Object.keys(bd),
-        height: selectedOptions.size
-          ? [...Object.keys(bd[selectedOptions.size] || {}), ...(extra.height || [])]
-          : [...(extra.height || [])],
-        level: selectedOptions.size && selectedOptions.height
-          ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {})
-          : [],
-        formType: selectedOptions.size && selectedOptions.height && selectedOptions.level
+
+      // 사이즈/높이/단수/형식 계산을 지역 변수로 만들어 H750 보강
+      const sizeList = Object.keys(bd);
+
+      const heightList = selectedOptions.size
+        ? Array.from(new Set([
+            ...Object.keys(bd[selectedOptions.size] || {}),
+            ...((extra.height || []))
+          ]))
+        : [...(extra.height || [])];
+
+      let levelList = (selectedOptions.size && selectedOptions.height)
+        ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {})
+        : [];
+
+      // ✅ 경량랙 H750: 데이터에 레벨이 없어도 선택 가능하도록 기본 L2~L6 제공
+      if (
+        selectedType === '경량랙' &&
+        selectedOptions.size &&
+        selectedOptions.height === 'H750' &&
+        levelList.length === 0
+      ) {
+        levelList = ['L2','L3','L4','L5','L6'];
+      }
+
+      const formTypeList =
+        (selectedOptions.size && selectedOptions.height && selectedOptions.level)
           ? (
               Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {}).length > 0
                 ? Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {})
                 : ['독립형', '연결형']
             )
-          : []
+          : [];
+
+      setAvailableOptions({
+        size: sizeList,
+        height: heightList,
+        level: levelList,
+        formType: formTypeList
       });
       return;          // ✅ 이 줄과
     }                  // ✅ 이 중괄호가 필요
@@ -338,6 +396,12 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
     if(['경량랙','중량랙'].includes(selectedType)){
       const rec = bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]
         ?. [selectedOptions.level]?.[selectedOptions.formType];
+
+      // ✅ 경량랙 H750: 데이터가 없으면 규칙 기반 BOM 생성
+      if (selectedType === '경량랙' && selectedOptions.height === 'H750' && !rec) {
+        return makeLightRackH750BOM(selectedType, selectedOptions, quantity, makeExtraOptionBOM());
+      }
+
       return [
         ...(rec?.components ? rec.components.map(c=>({
           ...c,
@@ -366,6 +430,15 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
     setSelectedOptions(prev=>({...prev,[k]:v}));
   };
 
+  // ✅ 담고 나면 초기화 (요청사항)
+  const resetSelections = () => {
+    setSelectedType('');
+    setSelectedOptions({});
+    setExtraOptionsSel([]);
+    setQuantity('');
+    setCustomPrice(0);
+  };
+
   const addToCart = () => {
     if(!selectedType||quantity<=0) return;
     setCart(prev=>[...prev,{
@@ -387,6 +460,8 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
         selectedOptions.color ? kgLabelFix(selectedOptions.color) : ''
       ].filter(Boolean).join(' ')
     }]);
+
+    resetSelections(); // ✅ 추가: 목록 추가 후 초기화
   };
 
   const removeFromCart = id => setCart(prev=>prev.filter(i=>i.id!==id));
