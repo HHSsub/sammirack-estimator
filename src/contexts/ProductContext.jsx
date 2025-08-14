@@ -2,10 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const ProductContext = createContext();
 
-const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
+const formTypeRacks = ['경량랙', '중량랙', '파렛트랙 철판형'];
 
 const EXTRA_OPTIONS = {
-  '파렛트랙': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
+  '파렛트랙 철판형': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
   '하이랙': { size: ['45x150'], height: ['108','150','200','250'], level: ['5단','6단'] },
   '스텐랙': { level: ['5단','6단'] }
 };
@@ -227,7 +227,7 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
   };
 
   const getFallbackBOM = () => {
-    if(selectedType==='파렛트랙'){
+    if(selectedType==='파렛트랙 철판형'){
       const lvl = parseInt(selectedOptions.level || '') || 1;
       const sz = kgLabelFix(selectedOptions.size || '');
       const ht = kgLabelFix(selectedOptions.height || '');
@@ -270,13 +270,13 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
   const calculateCurrentBOM = useCallback(()=>{
     if(customPrice>0) return getFallbackBOM();
     if(!selectedType||quantity<=0) return [];
-    if(selectedType==='파렛트랙'){
-      const rec = bomData['파렛트랙']?.[selectedOptions.size]?.[selectedOptions.height]
+    if(selectedType==='파렛트랙 철판형'){
+      const rec = bomData['파렛트랙 철판형']?.[selectedOptions.size]?.[selectedOptions.height]
         ?. [selectedOptions.level]?.[selectedOptions.formType];
       if(rec?.components){
         return [
           ...rec.components.map(c=>({
-            rackType:'파렛트랙',
+            rackType:'파렛트랙 철판형',
             size:kgLabelFix(selectedOptions.size),
             name:kgLabelFix(c.name),
             specification: kgLabelFix(c.specification ?? ''),
