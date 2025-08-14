@@ -7,7 +7,8 @@ const formTypeRacks = ['경량랙', '중량랙', '파렛트랙 철판형'];
 const EXTRA_OPTIONS = {
   '파렛트랙 철판형': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
   '하이랙': { size: ['45x150'], height: ['150','200','250'], level: ['5단','6단'] }, // 하이랙 필수높이노출 108제거 (150~250만)
-  '스텐랙': { level: ['5단','6단'], height: ['210'] }
+  '스텐랙': { level: ['5단','6단'], height: ['210'] },
+  '경량랙': { height: ['H750'] } 
 };
 
 const COMMON_LEVELS = ['2단','3단','4단','5단','6단'];
@@ -115,9 +116,15 @@ export const ProductProvider = ({ children }) => {
           const heightListSafe = Object.keys(
             rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size] || {}
           );
-          // 높이는 기존처럼 EXTRA 병합
-          opts.height = [...heightListSafe, ...(EXTRA_OPTIONS['하이랙'].height || [])];
-    
+          
+          const allow250ExtraFor = ['60x108', '60x150', '60x200'];
+          const extraH = allow250ExtraFor.includes(selectedOptions.size)
+            ? (EXTRA_OPTIONS['하이랙']?.height || []).filter(h => h === '250')
+            : [];
+          
+          // 중복 방지
+          opts.height = Array.from(new Set([...heightListSafe, ...extraH]));    
+          
           if (selectedOptions.height) {
             const levelsFromData = Object.keys(
               rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
