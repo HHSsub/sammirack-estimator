@@ -17,7 +17,7 @@ const colorLabelMap = { '200kg': '270kg', '350kg': '450kg', '700kg': '500kg' };
 // 무게명칭 변환
 function kgLabelFix(str) {
   if (!str) return '';
-  return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
+  return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg').replace(/700kg/g, '500kg');
 }
 
 export const ProductProvider = ({ children }) => {
@@ -89,35 +89,49 @@ export const ProductProvider = ({ children }) => {
           )
           : []
       });
-      return;
-    }
+        if(selectedType===\'하이랙\' && data?.하이랙){
+      const rd = data[\'하이랙\'];
+      const opts = { color: rd[\'색상\'] || [] };
 
-    if(selectedType==='하이랙' && data?.하이랙){
-      const rd = data['하이랙'];
-      const opts = { color: rd['색상'] || [] };
+      if (selectedOptions.color) {
+        const sizeListSafe = Object.keys(rd[\'기본가격\']?.[selectedOptions.color] || {});
 
-      if(selectedOptions.color){
-        const sizeListSafe = Object.keys(rd['기본가격']?.[selectedOptions.color] || {});
-        opts.size = [...sizeListSafe, ...(EXTRA_OPTIONS['하이랙'].size || [])];
+        // heaviest(500kg) 일 때는 EXTRA size(45x150) 제외
+        const isHeaviest =
+          /500kg$/.test(selectedOptions.color) || /700kg$/.test(selectedOptions.color); // 안전장치
 
-        if(selectedOptions.size){
+        const extraSizes = EXTRA_OPTIONS[\'하이랙\']?.size || [];
+        opts.size = isHeaviest
+          ? sizeListSafe
+          : Array.from(new Set([...sizeListSafe, ...extraSizes]));
+
+        if (selectedOptions.size) {
           const heightListSafe = Object.keys(
-            rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size] || {}
+            rd[\'기본가격\']?.[selectedOptions.color]?.[selectedOptions.size] || {}
           );
-          opts.height = [...heightListSafe, ...(EXTRA_OPTIONS['하이랙'].height || [])];
-          if(selectedOptions.height){
-            const levelListSafe = Object.keys(
-              rd['기본가격']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
+          // 높이는 기존처럼 EXTRA 병합 (150~250)
+          opts.height = [...heightListSafe, ...(EXTRA_OPTIONS[\'하이랙\'].height || [])];
+
+          if (selectedOptions.height) {
+            const levelsFromData = Object.keys(
+              rd[\'기본가격\']?.[selectedOptions.color]?.[selectedOptions.size]?.[selectedOptions.height] || {}
             );
-            // 항상 2~6단 전체 노출
-            opts.level = [...new Set([...levelListSafe, ...(EXTRA_OPTIONS['하이랙'].level || []), ...COMMON_LEVELS])];
+
+            // ★ heaviest(500kg)면 데이터에 있는 레벨만 사용(보통 \'1단\'),
+            //   그 외에는 기존처럼 COMMON_LEVELS/EXTRA level까지 합침
+            opts.level = isHeaviest
+              ? levelsFromData
+              : Array.from(new Set([
+                  ...levelsFromData,
+                  ...(EXTRA_OPTIONS[\'하이랙\'].level || []),
+                  ...COMMON_LEVELS
+                ]));
           }
         }
       }
       setAvailableOptions(opts);
       return;
     }
-
     // ▶ 스텐랙
     if (selectedType === '스텐랙' && data?.스텐랙) {
       const rd = data['스텐랙'];
