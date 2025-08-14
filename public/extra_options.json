@@ -18,25 +18,25 @@
     ],
     "추가상품3 (270kg 기둥추가)": [
       { "id": "h3-45x150-blue-pillar", "name": "45x150(블루기둥)", "price": 21000, "bom": [{ "name": "45x150 블루기둥", "qty": 1 }] },
-      { "id": "h3-45x150-gray-pillar", "name": "45x150(메트그레이기둥)", "price": 21000, "bom": [{ "name": "45x150 메트그레이기둥", "qty": 1 }] },
       { "id": "h3-45x200-blue-pillar", "name": "45x200(블루기둥)", "price": 23000, "bom": [{ "name": "45x200 블루기둥", "qty": 1 }] },
-      { "id": "h3-45x200-gray-pillar", "name": "45x200(메트그레이기둥)", "price": 23000, "bom": [{ "name": "45x200 메트그레이기둥", "qty": 1 }] },
       { "id": "h3-60x150-blue-pillar", "name": "60x150(블루기둥)", "price": 23000, "bom": [{ "name": "60x150 블루기둥", "qty": 1 }] },
-      { "id": "h3-60x150-gray-pillar", "name": "60x150(메트그레이기둥)", "price": 23000, "bom": [{ "name": "60x150 메트그레이기둥", "qty": 1 }] },
       { "id": "h3-60x200-blue-pillar", "name": "60x200(블루기둥)", "price": 25000, "bom": [{ "name": "60x200 블루기둥", "qty": 1 }] },
+      { "id": "h3-45x150-gray-pillar", "name": "45x150(메트그레이기둥)", "price": 21000, "bom": [{ "name": "45x150 메트그레이기둥", "qty": 1 }] },
+      { "id": "h3-45x200-gray-pillar", "name": "45x200(메트그레이기둥)", "price": 23000, "bom": [{ "name": "45x200 메트그레이기둥", "qty": 1 }] },
+      { "id": "h3-60x150-gray-pillar", "name": "60x150(메트그레이기둥)", "price": 23000, "bom": [{ "name": "60x150 메트그레이기둥", "qty": 1 }] },
       { "id": "h3-60x200-gray-pillar", "name": "60x200(메트그레이기둥)", "price": 25000, "bom": [{ "name": "60x200 메트그레이기둥", "qty": 1 }] }
     ],
     "추가상품4 (450kg 메트그레이 기둥 및 선반추가)": [
       { "id": "h4-60x108-gray-450-shelf", "name": "60x108(선반추가 450kg)", "price": 25000, "bom": [{ "name": "60x108 선반(450kg)", "qty": 1 }] },
       { "id": "h4-60x150-gray-450-shelf", "name": "60x150(선반추가 450kg)", "price": 30000, "bom": [{ "name": "60x150 선반(450kg)", "qty": 1 }] },
-      { "id": "h4-60x200-gray-450-pillar", "name": "60x200(기둥추가 450kg)", "price": 41000, "bom": [{ "name": "60x200 기둥(450kg)", "qty": 1 }] },
       { "id": "h4-60x200-gray-450-shelf", "name": "60x200(선반추가 450kg)", "price": 35500, "bom": [{ "name": "60x200 선반(450kg)", "qty": 1 }] }
+      { "id": "h4-60x200-gray-450-pillar", "name": "60x200(기둥추가 450kg)", "price": 41000, "bom": [{ "name": "60x200 기둥(450kg)", "qty": 1 }] },
     ],
     "추가상품5 (450kg 블루+오렌지 기둥 및 선반추가)": [
       { "id": "h5-60x108-orange-450-shelf", "name": "60x108(선반추가 450kg)", "price": 25000, "bom": [{ "name": "60x108 선반(450kg)", "qty": 1 }] },
       { "id": "h5-60x150-orange-450-shelf", "name": "60x150(선반추가 450kg)", "price": 30000, "bom": [{ "name": "60x150 선반(450kg)", "qty": 1 }] },
-      { "id": "h5-60x200-orange-450-pillar", "name": "60x200(기둥추가 450kg)", "price": 41000, "bom": [{ "name": "60x200 기둥(450kg)", "qty": 1 }] },
       { "id": "h5-60x200-orange-450-shelf", "name": "60x200(선반추가 450kg)", "price": 35500, "bom": [{ "name": "60x200 선반(450kg)", "qty": 1 }] }
+      { "id": "h5-60x200-orange-450-pillar", "name": "60x200(기둥추가 450kg)", "price": 41000, "bom": [{ "name": "60x200 기둥(450kg)", "qty": 1 }] },
     ],
     "추가상품6 (550kg 블루+오렌지 단추가)": [
       { "id": "h6-80x146-blue-700-shelf", "name": "80x146(블루선반+오렌지빔)", "price": 81000, "bom": [{ "name": "80x146 블루선반+오렌지빔", "qty": 1 }] },
@@ -58,6 +58,7 @@
       { "id": "s2-120-pillar", "name": "120(4개 1set)", "price": 35000, "bom": [{ "name": "120 기둥", "qty": 4 }] },
       { "id": "s2-150-pillar", "name": "150(4개 1set)", "price": 41000, "bom": [{ "name": "150 기둥", "qty": 4 }] },
       { "id": "s2-180-pillar", "name": "180(4개 1set)", "price": 50000, "bom": [{ "name": "180 기둥", "qty": 4 }] }
+      { "id": "s2-180-pillar", "name": "210(4개 1set)", "price": 53000, "bom": [{ "name": "210 기둥", "qty": 4 }] }
     ]
   },
   "중량랙": {
