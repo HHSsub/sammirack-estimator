@@ -76,7 +76,10 @@ export const ProductProvider = ({ children }) => {
 
   useEffect(()=>{
     if(!selectedType){ setAvailableOptions({}); return; }
-    const extra = EXTRA_OPTIONS[selectedType] || {};
+    const extra =
+      EXTRA_OPTIONS[selectedType]
+      || (['파렛트랙','파렛트랙 철판형'].includes(selectedType) ? (EXTRA_OPTIONS['파렛트랙 철판형'] || {}) : {})
+      || {};
 
     // 1) 폼타입 랙 (경량/중량/파렛트랙/파렛트랙 철판형)
     if (formTypeRacks.includes(selectedType)) {
