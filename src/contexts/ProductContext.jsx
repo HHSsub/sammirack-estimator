@@ -6,13 +6,13 @@ const formTypeRacks = ['경량랙', '중량랙', '파렛트랙 철판형'];
 
 const EXTRA_OPTIONS = {
   '파렛트랙 철판형': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
-  '하이랙': { size: ['45x150'], height: ['108','150','200','250'], level: ['5단','6단'] },
+  '하이랙': { size: ['45x150'], height: ['150','200','250'], level: ['5단','6단'] }, // 하이랙 필수높이노출 108제거 (150~250만)
   '스텐랙': { level: ['5단','6단'], height: ['210'] }
 };
 
 const COMMON_LEVELS = ['2단','3단','4단','5단','6단'];
 
-const colorLabelMap = { '200kg': '270kg', '350kg': '450kg' };
+const colorLabelMap = { '200kg': '270kg', '350kg': '450kg', '700kg': '500kg' };
 
 // 무게명칭 변환
 function kgLabelFix(str) {
