@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
-const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
+const formTypeRacks = ['경량랙', '중량랙', '파렛트랙', '파렛트랙 철판형'];
 
 // 무게명칭 변환
 function kgLabelFix(str) {
