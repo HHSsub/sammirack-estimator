@@ -118,21 +118,26 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
-    if(selectedType==='스텐랙' && data?.스텐랙){
+    // ▶ 스텐랙 (이 블록만 교체)
+    if (selectedType === '스텐랙' && data?.스텐랙) {
       const rd = data['스텐랙'];
-      const opts = { size:Object.keys(rd['기본가격'] || {}) };
+      const opts = { size: Object.keys(rd['기본가격'] || {}) };
       if (selectedOptions.size) {
         // data.json + EXTRA_OPTIONS 병합 → 210 항상 노출
         const heightsFromData  = Object.keys(rd['기본가격'][selectedOptions.size] || {});
-        const heightsFromExtra = EXTRA_OPTIONS['스텐랙']?.height || [];
+        const heightsFromExtra = EXTRA_OPTIONS['스텐랙']?.height || []; // ['210']
         opts.height = Array.from(new Set([...heightsFromData, ...heightsFromExtra]));
       }
-      if(selectedOptions.size && selectedOptions.height) {
-      opts.level = [...Object.keys(rd['기본가격'][selectedOptions.size][selectedOptions.height]||{}), ...(EXTRA_OPTIONS['스텐랙'].level||[])];
+      if (selectedOptions.size && selectedOptions.height) {
+        opts.level = [
+          ...Object.keys(rd['기본가격'][selectedOptions.size][selectedOptions.height] || {}),
+          ...(EXTRA_OPTIONS['스텐랙'].level || [])
+        ];
+      }
       opts.version = ['V1'];
       setAvailableOptions(opts);
       return;
-     }
+    }
     setAvailableOptions({});
   },[selectedType,selectedOptions,data,bomData]);
 
