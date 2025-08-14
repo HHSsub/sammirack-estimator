@@ -76,23 +76,19 @@ export const ProductProvider = ({ children }) => {
     })();
   }, []);
 
-  useEffect(()=>{
-    if(!selectedType){ setAvailableOptions({}); return; }
+  useEffect(() => {
+    if (!selectedType) { setAvailableOptions({}); return; }
+
+    // 보조(엑스트라) 옵션
     const extra =
       EXTRA_OPTIONS[selectedType]
-      // 파렛트랙/파렛트랙 철판형은 동일 옵션을 '파렛트랙' 키로 공통 사용
       || (['파렛트랙','파렛트랙 철판형'].includes(selectedType) ? (EXTRA_OPTIONS['파렛트랙'] || {}) : {})
       || {};
 
-    // 1) 폼타입 랙 (경량/중량/파렛트랙/파렛트랙 철판형)
+    // 1) 폼타입 랙 (경량/중량/파렛트랙/파렛트랙 철판형): 각 타입별로 bomData에서 크기/높이/단/형식 추출
     if (formTypeRacks.includes(selectedType)) {
       const bd = bomData[selectedType] || {};
-      const next = {
-        size: Object.keys(bd || {}),
-        height: [],
-        level: [],
-        formType: []
-      };
+      const next = { size: Object.keys(bd || {}), height: [], level: [], formType: [] };
 
       if (selectedOptions.size) {
         const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
@@ -102,16 +98,16 @@ export const ProductProvider = ({ children }) => {
       }
 
       if (selectedOptions.size && selectedOptions.height) {
-        // ✅ 경량랙 H750 특수 처리: 레벨/형식 강제 노출(데이터에 없어도)
+        // 경량랙 H750는 강제 노출(데이터 미포함 케이스 대응)
         if (selectedType === '경량랙' && selectedOptions.height === 'H750') {
           next.level = [...COMMON_LEVELS];
-          next.formType = ['독립형','연결형'];
+          next.formType = ['독립형', '연결형'];
         } else {
           next.level = Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {});
           if (selectedOptions.level) {
             const forms = bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
             next.formType = Object.keys(forms);
-            if (next.formType.length === 0) next.formType = ['독립형','연결형'];
+            if (next.formType.length === 0) next.formType = ['독립형', '연결형'];
           }
         }
       }
@@ -119,6 +115,7 @@ export const ProductProvider = ({ children }) => {
       setAvailableOptions(next);
       return;
     }
+
 
     // 2) 하이랙
     if (selectedType === '하이랙' && data?.하이랙) {
