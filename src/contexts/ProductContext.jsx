@@ -2,10 +2,10 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 const ProductContext = createContext();
 
-const formTypeRacks = ['경량랙', '중량랙', '파렛트랙 철판형'];
+const formTypeRacks = ['경량랙', '중량랙', '파렛트랙'];
 
 const EXTRA_OPTIONS = {
-  '파렛트랙 철판형': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
+  '파렛트랙': { height: ['H4500', 'H5000', 'H5500', 'H6000'] },
   '하이랙': { size: ['45x150'], height: ['150','200','250'], level: ['5단','6단'] }, // 하이랙 필수높이노출 108제거 (150~250만)
   '스텐랙': { level: ['5단','6단'], height: ['210'] },
   '경량랙': { height: ['H750'] } 
@@ -72,7 +72,7 @@ export const ProductProvider = ({ children }) => {
     if(!selectedType){ setAvailableOptions({}); return; }
     const extra = EXTRA_OPTIONS[selectedType] || {};
 
-    // 1) 폼타입 랙 (경량랙/중량랙/파렛트랙 철판형) — 로딩 전에도 안전하게 동작
+    // 1) 폼타입 랙 (경량랙/중량랙/파렛트랙) — 로딩 전에도 안전하게 동작
     if (formTypeRacks.includes(selectedType)) {
       const bd = bomData[selectedType] || {};
       const isH750 = selectedType==='경량랙' && /^H?750$/.test(String(selectedOptions.height || ''));
@@ -319,7 +319,7 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
       }
     }
 
-    if(selectedType==='파렛트랙 철판형'){
+    if(selectedType==='파렛트랙'){
       const lvl = parseInt(selectedOptions.level || '') || 1;
       const sz = selectedOptions.size || '';
       const ht = selectedOptions.height || '';
@@ -368,13 +368,13 @@ const setTotalBomQuantity = (key, nextQtyRaw) => {
         return makeLightRackH750BOM();
       }
     }
-    if(selectedType==='파렛트랙 철판형'){
-      const rec = bomData['파렛트랙 철판형']?.[selectedOptions.size]?.[selectedOptions.height]
+    if(selectedType==='파렛트랙'){
+      const rec = bomData['파렛트랙']?.[selectedOptions.size]?.[selectedOptions.height]
         ?. [selectedOptions.level]?.[selectedOptions.formType];
       if(rec?.components){
         return [
           ...rec.components.map(c=>({
-            rackType:'파렛트랙 철판형',
+            rackType:'파렛트랙',
             size:selectedOptions.size,
             name:c.name,
             specification: c.specification ?? '',
