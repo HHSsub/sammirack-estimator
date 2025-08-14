@@ -13,7 +13,7 @@ const EXTRA_OPTIONS = {
 
 const COMMON_LEVELS = ['2단','3단','4단','5단','6단'];
 
-const colorLabelMap = { '200kg': '270kg', '350kg': '450kg', '700kg': '500kg' };
+const colorLabelMap = { '200kg': '270kg', '350kg': '450kg', '700kg': '550kg' };
 
 // 높이/사이즈 문자열 파서(가벼움)
 const parseSize = (sizeStr='') => {
@@ -127,7 +127,7 @@ export const ProductProvider = ({ children }) => {
 
         // 500kg(=구 700kg)면 EXTRA size(45x150) 제외
         const isHeaviest =
-          /500kg$/.test(selectedOptions.color) || /700kg$/.test(selectedOptions.color);
+          /550kg$/.test(selectedOptions.color) || /700kg$/.test(selectedOptions.color);
 
         const extraSizes = EXTRA_OPTIONS['하이랙']?.size || [];
         opts.size = isHeaviest ? sizeListSafe : Array.from(new Set([...sizeListSafe, ...extraSizes]));
