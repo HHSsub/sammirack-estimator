@@ -317,59 +317,54 @@ export const ProductProvider = ({ children }) => {
     setAvailableOptions({});
   }, [selectedType, selectedOptions, data, bomData]);
 
-  const calculatePrice = useCallback(() => {
-    if (!selectedType || quantity <= 0) return 0;
-    if (customPrice > 0) return Math.round(customPrice * quantity * (applyRate / 100));
-  
-    let basePrice = 0;
-  
-    if (formTypeRacks.includes(selectedType)) {
-      // ✅ H750은 가격계산 시 H900을 참조해서 가격 재사용
-      const heightKeyForPrice =
-        (selectedType === '경량랙' && selectedOptions.height === 'H750')
-          ? 'H900'
-          : selectedOptions.height;
-  
-      const rec = bomData[selectedType]?.[selectedOptions.size]?.[heightKeyForPrice]
-        ?. [selectedOptions.level]?.[selectedOptions.formType];
-  
-      if (rec?.total_price) basePrice = rec.total_price * quantity;
-  
-    } else if (selectedType === '스텐랙') {
-      const p = data['스텐랙']['기본가격']
-        ?. [selectedOptions.size]
-        ?. [selectedOptions.height]
-        ?. [selectedOptions.level];
-      if (p) basePrice = p * quantity;
-  
-    } else if (selectedType === '하이랙') {
-      const color = selectedOptions.color;
-      const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
-      const p = data['하이랙']['기본가격']?.[color]
-        ?. [dataSizeKey]
-        ?. [selectedOptions.height]
-        ?. [selectedOptions.level];
-      if (p) basePrice = p * quantity;
-    }
-  
-    // ▼ 추가옵션 금액(일반 + 사용자 정의 여러 개 + 레거시 단건)
-    let extraPrice = 0;
-    const extraBlock = getExtraForType(selectedType, extraProducts);
-    if (extraBlock) {
-      Object.values(extraBlock).forEach(catArr => catArr.forEach(opt => {
-        if (extraOptionsSel.includes(opt.id) && opt.id !== 'l1-custom') {
-          extraPrice += opt.price;
+    const calculatePrice = useCallback(() => {
+      if (!selectedType || quantity <= 0) return 0;
+      if (customPrice > 0) return Math.round(customPrice * quantity * (applyRate / 100));
+    
+      let basePrice = 0;
+    
+      if (formTypeRacks.includes(selectedType)) {
+        // ✅ 경량랙 H750 -> H900 가격 사용
+        if (selectedType === '경량랙' && selectedOptions.height === 'H750') {
+          const recH900 = bomData['경량랙']?.[selectedOptions.size]?.['H900']
+            ?. [selectedOptions.level]?.[selectedOptions.formType];
+          if (recH900?.total_price) basePrice = recH900.total_price * quantity;
+        } else {
+          const rec = bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]
+            ?. [selectedOptions.level]?.[selectedOptions.formType];
+          if (rec?.total_price) basePrice = rec.total_price * quantity;
         }
-      }));
-    }
-    extraPrice += (customMaterials || []).reduce((sum, m) => sum + (Number(m.price) || 0), 0);
-    extraPrice += customMaterialPrice ? Number(customMaterialPrice) : 0;
-  
-    return Math.round((basePrice + extraPrice) * (applyRate / 100));
-  }, [
-    selectedType, selectedOptions, quantity, customPrice, applyRate,
-    data, bomData, extraProducts, extraOptionsSel, customMaterialPrice, customMaterials
-  ]);
+      } else if (selectedType === '스텐랙') {
+        const p = data['스텐랙']['기본가격']?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+        if (p) basePrice = p * quantity;
+      } else if (selectedType === '하이랙') {
+        const color = selectedOptions.color;
+        const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
+        const p = data['하이랙']['기본가격']?.[color]?.[dataSizeKey]
+          ?. [selectedOptions.height]?.[selectedOptions.level];
+        if (p) basePrice = p * quantity;
+      }
+    
+      // ▸ 기타 옵션 가격
+      let extraPrice = 0;
+      const extraBlock = getExtraForType(selectedType, extraProducts);
+      if (extraBlock) {
+        Object.values(extraBlock).forEach(catArr => catArr.forEach(opt => {
+          if (extraOptionsSel.includes(opt.id) && opt.id !== 'l1-custom') {
+            extraPrice += opt.price;
+          }
+        }));
+      }
+      // ▸ 사용자 정의 기타자재(여러 개)
+      extraPrice += (customMaterials || []).reduce((sum, m) => sum + (Number(m.price) || 0), 0);
+      // ▸ (레거시) 단건 사용자입력
+      extraPrice += customMaterialPrice ? Number(customMaterialPrice) : 0;
+    
+      return Math.round((basePrice + extraPrice) * (applyRate / 100));
+    }, [
+      selectedType, selectedOptions, quantity, customPrice, applyRate,
+      data, bomData, extraProducts, extraOptionsSel, customMaterialPrice, customMaterials
+    ]);
 
 
   // ▶ 장바구니 아이템 수량 변경 (가격·BOM 동기화)
