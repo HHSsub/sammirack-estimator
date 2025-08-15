@@ -164,37 +164,45 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
-    // 2) 하이랙
+    // 2) 하이랙 (색상→규격→높이→단수)
     if (selectedType === "하이랙" && data?.하이랙) {
       const rd = data["하이랙"];
       const opts = { color: rd["색상"] || [] };
-
+    
       if (selectedOptions.color) {
         const color = selectedOptions.color;
-        const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
-
+    
+        // 550/700kg 은 데이터 키 ↔ 표시값 별칭 필요
+        const isHeaviest = /(550kg|700kg)$/.test(color);
+        // ★ 450/550/700kg 은 45x150 숨김 (요청 반영)
+        const hide45x150 = /(450kg|550kg|700kg)$/.test(color);
+    
+        // 규격 목록(색상별)
         const rawSizes = Object.keys(rd["기본가격"]?.[color] || []);
         const sizeViewList = rawSizes.map((s) =>
           isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
             ? HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
             : s
         );
-
-        const baseSizes = isHeaviest
+    
+        // 270kg은 45x150 노출(보조옵션에 의해 추가됨), 450/550/700kg은 45x150 제거
+        const baseSizes = hide45x150
           ? sizeViewList.filter((s) => s !== "45x150")
           : Array.from(new Set([...sizeViewList, ...(EXTRA_OPTIONS["하이랙"]?.size || [])]));
         opts.size = sortSizes(baseSizes);
-
+    
+        // 높이: 어떤 옵션이든 150/200/250 항상 노출(데이터와 병합)
         if (selectedOptions.size) {
           const sizeKey = isHeaviest
             ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selectedOptions.size] || selectedOptions.size
             : selectedOptions.size;
+    
           const heightsFromData = Object.keys(rd["기본가격"]?.[color]?.[sizeKey] || []);
           opts.height = sortHeights([
             ...heightsFromData,
             ...(EXTRA_OPTIONS["하이랙"]?.height || []),
           ]);
-
+    
           if (selectedOptions.height) {
             const levelsFromData = Object.keys(
               rd["기본가격"]?.[color]?.[sizeKey]?.[selectedOptions.height] || {}
@@ -209,9 +217,11 @@ export const ProductProvider = ({ children }) => {
           }
         }
       }
+    
       setAvailableOptions(opts);
       return;
     }
+
 
     // 3) 스텐랙
     if (selectedType === "스텐랙" && data?.스텐랙) {
