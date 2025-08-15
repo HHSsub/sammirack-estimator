@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
-import CustomMaterialsBox from './CustomMaterialsBox'; // ✅ 추가
 
 const formTypeRacks = ['경량랙', '중량랙', '파렛트랙', '파렛트랙 철판형'];
 
@@ -17,9 +16,11 @@ export default function OptionSelector() {
     handleOptionChange,
     extraOptionsSel, handleExtraOptionChange,
     extraProducts,
-    // 레거시 단건 입력은 컨텍스트엔 남아 있지만, UI는 CustomMaterialsBox로 대체
+    // ▼ 사용자 자재(여러 개) 관련
+    customMaterials, addCustomMaterial, removeCustomMaterial,
     customMaterialName, setCustomMaterialName,
     customMaterialPrice, setCustomMaterialPrice,
+    // ▼ 공통 입력들
     quantity, setQuantity, applyRate, setApplyRate,
     customPrice, setCustomPrice, currentPrice,
     addToCart, loading
@@ -56,9 +57,13 @@ export default function OptionSelector() {
     );
   };
 
+  // 기타 옵션 카테고리 (경량랙의 l1-custom은 체크박스에서 숨김)
   let extraCatList = [];
   if (extraProducts && extraProducts[selectedType]) {
-    extraCatList = Object.entries(extraProducts[selectedType]);
+    extraCatList = Object.entries(extraProducts[selectedType]).map(([cat, arr]) => ([
+      cat,
+      (arr || []).filter(opt => opt.id !== 'l1-custom') // 사용자 입력 전용은 아래 별도 UI
+    ]));
   }
 
   const toggleExtra = id => {
@@ -66,8 +71,62 @@ export default function OptionSelector() {
     else handleExtraOptionChange([...extraOptionsSel, id]);
   };
 
-  if (loading) return <div>데이터 로드 중...</div>;
   const canAddItem = (customPrice > 0 || currentPrice > 0);
+
+  // ▷ 사용자 자재(여러 개) 입력 박스 (경량랙에서만 노출)
+  const renderCustomMaterialsBox = () => {
+    if (selectedType !== '경량랙') return null;
+    return (
+      <div style={{ marginTop: 12, padding: '10px 12px', border: '1px dashed #cbd5e1', borderRadius: 8, background: '#fafcff' }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>사용자 자재 (여러 개 추가 가능)</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            style={{ minWidth: 160 }}
+            placeholder="항목명 (예: 연결대)"
+            value={customMaterialName}
+            onChange={e => setCustomMaterialName(e.target.value)}
+          />
+          <input
+            type="number"
+            style={{ width: 120 }}
+            placeholder="단가"
+            value={customMaterialPrice}
+            onChange={e => setCustomMaterialPrice(Number(e.target.value) || 0)}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (!customMaterialName || !Number(customMaterialPrice)) return;
+              addCustomMaterial(customMaterialName, Number(customMaterialPrice));
+              setCustomMaterialName('');
+              setCustomMaterialPrice(0);
+            }}
+          >
+            추가
+          </button>
+        </div>
+
+        {customMaterials.length > 0 && (
+          <ul style={{ marginTop: 10 }}>
+            {customMaterials.map(m => (
+              <li key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{ minWidth: 160 }}>{m.name}</span>
+                <span>{m.price.toLocaleString()}원</span>
+                <button type="button" onClick={() => removeCustomMaterial(m.id)} style={{ marginLeft: 8 }}>
+                  삭제
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div style={{ color: '#64748b', fontSize: 12, marginTop: 6 }}>
+          * 단가는 1세트 기준이며, 상단의 수량과 곱해 합계에 반영됩니다.
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) return <div>데이터 로드 중...</div>;
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
@@ -109,77 +168,51 @@ export default function OptionSelector() {
             onChange={e => setQuantity(Math.max(0, Number(e.target.value)))}
           />
         </div>
+
         <div>
           <label>적용률(%)</label>
           <input value={applyRateInput} onChange={onApplyRateChange} maxLength={3} />
         </div>
+
         <div>
           <label>가격 직접입력</label>
-          <input type="number" value={customPrice} onChange={e => setCustomPrice(Number(e.target.value) || 0)} />
+          <input
+            type="number"
+            value={customPrice}
+            onChange={e => setCustomPrice(Number(e.target.value) || 0)}
+          />
         </div>
       </div>
 
-      {extraCatList.length > 0 && (
+      {/* 기타 추가 옵션 (체크박스 목록) */}
+      {extraCatList.some(([_, arr]) => arr.length > 0) && (
         <>
           <button onClick={() => setExtraOpen(o => !o)} style={{ margin: '10px 0' }}>
             {extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}
           </button>
-
-          {extraOpen && (
-            <div style={{display:'grid', gap:12}}>
-              {/* ✅ 사용자 정의 기타자재 입력 박스 (경량랙 전용 노출) */}
-              <CustomMaterialsBox />
-
-              {/* ✅ 레거시 l1-custom 항목은 경량랙에서 숨김 */}
-              {extraCatList.map(([cat, arr]) => {
-                const shownArr = (selectedType === '경량랙')
-                  ? arr.filter(opt => opt.id !== 'l1-custom')
-                  : arr;
-
-                if (!shownArr.length) return null;
-
-                return (
-                  <div key={cat}>
-                    <div style={{ fontWeight: 600 }}>{cat}</div>
-                    {shownArr.map(opt => {
-                      const checked = extraOptionsSel.includes(opt.id);
-                      return (
-                        <div key={opt.id}>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleExtra(opt.id)}
-                            />
-                            {kgLabelFix(opt.name)} {opt.price ? `+${opt.price}원` : ''}
-                          </label>
-
-                          {/* ⚠️ 레거시 단건 입력 UI는 제거—이제 CustomMaterialsBox가 담당 */}
-                          {false && selectedType === '경량랙' && opt.id === 'l1-custom' && checked && (
-                            <div>
-                              <input
-                                placeholder="부품명"
-                                value={customMaterialName}
-                                onChange={e => setCustomMaterialName(e.target.value)}
-                              />
-                              <input
-                                type="number"
-                                placeholder="금액"
-                                value={customMaterialPrice}
-                                onChange={e => setCustomMaterialPrice(Number(e.target.value) || 0)}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {extraOpen && extraCatList.map(([cat, arr]) => (
+            arr.length > 0 && (
+              <div key={cat} style={{ marginBottom: 8 }}>
+                <div style={{ fontWeight: 600 }}>{cat}</div>
+                {arr.map(opt => {
+                  const checked = extraOptionsSel.includes(opt.id);
+                  return (
+                    <div key={opt.id}>
+                      <label>
+                        <input type="checkbox" checked={checked} onChange={() => toggleExtra(opt.id)} />
+                        {kgLabelFix(opt.name)} {opt.price ? `+${opt.price}원` : ''}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ))}
         </>
       )}
+
+      {/* 경량랙 전용: 사용자 자재(여러 개) 입력 영역 */}
+      {renderCustomMaterialsBox()}
 
       <div style={{ marginTop: 12 }}>
         <span>계산 가격: {(customPrice > 0 ? customPrice : currentPrice).toLocaleString()}원</span>
