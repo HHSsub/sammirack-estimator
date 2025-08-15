@@ -96,12 +96,9 @@ export const ProductProvider = ({ children }) => {
     if (formTypeRacks.includes(selectedType)) {
       const bd = bomData[selectedType] || {};
 
-      // size 후보: 데이터 키와 PREFERRED_SIZES의 교집합(교집합이 비면 데이터 키 사용)
+      // size 후보: bom_data 기준 (표기 불일치로 비는 문제 방지)
       const dataSizes = Object.keys(bd || {});
-      const pref = PREFERRED_SIZES[selectedType] || [];
-      const sizeCandidates = pref.length ? dataSizes.filter(s => pref.includes(s)) : dataSizes;
-
-      const next = { size: sizeCandidates, height: [], level: [], formType: [] };
+      const next = { size: dataSizes, height: [], level: [], formType: [] };
 
       if (selectedOptions.size) {
         const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
