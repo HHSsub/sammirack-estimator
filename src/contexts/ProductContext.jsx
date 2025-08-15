@@ -20,7 +20,7 @@ const EXTRA_OPTIONS = {
   "파렛트랙 철판형": { height: ["H4500", "H5000", "H5500", "H6000"] },
 
   // 하이랙: 어떤 옵션이든 높이 150/200/250 항상 노출,
-  // 270kg에서 45x150 추가 노출, 550/700kg에선 45x150 제외
+  // 270kg에서 45x150 추가 노출, 450/550/700kg에선 45x150 제외
   하이랙: { size: ["45x150"], height: ["150", "200", "250"], level: ["5단", "6단"] },
 
   // 스텐랙: 210 보조 높이, 5·6단 보조 레벨
@@ -32,9 +32,6 @@ const EXTRA_OPTIONS = {
 
 const COMMON_LEVELS = ["2단", "3단", "4단", "5단", "6단"];
 export const colorLabelMap = { "200kg": "270kg", "350kg": "450kg", "700kg": "550kg" };
-
-// 문자열 유틸
-const norm = (s) => String(s || "").trim();
 
 // 정렬 유틸
 const parseSizeKey = (s = "") => {
@@ -99,15 +96,16 @@ export const ProductProvider = ({ children }) => {
   const [extraOptionsSel, setExtraOptionsSel] = useState([]);
 
   // ───────────────────────────────
-  // 데이터 로드
+  // 데이터 로드 (캐시 버스터 적용)
   // ───────────────────────────────
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const dj = await (await fetch("./data.json")).json();
-        const bj = await (await fetch("./bom_data.json")).json();
-        const ej = await (await fetch("./extra_options.json")).json();
+        const ts = Date.now();
+        const dj = await (await fetch(`./data.json?ts=${ts}`, { cache: "no-store" })).json();
+        const bj = await (await fetch(`./bom_data.json?ts=${ts}`, { cache: "no-store" })).json();
+        const ej = await (await fetch(`./extra_options.json?ts=${ts}`, { cache: "no-store" })).json();
 
         setData(dj);
         setBomData(bj);
@@ -198,26 +196,32 @@ export const ProductProvider = ({ children }) => {
 
       if (selectedOptions.color) {
         const color = selectedOptions.color;
-        const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
+        const is550or700 = /(550kg|700kg)$/.test(color);
+        const is450 = /450kg$/.test(color);
+        const is270 = /270kg$/.test(color) || /200kg$/.test(color) || /350kg$/.test(color);
 
         // 규격 목록(색상별)
         const rawSizes = Object.keys(rd["기본가격"]?.[color] || []);
         // 550/700kg이면 별칭 표시(80x146→80x108 등)
-        const sizeViewList = rawSizes.map((s) =>
-          isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
+        let sizeViewList = rawSizes.map((s) =>
+          is550or700 && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
             ? HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
             : s
         );
-        // 270kg(=200/350→270) 에는 45x150 추가 노출
-        const baseSizes = isHeaviest
-          ? sizeViewList
-          : Array.from(new Set([...sizeViewList, ...(EXTRA_OPTIONS["하이랙"]?.size || [])]));
-        // 550/700kg이면 45x150 제외
-        opts.size = sortSizes(isHeaviest ? baseSizes.filter((s) => s !== "45x150") : baseSizes);
 
-        // 높이: 어떤 옵션이든 150/200/250 항상 노출(데이터에 있으면 병합)
+        // 270kg이면 45x150 보조 노출 추가, 450/550/700kg이면 45x150 제거
+        if (is270) {
+          sizeViewList = Array.from(new Set([...sizeViewList, ...(EXTRA_OPTIONS["하이랙"]?.size || [])]));
+        }
+        if (is450 || is550or700) {
+          sizeViewList = sizeViewList.filter((s) => s !== "45x150");
+        }
+
+        opts.size = sortSizes(sizeViewList);
+
+        // 높이: 어떤 옵션이든 150/200/250 항상 노출(데이터 병합)
         if (selectedOptions.size) {
-          const sizeKey = isHeaviest
+          const sizeKey = is550or700
             ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selectedOptions.size] || selectedOptions.size
             : selectedOptions.size;
           const heightsFromData = Object.keys(rd["기본가격"]?.[color]?.[sizeKey] || []);
@@ -230,7 +234,7 @@ export const ProductProvider = ({ children }) => {
             const levelsFromData = Object.keys(
               rd["기본가격"]?.[color]?.[sizeKey]?.[selectedOptions.height] || {}
             );
-            opts.level = isHeaviest
+            opts.level = is550or700
               ? sortLevels(levelsFromData)
               : sortLevels([
                   ...levelsFromData,
@@ -317,8 +321,8 @@ export const ProductProvider = ({ children }) => {
       if (p) basePrice = p * quantity;
     } else if (selectedType === "하이랙") {
       const color = selectedOptions.color;
-      const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
-      const dataSizeKey = isHeaviest
+      const is550or700 = /(550kg|700kg)$/.test(color);
+      const dataSizeKey = is550or700
         ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selectedOptions.size] || selectedOptions.size
         : selectedOptions.size;
       const p =
@@ -458,7 +462,7 @@ export const ProductProvider = ({ children }) => {
     ];
   };
 
-  // Fallback BOM : 안전우 삭제(요청 반영)
+  // Fallback BOM : 안전우 제외(요청 반영)
   const getFallbackBOM = () => {
     if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
       const lvl = parseInt(selectedOptions.level || "") || 1;
@@ -602,9 +606,7 @@ export const ProductProvider = ({ children }) => {
         return makeLightRackH750BOM();
       }
       const rec =
-        bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[
-          selectedOptions.level
-        ]?.[selectedOptions.formType];
+        bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
       const q = Number(quantity) || 1;
       const base = (rec?.components || []).map((c) => ({
         rackType: selectedType,
@@ -726,7 +728,7 @@ export const ProductProvider = ({ children }) => {
     setCurrentBOM(customPrice > 0 ? getFallbackBOM() : calculateCurrentBOM());
   }, [calculatePrice, calculateCurrentBOM]);
 
-  // 전체 BOM 뷰(오버라이드 훅 등 필요 시 확장)
+  // 전체 BOM 뷰
   const cartBOMView = useMemo(() => cartBOM, [cartBOM]);
 
   return (
