@@ -10,88 +10,57 @@ import React, {
 
 const ProductContext = createContext();
 
-// ──────────────────────────────────────────────────────────────
-// 유틸
-// ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
+// 상수/유틸
+// ──────────────────────────────────────────────────────────
 const formTypeRacks = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형"];
 const COMMON_LEVELS = ["2단", "3단", "4단", "5단", "6단"];
-const colorLabelMap = { "200kg": "270kg", "350kg": "450kg", "700kg": "550kg" };
+export const colorLabelMap = { "200kg": "270kg", "350kg": "450kg", "700kg": "550kg" };
+
+// 파렛트랙·철판형에서 항상 노출할 높이(데이터 합집합)
+const PALETTE_EXTRA_HEIGHTS = ["4500", "5000", "5500", "6000"];
+
+// 스텐랙에서 데이터에 없더라도 보여줄 높이
+const STAINLESS_EXTRA_HEIGHTS = ["210"];
+
+// 하이랙 550kg(=700키) 별칭
+const H550_VIEW_FROM_DATA = { "80x146": "80x108", "80x206": "80x150" };
+const H550_DATA_FROM_VIEW = { "80x108": "80x146", "80x150": "80x206" };
 
 const parseSizeKey = (s = "") => {
   const m = String(s).replace(/\s+/g, "").match(/W?(\d+)\s*[xX]\s*D?(\d+)/);
-  return m ? { a: Number(m[1]), b: Number(m[2]) } : null;
+  return m ? { w: Number(m[1]), d: Number(m[2]) } : null;
 };
 const sortSizes = (arr = []) =>
   [...new Set(arr)].sort((A, B) => {
     const a = parseSizeKey(A),
       b = parseSizeKey(B);
     if (a && b) {
-      if (a.a !== b.a) return a.a - b.a;
-      if (a.b !== b.b) return a.b - b.b;
+      if (a.w !== b.w) return a.w - b.w;
+      if (a.d !== b.d) return a.d - b.d;
     }
     return String(A).localeCompare(String(B), "ko");
   });
 
-const parseNumInString = (s = "") => {
+const numKey = (s = "") => {
   const m = String(s).match(/\d+/);
   return m ? Number(m[0]) : Number.POSITIVE_INFINITY;
 };
 const sortHeights = (arr = []) =>
-  [...new Set(arr)].sort((a, b) => parseNumInString(a) - parseNumInString(b));
+  [...new Set(arr)].sort((a, b) => numKey(a) - numKey(b));
 const sortLevels = (arr = []) =>
-  [...new Set(arr)].sort((a, b) => parseNumInString(a) - parseNumInString(b));
+  [...new Set(arr)].sort((a, b) => numKey(a) - numKey(b));
 
-// 하이랙 550kg 데이터키<->보기 사이즈 별칭
-const HIGHRACK_550_VIEW_FROM_DATA = { "80x146": "80x108", "80x206": "80x150" };
-const HIGHRACK_550_DATA_FROM_VIEW = { "80x108": "80x146", "80x150": "80x206" };
-
-// 파렛트랙 높이 확장(요구사항 고정 노출)
-const PALETTE_EXTRA_HEIGHTS = ["1500", "2000", "2500", "3000", "3500", "4000", "4500", "5000", "5500", "6000"];
-
-// ──────────────────────────────────────────────────────────────
-// 추가 옵션(BOM 확장 규칙)
-// extra_options.json 의 id 기준으로 패키지에 포함된 실제 부품을 명시.
-// 가격은 옵션 price로 반영하고, 아래 BOM 항목들은 단가 0으로 넣어 표시만 한다.
-// ──────────────────────────────────────────────────────────────
-const EXTRA_BOM_EXPANSIONS = {
-  // 파렛트랙
-  "p1-loadbeam-1460": [
-    { name: "로드빔1460", qty: 2 },
-    { name: "타이빔", qty: 2 },
-  ],
-  "p2-loadbeam-2660": [
-    { name: "로드빔2660", qty: 2 },
-    { name: "타이빔", qty: 4 },
-  ],
-  "p3-steel-1460": [
-    { name: "로드빔1460", qty: 2 },
-    { name: "철판형 1460", qty: 2 },
-  ],
-  "p3-steel-2060": [
-    { name: "로드빔2060", qty: 2 },
-    { name: "철판형 2060", qty: 3 },
-  ],
-  "p3-steel-2660": [
-    { name: "로드빔2660", qty: 2 },
-    { name: "철판형 2660", qty: 3 },
-  ],
-  "p4-steel-1460": [
-    { name: "로드빔1460", qty: 2 },
-    { name: "철판형 1460", qty: 2 },
-  ],
-  "p4-steel-2060": [
-    { name: "로드빔2060", qty: 2 },
-    { name: "철판형 2060", qty: 3 },
-  ],
-  "p4-steel-2660": [
-    { name: "로드빔2660", qty: 2 },
-    { name: "철판형 2660", qty: 3 },
-  ],
+const resolveHighrackSizeKey = (color, viewSize) => {
+  const is550 = /550kg|700kg/.test(String(color));
+  return is550 && H550_DATA_FROM_VIEW[viewSize]
+    ? H550_DATA_FROM_VIEW[viewSize]
+    : viewSize;
 };
 
-// ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
 // 컨텍스트
-// ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────
 export const ProductProvider = ({ children }) => {
   const [data, setData] = useState({});
   const [bomData, setBomData] = useState({});
@@ -102,7 +71,7 @@ export const ProductProvider = ({ children }) => {
   const [availableOptions, setAvailableOptions] = useState({});
 
   const [selectedType, setSelectedType] = useState("");
-  const [selectedOptions, setSelectedOptions] = useState({}); // {color,size,height,level,formType}
+  const [selectedOptions, setSelectedOptions] = useState({});
   const [quantity, setQuantity] = useState("");
 
   const [customPrice, setCustomPrice] = useState(0);
@@ -115,10 +84,10 @@ export const ProductProvider = ({ children }) => {
   const [cartBOM, setCartBOM] = useState([]);
   const [cartTotal, setCartTotal] = useState(0);
 
-  // 기타 추가 옵션(체크박스) 선택값
-  const [extraOptionsSel, setExtraOptionsSel] = useState([]); // [id]
+  // 추가옵션(체크박스) 선택 id 들
+  const [extraOptionsSel, setExtraOptionsSel] = useState([]);
 
-  // 경량랙 사용자 정의 자재(여러 개)
+  // 경량랙: 사용자 정의 추가자재(여러 개)
   const [customMaterials, setCustomMaterials] = useState([]); // [{id,name,price}]
   const addCustomMaterial = (name, price) => {
     if (!name || !Number(price)) return;
@@ -131,18 +100,7 @@ export const ProductProvider = ({ children }) => {
     setCustomMaterials((prev) => prev.filter((m) => m.id !== id));
   const clearCustomMaterials = () => setCustomMaterials([]);
 
-  // BOM 오버라이드(견적 페이지에서 편집)
-  const [bomOverrides, setBomOverrides] = useState({});
-  const [bomSpecOverrides, setBomSpecOverrides] = useState({});
-  const setTotalBomQuantity = (key, nextQtyRaw) => {
-    const q = Math.max(0, Number(nextQtyRaw) || 0);
-    setBomOverrides((prev) => ({ ...prev, [key]: q }));
-  };
-  const setTotalBomSpec = (key, nextSpec) => {
-    setBomSpecOverrides((prev) => ({ ...prev, [key]: String(nextSpec ?? "") }));
-  };
-
-  // fetch
+  // ── fetch
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -150,7 +108,6 @@ export const ProductProvider = ({ children }) => {
         const dj = await (await fetch("./data.json")).json();
         const bj = await (await fetch("./bom_data.json")).json();
         const ej = await (await fetch("./extra_options.json")).json();
-
         setData(dj);
         setBomData(bj);
         setExtraProducts(ej);
@@ -176,49 +133,39 @@ export const ProductProvider = ({ children }) => {
     })();
   }, []);
 
-  // 하이랙 550kg 별칭 처리
-  const resolveHighrackSizeKey = (color, viewSize) => {
-    const is550 = /550kg|700kg/.test(String(color));
-    if (is550 && HIGHRACK_550_DATA_FROM_VIEW[viewSize]) {
-      return HIGHRACK_550_DATA_FROM_VIEW[viewSize];
-    }
-    return viewSize;
+  // ── 추가옵션 토글(OptionSelector와 호환되는 함수로 제공)
+  const handleExtraOptionChange = (nextIds) => {
+    // 현재 타입의 유효 id만 허용 + 중복 제거
+    const valid = new Set(
+      Object.values(extraProducts[selectedType] || {}).flat().map((o) => o.id)
+    );
+    const uniq = Array.from(new Set(nextIds || [])).filter((id) =>
+      valid.has(id)
+    );
+    setExtraOptionsSel(uniq);
   };
 
-  // 타입별 현재 선택한 추가옵션 카탈로그 가져오기
-  const getExtraCatalogForType = (t) => {
-    if (!t || !extraProducts[t]) return [];
-    return Object.entries(extraProducts[t]); // [ [카테고리, [{id,name,price,bom[]},...]], ... ]
-  };
-
-  // 옵션 드롭다운 구성
+  // ── 옵션 드롭다운 구성
   useEffect(() => {
     if (!selectedType) {
       setAvailableOptions({});
       return;
     }
 
-    // 1) 폼타입 랙(경량/중량/파렛트랙/파렛트랙 철판형)
+    // 1) 경량/중량/파렛트랙/파렛트랙 철판형(계단식)
     if (formTypeRacks.includes(selectedType)) {
       const bd = bomData[selectedType] || {};
-      const sizes = sortSizes(Object.keys(bd));
-
+      const sizes = sortSizes(Object.keys(bd || {}));
       const next = { size: sizes, height: [], level: [], formType: [] };
 
-      // 규격 선택 후 높이
       if (selectedOptions.size) {
-        const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
-        let heights = sortHeights(heightsFromData);
-
-        // 파렛트랙·철판형은 4500~6000 강제 노출(합집합)
+        const heights = Object.keys(bd[selectedOptions.size] || {});
+        let merged = sortHeights(heights);
         if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
-          heights = sortHeights([...heights, ...PALETTE_EXTRA_HEIGHTS]);
+          merged = sortHeights([...merged, ...PALETTE_EXTRA_HEIGHTS]);
         }
-
-        next.height = heights;
+        next.height = merged;
       }
-
-      // 높이 선택 후 단수/형식
       if (selectedOptions.size && selectedOptions.height) {
         const lvls = Object.keys(
           bd[selectedOptions.size]?.[selectedOptions.height] || {}
@@ -234,58 +181,41 @@ export const ProductProvider = ({ children }) => {
             : ["독립형", "연결형"];
         }
       }
-
       setAvailableOptions(next);
       return;
     }
 
-    // 2) 하이랙 (색상 → 규격 → 높이 → 단수)
+    // 2) 하이랙(색상→규격→높이→단수)
     if (selectedType === "하이랙" && data?.하이랙) {
       const rd = data["하이랙"];
       const opts = { color: rd["색상"] || [] };
 
-      // 색상 선택 후 규격
       if (selectedOptions.color) {
         const color = selectedOptions.color;
-        const is450 = /450kg/.test(color);
         const is550 = /550kg|700kg/.test(color);
 
-        const rawSizes = Object.keys(rd["기본가격"]?.[color] || []);
+        const rawSizes = Object.keys(rd["기본가격"]?.[color] || {});
         const viewSizes = rawSizes.map((s) =>
-          is550 && HIGHRACK_550_VIEW_FROM_DATA[s]
-            ? HIGHRACK_550_VIEW_FROM_DATA[s]
-            : s
+          is550 && H550_VIEW_FROM_DATA[s] ? H550_VIEW_FROM_DATA[s] : s
         );
+        // ❗️요청: 비표준도 숨기지 않음(450kg에서 45x150 포함)
+        opts.size = sortSizes(viewSizes);
 
-        // 450kg은 45x150 숨김, 그 외는 그대로
-        opts.size = sortSizes(
-          is450 ? viewSizes.filter((s) => s !== "45x150") : viewSizes
-        );
-
-        // 규격 선택 후 높이
         if (selectedOptions.size) {
-          const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
-          const heights = Object.keys(
-            rd["기본가격"]?.[color]?.[dataSizeKey] || {}
-          );
+          const dKey = resolveHighrackSizeKey(color, selectedOptions.size);
+          const heights = Object.keys(rd["기본가격"]?.[color]?.[dKey] || {});
+          // ❗️요청: 필요 시 150도 합집합으로 노출
+          const mergedH = sortHeights([...heights, "150"]);
+          opts.height = mergedH;
 
-          // 요구: 450kg에도 150 노출(데이터에 없으면 추가)
-          const extraH =
-            is450 && !heights.includes("150") ? ["150"] : [];
-          opts.height = sortHeights([...heights, ...extraH]);
-
-          // 높이 선택 후 단수
           if (selectedOptions.height) {
             const lvls = Object.keys(
-              rd["기본가격"]?.[color]?.[dataSizeKey]?.[
-                selectedOptions.height
-              ] || {}
+              rd["기본가격"]?.[color]?.[dKey]?.[selectedOptions.height] || {}
             );
             opts.level = sortLevels(lvls.length ? lvls : COMMON_LEVELS);
           }
         }
       }
-
       setAvailableOptions(opts);
       return;
     }
@@ -295,8 +225,9 @@ export const ProductProvider = ({ children }) => {
       const rd = data["스텐랙"];
       const opts = { size: sortSizes(Object.keys(rd["기본가격"] || {})) };
       if (selectedOptions.size) {
-        const hs = Object.keys(rd["기본가격"][selectedOptions.size] || {});
-        opts.height = sortHeights(hs);
+        const fromData = Object.keys(rd["기본가격"][selectedOptions.size] || {});
+        // ❗️요청: 210 고정 노출
+        opts.height = sortHeights([...fromData, ...STAINLESS_EXTRA_HEIGHTS]);
       }
       if (selectedOptions.size && selectedOptions.height) {
         const lv = Object.keys(
@@ -309,9 +240,9 @@ export const ProductProvider = ({ children }) => {
     }
 
     setAvailableOptions({});
-  }, [selectedType, selectedOptions, data, bomData]);
+  }, [selectedType, selectedOptions, bomData, data, extraProducts]);
 
-  // 가격 계산(옵션+추가옵션+사용자자재)
+  // ── 가격 계산
   const calculatePrice = useCallback(() => {
     const qty = Number(quantity) || 0;
     if (!selectedType || qty <= 0) return 0;
@@ -320,31 +251,27 @@ export const ProductProvider = ({ children }) => {
 
     let base = 0;
 
-    // 1) 폼타입 랙: bom_data 기준 가격
+    // 폼타입 랙: bom_data 우선
     if (formTypeRacks.includes(selectedType)) {
-      // 레코드
       const rec =
         bomData[selectedType]?.[selectedOptions.size]?.[
           selectedOptions.height
         ]?.[selectedOptions.level]?.[selectedOptions.formType];
 
-      if (rec && typeof rec.total_price === "number" && rec.total_price > 0) {
-        base = rec.total_price * qty;
+      if (rec && Number(rec.total_price) > 0) {
+        base = Number(rec.total_price) * qty;
       } else if (rec?.components?.length) {
-        // total_price가 없을 때 components 합으로 보정
+        // total_price가 0/누락이면 components 합으로 보정
         const perSet = rec.components.reduce((sum, c) => {
+          const tot = Number(c.total_price) || 0;
           const unit = Number(c.unit_price) || 0;
           const q = Number(c.quantity) || 0;
-          const tot = Number(c.total_price) || 0;
           return sum + (tot > 0 ? tot : unit * q);
         }, 0);
         base = perSet * qty;
-      } else {
-        base = 0;
       }
     }
 
-    // 2) 스텐랙
     if (selectedType === "스텐랙") {
       const p =
         data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[
@@ -353,32 +280,31 @@ export const ProductProvider = ({ children }) => {
       if (p) base = p * qty;
     }
 
-    // 3) 하이랙
     if (selectedType === "하이랙") {
       const color = selectedOptions.color;
-      const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
+      const dKey = resolveHighrackSizeKey(color, selectedOptions.size);
       const p =
-        data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[
-          selectedOptions.height
-        ]?.[selectedOptions.level];
+        data["하이랙"]["기본가격"]?.[color]?.[dKey]?.[selectedOptions.height]?.[
+          selectedOptions.level
+        ];
       if (p) base = p * qty;
     }
 
-    // ▶ 기타 추가 옵션(체크박스): price 합
+    // 추가옵션(체크박스) 가격 합
     const extraPrice = (() => {
-      let sum = 0;
-      const cats = getExtraCatalogForType(selectedType);
-      if (!cats.length || !extraOptionsSel.length) return 0;
+      const cats = extraProducts[selectedType] || {};
+      if (!Object.keys(cats).length || !extraOptionsSel.length) return 0;
       const map = new Map();
-      cats.forEach(([, arr]) => arr.forEach((o) => map.set(o.id, o)));
-      extraOptionsSel.forEach((id) => {
-        const item = map.get(id);
-        if (item && Number(item.price)) sum += Number(item.price);
-      });
-      return sum * qty;
+      Object.values(cats).forEach((arr) => arr.forEach((o) => map.set(o.id, o)));
+      return (
+        extraOptionsSel.reduce(
+          (s, id) => s + (Number(map.get(id)?.price) || 0),
+          0
+        ) * qty
+      );
     })();
 
-    // ▶ 경량랙 사용자 정의 자재(여러 개): 단가 합
+    // 경량 사용자자재(여러 개)
     const customExtra = (customMaterials || []).reduce(
       (s, m) => s + (Number(m.price) || 0),
       0
@@ -398,54 +324,31 @@ export const ProductProvider = ({ children }) => {
     customMaterials,
   ]);
 
-  // 추가옵션 BOM 변환
+  // ── 추가옵션 BOM (요청: “그 이름 그대로 한 줄”)
   const makeExtraOptionBOM = () => {
     const qty = Number(quantity) || 0;
     const result = [];
 
-    // (A) 체크박스형 추가옵션
-    const cats = getExtraCatalogForType(selectedType);
-    if (cats.length && extraOptionsSel.length) {
-      const map = new Map();
-      cats.forEach(([, arr]) => arr.forEach((o) => map.set(o.id, o)));
-
-      extraOptionsSel.forEach((id) => {
-        const item = map.get(id);
-        if (!item) return;
-
-        // 기본 bom
-        (item.bom || []).forEach((b) => {
-          result.push({
-            rackType: selectedType,
-            size: selectedOptions.size || "",
-            name: b.name,
-            specification: "",
-            quantity: (Number(b.qty) || 0) * qty,
-            unitPrice: 0,
-            totalPrice: 0,
-            note: "추가옵션",
-          });
-        });
-
-        // 패키지 확장(타이빔 포함 등)
-        if (EXTRA_BOM_EXPANSIONS[id]) {
-          EXTRA_BOM_EXPANSIONS[id].forEach((b) => {
-            result.push({
-              rackType: selectedType,
-              size: selectedOptions.size || "",
-              name: b.name,
-              specification: "",
-              quantity: (Number(b.qty) || 0) * qty,
-              unitPrice: 0,
-              totalPrice: 0,
-              note: "추가옵션(패키지)",
-            });
-          });
-        }
+    // 체크박스형
+    const cats = extraProducts[selectedType] || {};
+    const map = new Map();
+    Object.values(cats).forEach((arr) => arr.forEach((o) => map.set(o.id, o)));
+    extraOptionsSel.forEach((id) => {
+      const item = map.get(id);
+      if (!item) return;
+      result.push({
+        rackType: selectedType,
+        size: selectedOptions.size || "",
+        name: item.name, // 그대로
+        specification: "",
+        quantity: qty,
+        unitPrice: Number(item.price) || 0,
+        totalPrice: (Number(item.price) || 0) * qty,
+        note: "추가옵션",
       });
-    }
+    });
 
-    // (B) 경량랙 사용자 정의 자재(여러 개)
+    // 경량 사용자 정의 자재(여러 개)
     (customMaterials || []).forEach((m) => {
       const unit = Number(m.price) || 0;
       result.push({
@@ -456,14 +359,14 @@ export const ProductProvider = ({ children }) => {
         quantity: qty,
         unitPrice: unit,
         totalPrice: unit * qty,
-        note: "추가옵션(사용자자재)",
+        note: "추가옵션",
       });
     });
 
     return result;
   };
 
-  // 펄백 BOM (가격계산용 아님, 표시에만 사용) — ⚠ 베이스(안전우) 절대 추가하지 않음
+  // ── 펄백 BOM (표시용) — “베이스(안전우)” 절대 생성하지 않음
   const getFallbackBOM = () => {
     const qty = Number(quantity) || 1;
 
@@ -472,10 +375,9 @@ export const ProductProvider = ({ children }) => {
       const sz = selectedOptions.size || "";
       const ht = selectedOptions.height || "";
       const form = selectedOptions.formType || "독립형";
-
-      // 철판 수량 추정(표시용)
-      const platePerLevel = sz.startsWith("1380x") ? 2 : sz.startsWith("2580x") ? 3 : 0;
       const isSteel = selectedType === "파렛트랙 철판형";
+
+      const platePerLevel = sz.startsWith("1380x") ? 2 : sz.startsWith("2580x") ? 3 : 0;
 
       const base = [
         { name: `기둥(${ht})`, specification: ht, quantity: (form === "연결형" ? 2 : 4) * qty },
@@ -506,7 +408,6 @@ export const ProductProvider = ({ children }) => {
       ];
     }
 
-    // 하이랙/스텐랙 간단표시
     if (selectedType === "하이랙" || selectedType === "스텐랙") {
       const lvl = parseInt(selectedOptions.level || "") || 5;
       return [
@@ -532,17 +433,15 @@ export const ProductProvider = ({ children }) => {
       ];
     }
 
-    // 경량/중량 등 기본
     return makeExtraOptionBOM();
   };
 
-  // 현재 BOM 계산
+  // ── 현재 BOM
   const calculateCurrentBOM = useCallback(() => {
     const qty = Number(quantity) || 0;
     if (customPrice > 0) return getFallbackBOM();
     if (!selectedType || qty <= 0) return [];
 
-    // 폼타입 랙은 bom_data 우선
     if (formTypeRacks.includes(selectedType)) {
       const rec =
         bomData[selectedType]?.[selectedOptions.size]?.[
@@ -567,11 +466,9 @@ export const ProductProvider = ({ children }) => {
           ...makeExtraOptionBOM(),
         ];
       }
-      // 레코드 없으면 펄백
       return getFallbackBOM();
     }
 
-    // 하이랙/스텐랙은 간단표시 + 추가옵션
     return getFallbackBOM();
   }, [
     selectedType,
@@ -579,18 +476,18 @@ export const ProductProvider = ({ children }) => {
     quantity,
     customPrice,
     bomData,
-    customMaterials,
     extraOptionsSel,
     extraProducts,
+    customMaterials,
   ]);
 
-  // 선택 변경
+  // ── 옵션 변경
   const handleOptionChange = (k, v) => {
     if (k === "type") {
       setSelectedType(v);
       setSelectedOptions({});
       setExtraOptionsSel([]);
-      setQuantity(""); // 입력 초기화
+      setQuantity("");
       setCustomPrice(0);
       clearCustomMaterials();
       return;
@@ -601,7 +498,7 @@ export const ProductProvider = ({ children }) => {
     }
   };
 
-  // 장바구니
+  // ── 장바구니
   const addToCart = () => {
     const qty = Number(quantity) || 0;
     if (!selectedType || qty <= 0) return;
@@ -614,7 +511,7 @@ export const ProductProvider = ({ children }) => {
         id: `${Date.now()}`,
         type: selectedType,
         options: { ...selectedOptions },
-        extraOptions: [...extraOptionsSel], // 기록
+        extraOptions: [...extraOptionsSel],
         quantity: qty,
         price,
         bom: customPrice > 0 ? getFallbackBOM() : calculateCurrentBOM(),
@@ -631,7 +528,6 @@ export const ProductProvider = ({ children }) => {
       },
     ]);
 
-    // 초기화
     setSelectedType("");
     setSelectedOptions({});
     setExtraOptionsSel([]);
@@ -642,55 +538,12 @@ export const ProductProvider = ({ children }) => {
   const removeFromCart = (id) =>
     setCart((prev) => prev.filter((i) => i.id !== id));
 
-  // 장바구니 수량 변경(가격/BOM 동기화)
-  const updateCartItemQuantity = (id, nextQtyRaw) => {
-    setCart((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
-        const oldQty = item.quantity > 0 ? item.quantity : 1;
-        const nextQty = Math.max(0, Number(nextQtyRaw) || 0);
-
-        const unitPrice = (item.price || 0) / oldQty;
-        const newPrice = Math.round(unitPrice * nextQty);
-
-        const newBOM = (item.bom || []).map((c) => {
-          const perUnitQty = (c.quantity || 0) / oldQty;
-          const q = perUnitQty * nextQty;
-          const unit = c.unitPrice ?? c.unit_price ?? 0;
-          return {
-            ...c,
-            quantity: q,
-            totalPrice: unit ? unit * q : c.totalPrice || 0,
-          };
-        });
-
-        return { ...item, quantity: nextQty, price: newPrice, bom: newBOM };
-      })
-    );
-  };
-
-  // 합산 BOM 뷰(오버라이드 반영)
-  const cartBOMView = useMemo(() => {
-    return (cartBOM || []).map((row) => {
-      const key = `${row.rackType} ${row.size || ""} ${row.name}`;
-      const qtyOverride = bomOverrides[key];
-      const specOverride = bomSpecOverrides[key];
-      return {
-        ...row,
-        quantity: qtyOverride === undefined ? row.quantity : qtyOverride,
-        specification:
-          specOverride === undefined ? row.specification : specOverride,
-      };
-    });
-  }, [cartBOM, bomOverrides, bomSpecOverrides]);
-
-  // 파생값 계산
+  // ── 합산 BOM/합계
   useEffect(() => {
     setCurrentPrice(calculatePrice());
     setCurrentBOM(customPrice > 0 ? getFallbackBOM() : calculateCurrentBOM());
   }, [calculatePrice, calculateCurrentBOM]);
 
-  // 전체 BOM/합계
   useEffect(() => {
     const map = {};
     cart.forEach((item) => {
@@ -701,13 +554,13 @@ export const ProductProvider = ({ children }) => {
       });
     });
     setCartBOM(Object.values(map));
-    setCartTotal(cart.reduce((sum, i) => sum + (i.price || 0), 0));
+    setCartTotal(cart.reduce((s, i) => s + (i.price || 0), 0));
   }, [cart]);
 
+  // ── export
   return (
     <ProductContext.Provider
       value={{
-        // 데이터/상태
         allOptions,
         availableOptions,
         colorLabelMap,
@@ -722,8 +575,6 @@ export const ProductProvider = ({ children }) => {
         cartTotal,
         cartBOM,
         loading,
-        cartBOMView,
-        bomSpecOverrides,
 
         // 조작
         handleOptionChange,
@@ -732,21 +583,41 @@ export const ProductProvider = ({ children }) => {
         setCustomPrice,
         addToCart,
         removeFromCart,
-        updateCartItemQuantity,
+
+        // 장바구니 편집
+        updateCartItemQuantity: (id, nextQtyRaw) =>
+          setCart((prev) =>
+            prev.map((item) => {
+              if (item.id !== id) return item;
+              const oldQty = item.quantity > 0 ? item.quantity : 1;
+              const nextQty = Math.max(0, Number(nextQtyRaw) || 0);
+              const unitPrice = (item.price || 0) / oldQty;
+              const newPrice = Math.round(unitPrice * nextQty);
+              const newBOM = (item.bom || []).map((c) => {
+                const perUnitQty = (c.quantity || 0) / oldQty;
+                const q = perUnitQty * nextQty;
+                const unit = c.unitPrice ?? c.unit_price ?? 0;
+                return {
+                  ...c,
+                  quantity: q,
+                  totalPrice: unit ? unit * q : c.totalPrice || 0,
+                };
+              });
+              return { ...item, quantity: nextQty, price: newPrice, bom: newBOM };
+            })
+          ),
 
         // 추가옵션
         extraProducts,
         extraOptionsSel,
-        setExtraOptionsSel, // OptionSelector에서 토글
-        // 경량 사용자 자재(여러 개)
+        setExtraOptionsSel,
+        handleExtraOptionChange,
+
+        // 경량 사용자자재
         customMaterials,
         addCustomMaterial,
         removeCustomMaterial,
         clearCustomMaterials,
-
-        // BOM 오버라이드
-        setTotalBomQuantity,
-        setTotalBomSpec,
       }}
     >
       {children}
