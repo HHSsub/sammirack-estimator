@@ -30,6 +30,23 @@ const parseSize = (sizeStr='') => {
   return m ? { w: m[1], d: m[2] } : { w: '', d: '' };
 };
 
+// 타입 키 정규화(공백/제로폭공백/전각공백 차이 무시)
+const normType = s =>
+  String(s || '')
+    .replace(/\u200B|\u200C|\u200D|\uFEFF/g, '') // zero-width 제거
+    .replace(/\s+/g, ' ')                        // 공백 연속 → 1칸
+    .trim();
+const getExtraForType = (t, store) => {
+   const keys = Object.keys(store || {});
+   const n = normType(t);
+   // 완전일치 우선
+   let hit = keys.find(k => k === t);
+   if (hit) return store[hit];
+   // 정규화 일치(보이는 건 같지만 코드포인트가 다른 경우)
+   hit = keys.find(k => normType(k) === n);
+   return hit ? store[hit] : undefined;
+};
+
 export const ProductProvider = ({ children }) => {
   const [data, setData] = useState({});
   const [bomData, setBomData] = useState({});
@@ -213,8 +230,9 @@ export const ProductProvider = ({ children }) => {
     }
 
     let extraPrice = 0;
-    if (extraProducts[selectedType]) {
-      Object.values(extraProducts[selectedType]).forEach(catArr => catArr.forEach(opt => {
+    const extraBlock = getExtraForType(selectedType, extraProducts);
+    if (extraBlock) {
+        Object.values(extraBlock).forEach(catArr => catArr.forEach(opt => {
         if (extraOptionsSel.includes(opt.id)) {
           extraPrice += opt.id === 'l1-custom' ? customMaterialPrice : opt.price;
         }
@@ -269,9 +287,10 @@ export const ProductProvider = ({ children }) => {
   };
 
   const makeExtraOptionBOM = () => {
-    if (!extraOptionsSel || !extraProducts[selectedType]) return [];
+    const ex = getExtraForType(selectedType, extraProducts);
+    if (!extraOptionsSel || !ex) return [];
     const result = [];
-    Object.values(extraProducts[selectedType]).forEach(catArr => {
+    Object.values(ex).forEach(catArr => {
       catArr.forEach(opt => {
         if (extraOptionsSel.includes(opt.id)) {
           result.push({
@@ -332,7 +351,8 @@ export const ProductProvider = ({ children }) => {
       const platePerLevel = sz.startsWith('W1380') ? 2 : (sz.startsWith('W2580') ? 3 : 0);
 
       const base = [
-        { rackType:selectedType, size:sz, name:`기둥(${ht})`, specification: ht, quantity:2*qty, unitPrice:0, totalPrice:0 },
+        // 기둥은 연결형은 2개씩, 독립형은 4개씩
+        { rackType:selectedType, size:sz, name:`기둥(${ht})`, specification: ht, quantity:(form==='연결형'? 2 : 4)*qty, unitPrice:0, totalPrice:0 },
         { rackType:selectedType, size:sz, name:'로드빔', specification: sz, quantity:2*lvl*qty, unitPrice:0, totalPrice:0 },
         // 타이빔/철판은 아래에서 조건 분기
         { rackType:selectedType, size:sz, name:'베이스(안전좌)', specification:'', quantity:baseSafetyLeftQty, unitPrice:0, totalPrice:0 },
