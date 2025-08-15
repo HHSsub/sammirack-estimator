@@ -1,3 +1,4 @@
+// src/contexts/ProductContext.jsx
 import React, {
   createContext,
   useContext,
@@ -126,7 +127,7 @@ export const ProductProvider = ({ children }) => {
       // 규격
       next.size = sortSizes(Object.keys(bd || {}));
 
-      // 높이: 선택된 규격의 데이터 + 보조 높이(타입별 독립)
+      // 높이
       if (selectedOptions.size) {
         const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
         next.height = sortHeights([
@@ -139,11 +140,9 @@ export const ProductProvider = ({ children }) => {
 
       // 단수/형식
       if (selectedOptions.size && selectedOptions.height) {
-        // 경량랙 H750는 H900의 레벨/형식을 그대로 사용(L2/L3.. 키 그대로)
         if (selectedType === "경량랙" && selectedOptions.height === "H750") {
           const lk = Object.keys(bd[selectedOptions.size]?.["H900"] || {});
           next.level = lk.length ? lk : [];
-          if (!next.level.length) next.level = [];
           if (selectedOptions.level) {
             const fm = bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level] || {};
             next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
@@ -151,7 +150,6 @@ export const ProductProvider = ({ children }) => {
         } else {
           const levelKeys =
             Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {}) || [];
-          // 가격 없어도 최소 L1~L6 선택 가능
           next.level = levelKeys.length ? sortLevels(levelKeys) : ["L1", "L2", "L3", "L4", "L5", "L6"];
 
           if (selectedOptions.level) {
@@ -267,31 +265,27 @@ export const ProductProvider = ({ children }) => {
       const levelRaw = selectedOptions.level;
       const formType = selectedOptions.formType;
 
-      // 경량 H750 → H900 레코드 사용
+      // 경량 H750 → H900
       const height = selectedType === "경량랙" && heightRaw === "H750" ? "H900" : heightRaw;
 
       // 1) data.json 기본가격 우선
       let pData;
 
       if (selectedType === "파렛트랙 철판형") {
-        // data.json 구조: 형식 → 규격 → 높이(숫자) → 'n단'
-        const hKey = String(height || "").replace(/^H/i, ""); // 'H2500' -> '2500'
+        const hKey = String(height || "").replace(/^H/i, "");
         const lKey =
           String(levelRaw || "")
             .replace(/^L/i, "")
-            .replace(/^\s*$/, "0") + "단"; // 'L4' -> '4단'
-        pData =
-          data?.[selectedType]?.["기본가격"]?.[formType]?.[size]?.[hKey]?.[lKey];
+            .replace(/^\s*$/, "0") + "단";
+        pData = data?.[selectedType]?.["기본가격"]?.[formType]?.[size]?.[hKey]?.[lKey];
       } else {
-        // 일반 구조: 규격 → 높이 → 단수(Lx) → 형식
-        pData =
-          data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[levelRaw]?.[formType];
+        pData = data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[levelRaw]?.[formType];
       }
 
       if (pData) {
         basePrice = Number(pData) * (Number(quantity) || 0);
       } else {
-        // 2) bom_data components 합계(있으면)
+        // 2) bom_data components 합계
         const rec =
           bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
         if (rec) {
@@ -320,7 +314,7 @@ export const ProductProvider = ({ children }) => {
       if (p) basePrice = p * quantity;
     }
 
-    // 추가옵션(체크박스) 가격 합산
+    // 추가옵션(체크박스)
     let extraPrice = 0;
     const catmap = extraProducts?.[selectedType] || {};
     Object.values(catmap).forEach((arr) =>
@@ -394,6 +388,32 @@ export const ProductProvider = ({ children }) => {
     ];
   };
 
+  // 기본 하드웨어(브레싱/볼트/고무) 강제 보강
+  const appendCommonHardwareIfMissing = (list, qty) => {
+    const names = new Set(list.map((x) => x.name));
+    const pushIfAbsent = (name, quantity) => {
+      if (!names.has(name)) {
+        list.push({
+          rackType: selectedType,
+          size: selectedOptions.size,
+          name,
+          specification: "",
+          quantity,
+          unitPrice: 0,
+          totalPrice: 0,
+        });
+        names.add(name);
+      }
+    };
+    // 수량 규칙: 수평/경사 1세트, 나머지 4ea × 수량
+    pushIfAbsent("수평브레싱", 1 * qty);
+    pushIfAbsent("경사브레싱", 1 * qty);
+    pushIfAbsent("앙카볼트", 4 * qty);
+    pushIfAbsent("베이스볼트", 4 * qty);
+    pushIfAbsent("브레싱볼트", 4 * qty);
+    pushIfAbsent("브레싱고무", 4 * qty);
+  };
+
   // Fallback BOM : 안전우 제외(요청 반영)
   const getFallbackBOM = () => {
     if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
@@ -409,13 +429,8 @@ export const ProductProvider = ({ children }) => {
         { rackType: selectedType, size: sz, name: "타이빔", specification: `규격 ${sz}`, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "베이스(안전좌)", specification: "", quantity: 2 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "수평브레싱", specification: "", quantity: 1 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "경사브레싱", specification: "", quantity: 1 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "앙카볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "베이스볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "브레싱볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "브레싱보조고무", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
       ];
+      appendCommonHardwareIfMissing(base, qty);
       return [...base, ...makeExtraOptionBOM()];
     }
 
@@ -448,6 +463,7 @@ export const ProductProvider = ({ children }) => {
         bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[
           selectedOptions.level
         ]?.[selectedOptions.formType];
+
       if (rec?.components) {
         const q = Number(quantity) || 1;
         const base = rec.components.map((c) => ({
@@ -463,6 +479,10 @@ export const ProductProvider = ({ children }) => {
               ? Number(c.total_price) * q
               : (Number(c.unit_price) || 0) * (Number(c.quantity) || 0) * q,
         }));
+
+        // ▼ 부자재(브레싱/볼트/고무) 자동 보강
+        appendCommonHardwareIfMissing(base, q);
+
         return [...base, ...makeExtraOptionBOM()];
       }
       return getFallbackBOM();
