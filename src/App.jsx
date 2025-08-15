@@ -60,13 +60,6 @@ const HomePage = () => {
       </div>
 
       <div className="action-buttons" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-        <button 
-          onClick={() => addToCart()} 
-          disabled={!canAddItem}
-          className="p-2 bg-blue-500 text-white rounded"
-        >
-          목록에 추가
-        </button>
       </div>
 
       {/* 🔹 항상 표시 + 숨기기 가능 */}
