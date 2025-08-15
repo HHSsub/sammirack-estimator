@@ -1,10 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-
-// size 후보: 데이터 키와 PREFERRED_SIZES의 교집합(교집합이 비면 데이터 키 사용)
-const dataSizes = Object.keys(bd || {});
-const pref = PREFERRED_SIZES[selectedType] || [];
-const sizeCandidates = pref.length ? dataSizes.filter(s => pref.includes(s)) : dataSizes;
-const next = { size: sizeCandidates, height: [], level: [], formType: [] };import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const ProductContext = createContext();
 
@@ -69,16 +63,15 @@ export const ProductProvider = ({ children }) => {
         const bj = await (await fetch('./bom_data.json')).json();
         const ej = await (await fetch('./extra_options.json')).json();
 
-        // ✅ 사용자가 data.json에 "파렛트랙 철판형"을 별도로 넣었으므로, 복제 금지 & 키 그대로 사용
+        // data/bom/extra 그대로 사용(복제 금지)
         setData(dj);
         setBomData(bj);
         setExtraProducts(ej);
 
-        // 타입 목록: data.json의 실제 존재 키를 기준으로 하되, 원하는 순서(canonical)로 정렬
+        // 타입 목록: data.json 존재 키 기준 + 선호 순서
         const canonical = ['경량랙','중량랙','파렛트랙','파렛트랙 철판형','하이랙','스텐랙'];
         const fromData = Object.keys(dj || {});
         const types = canonical.filter(t => fromData.includes(t));
-        // 만약 data.json에 추가 타입이 있으면 뒤에 붙임
         const leftovers = fromData.filter(t => !types.includes(t));
         setAllOptions({ types: [...types, ...leftovers] });
       } catch (e) {
@@ -102,7 +95,13 @@ export const ProductProvider = ({ children }) => {
     // 1) 폼타입 랙 (경량/중량/파렛트랙/파렛트랙 철판형): 각 타입별로 bomData에서 크기/높이/단/형식 추출
     if (formTypeRacks.includes(selectedType)) {
       const bd = bomData[selectedType] || {};
-      const next = { size: Object.keys(bd || {}), height: [], level: [], formType: [] };
+
+      // size 후보: 데이터 키와 PREFERRED_SIZES의 교집합(교집합이 비면 데이터 키 사용)
+      const dataSizes = Object.keys(bd || {});
+      const pref = PREFERRED_SIZES[selectedType] || [];
+      const sizeCandidates = pref.length ? dataSizes.filter(s => pref.includes(s)) : dataSizes;
+
+      const next = { size: sizeCandidates, height: [], level: [], formType: [] };
 
       if (selectedOptions.size) {
         const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
@@ -336,8 +335,8 @@ export const ProductProvider = ({ children }) => {
       const platePerLevel = sz.startsWith('W1380') ? 2 : (sz.startsWith('W2580') ? 3 : 0);
 
       const base = [
-        { rackType:selectedType, size:sz, name:`기둥(${ht})`, specification:`높이 ${ht}`, quantity:2*qty, unitPrice:0, totalPrice:0 },
-        { rackType:selectedType, size:sz, name:'로드빔', specification:`규격 ${sz}`, quantity:2*lvl*qty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:`기둥(${ht})`, specification: ht, quantity:2*qty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, size:sz, name:'로드빔', specification: sz, quantity:2*lvl*qty, unitPrice:0, totalPrice:0 },
         // 타이빔/철판은 아래에서 조건 분기
         { rackType:selectedType, size:sz, name:'베이스(안전좌)', specification:'', quantity:baseSafetyLeftQty, unitPrice:0, totalPrice:0 },
         { rackType:selectedType, size:sz, name:'베이스(안전우)', specification:'', quantity:baseSafetyRightQty, unitPrice:0, totalPrice:0 },
@@ -351,8 +350,8 @@ export const ProductProvider = ({ children }) => {
       ];
 
       const middle = isSteelPlate
-        ? [{ rackType:selectedType, size:sz, name: sz.startsWith('W1380') ? '1380철판' : (sz.startsWith('W2580') ? '2580철판' : '철판'), specification:`규격 ${sz}`, quantity: (platePerLevel || 0) * lvl * qty, unitPrice:0, totalPrice:0 }]
-        : [{ rackType:selectedType, size:sz, name:'타이빔', specification:`규격 ${sz}`, quantity:2*lvl*qty, unitPrice:0, totalPrice:0 }];
+        ? [{ rackType:selectedType, size:sz, name: sz.startsWith('W1380') ? '1380철판' : (sz.startsWith('W2580') ? '2580철판' : '철판'), specification: sz, quantity: (platePerLevel || 0) * lvl * qty, unitPrice:0, totalPrice:0 }]
+        : [{ rackType:selectedType, size:sz, name:'타이빔', specification: sz, quantity:2*lvl*qty, unitPrice:0, totalPrice:0 }];
 
       return [
         ...base.slice(0, 2),
@@ -508,8 +507,3 @@ export const ProductProvider = ({ children }) => {
 };
 
 export const useProducts = () => useContext(ProductContext);
-
-
-export const useProducts = ()=>useContext(ProductContext);
-
-  
