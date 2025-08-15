@@ -16,23 +16,21 @@ export default function OptionSelector() {
     selectedType, selectedOptions,
     handleOptionChange,
 
-    // ✅ 공통 추가옵션(체크박스)용
-    extraProducts,
-    extraOptionsSel,
-    handleExtraOptionChange,
+    // ▶ 추가옵션(체크박스용)
+    extraProducts, extraOptionsSel, handleExtraOptionChange,
 
-    // ✅ 경량랙 전용 사용자 정의 자재(여러 개)
+    // ▶ 경량랙 전용 사용자 정의 자재(여러 개)
     customMaterials, addCustomMaterial, removeCustomMaterial,
 
     quantity, setQuantity, applyRate, setApplyRate,
     customPrice, setCustomPrice, currentPrice,
-    addToCart, loading
+    addToCart, loading,
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
   const [extraOpen, setExtraOpen] = useState(false);
 
-  // 경량랙 사용자 정의 입력 행
+  // 사용자 정의 입력값(경량랙)
   const [cmName, setCmName] = useState('');
   const [cmPrice, setCmPrice] = useState('');
 
@@ -68,23 +66,23 @@ export default function OptionSelector() {
     );
   };
 
-  // 공통 extra_options 목록 (경량랙 제외 타입에서 체크박스용)
-  let extraCatList = [];
-  if (extraProducts && selectedType && extraProducts[selectedType]) {
-    extraCatList = Object.entries(extraProducts[selectedType]); // [ [cat, arr], ... ]
-  }
-
   const toggleExtra = id => {
     if (!id) return;
-    if (extraOptionsSel?.includes(id)) {
+    if (extraOptionsSel.includes(id)) {
       handleExtraOptionChange(extraOptionsSel.filter(e => e !== id));
     } else {
-      handleExtraOptionChange([...(extraOptionsSel || []), id]);
+      handleExtraOptionChange([...extraOptionsSel, id]);
     }
   };
 
   if (loading) return <div>데이터 로드 중...</div>;
-  const canAddItem = (customPrice > 0 || currentPrice > 0) && Number(quantity) > 0;
+  const canAddItem = customPrice > 0 || currentPrice > 0;
+
+  // 현재 타입의 extra 옵션 카테고리
+  const extraCatList =
+    extraProducts && selectedType && extraProducts[selectedType]
+      ? Object.entries(extraProducts[selectedType])
+      : [];
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
@@ -94,9 +92,7 @@ export default function OptionSelector() {
           <select
             value={selectedType}
             onChange={e => {
-              setExtraOpen(false); // 타입 바꾸면 토글 닫기
-              setCmName('');
-              setCmPrice('');
+              setExtraOpen(false); // 타입 바꾸면 패널 닫기
               handleOptionChange('type', e.target.value);
             }}
           >
@@ -182,23 +178,28 @@ export default function OptionSelector() {
         </div>
       </div>
 
-      {/* ▶ 추가 옵션 토글 (모든 타입 공통) */}
-      <button onClick={() => setExtraOpen(o => !o)} style={{ margin: '10px 0' }}>
+      {/* ▸ 기타 추가 옵션 토글 (모든 타입에서 공통) */}
+      <button
+        onClick={() => setExtraOpen(o => !o)}
+        style={{ margin: '10px 0' }}
+        disabled={!selectedType}
+      >
         {extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}
       </button>
 
-      {/* ▶ 토글 열렸을 때 보이는 영역 */}
-      {extraOpen && (
+      {/* ▸ 패널 내용 */}
+      {extraOpen && selectedType && (
         <>
-          {/* ① 경량랙: 사용자 정의 추가자재(여러 개) 전용 UI */}
-          {selectedType === '경량랙' && (
+          {selectedType === '경량랙' ? (
+            // ─────────────────────────────────────────
+            // 경량랙: 사용자 정의 추가자재(여러 개) 전용 UI
+            // ─────────────────────────────────────────
             <div
               style={{
                 padding: '12px',
                 border: '1px solid #e4eef8',
                 borderRadius: 6,
                 background: '#fff',
-                marginBottom: 12
               }}
             >
               <div style={{ fontWeight: 700, marginBottom: 8 }}>
@@ -212,7 +213,7 @@ export default function OptionSelector() {
                   gridTemplateColumns: '1fr 140px 80px',
                   gap: 8,
                   alignItems: 'center',
-                  marginBottom: 8
+                  marginBottom: 8,
                 }}
               >
                 <input
@@ -250,7 +251,7 @@ export default function OptionSelector() {
                       style={{
                         border: '1px solid #e1e8f5',
                         padding: '6px',
-                        width: 140
+                        width: 140,
                       }}
                     >
                       단가
@@ -259,7 +260,7 @@ export default function OptionSelector() {
                       style={{
                         border: '1px solid #e1e8f5',
                         padding: '6px',
-                        width: 80
+                        width: 80,
                       }}
                     >
                       관리
@@ -275,7 +276,7 @@ export default function OptionSelector() {
                           border: '1px solid #e1e8f5',
                           padding: '8px',
                           textAlign: 'center',
-                          color: '#8aa1c4'
+                          color: '#8aa1c4',
                         }}
                       >
                         추가된 자재가 없습니다.
@@ -291,7 +292,10 @@ export default function OptionSelector() {
                           {Number(m.price).toLocaleString()}원
                         </td>
                         <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          <button type="button" onClick={() => removeCustomMaterial(m.id)}>
+                          <button
+                            type="button"
+                            onClick={() => removeCustomMaterial(m.id)}
+                          >
                             삭제
                           </button>
                         </td>
@@ -301,38 +305,43 @@ export default function OptionSelector() {
                 </tbody>
               </table>
             </div>
-          )}
-
-          {/* ② 경량랙 제외한 나머지 타입: extra_options 체크박스 UI */}
-          {selectedType !== '경량랙' && extraCatList.length > 0 && (
+          ) : (
+            // ─────────────────────────────────────────
+            // 경량랙 외: extra_options.json 기반 체크박스 UI
+            // ─────────────────────────────────────────
             <div
               style={{
                 padding: '12px',
-                border: '1px dashed #cbd8ee',
+                border: '1px solid #e4eef8',
                 borderRadius: 6,
-                background: '#fff'
+                background: '#fff',
               }}
             >
-              {extraCatList.map(([cat, arr]) => (
-                <div key={cat} style={{ marginBottom: 10 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{cat}</div>
-                  {arr.map(opt => {
-                    const checked = (extraOptionsSel || []).includes(opt.id);
-                    return (
-                      <label key={opt.id} style={{ display: 'block', margin: '2px 0' }}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleExtra(opt.id)}
-                          style={{ marginRight: 6 }}
-                        />
-                        {kgLabelFix(opt.name)}{' '}
-                        {opt.price ? `+${Number(opt.price).toLocaleString()}원` : ''}
-                      </label>
-                    );
-                  })}
-                </div>
-              ))}
+              {extraCatList.length === 0 ? (
+                <div style={{ color: '#8aa1c4' }}>추가 옵션이 없습니다.</div>
+              ) : (
+                extraCatList.map(([cat, arr]) => (
+                  <div key={cat} style={{ marginBottom: 10 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{cat}</div>
+                    {arr.map(opt => {
+                      const checked = extraOptionsSel.includes(opt.id);
+                      return (
+                        <label key={opt.id} style={{ display: 'block', margin: '4px 0' }}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleExtra(opt.id)}
+                          />
+                          <span style={{ marginLeft: 6 }}>
+                            {kgLabelFix(opt.name)}{' '}
+                            {opt.price ? `+${Number(opt.price).toLocaleString()}원` : ''}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ))
+              )}
             </div>
           )}
         </>
@@ -340,8 +349,7 @@ export default function OptionSelector() {
 
       <div style={{ marginTop: 12 }}>
         <span>
-          계산 가격:{' '}
-          {(customPrice > 0 ? customPrice : currentPrice).toLocaleString()}원
+          계산 가격: {(customPrice > 0 ? customPrice : currentPrice).toLocaleString()}원
         </span>
         <button onClick={addToCart} disabled={!canAddItem} style={{ marginLeft: 10 }}>
           목록 추가
