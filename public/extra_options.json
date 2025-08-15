@@ -58,7 +58,7 @@
       { "id": "s2-120-pillar", "name": "120(4개 1set)", "price": 35000, "bom": [{ "name": "120 기둥", "qty": 4 }] },
       { "id": "s2-150-pillar", "name": "150(4개 1set)", "price": 41000, "bom": [{ "name": "150 기둥", "qty": 4 }] },
       { "id": "s2-180-pillar", "name": "180(4개 1set)", "price": 50000, "bom": [{ "name": "180 기둥", "qty": 4 }] },
-      { "id": "s2-180-pillar", "name": "210(4개 1set)", "price": 53000, "bom": [{ "name": "210 기둥", "qty": 4 }] }
+      { "id": "s2-210-pillar", "name": "210(4개 1set)", "price": 53000, "bom": [{ "name": "210 기둥", "qty": 4 }] }
     ]
   },
   "중량랙": {
