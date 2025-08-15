@@ -84,6 +84,21 @@ const HIGHRACK_550_ALIASES_DATA_FROM_VIEW = {
   '80x150': '80x206'
 };
 
+// ─────────────────────────────
+// BOM 키 느슨 매칭 유틸 (공백/대소문자/전각/제로폭 무시)
+// ─────────────────────────────
+const nkey = (s) =>
+  String(s ?? '')
+    .replace(/\u200B|\u200C|\u200D|\uFEFF/g, '')
+    .replace(/\s+/g, '')
+    .toUpperCase();
+
+const pickKey = (obj, want) => {
+  if (!obj) return undefined;
+  const target = nkey(want);
+  return Object.keys(obj).find(k => nkey(k) === target);
+};
+
 export const ProductProvider = ({ children }) => {
   const [data, setData] = useState({});
   const [bomData, setBomData] = useState({});
@@ -317,55 +332,67 @@ export const ProductProvider = ({ children }) => {
     setAvailableOptions({});
   }, [selectedType, selectedOptions, data, bomData]);
 
-    const calculatePrice = useCallback(() => {
-      if (!selectedType || quantity <= 0) return 0;
-      if (customPrice > 0) return Math.round(customPrice * quantity * (applyRate / 100));
-    
-      let basePrice = 0;
-    
-      if (formTypeRacks.includes(selectedType)) {
-        // ✅ 경량랙 H750 -> H900 가격 사용
-        if (selectedType === '경량랙' && selectedOptions.height === 'H750') {
-          const recH900 = bomData['경량랙']?.[selectedOptions.size]?.['H900']
-            ?. [selectedOptions.level]?.[selectedOptions.formType];
-          if (recH900?.total_price) basePrice = recH900.total_price * quantity;
-        } else {
-          const rec = bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]
-            ?. [selectedOptions.level]?.[selectedOptions.formType];
-          if (rec?.total_price) basePrice = rec.total_price * quantity;
-        }
-      } else if (selectedType === '스텐랙') {
-        const p = data['스텐랙']['기본가격']?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-        if (p) basePrice = p * quantity;
-      } else if (selectedType === '하이랙') {
-        const color = selectedOptions.color;
-        const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
-        const p = data['하이랙']['기본가격']?.[color]?.[dataSizeKey]
-          ?. [selectedOptions.height]?.[selectedOptions.level];
-        if (p) basePrice = p * quantity;
-      }
-    
-      // ▸ 기타 옵션 가격
-      let extraPrice = 0;
-      const extraBlock = getExtraForType(selectedType, extraProducts);
-      if (extraBlock) {
-        Object.values(extraBlock).forEach(catArr => catArr.forEach(opt => {
-          if (extraOptionsSel.includes(opt.id) && opt.id !== 'l1-custom') {
-            extraPrice += opt.price;
-          }
-        }));
-      }
-      // ▸ 사용자 정의 기타자재(여러 개)
-      extraPrice += (customMaterials || []).reduce((sum, m) => sum + (Number(m.price) || 0), 0);
-      // ▸ (레거시) 단건 사용자입력
-      extraPrice += customMaterialPrice ? Number(customMaterialPrice) : 0;
-    
-      return Math.round((basePrice + extraPrice) * (applyRate / 100));
-    }, [
-      selectedType, selectedOptions, quantity, customPrice, applyRate,
-      data, bomData, extraProducts, extraOptionsSel, customMaterialPrice, customMaterials
-    ]);
+  // 가격 계산 (느슨 매칭 + H750→H900 대체)
+  const calculatePrice = useCallback(() => {
+    if (!selectedType || (Number(quantity) || 0) <= 0) return 0;
+    if (customPrice > 0) return Math.round(customPrice * (Number(quantity)||0) * (applyRate / 100));
 
+    const qty = Number(quantity) || 0;
+    let basePrice = 0;
+
+    // 느슨 매칭으로 BOM 레코드 가져오기
+    const getRec = (type, size, height, level, formType) => {
+      const t = bomData[type] || {};
+      const sKey = pickKey(t, size);
+      const s = sKey ? t[sKey] : undefined;
+      const hKey = pickKey(s, height);
+      const h = hKey ? s[hKey] : undefined;
+      const lKey = pickKey(h, level);
+      const l = lKey ? h[lKey] : undefined;
+      const fKey = pickKey(l, formType);
+      return fKey ? l[fKey] : undefined;
+    };
+
+    if (formTypeRacks.includes(selectedType)) {
+      // ✅ 경량랙 H750 -> H900 가격 사용
+      if (selectedType === '경량랙' && selectedOptions.height === 'H750') {
+        const recH900 = getRec('경량랙', selectedOptions.size, 'H900', selectedOptions.level, selectedOptions.formType);
+        if (recH900?.total_price) basePrice = recH900.total_price * qty;
+      } else {
+        const rec = getRec(selectedType, selectedOptions.size, selectedOptions.height, selectedOptions.level, selectedOptions.formType);
+        if (rec?.total_price) basePrice = rec.total_price * qty;
+      }
+    } else if (selectedType === '스텐랙') {
+      const p = data['스텐랙']['기본가격']?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      if (p) basePrice = p * qty;
+    } else if (selectedType === '하이랙') {
+      const color = selectedOptions.color;
+      const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
+      const p = data['하이랙']['기본가격']?.[color]?.[dataSizeKey]
+        ?. [selectedOptions.height]?.[selectedOptions.level];
+      if (p) basePrice = p * qty;
+    }
+
+    // ▸ 기타 옵션 가격
+    let extraPrice = 0;
+    const extraBlock = getExtraForType(selectedType, extraProducts);
+    if (extraBlock) {
+      Object.values(extraBlock).forEach(catArr => catArr.forEach(opt => {
+        if (extraOptionsSel.includes(opt.id) && opt.id !== 'l1-custom') {
+          extraPrice += opt.price;
+        }
+      }));
+    }
+    // ▸ 사용자 정의 기타자재(여러 개)
+    extraPrice += (customMaterials || []).reduce((sum, m) => sum + (Number(m.price) || 0), 0);
+    // ▸ (레거시) 단건 사용자입력
+    extraPrice += customMaterialPrice ? Number(customMaterialPrice) : 0;
+
+    return Math.round((basePrice + extraPrice) * (applyRate / 100));
+  }, [
+    selectedType, selectedOptions, quantity, customPrice, applyRate,
+    data, bomData, extraProducts, extraOptionsSel, customMaterialPrice, customMaterials
+  ]);
 
   // ▶ 장바구니 아이템 수량 변경 (가격·BOM 동기화)
   const updateCartItemQuantity = (id, nextQtyRaw) => {
@@ -550,11 +577,23 @@ export const ProductProvider = ({ children }) => {
 
   const calculateCurrentBOM = useCallback(() => {
     if (customPrice > 0) return getFallbackBOM();
-    if (!selectedType || quantity <= 0) return [];
+    if (!selectedType || (Number(quantity)||0) <= 0) return [];
+
+    // 느슨 매칭 유틸
+    const getRec = (type, size, height, level, formType) => {
+      const t = bomData[type] || {};
+      const sKey = pickKey(t, size);
+      const s = sKey ? t[sKey] : undefined;
+      const hKey = pickKey(s, height);
+      const h = hKey ? s[hKey] : undefined;
+      const lKey = pickKey(h, level);
+      const l = lKey ? h[lKey] : undefined;
+      const fKey = pickKey(l, formType);
+      return fKey ? l[fKey] : undefined;
+    };
 
     if (selectedType === '파렛트랙' || selectedType === '파렛트랙 철판형') {
-      const rec = bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]
-        ?. [selectedOptions.level]?.[selectedOptions.formType];
+      const rec = getRec(selectedType, selectedOptions.size, selectedOptions.height, selectedOptions.level, selectedOptions.formType);
       if (rec?.components) {
         return [
           ...rec.components.map(c => ({
@@ -581,8 +620,7 @@ export const ProductProvider = ({ children }) => {
       if (selectedType === '경량랙' && selectedOptions.height === 'H750') {
         return makeLightRackH750BOM();
       }
-      const rec = bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]
-        ?. [selectedOptions.level]?.[selectedOptions.formType];
+      const rec = getRec(selectedType, selectedOptions.size, selectedOptions.height, selectedOptions.level, selectedOptions.formType);
       return [
         ...(rec?.components ? rec.components.map(c => ({
           ...c,
@@ -618,7 +656,7 @@ export const ProductProvider = ({ children }) => {
   };
 
   const addToCart = () => {
-    if (!selectedType || quantity <= 0) return;
+    if (!selectedType || (Number(quantity)||0) <= 0) return;
     setCart(prev => [...prev, {
       id: `${Date.now()}`,
       type: selectedType,
