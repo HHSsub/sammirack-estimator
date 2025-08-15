@@ -514,7 +514,7 @@ export const ProductProvider = ({ children }) => {
         { rackType: selectedType, size: sz, name: "앙카볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "베이스볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "브레싱볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "브레싱고무", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, size: sz, name: "브레싱보조고무", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
       ];
       return [...base, ...makeExtraOptionBOM()];
     }
