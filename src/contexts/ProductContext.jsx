@@ -54,9 +54,14 @@ const sortLevels = (arr = []) =>
 const HIGHRACK_550_ALIAS_VIEW_FROM_DATA = { "80x146": "80x108", "80x206": "80x150" };
 const HIGHRACK_550_ALIAS_DATA_FROM_VIEW = { "80x108": "80x146", "80x150": "80x206" };
 
-// ── 추가 유틸: 높이 파싱 및 파렛트 하드웨어 계산 ──
-// 높이 "H2500" → 2500
+// ── 추가 유틸: 높이/규격 파싱과 파렛트 하드웨어 계산 ──
 const parseHeightMm = (h) => Number(String(h || "").replace(/[^\d]/g, "")) || 0;
+
+// "2780x1000" → {w:2780, d:1000}
+const parseWD = (size = "") => {
+  const m = String(size).replace(/\s+/g, "").match(/(\d+)\s*[xX]\s*(\d+)/);
+  return m ? { w: Number(m[1]), d: Number(m[2]) } : { w: null, d: null };
+};
 
 // 파렛트랙(철판형 포함) 브레싱/볼트 수량 규칙
 // 독립형: 수평=4, 경사=2*(h/500-1), 앙카=4, 베이스볼트=4, 브레싱볼트=2*(h/500)+4
@@ -144,9 +149,11 @@ export const ProductProvider = ({ children }) => {
 
         const canonical = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형", "하이랙", "스텐랙"];
         const fromData = Object.keys(dj || {});
-        const types = canonical.filter((t) => fromData.includes(t));
-        const leftovers = fromData.filter((t) => !types.includes(t));
-        setAllOptions({ types: [...types, ...leftovers] });
+        the_types: {
+          const types = canonical.filter((t) => fromData.includes(t));
+          const leftovers = fromData.filter((t) => !types.includes(t));
+          setAllOptions({ types: [...types, ...leftovers] });
+        }
       } catch (e) {
         console.error("데이터 로드 실패", e);
         setAllOptions({ types: [] });
@@ -170,10 +177,8 @@ export const ProductProvider = ({ children }) => {
       const bd = bomData[selectedType] || {};
       const next = { size: [], height: [], level: [], formType: [] };
 
-      // 규격
       next.size = sortSizes(Object.keys(bd || {}));
 
-      // 높이
       if (selectedOptions.size) {
         const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
         next.height = sortHeights([
@@ -184,7 +189,6 @@ export const ProductProvider = ({ children }) => {
         next.height = sortHeights([...(EXTRA_OPTIONS[selectedType]?.height || [])]);
       }
 
-      // 단수/형식
       if (selectedOptions.size && selectedOptions.height) {
         if (selectedType === "경량랙" && selectedOptions.height === "H750") {
           const lk = Object.keys(bd[selectedOptions.size]?.["H900"] || {});
@@ -220,28 +224,24 @@ export const ProductProvider = ({ children }) => {
 
         // 550/700kg 은 데이터 키 ↔ 표시값 별칭 필요
         const isHeaviest = /(550kg|700kg)$/.test(color);
-        // ★ 450/550/700kg 은 45x150 숨김 (요청 반영)
+        // 450/550/700kg 은 45x150 숨김
         const hide45x150 = /(450kg|550kg|700kg)$/.test(color);
 
-        // 규격 목록(색상별)
+        // 규격
         const rawSizes = Object.keys(rd["기본가격"]?.[color] || []);
         const sizeViewList = rawSizes.map((s) =>
           isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
             ? HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
             : s
         );
-
-        // 270kg은 45x150 노출, 450/550/700kg은 45x150 제거
         const baseSizes = hide45x150
           ? sizeViewList.filter((s) => s !== "45x150")
           : Array.from(new Set([...sizeViewList, ...(EXTRA_OPTIONS["하이랙"]?.size || [])]));
-
-        // ▶ 550kg/700kg에서 80x200은 반드시 노출
         const sizeSet = new Set(baseSizes);
-        if (isHeaviest) sizeSet.add("80x200");
+        if (isHeaviest) sizeSet.add("80x200"); // 80x200 강제 노출
         opts.size = sortSizes([...sizeSet]);
 
-        // 높이: 어떤 옵션이든 150/200/250 항상 노출(데이터와 병합)
+        // 높이
         if (selectedOptions.size) {
           const sizeKey = isHeaviest
             ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selectedOptions.size] || selectedOptions.size
@@ -253,13 +253,14 @@ export const ProductProvider = ({ children }) => {
             ...(EXTRA_OPTIONS["하이랙"]?.height || []),
           ]);
 
+          // 단수: 550/700kg은 1~6단 항상 가능(데이터와 합집합)
           if (selectedOptions.height) {
             const levelsFromData = Object.keys(
               rd["기본가격"]?.[color]?.[sizeKey]?.[selectedOptions.height] || {}
             );
-            // ▶ 550/700kg 은 1~6단 항상 선택 가능
+            const full16 = ["1단", "2단", "3단", "4단", "5단", "6단"];
             opts.level = isHeaviest
-              ? sortLevels(levelsFromData.length ? levelsFromData : ["1단","2단","3단","4단","5단","6단"])
+              ? sortLevels([...new Set([...(levelsFromData || []), ...full16])])
               : sortLevels([
                   ...levelsFromData,
                   ...(EXTRA_OPTIONS["하이랙"]?.level || []),
@@ -303,7 +304,7 @@ export const ProductProvider = ({ children }) => {
   }, [selectedType, selectedOptions, data, bomData]);
 
   // ───────────────────────────────
-  // 가격 계산 (data.json 우선 → components 합계 → 0)
+  // 가격 계산
   // ───────────────────────────────
   const sumComponents = (compArr = []) =>
     compArr.reduce((sum, c) => {
@@ -325,12 +326,9 @@ export const ProductProvider = ({ children }) => {
       const levelRaw = selectedOptions.level;
       const formType = selectedOptions.formType;
 
-      // 경량 H750 → H900
       const height = selectedType === "경량랙" && heightRaw === "H750" ? "H900" : heightRaw;
 
-      // 1) data.json 기본가격 우선
       let pData;
-
       if (selectedType === "파렛트랙 철판형") {
         const hKey = String(height || "").replace(/^H/i, "");
         const lKey =
@@ -345,7 +343,6 @@ export const ProductProvider = ({ children }) => {
       if (pData) {
         basePrice = Number(pData) * (Number(quantity) || 0);
       } else {
-        // 2) bom_data components 합계
         const rec =
           bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
         if (rec) {
@@ -385,7 +382,7 @@ export const ProductProvider = ({ children }) => {
       }
     });
 
-    // ★ 경량랙 사용자 정의 기타자재 가격 합산
+    // 경량랙 사용자 정의 기타자재
     const customExtra =
       selectedType === "경량랙"
         ? customMaterials.reduce((s, m) => s + (Number(m.price) || 0), 0)
@@ -431,7 +428,6 @@ export const ProductProvider = ({ children }) => {
       }
     });
 
-    // ★ 경량랙 사용자 정의 기타자재도 그대로 BOM 추가
     if (selectedType === "경량랙") {
       customMaterials.forEach((m) => {
         const unit = Number(m.price) || 0;
@@ -494,10 +490,10 @@ export const ProductProvider = ({ children }) => {
       }
     };
 
-    // ── 파렛트랙(철판형 포함)은 표 규칙 적용 ──
+    // 파렛트랙(철판형 포함) → 표 규칙
     if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
       const isConn = selectedOptions.formType === "연결형";
-      const h = parseHeightMm(selectedOptions.height); // ex) H2500 → 2500
+      const h = parseHeightMm(selectedOptions.height);
       const { horizontal, diagonal, anchor, baseBolt, braceBolt, rubber } =
         calcPalletHardwareCounts(h, isConn, qty);
 
@@ -510,7 +506,7 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
-    // ── 그 외 타입은 기본 규칙(2/3/4 배수) 유지 ──
+    // 그 외 타입 기본 규칙
     pushIfAbsent("수평브레싱", 2 * qty);
     pushIfAbsent("경사브레싱", 3 * qty);
     pushIfAbsent("앙카볼트", 4 * qty);
@@ -519,7 +515,7 @@ export const ProductProvider = ({ children }) => {
     pushIfAbsent("브레싱고무", 4 * qty);
   };
 
-  // Fallback BOM : 안전우 제외(요청 반영)
+  // Fallback BOM : 안전우 제외
   const getFallbackBOM = () => {
     if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
       const lvl = parseInt(selectedOptions.level || "") || 1;
@@ -528,10 +524,16 @@ export const ProductProvider = ({ children }) => {
       const form = selectedOptions.formType || "독립형";
       const qty = Number(quantity) || 1;
 
+      // 로드빔/타이빔 표시용 규격 가공
+      const { w, d } = parseWD(sz);
+      const tieSpec = d != null ? String(d) : `규격 ${sz}`;
+      const loadSpec =
+        w != null ? String(Math.floor(w / 100) * 100) : `규격 ${sz}`;
+
       const base = [
         { rackType: selectedType, size: sz, name: `기둥(${ht})`, specification: `높이 ${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "로드빔", specification: `규격 ${sz}`, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "타이빔", specification: `규격 ${sz}`, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, size: sz, name: "타이빔", specification: tieSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "베이스(안전좌)", specification: "", quantity: 2 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
       ];
@@ -571,23 +573,33 @@ export const ProductProvider = ({ children }) => {
 
       if (rec?.components) {
         const q = Number(quantity) || 1;
-        const base = rec.components.map((c) => ({
-          rackType: selectedType,
-          size: selectedOptions.size,
-          name: c.name,
-          specification: c.specification ?? "",
-          note: c.note ?? "",
-          quantity: (Number(c.quantity) || 0) * q,
-          unitPrice: Number(c.unit_price) || 0,
-          totalPrice:
-            Number(c.total_price) > 0
-              ? Number(c.total_price) * q
-              : (Number(c.unit_price) || 0) * (Number(c.quantity) || 0) * q,
-        }));
+        const sz = selectedOptions.size || "";
+        const { w, d } = parseWD(sz);
+        const loadSpec = w != null ? String(Math.floor(w / 100) * 100) : `규격 ${sz}`;
+        const tieSpec = d != null ? String(d) : `규격 ${sz}`;
 
-        // 부자재(브레싱/볼트/고무) 자동 보강
+        const base = rec.components.map((c) => {
+          let spec = c.specification ?? "";
+          // 로드빔/타이빔은 표시 규칙 강제 적용(선택한 규격 기반)
+          if (String(c.name).includes("로드빔")) spec = loadSpec;
+          if (String(c.name).includes("타이빔")) spec = tieSpec;
+
+          return {
+            rackType: selectedType,
+            size: sz,
+            name: c.name,
+            specification: spec,
+            note: c.note ?? "",
+            quantity: (Number(c.quantity) || 0) * q,
+            unitPrice: Number(c.unit_price) || 0,
+            totalPrice:
+              Number(c.total_price) > 0
+                ? Number(c.total_price) * q
+                : (Number(c.unit_price) || 0) * (Number(c.quantity) || 0) * q,
+          };
+        });
+
         appendCommonHardwareIfMissing(base, q);
-
         return [...base, ...makeExtraOptionBOM()];
       }
       return getFallbackBOM();
@@ -633,7 +645,7 @@ export const ProductProvider = ({ children }) => {
       setExtraOptionsSel([]);
       setQuantity("");
       setCustomPrice(0);
-      clearCustomMaterials(); // ★ 경량랙 사용자자재 초기화
+      clearCustomMaterials();
       return;
     }
     setSelectedOptions((prev) => ({ ...prev, [k]: v }));
