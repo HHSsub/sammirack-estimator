@@ -54,6 +54,24 @@ const sortLevels = (arr = []) =>
 const HIGHRACK_550_ALIAS_VIEW_FROM_DATA = { "80x146": "80x108", "80x206": "80x150" };
 const HIGHRACK_550_ALIAS_DATA_FROM_VIEW = { "80x108": "80x146", "80x150": "80x206" };
 
+// ── 추가 유틸: 높이 파싱 및 파렛트 하드웨어 계산 ──
+// 높이 "H2500" → 2500
+const parseHeightMm = (h) => Number(String(h || "").replace(/[^\d]/g, "")) || 0;
+
+// 파렛트랙(철판형 포함) 브레싱/볼트 수량 규칙
+// 독립형: 수평=4, 경사=2*(h/500-1), 앙카=4, 베이스볼트=4, 브레싱볼트=2*(h/500)+4
+// 연결형: 수평=2, 경사=(h/500-1),   앙카=2, 베이스볼트=4, 브레싱볼트=(h/500)+2
+const calcPalletHardwareCounts = (heightMm, isConn, qty) => {
+  const step = heightMm / 500;
+  const horizontal = (isConn ? 2 : 4) * qty;
+  const diagonal = Math.max(0, (isConn ? (step - 1) : 2 * (step - 1))) * qty;
+  const anchor = (isConn ? 2 : 4) * qty;
+  const baseBolt = 4 * qty;
+  const braceBolt = (isConn ? (step + 2) : (2 * step + 4)) * qty;
+  const rubber = 4 * qty; // 브레싱고무는 항상 4개 × 수량
+  return { horizontal, diagonal, anchor, baseBolt, braceBolt, rubber };
+};
+
 export const ProductProvider = ({ children }) => {
   const [data, setData] = useState({});
   const [bomData, setBomData] = useState({});
@@ -217,7 +235,11 @@ export const ProductProvider = ({ children }) => {
         const baseSizes = hide45x150
           ? sizeViewList.filter((s) => s !== "45x150")
           : Array.from(new Set([...sizeViewList, ...(EXTRA_OPTIONS["하이랙"]?.size || [])]));
-        opts.size = sortSizes(baseSizes);
+
+        // ▶ 550kg/700kg에서 80x200은 반드시 노출
+        const sizeSet = new Set(baseSizes);
+        if (isHeaviest) sizeSet.add("80x200");
+        opts.size = sortSizes([...sizeSet]);
 
         // 높이: 어떤 옵션이든 150/200/250 항상 노출(데이터와 병합)
         if (selectedOptions.size) {
@@ -235,8 +257,9 @@ export const ProductProvider = ({ children }) => {
             const levelsFromData = Object.keys(
               rd["기본가격"]?.[color]?.[sizeKey]?.[selectedOptions.height] || {}
             );
+            // ▶ 550/700kg 은 1~6단 항상 선택 가능
             opts.level = isHeaviest
-              ? sortLevels(levelsFromData)
+              ? sortLevels(levelsFromData.length ? levelsFromData : ["1단","2단","3단","4단","5단","6단"])
               : sortLevels([
                   ...levelsFromData,
                   ...(EXTRA_OPTIONS["하이랙"]?.level || []),
@@ -470,9 +493,26 @@ export const ProductProvider = ({ children }) => {
         names.add(name);
       }
     };
-    // 수량 규칙: 수평/경사 1세트, 나머지 4ea × 수량
-    pushIfAbsent("수평브레싱", 1 * qty);
-    pushIfAbsent("경사브레싱", 1 * qty);
+
+    // ── 파렛트랙(철판형 포함)은 표 규칙 적용 ──
+    if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
+      const isConn = selectedOptions.formType === "연결형";
+      const h = parseHeightMm(selectedOptions.height); // ex) H2500 → 2500
+      const { horizontal, diagonal, anchor, baseBolt, braceBolt, rubber } =
+        calcPalletHardwareCounts(h, isConn, qty);
+
+      pushIfAbsent("수평브레싱", horizontal);
+      pushIfAbsent("경사브레싱", diagonal);
+      pushIfAbsent("앙카볼트", anchor);
+      pushIfAbsent("베이스볼트", baseBolt);
+      pushIfAbsent("브레싱볼트", braceBolt);
+      pushIfAbsent("브레싱고무", rubber);
+      return;
+    }
+
+    // ── 그 외 타입은 기본 규칙(2/3/4 배수) 유지 ──
+    pushIfAbsent("수평브레싱", 2 * qty);
+    pushIfAbsent("경사브레싱", 3 * qty);
     pushIfAbsent("앙카볼트", 4 * qty);
     pushIfAbsent("베이스볼트", 4 * qty);
     pushIfAbsent("브레싱볼트", 4 * qty);
