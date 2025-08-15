@@ -198,14 +198,14 @@ export const ProductProvider = ({ children }) => {
     if (selectedType === '하이랙' && data?.하이랙) {
       const rd = data['하이랙'];
       const opts = { color: rd['색상'] || [] };
-
+    
       if (selectedOptions.color) {
         const color = selectedOptions.color;
         const is450 = /450kg/.test(String(color));
         const is550 = /550kg/.test(String(color)) || /700kg/.test(String(color));
-
+    
         const sizeListSafeRaw = Object.keys(rd['기본가격']?.[color] || {});
-
+    
         // 550kg: 표기 치환(80x146→80x108, 80x206→80x150)
         const sizeViewList = sizeListSafeRaw.map(s => {
           if (is550 && HIGHRACK_550_ALIASES_VIEW_FROM_DATA[s]) {
@@ -213,32 +213,39 @@ export const ProductProvider = ({ children }) => {
           }
           return s;
         });
-
-        // 450kg: 45x150 제외
+    
+        // 1차: 데이터 기반 사이즈 (450kg이면 우선 45x150 제거)
         let sizeView = is450
           ? sizeViewList.filter(s => s !== '45x150')
           : sizeViewList;
-
-        // 550kg: 80x200 추가 노출(데이터 없으면 수동가)
-        if (is550 && !sizeView.includes('80x200')) sizeView = [...sizeView, '80x200'];
-
-        // EXTRA 사이즈(경량급 추가 노출)는 heaviest가 아니면 병합
+    
+        // 2차: (비-최대하중일 때만) Extra 사이즈 병합
         const extraSizes = EXTRA_OPTIONS['하이랙']?.size || [];
-        const isHeaviest = is550; // 기존 로직 호환
-        opts.size = sortSizes(isHeaviest ? sizeView : Array.from(new Set([...sizeView, ...extraSizes])));
-
+        const isHeaviest = is550;
+        if (!isHeaviest) {
+          sizeView = Array.from(new Set([...sizeView, ...extraSizes]));
+        }
+    
+        // 3차: 450kg 재확인(Extra로 다시 들어온 45x150 최종 제거)
+        if (is450) sizeView = sizeView.filter(s => s !== '45x150');
+    
+        // 4차: 550kg이면 80x200 강제 추가
+        if (is550 && !sizeView.includes('80x200')) sizeView.push('80x200');
+    
+        opts.size = sortSizes(sizeView);
+    
         if (selectedOptions.size) {
           const dataSizeKey = resolveHighrackSizeKey(color, selectedOptions.size);
           const heightListSafe = Object.keys(
             rd['기본가격']?.[color]?.[dataSizeKey] || {}
           );
-
+    
           const allow250ExtraFor = ['60x108', '60x150', '60x200'];
           const extraH = allow250ExtraFor.includes(selectedOptions.size)
             ? (EXTRA_OPTIONS['하이랙']?.height || []).filter(h => h === '250')
             : [];
           opts.height = sortHeights(Array.from(new Set([...heightListSafe, ...extraH])));
-
+    
           if (selectedOptions.height) {
             const levelsFromData = Object.keys(
               rd['기본가격']?.[color]?.[dataSizeKey]?.[selectedOptions.height] || {}
@@ -522,10 +529,15 @@ export const ProductProvider = ({ children }) => {
       setSelectedOptions({});
       setExtraOptionsSel([]);
       setQuantity();
-      setCustomPrice();
+      setCustomPrice(0);  // ✅ 타입 바꿀 때도 수동가격 초기화
       return;
     }
     setSelectedOptions(prev => ({ ...prev, [k]: v }));
+
+    // ✅ 핵심 옵션 변경 시 수동가격 초기화 (간섭 방지)
+    if (['color','size','height','level','formType'].includes(k)) {
+      setCustomPrice(0);
+    }
   };
 
   const addToCart = () => {
@@ -547,6 +559,12 @@ export const ProductProvider = ({ children }) => {
         selectedOptions.color ? selectedOptions.color : ''
       ].filter(Boolean).join(' ')
     }]);
+  // ✅ 추가 후 모든 선택/입력 초기화
+  setSelectedType('');
+  setSelectedOptions({});
+  setExtraOptionsSel([]);
+  setQuantity('');
+  setCustomPrice(0);        // 수동가격 초기화
   };
 
   const removeFromCart = id => setCart(prev => prev.filter(i => i.id !== id));
