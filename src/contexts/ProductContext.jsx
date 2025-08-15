@@ -143,7 +143,7 @@ export const ProductProvider = ({ children }) => {
         if (selectedType === "경량랙" && selectedOptions.height === "H750") {
           const lk = Object.keys(bd[selectedOptions.size]?.["H900"] || {});
           next.level = lk.length ? lk : [];
-          if (!next.level.length) next.level = []; // 데이터 기준
+          if (!next.level.length) next.level = [];
           if (selectedOptions.level) {
             const fm = bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level] || {};
             next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
@@ -151,13 +151,12 @@ export const ProductProvider = ({ children }) => {
         } else {
           const levelKeys =
             Object.keys(bd[selectedOptions.size]?.[selectedOptions.height] || {}) || [];
-          // ★ 가격 데이터가 없어도 최소 L1~L6 선택 가능 (요청 반영)
+          // 가격 없어도 최소 L1~L6 선택 가능
           next.level = levelKeys.length ? sortLevels(levelKeys) : ["L1", "L2", "L3", "L4", "L5", "L6"];
 
           if (selectedOptions.level) {
             const fm =
               bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
-            // 데이터에 없을 때도 형식은 기본 2가지 제공
             next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
           }
         }
@@ -167,7 +166,7 @@ export const ProductProvider = ({ children }) => {
       return;
     }
 
-    // 2) 하이랙 (색상→규격→높이→단수)
+    // 2) 하이랙
     if (selectedType === "하이랙" && data?.하이랙) {
       const rd = data["하이랙"];
       const opts = { color: rd["색상"] || [] };
@@ -176,7 +175,6 @@ export const ProductProvider = ({ children }) => {
         const color = selectedOptions.color;
         const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
 
-        // 규격 목록(색상별)
         const rawSizes = Object.keys(rd["기본가격"]?.[color] || []);
         const sizeViewList = rawSizes.map((s) =>
           isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
@@ -184,13 +182,11 @@ export const ProductProvider = ({ children }) => {
             : s
         );
 
-        // 270kg에는 45x150 추가, 550/700kg에는 45x150 제외
         const baseSizes = isHeaviest
           ? sizeViewList.filter((s) => s !== "45x150")
           : Array.from(new Set([...sizeViewList, ...(EXTRA_OPTIONS["하이랙"]?.size || [])]));
         opts.size = sortSizes(baseSizes);
 
-        // 높이: 어떤 옵션이든 150/200/250 항상 노출(데이터와 병합)
         if (selectedOptions.size) {
           const sizeKey = isHeaviest
             ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selectedOptions.size] || selectedOptions.size
@@ -266,22 +262,38 @@ export const ProductProvider = ({ children }) => {
     let basePrice = 0;
 
     if (formTypeRacks.includes(selectedType)) {
-      // 경량 H750 → H900 레코드 사용
       const size = selectedOptions.size;
-      const height = selectedOptions.height === "H750" ? "H900" : selectedOptions.height;
-      const level = selectedOptions.level;
+      const heightRaw = selectedOptions.height;
+      const levelRaw = selectedOptions.level;
       const formType = selectedOptions.formType;
 
+      // 경량 H750 → H900 레코드 사용
+      const height = selectedType === "경량랙" && heightRaw === "H750" ? "H900" : heightRaw;
+
       // 1) data.json 기본가격 우선
-      const pData =
-        data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[level]?.[formType];
+      let pData;
+
+      if (selectedType === "파렛트랙 철판형") {
+        // data.json 구조: 형식 → 규격 → 높이(숫자) → 'n단'
+        const hKey = String(height || "").replace(/^H/i, ""); // 'H2500' -> '2500'
+        const lKey =
+          String(levelRaw || "")
+            .replace(/^L/i, "")
+            .replace(/^\s*$/, "0") + "단"; // 'L4' -> '4단'
+        pData =
+          data?.[selectedType]?.["기본가격"]?.[formType]?.[size]?.[hKey]?.[lKey];
+      } else {
+        // 일반 구조: 규격 → 높이 → 단수(Lx) → 형식
+        pData =
+          data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[levelRaw]?.[formType];
+      }
 
       if (pData) {
         basePrice = Number(pData) * (Number(quantity) || 0);
       } else {
         // 2) bom_data components 합계(있으면)
         const rec =
-          bomData?.[selectedType]?.[size]?.[height]?.[level]?.[formType];
+          bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
         if (rec) {
           const labelled = Number(rec.total_price) || 0;
           basePrice =
@@ -291,7 +303,9 @@ export const ProductProvider = ({ children }) => {
       }
     } else if (selectedType === "스텐랙") {
       const p =
-        data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+        data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[
+          selectedOptions.level
+        ];
       if (p) basePrice = p * quantity;
     } else if (selectedType === "하이랙") {
       const color = selectedOptions.color;
@@ -341,7 +355,7 @@ export const ProductProvider = ({ children }) => {
           const unit = Number(opt.price) || 0;
           result.push({
             rackType: selectedType,
-            name: opt.name, // 그대로 표시 (파싱 NO)
+            name: opt.name,
             specification: opt.specification || "",
             quantity: qty,
             unitPrice: unit,
@@ -400,7 +414,7 @@ export const ProductProvider = ({ children }) => {
         { rackType: selectedType, size: sz, name: "앙카볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "베이스볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "브레싱볼트", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "브레싱고무", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, size: sz, name: "브레싱보조고무", specification: "", quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
       ];
       return [...base, ...makeExtraOptionBOM()];
     }
