@@ -81,6 +81,20 @@ export const ProductProvider = ({ children }) => {
   // 추가 옵션 선택 상태
   const [extraOptionsSel, setExtraOptionsSel] = useState([]);
 
+  // ▶ 경량랙 사용자 정의 기타자재(“기타 추가 옵션”)
+  const [customMaterials, setCustomMaterials] = useState([]); // [{id,name,price}]
+  const addCustomMaterial = (name, price) => {
+    if (!String(name).trim() || !(Number(price) > 0)) return;
+    setCustomMaterials((prev) => [
+      ...prev,
+      { id: `cm-${Date.now()}-${prev.length}`, name: String(name), price: Number(price) },
+    ]);
+  };
+  const removeCustomMaterial = (id) => {
+    setCustomMaterials((prev) => prev.filter((m) => m.id !== id));
+  };
+  const clearCustomMaterials = () => setCustomMaterials([]);
+
   // ───────────────────────────────
   // 데이터 로드 (+ extra 옵션 정규화)
   // ───────────────────────────────
@@ -348,7 +362,13 @@ export const ProductProvider = ({ children }) => {
       }
     });
 
-    return Math.round((basePrice + extraPrice) * (applyRate / 100));
+    // ★ 경량랙 사용자 정의 기타자재 가격 합산
+    const customExtra =
+      selectedType === "경량랙"
+        ? customMaterials.reduce((s, m) => s + (Number(m.price) || 0), 0)
+        : 0;
+
+    return Math.round((basePrice + extraPrice + customExtra) * (applyRate / 100));
   }, [
     selectedType,
     selectedOptions,
@@ -359,6 +379,7 @@ export const ProductProvider = ({ children }) => {
     bomData,
     extraProducts,
     extraOptionsSel,
+    customMaterials,
   ]);
 
   // ───────────────────────────────
@@ -386,6 +407,23 @@ export const ProductProvider = ({ children }) => {
         });
       }
     });
+
+    // ★ 경량랙 사용자 정의 기타자재도 그대로 BOM 추가
+    if (selectedType === "경량랙") {
+      customMaterials.forEach((m) => {
+        const unit = Number(m.price) || 0;
+        result.push({
+          rackType: selectedType,
+          name: m.name,
+          specification: "",
+          quantity: qty,
+          unitPrice: unit,
+          totalPrice: unit * qty,
+          note: "추가옵션",
+        });
+      });
+    }
+
     return result;
   };
 
@@ -555,6 +593,7 @@ export const ProductProvider = ({ children }) => {
       setExtraOptionsSel([]);
       setQuantity("");
       setCustomPrice(0);
+      clearCustomMaterials(); // ★ 경량랙 사용자자재 초기화
       return;
     }
     setSelectedOptions((prev) => ({ ...prev, [k]: v }));
@@ -686,6 +725,12 @@ export const ProductProvider = ({ children }) => {
         extraProducts,
         extraOptionsSel,
         handleExtraOptionChange,
+
+        // 경량랙 사용자 정의 자재
+        customMaterials,
+        addCustomMaterial,
+        removeCustomMaterial,
+        clearCustomMaterials,
       }}
     >
       {children}
