@@ -14,14 +14,17 @@ import PasswordChange from './components/PasswordChange'; // 비밀번호 변경
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태 관리
+  const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
   const [showPasswordChange, setShowPasswordChange] = useState(false); // 비밀번호 변경 모달 상태
 
-  const handleLogin = (status) => {
+  const handleLogin = (status, userInfo = null) => {
     setIsLoggedIn(status);
+    setCurrentUser(userInfo);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setCurrentUser(null);
   };
 
   const handlePasswordChange = () => {
@@ -44,7 +47,12 @@ function App() {
           <Link to="/" className="nav-link">홈</Link>
           <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
           <Link to="/purchase-order/new" className="nav-link">거래명세서(발주서) 작성</Link>
-          <Link to="/history" className="nav-link">문서 관리</Link>
+          {currentUser?.role === 'admin' && (
+            <Link to="/history" className="nav-link">문서 관리</Link>
+          )}
+          <span className="user-info">
+            {currentUser?.username} ({currentUser?.role === 'admin' ? '관리자' : '일반사용자'})
+          </span>
           <button onClick={handlePasswordChange} className="nav-link">비밀번호 변경</button>
           <button onClick={handleLogout} className="nav-link">로그아웃</button>
         </div>
@@ -63,7 +71,10 @@ function App() {
       
       {/* 비밀번호 변경 모달 */}
       {showPasswordChange && (
-        <PasswordChange onClose={handlePasswordChangeClose} />
+        <PasswordChange 
+          currentUser={currentUser}
+          onClose={handlePasswordChangeClose} 
+        />
       )}
     </div>
   );
