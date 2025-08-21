@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
 
 const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState('admin');
+  const [username, setUsername] = useState('admin'); // 기본값만 admin으로 설정
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockWarning, setCapsLockWarning] = useState(false);
 
+  // 사용자 계정 정보 (실제 운영에서는 서버에서 관리해야 함)
+  const userAccounts = {
+    'admin': 'sammi1234',
+    'member': '1234'
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // localStorage에서 저장된 비밀번호 확인 (없으면 기본값 사용)
-    const storedPassword = localStorage.getItem('adminPassword') || 'sammi1234';
+    let validPassword = userAccounts[username];
     
-    if (username === 'admin' && password === storedPassword) {
-      onLogin(true); // 로그인 성공
+    // 비밀번호가 변경된 경우 localStorage에서 확인
+    const storedPassword = localStorage.getItem(`${username}_password`);
+    if (storedPassword) {
+      validPassword = storedPassword;
+    }
+    
+    if (validPassword && password === validPassword) {
+      // 로그인 성공 시 사용자 정보와 함께 전달
+      onLogin(true, { username, role: username === 'admin' ? 'admin' : 'member' });
     } else {
       setError('아이디 또는 비밀번호가 올바르지 않습니다.');
     }
@@ -53,7 +66,8 @@ const Login = ({ onLogin }) => {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            readOnly // admin으로 고정
+            placeholder="아이디를 입력하세요"
+            required
           />
         </div>
         
