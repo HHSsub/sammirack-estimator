@@ -9,8 +9,33 @@ import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
 import PrintPage from './components/PrintPage';
+import Login from './components/Login'; // Login 컴포넌트 임포트
+import PasswordChange from './components/PasswordChange'; // 비밀번호 변경 컴포넌트 임포트
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태 관리
+  const [showPasswordChange, setShowPasswordChange] = useState(false); // 비밀번호 변경 모달 상태
+
+  const handleLogin = (status) => {
+    setIsLoggedIn(status);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
+
+  const handlePasswordChange = () => {
+    setShowPasswordChange(true);
+  };
+
+  const handlePasswordChangeClose = () => {
+    setShowPasswordChange(false);
+  };
+
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="app">
       <nav className="main-nav">
@@ -20,6 +45,8 @@ function App() {
           <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
           <Link to="/purchase-order/new" className="nav-link">거래명세서(발주서) 작성</Link>
           <Link to="/history" className="nav-link">문서 관리</Link>
+          <button onClick={handlePasswordChange} className="nav-link">비밀번호 변경</button>
+          <button onClick={handleLogout} className="nav-link">로그아웃</button>
         </div>
       </nav>
       <main className="main-content">
@@ -33,6 +60,11 @@ function App() {
         </Routes>
       </main>
       <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
+      
+      {/* 비밀번호 변경 모달 */}
+      {showPasswordChange && (
+        <PasswordChange onClose={handlePasswordChangeClose} />
+      )}
     </div>
   );
 }
