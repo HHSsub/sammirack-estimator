@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
 
-const PasswordChange = ({ onClose }) => {
+const PasswordChange = ({ currentUser, onClose }) => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // 사용자 계정 정보 (실제 운영에서는 서버에서 관리해야 함)
+  const defaultPasswords = {
+    'admin': 'sammi1234',
+    'member': '1234'
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     // 현재 비밀번호 확인
-    const storedPassword = localStorage.getItem('adminPassword') || 'sammi1234';
+    const storedPassword = localStorage.getItem(`${currentUser.username}_password`) || defaultPasswords[currentUser.username];
     if (currentPassword !== storedPassword) {
       setError('현재 비밀번호가 올바르지 않습니다.');
       return;
@@ -29,21 +35,21 @@ const PasswordChange = ({ onClose }) => {
     }
 
     // 비밀번호 변경 성공 (실제로는 서버에 저장해야 함)
-    // 여기서는 localStorage에 임시 저장
-    localStorage.setItem('adminPassword', newPassword);
+    // 여기서는 localStorage에 사용자별로 저장
+    localStorage.setItem(`${currentUser.username}_password`, newPassword);
     setSuccess('비밀번호가 성공적으로 변경되었습니다.');
     setError('');
     
-    // 3초 후 창 닫기
+    // 5초 후 창 닫기
     setTimeout(() => {
       onClose();
-    }, 3000);
+    }, 5000);
   };
 
   return (
     <div className="password-change-overlay">
       <div className="password-change-modal">
-        <h3>비밀번호 변경</h3>
+        <h3>비밀번호 변경 - {currentUser?.username}</h3>
         {error && <p className="error-message">{error}</p>}
         {success && <p className="success-message">{success}</p>}
         
