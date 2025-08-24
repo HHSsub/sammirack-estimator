@@ -28,12 +28,6 @@ const GyeonjukPrint = ({ data }) => {
             <td>삼미앵글랙산업</td>
           </tr>
           <tr>
-            <td className="label">담당자</td>
-            <td>{data?.contactPerson || ''}</td>
-            <td className="label">대표자</td>
-            <td>박이삭</td>
-          </tr>
-          <tr>
             <td colSpan={2} rowSpan={4} style={{
               textAlign: 'center',
               fontWeight: 'bold',
@@ -45,6 +39,10 @@ const GyeonjukPrint = ({ data }) => {
             }}>
               아래와 같이 견적합니다 (부가세, 운임비 별도)
             </td>
+            <td className="label">대표자</td>
+            <td>박이삭</td>
+          </tr>
+          <tr>
             <td className="label">소재지</td>
             <td>경기도 광명시 원노온사로 39, 제1동</td>
           </tr>
