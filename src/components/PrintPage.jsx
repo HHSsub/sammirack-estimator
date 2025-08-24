@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import GyeonjukPrint from './GyeonjukPrint';
 import BaljuPrint from './BaljuPrint';
+import { exportEstimateToExcel, exportPurchaseOrderToExcel } from '../utils/excelUtils';
 import '../styles/PrintStyles.css';
 
 const PrintPage = () => {
@@ -124,6 +125,15 @@ const PrintPage = () => {
     }
   };
 
+  const handleExcelExport = () => {
+    const type = searchParams.get('type');
+    if (type === 'gyeonjuk') {
+      exportEstimateToExcel(printData);
+    } else if (type === 'balju') {
+      exportPurchaseOrderToExcel(printData);
+    }
+  };
+
   if (isLoading) {
     return (
       <div style={{ 
@@ -166,6 +176,19 @@ const PrintPage = () => {
           }}
         >
           프린트
+        </button>
+        <button 
+          onClick={handleExcelExport}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          엑셀 저장
         </button>
         <button 
           onClick={() => navigate(-1)}
