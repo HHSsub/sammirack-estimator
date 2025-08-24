@@ -20,9 +20,6 @@ const PurchaseOrderForm = () => {
     date: new Date().toISOString().split('T')[0],
     orderNumber: '',
     companyName: '',
-    contactPerson: '',
-    customerName: '',
-    contactInfo: '',
     notes: ''
   });
 
@@ -44,8 +41,8 @@ const PurchaseOrderForm = () => {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">거래명세서(발주서) 작성</h2>
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6 text-center">거래명세서(발주서) 작성</h2>
       <div className="mb-6 p-4 border rounded">
         <h3 className="text-xl font-semibold mb-3">발주서 정보</h3>
         <div className="grid grid-cols-2 gap-4">
@@ -55,26 +52,13 @@ const PurchaseOrderForm = () => {
           </div>
           <div><label>발주번호</label>
             <input type="text" name="orderNumber" value={formData.orderNumber}
-              onChange={handleInputChange} placeholder="자동 생성"
+              onChange={handleInputChange} placeholder="수동 입력"
               className="w-full p-2 border rounded" />
           </div>
-          <div><label>상호명 (공급받는 쪽)</label>
+          <div className="col-span-2"><label>상호명 (공급받는 쪽)</label>
             <input type="text" name="companyName" value={formData.companyName}
               onChange={handleInputChange} placeholder="예: ㈜테스트고객"
               className="w-full p-2 border rounded" />
-          </div>
-          <div><label>담당자</label>
-            <input type="text" name="contactPerson" value={formData.contactPerson}
-              onChange={handleInputChange} placeholder="예: 홍길동"
-              className="w-full p-2 border rounded" />
-          </div>
-          <div><label>고객명</label>
-            <input type="text" name="customerName" value={formData.customerName}
-              onChange={handleInputChange} className="w-full p-2 border rounded" />
-          </div>
-          <div><label>연락처</label>
-            <input type="text" name="contactInfo" value={formData.contactInfo}
-              onChange={handleInputChange} className="w-full p-2 border rounded" />
           </div>
         </div>
         <div className="mt-4">
