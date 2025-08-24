@@ -14,10 +14,7 @@ const EstimateForm = () => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     estimateNumber: '',
-    customerName: '',
-    contactInfo: '',
     companyName: '',
-    contactPerson: '',
     notes: ''
   });
 
@@ -60,37 +57,25 @@ const EstimateForm = () => {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">견적서 작성</h2>
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6 text-center">견적서 작성</h2>
 
       {/* 고객 정보 입력 */}
       <div className="mb-6 p-4 border rounded">
         <h3 className="text-xl font-semibold mb-3">견적서 정보</h3>
         <div className="grid grid-cols-2 gap-4">
-          {/* 날짜, 번호, 회사명, 담당자, 고객명, 연락처 필드들 */}
+          {/* 날짜, 번호, 회사명 필드들 */}
           <div>
             <label>견적일자</label>
             <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full p-2 border rounded"/>
           </div>
           <div>
             <label>견적번호</label>
-            <input type="text" name="estimateNumber" value={formData.estimateNumber} onChange={handleInputChange} placeholder="자동 생성됩니다" className="w-full p-2 border rounded"/>
+            <input type="text" name="estimateNumber" value={formData.estimateNumber} onChange={handleInputChange} placeholder="수동 입력" className="w-full p-2 border rounded"/>
           </div>
-          <div>
+          <div className="col-span-2">
             <label>상호명 (공급받는 쪽)</label>
             <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="예: (주)테스트" className="w-full p-2 border rounded"/>
-          </div>
-          <div>
-            <label>담당자</label>
-            <input type="text" name="contactPerson" value={formData.contactPerson} onChange={handleInputChange} placeholder="예: 홍길동" className="w-full p-2 border rounded"/>
-          </div>
-          <div>
-            <label>고객명</label>
-            <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className="w-full p-2 border rounded"/>
-          </div>
-          <div>
-            <label>연락처</label>
-            <input type="text" name="contactInfo" value={formData.contactInfo} onChange={handleInputChange} className="w-full p-2 border rounded"/>
           </div>
         </div>
         <div className="mt-4">
