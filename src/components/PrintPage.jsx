@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import GyeonjukPrint from './GyeonjukPrint';
 import BaljuPrint from './BaljuPrint';
-import { exportEstimateToExcel, exportPurchaseOrderToExcel } from '../utils/excelUtils';
+// import { exportEstimateToExcel, exportPurchaseOrderToExcel } from '../utils/excelUtils';
 import '../styles/PrintStyles.css';
 
 const PrintPage = () => {
