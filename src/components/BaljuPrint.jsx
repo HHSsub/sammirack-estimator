@@ -51,14 +51,14 @@ const BaljuPrint = ({ data }) => {
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
       <div className="print-header">
-        <h1>거래명세서(발&nbsp;주&nbsp;서)</h1>
+        <h1>발&nbsp;주&nbsp;서</h1>
         <img className="stamp" src={stampImage} alt="도장" />
         <table className="print-table info-table">
           <tbody>
             <tr>
-              <td className="label" style={{ width: '12.5%' }}>발주일자</td>
+              <td className="label" style={{ width: '12.5%' }}>거래일자</td>
               <td style={{ width: '12.5%' }}>{data?.date || ''}</td>
-              <td className="label" style={{ width: '12.5%' }}>발주번호</td>
+              <td className="label" style={{ width: '12.5%' }}>거래번호</td>
               <td style={{ width: '12.5%' }}>{data?.orderNumber || ''}</td>
             </tr>
             <tr>
