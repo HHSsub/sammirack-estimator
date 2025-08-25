@@ -42,15 +42,15 @@ const PurchaseOrderForm = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">거래명세서(발주서) 작성</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">발주서 작성</h2>
       <div className="mb-6 p-4 border rounded">
         <h3 className="text-xl font-semibold mb-3">발주서 정보</h3>
         <div className="grid grid-cols-2 gap-4">
-          <div><label>발주일자</label>
+          <div><label>거래일자</label>
             <input type="date" name="date" value={formData.date}
               onChange={handleInputChange} className="w-full p-2 border rounded" />
           </div>
-          <div><label>발주번호</label>
+          <div><label>거래번호</label>
             <input type="text" name="orderNumber" value={formData.orderNumber}
               onChange={handleInputChange} placeholder="수동 입력"
               className="w-full p-2 border rounded" />
