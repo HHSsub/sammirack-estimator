@@ -1,114 +1,329 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import BOMDisplay from './BOMDisplay';
-import { formatEstimateData, navigateToPrintPage } from '../utils/printUtils';
+import { useParams } from 'react-router-dom';
+import './EstimateForm.css';
 
 const EstimateForm = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const [cart] = useState(Array.isArray(location.state?.cart) ? location.state.cart : []);
-  const [cartTotal] = useState(location.state?.cartTotal || 0);
-  const [totalBom] = useState(location.state?.totalBom || []);
-
+  const { id } = useParams();
+  const isEditMode = !!id;
+  
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    estimateNumber: '',
     companyName: '',
+    documentNumber: '',
+    items: [
+      { name: '', specification: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
+    ],
+    subtotal: 0,
+    tax: 0,
+    totalAmount: 0,
     notes: ''
   });
 
+  // 편집 모드일 때 기존 데이터 로드
   useEffect(() => {
-    if (!location.state || cart.length === 0) {
-      alert("견적할 항목을 먼저 선택해주세요.");
-      navigate('/');
+    if (isEditMode) {
+      const storageKey = `estimate_${id}`;
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const estimateData = JSON.parse(savedData);
+        setFormData(estimateData);
+      }
     }
-  }, [location, navigate, cart.length]);
+  }, [id, isEditMode]);
 
-  const handleInputChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  // 아이템 추가
+  const addItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { name: '', specification: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+    }));
   };
 
-  const handlePrint = () => {
-    const printData = formatEstimateData(formData, cart, cartTotal);
+  // 아이템 삭제
+  const removeItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
 
-    // ==== 히스토리에 저장 ====
-    const id = Date.now().toString();
-    const historyItem = {
-      id,
+  // 아이템 업데이트
+  const updateItem = (index, field, value) => {
+    const newItems = [...formData.items];
+    newItems[index][field] = value;
+    
+    // 수량과 단가가 입력되면 공급가 자동 계산
+    if (field === 'quantity' || field === 'unitPrice') {
+      const quantity = parseFloat(newItems[index].quantity) || 0;
+      const unitPrice = parseFloat(newItems[index].unitPrice) || 0;
+      newItems[index].totalPrice = quantity * unitPrice;
+    }
+    
+    setFormData(prev => ({ ...prev, items: newItems }));
+  };
+
+  // 전체 금액 계산
+  useEffect(() => {
+    const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
+    const tax = Math.round(subtotal * 0.1);
+    const totalAmount = subtotal + tax;
+    
+    setFormData(prev => ({
+      ...prev,
+      subtotal,
+      tax,
+      totalAmount
+    }));
+  }, [formData.items]);
+
+  // 폼 데이터 업데이트
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // 저장 함수 (편집 모드 지원)
+  const handleSave = () => {
+    const itemId = isEditMode ? id : Date.now();
+    const storageKey = `estimate_${itemId}`;
+    
+    const newEstimate = {
+      ...formData,
+      id: itemId,
       type: 'estimate',
-      estimateNumber: printData.estimateNumber,
-      date: printData.date,
-      customerName: printData.customerName,
-      contactInfo: printData.contactInfo,
-      productType: cart[0]?.type || '',
-      selectedOptions: cart[0]?.options || {},
-      quantity: cart[0]?.quantity || 0,
-      unitPrice: cart[0] ? Math.floor(cart[0].price / (cart[0].quantity || 1)) : 0,
-      totalPrice: cartTotal,
-      status: '진행 중',
-      createdAt: new Date().toISOString()
+      status: formData.status || '진행 중',
+      estimateNumber: formData.documentNumber,
+      customerName: formData.companyName,
+      updatedAt: new Date().toISOString()
     };
-    localStorage.setItem(`estimate_${id}`, JSON.stringify(historyItem));
-    // ========================
 
-    navigateToPrintPage('gyeonjuk', printData, navigate);
+    // createdAt은 새 문서일 때만 설정
+    if (!isEditMode) {
+      newEstimate.createdAt = new Date().toISOString();
+    }
+
+    localStorage.setItem(storageKey, JSON.stringify(newEstimate));
+    alert(isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.');
+  };
+
+  // 인쇄하기
+  const handlePrint = () => {
+    localStorage.setItem('printData', JSON.stringify(formData));
+    window.open('/print?type=estimate', '_blank');
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6 text-center">견적서 작성</h2>
-
-      {/* 고객 정보 입력 */}
-      <div className="mb-6 p-4 border rounded">
-        <h3 className="text-xl font-semibold mb-3">견적서 정보</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {/* 날짜, 번호, 회사명 필드들 */}
-          <div>
-            <label>견적일자</label>
-            <input type="date" name="date" value={formData.date} onChange={handleInputChange} className="w-full p-2 border rounded"/>
-          </div>
-          <div>
-            <label>견적번호</label>
-            <input type="text" name="estimateNumber" value={formData.estimateNumber} onChange={handleInputChange} placeholder="수동 입력" className="w-full p-2 border rounded"/>
-          </div>
-          <div className="col-span-2">
-            <label>상호명 (공급받는 쪽)</label>
-            <input type="text" name="companyName" value={formData.companyName} onChange={handleInputChange} placeholder="예: (주)테스트" className="w-full p-2 border rounded"/>
-          </div>
-        </div>
-        <div className="mt-4">
-          <label>비고사항</label>
-          <textarea name="notes" value={formData.notes} onChange={handleInputChange} rows="3" className="w-full p-2 border rounded"/>
+    <div className="estimate-form-container">
+      <div className="form-header">
+        <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
+        <div className="document-number-field">
+          <label>문서번호:</label>
+          <input
+            type="text"
+            value={formData.documentNumber}
+            onChange={(e) => updateFormData('documentNumber', e.target.value)}
+            placeholder="휴대폰번호 입력"
+          />
         </div>
       </div>
 
-      {/* 항목 리스트 */}
-      <div className="mb-4">
-        <h3 className="text-xl font-semibold">견적 항목</h3>
-        <table className="w-full text-left border-collapse">
-          <thead><tr><th>항목</th><th className="text-right">금액</th></tr></thead>
-          <tbody>
-            {cart.map((item, idx) => (
-              <tr key={idx}>
-                <td>{item.displayName || `${item.type} ${item.options?.formType || ''} ${item.options?.size || ''} ${item.options?.height || ''} ${item.options?.level || ''} x ${item.quantity}개`}</td>
-                <td className="text-right">{item.price?.toLocaleString()}원</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* 상단 정보 테이블 - GyeonjukPrint와 동일한 구조 */}
+      <table className="form-table info-table">
+        <tbody>
+          <tr>
+            <td className="label">견적일자</td>
+            <td>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => updateFormData('date', e.target.value)}
+              />
+            </td>
+            <td className="label">사업자등록번호</td>
+            <td>232-81-01750</td>
+          </tr>
+          <tr>
+            <td className="label">상호명</td>
+            <td>
+              <input
+                type="text"
+                value={formData.companyName}
+                onChange={(e) => updateFormData('companyName', e.target.value)}
+                placeholder="고객 회사명 입력"
+              />
+            </td>
+            <td className="label">상호</td>
+            <td>삼미앵글랙산업</td>
+          </tr>
+          <tr>
+            <td colSpan={2} rowSpan={4} style={{
+              textAlign: 'center',
+              fontWeight: 'bold',
+              fontSize: 15,
+              verticalAlign: 'middle',
+              padding: '16px 0',
+              background: '#f8f9fa',
+              border: '1px solid #ddd'
+            }}>
+              아래와 같이 견적합니다 (부가세, 운임비 별도)
+            </td>
+            <td className="label">대표자</td>
+            <td>박이삭</td>
+          </tr>
+          <tr>
+            <td className="label">소재지</td>
+            <td>경기도 광명시 원노온사로 39, 제1동</td>
+          </tr>
+          <tr>
+            <td className="label">TEL</td>
+            <td>(02)2611-4597</td>
+          </tr>
+          <tr>
+            <td className="label">FAX</td>
+            <td>(02)2611-4595</td>
+          </tr>
+          <tr>
+            <td className="label">홈페이지</td>
+            <td>http://www.ssmake.com</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* 견적 명세 테이블 */}
+      <table className="form-table quote-table">
+        <thead>
+          <tr>
+            <th>NO</th>
+            <th>품명</th>
+            <th>규격</th>
+            <th>단위</th>
+            <th>수량</th>
+            <th>단가</th>
+            <th>공급가</th>
+            <th>비고</th>
+            <th>작업</th>
+          </tr>
+        </thead>
+        <tbody>
+          {formData.items.map((item, index) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => updateItem(index, 'name', e.target.value)}
+                  placeholder="품명 입력"
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={item.specification}
+                  onChange={(e) => updateItem(index, 'specification', e.target.value)}
+                  placeholder="규격"
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={item.unit}
+                  onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                  placeholder="단위"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={item.quantity}
+                  onChange={(e) => updateItem(index, 'quantity', e.target.value)}
+                  placeholder="수량"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={item.unitPrice}
+                  onChange={(e) => updateItem(index, 'unitPrice', e.target.value)}
+                  placeholder="단가"
+                />
+              </td>
+              <td className="right">
+                {item.totalPrice ? parseInt(item.totalPrice).toLocaleString() : '0'}
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={item.note}
+                  onChange={(e) => updateItem(index, 'note', e.target.value)}
+                  placeholder="비고"
+                />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  onClick={() => removeItem(index)}
+                  className="remove-btn"
+                  disabled={formData.items.length === 1}
+                >
+                  삭제
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* 아이템 추가 버튼 */}
+      <div className="item-controls">
+        <button type="button" onClick={addItem} className="add-item-btn">
+          + 품목 추가
+        </button>
       </div>
 
-      <h3 className="text-xl font-semibold">총 견적 금액: {cartTotal.toLocaleString()} 원</h3>
+      {/* 합계 테이블 */}
+      <table className="form-table total-table">
+        <tbody>
+          <tr>
+            <td className="label">소계</td>
+            <td className="right">{formData.subtotal.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td className="label">부가세</td>
+            <td className="right">{formData.tax.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td className="label"><strong>합계</strong></td>
+            <td className="right"><strong>{formData.totalAmount.toLocaleString()}</strong></td>
+          </tr>
+        </tbody>
+      </table>
 
-      <BOMDisplay bom={totalBom} title="총 부품 목록 (BOM)" />
-
-      {/* 버튼 */}
-      <div className="mt-6 flex gap-4">
-        <button onClick={handlePrint} className="p-3 bg-green-500 text-white rounded">견적서 인쇄</button>
-        <button onClick={() => navigate('/')} className="p-3 bg-gray-500 text-white rounded">돌아가기</button>
+      {/* 비고 */}
+      <div className="notes-section">
+        <label>비고:</label>
+        <textarea
+          value={formData.notes}
+          onChange={(e) => updateFormData('notes', e.target.value)}
+          placeholder="기타 사항을 입력하세요"
+          rows={4}
+        />
       </div>
+
+      {/* 하단 버튼들 */}
+      <div className="form-actions">
+        <button type="button" onClick={handleSave} className="save-btn">
+          저장하기
+        </button>
+        <button type="button" onClick={handlePrint} className="print-btn">
+          인쇄하기
+        </button>
+      </div>
+
+      {/* 하단 회사명 */}
+      <div className="form-company">(주)삼미앵글랙산업</div>
     </div>
   );
 };
