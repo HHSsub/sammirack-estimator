@@ -16,7 +16,7 @@ const GyeonjukPrint = ({ data }) => {
       <table className="print-table info-table">
         <tbody>
           <tr>
-            <td className="label">견적일자</td>
+            <td className="label">거래일자</td>
             <td>{data?.date || ''}</td>
             <td className="label">사업자등록번호</td>
             <td>232-81-01750</td>
