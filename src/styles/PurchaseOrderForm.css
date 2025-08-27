@@ -101,9 +101,11 @@
 
 .info-table input {
   width: 100%;
+  max-width: 98%;
+  box-sizing: border-box;
   padding: 6px 8px;
   border: 1px solid #ccc;
-  border-radius: 3px;
+  border-radius: 4px; /* 입력박스가 셀을 넘지 않도록 */
   font-size: 13px;
 }
 
