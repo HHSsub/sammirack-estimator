@@ -248,7 +248,7 @@ const EstimateForm = () => {
             </tr>
             <tr>
               <td class="label">홈페이지</td>
-              <td colspan="3">http://www.ssmake.com</td>
+              <td>http://www.ssmake.com</td>
             </tr>
           </tbody>
         </table>
@@ -423,7 +423,7 @@ const EstimateForm = () => {
           </tr>
           <tr>
             <td className="label">홈페이지</td>
-            <td colspan="3">http://www.ssmake.com</td>
+            <td>http://www.ssmake.com</td>
           </tr>
         </tbody>
       </table>
