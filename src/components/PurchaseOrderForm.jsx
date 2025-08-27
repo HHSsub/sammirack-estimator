@@ -242,7 +242,7 @@ const PurchaseOrderForm = () => {
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
-              <td colSpan="2" rowSpan="3" style={{
+              <td colSpan={2} rowSpan={3} style={{
                 textAlign: "center",
                 fontWeight: "bold",
                 verticalAlign: "middle",
@@ -250,9 +250,10 @@ const PurchaseOrderForm = () => {
                 background: "#f8f9fa"
               }}>
                 <textarea
+                  className="estimate-memo"
                   value={memo}
                   onChange={e => setMemo(e.target.value)}
-                  placeholder="아래와 같이 발주합니다"
+                  placeholder="아래와 같이 발주합니다 (부가세, 운임비 별도)"
                   style={{
                     width: "96%",
                     border: "none",
@@ -265,7 +266,8 @@ const PurchaseOrderForm = () => {
                     outline: "none",
                     fontStyle: memo ? "normal" : "italic",
                     opacity: memo ? 1 : 0.7,
-                    minHeight: "40px"
+                    minHeight: "3em",
+                    lineHeight: "1.5"
                   }}
                 />
               </td>
@@ -274,7 +276,7 @@ const PurchaseOrderForm = () => {
             </tr>
             <tr>
               <td class="label">소재지</td>
-              <td>경기도 광명시 원노온사로 39, 제1동</td>
+              <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
             </tr>
             <tr>
               <td class="label">TEL</td>
@@ -439,23 +441,41 @@ const PurchaseOrderForm = () => {
             <td>삼미앵글랙산업</td>
           </tr>
           <tr>
-            <td colSpan={2} rowSpan={4} style={{
-              textAlign: 'center',
-              fontWeight: 'bold',
-              fontSize: 15,
-              verticalAlign: 'middle',
-              padding: '18px 0',
-              background: '#f8f9fa',
-              border: '1px solid #ddd'
+            <td colSpan={2} rowSpan={3} style={{
+              textAlign: "center",
+              fontWeight: "bold",
+              verticalAlign: "middle",
+              padding: "16px 0",
+              background: "#f8f9fa"
             }}>
-              아래와 같이 발주합니다 (부가세, 운임비 별도)
+              <textarea
+                className="estimate-memo"
+                value={memo}
+                onChange={e => setMemo(e.target.value)}
+                placeholder="아래와 같이 발주합니다 (부가세, 운임비 별도)"
+                style={{
+                  width: "96%",
+                  border: "none",
+                  background: "#f8f9fa",
+                  color: memo ? "#333" : "#999",
+                  fontWeight: "bold",
+                  fontSize: "16px",
+                  textAlign: "center",
+                  resize: "none",
+                  outline: "none",
+                  fontStyle: memo ? "normal" : "italic",
+                  opacity: memo ? 1 : 0.7,
+                  minHeight: "3em",
+                  lineHeight: "1.5"
+                }}
+              />
             </td>
             <td className="label">대표자</td>
             <td>박이삭</td>
           </tr>
           <tr>
             <td className="label">소재지</td>
-            <td>경기도 광명시 원노온사로 39, 제1동</td>
+            <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
           </tr>
           <tr>
             <td className="label">TEL</td>
