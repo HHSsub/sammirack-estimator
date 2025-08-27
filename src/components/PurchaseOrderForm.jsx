@@ -296,14 +296,12 @@ const PurchaseOrderForm = () => {
             <tr>
               <td class="label">TEL</td>
               <td>(02)2611-4597</td>
-            </tr>
-            <tr>
               <td class="label">FAX</td>
               <td>(02)2611-4595</td>
             </tr>
             <tr>
               <td class="label">홈페이지</td>
-              <td>http://www.ssmake.com</td>
+              <td colspan="3">http://www.ssmake.com</td>
             </tr>
           </tbody>
         </table>
@@ -507,16 +505,14 @@ const PurchaseOrderForm = () => {
             <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
           </tr>
           <tr>
-            <td className="label">TEL</td>
+            <td class="label">TEL</td>
             <td>(02)2611-4597</td>
-          </tr>
-          <tr>
-            <td className="label">FAX</td>
+            <td class="label">FAX</td>
             <td>(02)2611-4595</td>
           </tr>
           <tr>
             <td className="label">홈페이지</td>
-            <td>http://www.ssmake.com</td>
+            <td colspan="3">http://www.ssmake.com</td>
           </tr>
         </tbody>
       </table>
