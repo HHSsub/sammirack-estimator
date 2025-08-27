@@ -189,8 +189,32 @@ const EstimateForm = () => {
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
-              <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
-                아래와 같이 견적합니다 (부가세, 운임비 별도)
+              <td colSpan="2" rowSpan="3" style={{
+                textAlign: "center",
+                fontWeight: "bold",
+                verticalAlign: "middle",
+                padding: "16px 0",
+                background: "#f8f9fa"
+              }}>
+                <textarea
+                  value={memo}
+                  onChange={e => setMemo(e.target.value)}
+                  placeholder="아래와 같이 견적합니다"
+                  style={{
+                    width: "96%",
+                    border: "none",
+                    background: "#f8f9fa",
+                    color: memo ? "#333" : "#999",
+                    fontWeight: "bold",
+                    fontSize: "16px",
+                    textAlign: "center",
+                    resize: "none",
+                    outline: "none",
+                    fontStyle: memo ? "normal" : "italic",
+                    opacity: memo ? 1 : 0.7,
+                    minHeight: "40px"
+                  }}
+                />
               </td>
               <td class="label">대표자</td>
               <td>박이삭</td>
