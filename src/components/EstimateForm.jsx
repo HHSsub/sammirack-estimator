@@ -220,7 +220,21 @@ const EstimateForm = () => {
                 />
               </td>
               <td class="label">대표자</td>
-              <td>박이삭</td>
+              <td style={{ position: 'relative' }}>
+                박이삭
+                <img
+                  src="/images/도장.png"
+                  alt="도장"
+                  style={{
+                    position: "absolute",
+                    top: "-10px",
+                    right: "-35px",
+                    width: "40px",
+                    height: "40px",
+                    opacity: 0.8
+                  }}
+                />
+              </td>
             </tr>
             <tr>
               <td class="label">소재지</td>
@@ -383,7 +397,21 @@ const EstimateForm = () => {
               />
             </td>
             <td className="label">대표자</td>
-            <td>박이삭</td>
+            <td style={{ position: 'relative' }}>
+              박이삭
+              <img
+                src="/images/도장.png"
+                alt="도장"
+                style={{
+                  position: "absolute",
+                  top: "-10px",
+                  right: "-35px",
+                  width: "40px",
+                  height: "40px",
+                  opacity: 0.8
+                }}
+              />
+            </td>
           </tr>
           <tr>
             <td className="label">소재지</td>
