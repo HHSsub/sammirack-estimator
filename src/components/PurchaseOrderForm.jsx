@@ -196,209 +196,7 @@ const PurchaseOrderForm = () => {
 
   // 인쇄하기
   const handlePrint = () => {
-    // 현재 페이지에서 직접 인쇄하는 방식으로 변경
-    const printWindow = window.open('', '_blank');
-    const printData = formData;
-    
-    // 인쇄용 HTML 생성
-    const printHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>발주서</title>
-        <style>
-          @media print {
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-            .print-header { text-align: center; margin-bottom: 30px; }
-            .print-header h1 { font-size: 24px; margin: 0; }
-            .info-table, .order-table, .material-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .info-table td, .order-table th, .order-table td, .material-table th, .material-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-            .order-table th, .material-table th { background-color: #f0f0f0; text-align: center; }
-            .right { text-align: right; }
-            .label { background-color: #f8f9fa; font-weight: bold; }
-            .section-title { margin-top: 30px; margin-bottom: 10px; font-size: 18px; font-weight: bold; }
-            .notes-section { margin-top: 20px; }
-            .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="print-header">
-          <h1>발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-          <div>거래번호: ${printData.orderNumber}</div>
-        </div>
-        
-        <table class="info-table">
-          <tbody>
-            <tr>
-              <td class="label">거래일자</td>
-              <td>${printData.date}</td>
-              <td class="label">거래번호</td>
-              <td>${printData.orderNumber}</td>
-            </tr>
-            <tr>
-              <td class="label">상호명</td>
-              <td>${printData.companyName}</td>
-              <td class="label">상호</td>
-              <td>삼미앵글랙산업</td>
-            </tr>
-            <tr>
-              <td colSpan={2} style={{
-                textAlign: "center",
-                fontWeight: "bold",
-                verticalAlign: "middle",
-                padding: "16px 0",
-                background: "#f8f9fa"
-              }}>
-                <textarea
-                  className="estimate-memo"
-                  value={memo}
-                  onChange={e => setMemo(e.target.value)}
-                  placeholder="아래와 같이 발주합니다 (부가세, 운임비 별도)"
-                  style={{
-                    width: "96%",
-                    border: "none",
-                    background: "#f8f9fa",
-                    color: memo ? "#333" : "#999",
-                    fontWeight: "bold",
-                    fontSize: "16px",
-                    textAlign: "center",
-                    resize: "none",
-                    outline: "none",
-                    fontStyle: memo ? "normal" : "italic",
-                    opacity: memo ? 1 : 0.7,
-                    minHeight: "3em",
-                    lineHeight: "1.5"
-                  }}
-                />
-              </td>
-              <td class="label">대표자</td>
-              <td style={{ position: 'relative' }}>
-                박이삭
-                <img
-                  src="/public/images/도장.png"
-                  alt="도장"
-                  style={{
-                    position: "absolute",
-                    top: "-10px",
-                    right: "-35px",
-                    width: "40px",
-                    height: "40px",
-                    opacity: 0.8
-                  }}
-                />
-              </td>
-            </tr>
-            <tr>
-              <td class="label">소재지</td>
-              <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
-              <td class="label">홈페이지</td>
-              <td>http://www.ssmake.com</td>
-            </tr>
-            <tr>
-              <td class="label">TEL</td>
-              <td>(02)2611-4597</td>
-              <td class="label">FAX</td>
-              <td>(02)2611-4595</td>
-            </tr>
-          </tbody>
-        </table>
-        
-        <h3 class="section-title">발주 명세</h3>
-        <table class="order-table">
-          <thead>
-            <tr>
-              <th>NO</th>
-              <th>품명</th>
-              <th>규격</th>
-              <th>단위</th>
-              <th>수량</th>
-              <th>단가</th>
-              <th>공급가</th>
-              <th>비고</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${printData.items.map((item, index) => `
-              <tr>
-                <td>${index + 1}</td>
-                <td>${item.name}</td>
-                <td>${item.specification}</td>
-                <td>${item.unit}</td>
-                <td>${item.quantity}</td>
-                <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
-                <td class="right">${parseInt(item.totalPrice || 0).toLocaleString()}</td>
-                <td>${item.note}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <h3 class="section-title">원자재 명세서</h3>
-        <table class="material-table">
-          <thead>
-            <tr>
-              <th>NO</th>
-              <th>부품명</th>
-              <th>규격/설명</th>
-              <th>수량</th>
-              <th>단가</th>
-              <th>금액</th>
-              <th>비고</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${printData.materials.map((material, index) => `
-              <tr>
-                <td>${index + 1}</td>
-                <td>${material.name}</td>
-                <td>${material.specification}</td>
-                <td>${material.quantity}</td>
-                <td>${parseInt(material.unitPrice || 0).toLocaleString()}</td>
-                <td class="right">${parseInt(material.totalPrice || 0).toLocaleString()}</td>
-                <td>${material.note}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        
-        <table class="total-table">
-          <tbody>
-            <tr>
-              <td class="label">소계</td>
-              <td class="right">${printData.subtotal.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td class="label">부가세</td>
-              <td class="right">${printData.tax.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td class="label"><strong>합계</strong></td>
-              <td class="right"><strong>${printData.totalAmount.toLocaleString()}</strong></td>
-            </tr>
-          </tbody>
-        </table>
-        
-        ${printData.notes ? `
-          <div class="notes-section">
-            <strong>비고:</strong><br>
-            ${printData.notes.replace(/\n/g, '<br>')}
-          </div>
-        ` : ''}
-        
-        <div class="form-company">(주)삼미앵글랙산업</div>
-      </body>
-      </html>
-    `;
-    
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
-    
-    // 인쇄 실행
-    printWindow.onload = function() {
-      printWindow.print();
-      printWindow.close();
-    };
+    window.print();
   };
 
   return (
@@ -588,7 +386,7 @@ const PurchaseOrderForm = () => {
                 <button
                   type="button"
                   onClick={() => removeItem(index)}
-                  className="remove-btn"
+                  className="remove-btn no-print"
                   disabled={formData.items.length === 1}
                 >
                   삭제
@@ -600,8 +398,8 @@ const PurchaseOrderForm = () => {
       </table>
 
       {/* 아이템 추가 버튼 */}
-      <div className="item-controls">
-        <button type="button" onClick={addItem} className="add-item-btn">
+      <div className="item-controls no-print">
+        <button type="button" onClick={addItem} className="add-item-btn no-print">
           + 발주 품목 추가
         </button>
       </div>
@@ -672,7 +470,7 @@ const PurchaseOrderForm = () => {
                 <button
                   type="button"
                   onClick={() => removeMaterial(index)}
-                  className="remove-btn"
+                  className="remove-btn no-print"
                   disabled={formData.materials.length === 1}
                 >
                   삭제
@@ -684,8 +482,8 @@ const PurchaseOrderForm = () => {
       </table>
 
       {/* 원자재 추가 버튼 */}
-      <div className="item-controls">
-        <button type="button" onClick={addMaterial} className="add-material-btn">
+      <div className="item-controls no-print">
+        <button type="button" onClick={addMaterial} className="add-material-btn no-print">
           + 원자재 추가
         </button>
       </div>
@@ -720,11 +518,11 @@ const PurchaseOrderForm = () => {
       </div>
 
       {/* 하단 버튼들 */}
-      <div className="form-actions">
-        <button type="button" onClick={handleSave} className="save-btn">
+      <div className="form-actions no-print">
+        <button type="button" onClick={handleSave} className="save-btn no-print">
           저장하기
         </button>
-        <button type="button" onClick={handlePrint} className="print-btn">
+        <button type="button" onClick={handlePrint} className="print-btn no-print">
           인쇄하기
         </button>
       </div>
