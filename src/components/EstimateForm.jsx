@@ -239,16 +239,14 @@ const EstimateForm = () => {
             <tr>
               <td class="label">소재지</td>
               <td>경기도 광명시 원노온사로 39, 제1동</td>
+              <td class="label">홈페이지</td>
+              <td>http://www.ssmake.com</td>
             </tr>
             <tr>
               <td class="label">TEL</td>
               <td>(02)2611-4597</td>
               <td class="label">FAX</td>
               <td>(02)2611-4595</td>
-            </tr>
-            <tr>
-              <td class="label">홈페이지</td>
-              <td>http://www.ssmake.com</td>
             </tr>
           </tbody>
         </table>
@@ -414,16 +412,14 @@ const EstimateForm = () => {
           <tr>
             <td className="label">소재지</td>
             <td>경기도 광명시 원노온사로 39, 제1동</td>
+            <td className="label">홈페이지</td>
+            <td>http://www.ssmake.com</td>
           </tr>
           <tr>
             <td class="label">TEL</td>
             <td>(02)2611-4597</td>
             <td class="label">FAX</td>
             <td>(02)2611-4595</td>
-          </tr>
-          <tr>
-            <td className="label">홈페이지</td>
-            <td>http://www.ssmake.com</td>
           </tr>
         </tbody>
       </table>
