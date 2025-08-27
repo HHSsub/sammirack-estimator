@@ -98,6 +98,7 @@
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 4px; /* 입력박스가 셀을 넘지 않도록 */
+  font-size: 13px;
 }
 
 .info-table input[type="date"] {
