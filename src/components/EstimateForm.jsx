@@ -190,7 +190,7 @@ const EstimateForm = () => {
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
-              <td colSpan={2} rowSpan={1} style={{
+              <td colSpan={4} rowSpan={1} style={{
                 textAlign: "center",
                 fontWeight: "bold",
                 verticalAlign: "middle",
@@ -247,8 +247,6 @@ const EstimateForm = () => {
             <tr>
               <td class="label">FAX</td>
               <td>(02)2611-4595</td>
-            </tr>
-            <tr>
               <td class="label">홈페이지</td>
               <td>http://www.ssmake.com</td>
             </tr>
@@ -367,7 +365,7 @@ const EstimateForm = () => {
             <td>삼미앵글랙산업</td>
           </tr>
           <tr>
-            <td colSpan={2} rowSpan={1} style={{
+            <td colSpan={4} rowSpan={1} style={{
               textAlign: "center",
               fontWeight: "bold",
               verticalAlign: "middle",
@@ -424,8 +422,6 @@ const EstimateForm = () => {
           <tr>
             <td className="label">FAX</td>
             <td>(02)2611-4595</td>
-          </tr>
-          <tr>
             <td className="label">홈페이지</td>
             <td>http://www.ssmake.com</td>
           </tr>
