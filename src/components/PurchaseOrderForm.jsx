@@ -243,7 +243,7 @@ const PurchaseOrderForm = () => {
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
-              <td colSpan={2} rowSpan={3} style={{
+              <td colSpan={2} rowSpan={1} style={{
                 textAlign: "center",
                 fontWeight: "bold",
                 verticalAlign: "middle",
@@ -442,7 +442,7 @@ const PurchaseOrderForm = () => {
             <td>삼미앵글랙산업</td>
           </tr>
           <tr>
-            <td colSpan={2} rowSpan={3} style={{
+            <td colSpan={2} rowSpan={1} style={{
               textAlign: "center",
               fontWeight: "bold",
               verticalAlign: "middle",
