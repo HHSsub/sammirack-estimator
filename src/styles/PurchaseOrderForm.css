@@ -405,3 +405,23 @@ textarea:focus {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   font-style: italic;
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .purchase-order-form-container, .purchase-order-form-container * {
+    visibility: visible !important;
+  }
+  .purchase-order-form-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    background: #fff !important;
+    z-index: 9999 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
