@@ -243,7 +243,7 @@ const PurchaseOrderForm = () => {
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
-              <td colSpan={4} style={{
+              <td colSpan={2} style={{
                 textAlign: "center",
                 fontWeight: "bold",
                 verticalAlign: "middle",
@@ -276,7 +276,7 @@ const PurchaseOrderForm = () => {
               <td style={{ position: 'relative' }}>
                 박이삭
                 <img
-                  src="/images/도장.png"
+                  src="/public/images/도장.png"
                   alt="도장"
                   style={{
                     position: "absolute",
@@ -454,7 +454,7 @@ const PurchaseOrderForm = () => {
             <td>삼미앵글랙산업</td>
           </tr>
           <tr>
-            <td colSpan={4} style={{
+            <td colSpan={2} style={{
               textAlign: "center",
               fontWeight: "bold",
               verticalAlign: "middle",
@@ -487,7 +487,7 @@ const PurchaseOrderForm = () => {
             <td style={{ position: 'relative' }}>
               박이삭
               <img
-                src="/images/도장.png"
+                src="/public/images/도장.png"
                 alt="도장"
                 style={{
                   position: "absolute",
