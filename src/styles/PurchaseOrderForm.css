@@ -9,6 +9,16 @@
   min-height: 100vh;
 }
 
+.estimate-memo {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none;
+  padding: 8px;
+  font-size: 16px;
+}
+
 /* 폼 헤더 */
 .form-header {
   display: flex;
