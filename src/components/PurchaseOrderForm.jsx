@@ -7,7 +7,7 @@ const PurchaseOrderForm = () => {
   const location = useLocation();
   const navigate = useNavigate(); // navigate 변수 추가
   const isEditMode = !!id;
-  const [memo, setMemo] = useState('아래와 같이 견적합니다 (부가세, 운임비 별도)');
+  const [memo, setMemo] = useState('');
   
   // 장바구니에서 전달받은 데이터
   const cartData = location.state || {};
