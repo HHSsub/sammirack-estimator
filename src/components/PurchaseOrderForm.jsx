@@ -300,6 +300,8 @@ const PurchaseOrderForm = () => {
             <tr>
               <td class="label">FAX</td>
               <td>(02)2611-4595</td>
+            </tr>
+            <tr>
               <td class="label">홈페이지</td>
               <td>http://www.ssmake.com</td>
             </tr>
@@ -511,6 +513,8 @@ const PurchaseOrderForm = () => {
           <tr>
             <td className="label">FAX</td>
             <td>(02)2611-4595</td>
+          </tr>
+          <tr>
             <td className="label">홈페이지</td>
             <td>http://www.ssmake.com</td>
           </tr>
