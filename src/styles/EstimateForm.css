@@ -1,142 +1,313 @@
-/* EstimateForm Styles */
-.estimate-form {
-  max-width: 800px;
+/* EstimateForm.css - 견적서 작성 폼 스타일 */
+
+.estimate-form-container {
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: 'Malgun Gothic', Arial, sans-serif;
+  background: white;
+  min-height: 100vh;
 }
 
-.estimate-form h2 {
-  margin-top: 0;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
-
-.form-section {
+/* 폼 헤더 */
+.form-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #333;
 }
 
-.form-group {
-  flex: 1;
-  min-width: 250px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 5px;
+.form-header h1 {
+  font-size: 28px;
   font-weight: bold;
-  color: #555;
+  margin: 0;
+  text-align: center;
+  flex: 1;
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.form-group textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.product-summary {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border: 1px solid #eee;
-  border-radius: 4px;
-}
-
-.product-summary h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 16px;
-  color: #333;
-}
-
-.quantity-section {
-  margin: 15px 0;
+.document-number-field {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
-.quantity-section label {
-  margin-right: 10px;
+.document-number-field label {
   font-weight: bold;
+  font-size: 14px;
 }
 
-.quantity-section input {
-  width: 80px;
+.document-number-field input {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
+  width: 150px;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+/* 테이블 공통 스타일 */
+.form-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 14px;
 }
 
-.form-actions button {
-  padding: 10px 15px;
-  background-color: #4a90e2;
+.form-table th,
+.form-table td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.form-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+.form-table .label {
+  background-color: #f0f0f0;
+  font-weight: bold;
+  text-align: center;
+  width: 120px;
+}
+
+.form-table .left {
+  text-align: left;
+}
+
+.form-table .right {
+  text-align: right;
+}
+
+/* 상단 정보 테이블 */
+.info-table {
+  margin-bottom: 30px;
+}
+
+.info-table td {
+  padding: 12px 8px;
+}
+
+.info-table input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.info-table input[type="date"] {
+  width: auto;
+  min-width: 120px;
+}
+
+/* 견적 명세 테이블 */
+.quote-table {
+  margin-bottom: 20px;
+}
+
+.quote-table th {
+  padding: 12px 8px;
+  background-color: #e9ecef;
+}
+
+.quote-table th:nth-child(1) { width: 50px; }   /* NO */
+.quote-table th:nth-child(2) { width: 200px; }  /* 품명 */
+.quote-table th:nth-child(3) { width: 120px; }  /* 규격 */
+.quote-table th:nth-child(4) { width: 60px; }   /* 단위 */
+.quote-table th:nth-child(5) { width: 80px; }   /* 수량 */
+.quote-table th:nth-child(6) { width: 100px; }  /* 단가 */
+.quote-table th:nth-child(7) { width: 120px; }  /* 공급가 */
+.quote-table th:nth-child(8) { width: 100px; }  /* 비고 */
+.quote-table th:nth-child(9) { width: 80px; }   /* 작업 */
+
+.quote-table input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.quote-table input[type="number"] {
+  text-align: right;
+}
+
+.quote-table .remove-btn {
+  background-color: #dc3545;
   color: white;
   border: none;
-  border-radius: 4px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
 }
 
-.form-actions button:hover {
-  background-color: #357abd;
+.quote-table .remove-btn:hover {
+  background-color: #c82333;
 }
 
-.form-actions button:disabled {
-  background-color: #cccccc;
+.quote-table .remove-btn:disabled {
+  background-color: #6c757d;
   cursor: not-allowed;
 }
 
-@media print {
-  .estimate-form {
-    box-shadow: none;
-    padding: 0;
-  }
-  
-  .form-actions {
-    display: none;
-  }
-  
-  .product-summary, 
-  .bom-display {
-    break-inside: avoid;
-  }
+/* 아이템 컨트롤 */
+.item-controls {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
-@media (max-width: 600px) {
-  .form-group {
-    min-width: 100%;
+.add-item-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-item-btn:hover {
+  background-color: #218838;
+}
+
+/* 합계 테이블 */
+.total-table {
+  width: 300px;
+  margin-left: auto;
+  margin-bottom: 30px;
+}
+
+.total-table .label {
+  width: 100px;
+  background-color: #f8f9fa;
+}
+
+.total-table td:last-child {
+  text-align: right;
+  font-weight: bold;
+  padding-right: 15px;
+}
+
+/* 비고 섹션 */
+.notes-section {
+  margin-bottom: 30px;
+}
+
+.notes-section label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.notes-section textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+/* 폼 액션 버튼들 */
+.form-actions {
+  text-align: center;
+  margin: 40px 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.save-btn,
+.print-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.save-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #0056b3;
+}
+
+.print-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.print-btn:hover {
+  background-color: #545b62;
+}
+
+/* 하단 회사명 */
+.form-company {
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .estimate-form-container {
+    padding: 10px;
+  }
+  
+  .form-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .form-table {
+    font-size: 12px;
+  }
+  
+  .quote-table th,
+  .quote-table td {
+    padding: 4px;
+  }
+  
+  .quote-table input {
+    padding: 4px 6px;
+    font-size: 12px;
   }
   
   .form-actions {
     flex-direction: column;
+    gap: 10px;
   }
-  
-  .form-actions button {
-    width: 100%;
-  }
+}
+
+/* 입력 필드 포커스 스타일 */
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 계산된 값 스타일 */
+.quote-table .right {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #495057;
 }
