@@ -190,7 +190,7 @@ const EstimateForm = () => {
               <td>삼미앵글랙산업</td>
             </tr>
             <tr>
-              <td colSpan={4} style={{
+              <td colSpan={2} style={{
                 textAlign: "center",
                 fontWeight: "bold",
                 verticalAlign: "middle",
@@ -365,7 +365,7 @@ const EstimateForm = () => {
             <td>삼미앵글랙산업</td>
           </tr>
           <tr>
-            <td colSpan={4} style={{
+            <td colSpan={2} style={{
               textAlign: "center",
               fontWeight: "bold",
               verticalAlign: "middle",
