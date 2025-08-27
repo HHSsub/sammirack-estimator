@@ -223,7 +223,7 @@ const EstimateForm = () => {
               <td style={{ position: 'relative' }}>
                 박이삭
                 <img
-                  src="/images/도장.png"
+                  src="/public/images/도장.png"
                   alt="도장"
                   style={{
                     position: "absolute",
@@ -398,7 +398,7 @@ const EstimateForm = () => {
             <td style={{ position: 'relative' }}>
               박이삭
               <img
-                src="/images/도장.png"
+                src="/public/images/도장.png"
                 alt="도장"
                 style={{
                   position: "absolute",
