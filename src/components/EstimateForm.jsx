@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import '../styles/EstimateForm.css'; // 새로운 경로로 import
 
@@ -7,6 +7,7 @@ const EstimateForm = () => {
   const location = useLocation();
   const navigate = useNavigate(); // useNavigate 훅 추가
   const isEditMode = !!id;
+  const documentNumberInputRef = useRef(null);
   const [memo, setMemo] = useState('');
   
   // 장바구니에서 전달받은 데이터
@@ -144,6 +145,15 @@ const EstimateForm = () => {
 
   // 인쇄하기
   const handlePrint = () => {
+    if (!formData.documentNumber || String(formData.documentNumber).trim() === '') {
+      if (documentNumberInputRef.current) {
+        documentNumberInputRef.current.classList.add('invalid');
+        documentNumberInputRef.current.focus();
+        documentNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      alert('문서번호(거래번호)를 입력해주세요.');
+      return;
+    }
     window.print();
   };
 
@@ -156,7 +166,13 @@ const EstimateForm = () => {
           <input
             type="text"
             value={formData.documentNumber}
-            onChange={(e) => updateFormData('documentNumber', e.target.value)}
+            ref={documentNumberInputRef}
+            onChange={(e) => {
+              if (documentNumberInputRef.current) {
+                documentNumberInputRef.current.classList.remove('invalid');
+              }
+              updateFormData('documentNumber', e.target.value);
+            }}
             placeholder="휴대폰번호 입력"
           />
         </div>

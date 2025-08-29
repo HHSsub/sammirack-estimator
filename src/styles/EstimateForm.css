@@ -342,4 +342,8 @@ textarea:focus {
   .no-print {
     display: none !important;
   }
+
+  /* 인쇄 시 입력 박스 테두리 제거 */
+  input, textarea, select { border: none !important; box-shadow: none !important; outline: none !important; background: transparent !important; }
+  .quote-table input { border: none !important; background: transparent !important; }
 }

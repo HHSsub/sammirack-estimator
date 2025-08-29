@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import '../styles/PurchaseOrderForm.css';
 
@@ -7,6 +7,7 @@ const PurchaseOrderForm = () => {
   const location = useLocation();
   const navigate = useNavigate(); // navigate 변수 추가
   const isEditMode = !!id;
+  const orderNumberInputRef = useRef(null);
   const [memo, setMemo] = useState('');
   
   // 장바구니에서 전달받은 데이터
@@ -196,6 +197,15 @@ const PurchaseOrderForm = () => {
 
   // 인쇄하기
   const handlePrint = () => {
+    if (!formData.orderNumber || String(formData.orderNumber).trim() === '') {
+      if (orderNumberInputRef.current) {
+        orderNumberInputRef.current.classList.add('invalid');
+        orderNumberInputRef.current.focus();
+        orderNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      alert('거래번호를 입력해주세요.');
+      return;
+    }
     window.print();
   };
 
@@ -208,7 +218,13 @@ const PurchaseOrderForm = () => {
           <input
             type="text"
             value={formData.orderNumber}
-            onChange={(e) => updateFormData('orderNumber', e.target.value)}
+            ref={orderNumberInputRef}
+            onChange={(e) => {
+              if (orderNumberInputRef.current) {
+                orderNumberInputRef.current.classList.remove('invalid');
+              }
+              updateFormData('orderNumber', e.target.value);
+            }}
             placeholder="거래번호 입력"
           />
         </div>
@@ -227,14 +243,7 @@ const PurchaseOrderForm = () => {
               />
             </td>
             <td className="label">거래번호</td>
-            <td>
-              <input
-                type="text"
-                value={formData.orderNumber}
-                onChange={(e) => updateFormData('orderNumber', e.target.value)}
-                placeholder="거래번호"
-              />
-            </td>
+            <td>{formData.orderNumber}</td>
           </tr>
           <tr>
             <td className="label">상호명</td>
