@@ -8,9 +8,8 @@ const GyeonjukPrint = ({ data }) => {
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
 
-      {/* 사이트명 등 불필요 항목 제거, 제목과 도장만 유지 */}
+      {/* 제목 */}
       <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-      <img className="stamp" src={stampImage} alt="도장" />
 
       {/* 상단 정보 - 좌우 2분할 */}
       <table className="print-table info-table">
@@ -41,7 +40,10 @@ const GyeonjukPrint = ({ data }) => {
               아래와 같이 견적합니다 (부가세, 운임비 별도)
             </td>
             <td className="label">대표자</td>
-            <td>박이삭</td>
+            <td>
+              <span>박이삭</span>
+              <img src={stampImage} alt="도장" style={{ width: '22px', height: '22px', marginLeft: '6px', verticalAlign: 'middle', opacity: 0.8 }} />
+            </td>
           </tr>
           <tr>
             <td className="label">소재지</td>
@@ -61,6 +63,9 @@ const GyeonjukPrint = ({ data }) => {
           </tr>
         </tbody>
       </table>
+
+      {/* 구분 바 */}
+      <div className="section-divider">견적명세</div>
 
       {/* 견적 명세 */}
       <table className="print-table quote-table">

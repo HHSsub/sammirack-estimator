@@ -52,7 +52,6 @@ const BaljuPrint = ({ data }) => {
       </div>
       <div className="print-header">
         <h1>발&nbsp;주&nbsp;서</h1>
-        <img className="stamp" src={stampImage} alt="도장" />
         <table className="print-table info-table">
           <tbody>
             <tr>
@@ -81,7 +80,10 @@ const BaljuPrint = ({ data }) => {
                 아래와 같이 발주합니다 (부가세, 운임비 별도)
               </td>
               <td className="label">대표자</td>
-              <td>박이삭</td>
+              <td>
+                <span>박이삭</span>
+                <img src={stampImage} alt="도장" style={{ width: '20px', height: '20px', marginLeft: '6px', verticalAlign: 'middle', opacity: 0.8 }} />
+              </td>
             </tr>
             <tr>
               <td className="label">소재지</td>
@@ -101,7 +103,7 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
-        <h3 style={{ marginTop: '12px', fontWeight: 'bold' }}>발주 명세</h3>
+        <div className="section-divider">발주명세</div>
         <table className="print-table order-table">
           <thead>
             <tr>

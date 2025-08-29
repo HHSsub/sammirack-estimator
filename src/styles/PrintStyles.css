@@ -79,23 +79,22 @@
     color: #000 !important;
   }
 
-  /* 견적서 도장 - 박이삭 대표자명 오른쪽에 작게 위치 */
+  /* 견적서 도장 - 인라인 배치 */
   .gyeonjuk-print .stamp {
-    position: absolute !important;
-    top: 60px !important; /* 대표자 행 높이에 맞춤 */
-    right: 120px !important; /* 박이삭 텍스트 바로 오른쪽 */
-    width: 30px !important; /* 크기 축소 */
-    height: 30px !important; /* 크기 축소 */
-    opacity: 0.7 !important;
-    z-index: 10 !important;
+    display: inline-block !important;
+    position: static !important;
+    width: 22px !important;
+    height: 22px !important;
+    margin-left: 6px !important;
+    opacity: 0.8 !important;
   }
 
   /* 견적서 테이블 공통 스타일 */
   .gyeonjuk-print .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 8px !important;
-    font-size: 9px !important;
+    margin-bottom: 6px !important;
+    font-size: 8px !important;
     table-layout: fixed !important;
     border: 1px solid #000 !important;
   }
@@ -103,7 +102,7 @@
   .gyeonjuk-print .print-table td,
   .gyeonjuk-print .print-table th {
     border: 1px solid #000 !important;
-    padding: 3px 4px !important;
+    padding: 2px 3px !important;
     text-align: center !important;
     vertical-align: middle !important;
     word-wrap: break-word !important;
@@ -118,8 +117,8 @@
   }
 
   .gyeonjuk-print .info-table td {
-    height: 20px !important;
-    font-size: 9px !important;
+    height: 16px !important;
+    font-size: 8px !important;
   }
 
   .gyeonjuk-print .info-table .label {
@@ -132,13 +131,13 @@
   .gyeonjuk-print .quote-table th {
     background-color: #e0e0e0 !important;
     font-weight: bold !important;
-    height: 25px !important;
-    font-size: 9px !important;
+    height: 18px !important;
+    font-size: 8px !important;
   }
 
   .gyeonjuk-print .quote-table td {
-    height: 18px !important;
-    font-size: 8px !important;
+    height: 14px !important;
+    font-size: 7px !important;
   }
 
   .gyeonjuk-print .quote-table th:nth-child(1), /* NO */
@@ -185,7 +184,7 @@
   .gyeonjuk-print .print-table:last-of-type {
     width: 40% !important;
     margin-left: auto !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 6px !important;
   }
 
   .gyeonjuk-print .print-table:last-of-type .label {
@@ -217,7 +216,7 @@
 
   /* ===== 발주서 스타일 ===== */
   .balju-print {
-    font-size: 8px !important;
+    font-size: 7px !important;
     line-height: 1.0 !important;
     position: relative !important;
   }
@@ -250,23 +249,22 @@
     color: #000 !important;
   }
 
-  /* 발주서 도장 - 박이삭 대표자명 오른쪽에 작게 위치 */
+  /* 발주서 도장 - 인라인 배치 */
   .balju-print .stamp {
-    position: absolute !important;
-    top: 50px !important; /* 대표자 행 높이에 맞춤 */
-    right: 120px !important; /* 박이삭 텍스트 바로 오른쪽 */
-    width: 30px !important; /* 크기 축소 */
-    height: 30px !important; /* 크기 축소 */
-    opacity: 0.7 !important;
-    z-index: 10 !important;
+    display: inline-block !important;
+    position: static !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin-left: 6px !important;
+    opacity: 0.8 !important;
   }
   
   /* 발주서 테이블 공통 스타일 */
   .balju-print .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 3px !important;
-    font-size: 7px !important;
+    margin-bottom: 2px !important;
+    font-size: 6.5px !important;
     table-layout: fixed !important;
     border: 1px solid #000 !important;
   }
@@ -274,12 +272,12 @@
   .balju-print .print-table td,
   .balju-print .print-table th {
     border: 1px solid #000 !important;
-    padding: 1px 2px !important;
+    padding: 1px 1.5px !important;
     text-align: center !important;
     vertical-align: middle !important;
     word-wrap: break-word !important;
     overflow: hidden !important;
-    height: 12px !important;
+    height: 10px !important;
     color: #000 !important;
     background: white !important;
   }
@@ -300,31 +298,57 @@
   .balju-print .order-table th {
     background-color: #e0e0e0 !important;
     font-weight: bold !important;
-    font-size: 8px !important;
-    padding: 4.5px !important; /* 4px에서 4.5px로 증가 */
-    min-height: 17.5px !important; /* 17px에서 17.5px로 증가 */
+    font-size: 7px !important;
+    padding: 3px !important;
+    min-height: 14px !important;
   }
 
   .balju-print .order-table td {
-    font-size: 8px !important;
-    padding: 4.5px !important; /* 4px에서 4.5px로 증가 */
-    min-height: 17.5px !important; /* 17px에서 17.5px로 증가 */
+    font-size: 7px !important;
+    padding: 3px !important;
+    min-height: 14px !important;
   }
 
   /* 발주서 원자재 테이블 */
   .balju-print .material-table th {
     background-color: #e0e0e0 !important;
     font-weight: bold !important;
-    line-height: 1.0 !important; /* 1.0로 */
-    font-size: 7px !important; /* 5px에서 7px로 */
-    min-height: 9.5px !important; /* 8px에서 9.5px로 */
+    line-height: 1.0 !important;
+    font-size: 6.5px !important;
+    min-height: 9px !important;
   }
 
   .balju-print .material-table td {
-    font-size: 7px !important;
-    line-height: 1.0 !important; /* 1.0에서 0.9로 축소 */
-    min-height: 9.5px !important; /* 10px에서 8px로 축소 */
+    font-size: 6.5px !important;
+    line-height: 1.0 !important;
+    min-height: 9px !important;
     padding: 0px 1px !important;
+  }
+
+  /* 섹션 구분 바 */
+  .section-divider {
+    display: block !important;
+    width: 100% !important;
+    background: #222 !important;
+    color: #fff !important;
+    text-align: left !important;
+    padding: 4px 6px !important;
+    font-size: 9px !important;
+    font-weight: bold !important;
+    margin: 6px 0 4px 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 폼 화면의 작업 컬럼 인쇄 숨김 */
+  .form-table th:last-child,
+  .form-table td:last-child {
+    display: none !important;
+  }
+
+  /* 인쇄 시 placeholder 감추기 */
+  input::placeholder, textarea::placeholder {
+    color: transparent !important;
   }
 
   /* 발주서 합계 테이블 */
