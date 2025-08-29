@@ -19,7 +19,7 @@ const PurchaseOrderForm = () => {
     orderNumber: '',
     companyName: '',
     items: [
-      { name: '', specification: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
+      { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
     materials: [
       { name: '', specification: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
@@ -48,7 +48,6 @@ const PurchaseOrderForm = () => {
       // cart 데이터를 items로 변환
       const cartItems = cart.map((item, index) => ({
         name: item.displayName || item.name || '',
-        specification: item.specification || '',
         unit: '개',
         quantity: item.quantity || 1,
         unitPrice: Math.round((item.price || 0) / (item.quantity || 1)),
@@ -78,7 +77,7 @@ const PurchaseOrderForm = () => {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { name: '', specification: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
     }));
   };
 
@@ -325,7 +324,6 @@ const PurchaseOrderForm = () => {
           <tr>
             <th>NO</th>
             <th>품명</th>
-            <th>규격</th>
             <th>단위</th>
             <th>수량</th>
             <th>단가</th>
@@ -344,14 +342,6 @@ const PurchaseOrderForm = () => {
                   value={item.name}
                   onChange={(e) => updateItem(index, 'name', e.target.value)}
                   placeholder="품명 입력"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={item.specification}
-                  onChange={(e) => updateItem(index, 'specification', e.target.value)}
-                  placeholder="규격"
                 />
               </td>
               <td>
@@ -418,7 +408,6 @@ const PurchaseOrderForm = () => {
           <tr>
             <th>NO</th>
             <th>부품명</th>
-            <th>규격/설명</th>
             <th>수량</th>
             <th>단가</th>
             <th>금액</th>
@@ -436,14 +425,6 @@ const PurchaseOrderForm = () => {
                   value={material.name}
                   onChange={(e) => updateMaterial(index, 'name', e.target.value)}
                   placeholder="부품명 입력"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={material.specification}
-                  onChange={(e) => updateMaterial(index, 'specification', e.target.value)}
-                  placeholder="규격/설명"
                 />
               </td>
               <td>
