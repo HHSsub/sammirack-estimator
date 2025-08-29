@@ -73,7 +73,6 @@ const GyeonjukPrint = ({ data }) => {
           <tr>
             <th>NO</th>
             <th>품명</th>
-            <th>규격</th>
             <th>단위</th>
             <th>수량</th>
             <th>단가</th>
