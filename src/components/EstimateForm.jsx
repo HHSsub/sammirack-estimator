@@ -244,8 +244,6 @@ const EstimateForm = () => {
                 src={`${import.meta.env.BASE_URL}images/도장.png`}
                 alt="도장"
                 style={{
-                  width: "22px",
-                  height: "22px",
                   marginLeft: "6px",
                   verticalAlign: "middle",
                   opacity: 0.85
