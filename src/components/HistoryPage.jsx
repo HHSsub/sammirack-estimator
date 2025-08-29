@@ -21,7 +21,7 @@ const HistoryPage = () => {
   // State for filters
   const [filters, setFilters] = useState({
     documentType: 'all', // 'all', 'estimate', 'order'
-    customerName: '',
+    documentNumber: '',
     dateFrom: '',
     dateTo: '',
     status: 'all', // 'all', 'pending', 'completed', 'cancelled'
@@ -89,11 +89,12 @@ const HistoryPage = () => {
       filtered = filtered.filter(item => item.type === filters.documentType);
     }
     
-    // Filter by customer name
-    if (filters.customerName) {
-      const searchTerm = filters.customerName.toLowerCase();
+    // Filter by document number
+    if (filters.documentNumber) {
+      const searchTerm = filters.documentNumber.toLowerCase();
       filtered = filtered.filter(item => 
-        item.customerName && item.customerName.toLowerCase().includes(searchTerm)
+        (item.estimateNumber && item.estimateNumber.toLowerCase().includes(searchTerm)) ||
+        (item.orderNumber && item.orderNumber.toLowerCase().includes(searchTerm))
       );
     }
     
@@ -140,7 +141,7 @@ const HistoryPage = () => {
   const resetFilters = () => {
     setFilters({
       documentType: 'all',
-      customerName: '',
+      documentNumber: '',
       dateFrom: '',
       dateTo: '',
       status: 'all'
@@ -829,13 +830,14 @@ const HistoryPage = () => {
               </div>
               
               <div className="filter-group">
-                <label>고객명:</label>
-                <input 
+                <label>문서번호:</label>
+                <input
                   type="text"
-                  name="customerName"
-                  value={filters.customerName}
+                  name="documentNumber"
+                  placeholder="문서번호 검색"
+                  value={filters.documentNumber}
                   onChange={handleFilterChange}
-                  placeholder="고객명 검색"
+                  className="filter-input"
                 />
               </div>
               
