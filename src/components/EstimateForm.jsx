@@ -19,7 +19,7 @@ const EstimateForm = () => {
     companyName: '',
     documentNumber: '',
     items: [
-      { name: '', specification: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
+      { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
     subtotal: 0,
     tax: 0,
@@ -44,7 +44,6 @@ const EstimateForm = () => {
     if (!isEditMode && cart.length > 0) {
       const cartItems = cart.map((item, index) => ({
         name: item.displayName || item.name || '',
-        specification: item.specification || '',
         unit: '개',
         quantity: item.quantity || 1,
         unitPrice: Math.round((item.price || 0) / (item.quantity || 1)),
@@ -63,7 +62,7 @@ const EstimateForm = () => {
   const addItem = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { name: '', specification: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
     }));
   };
 
