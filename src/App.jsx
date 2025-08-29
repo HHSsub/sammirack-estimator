@@ -95,11 +95,19 @@ const HomePage = () => {
   return (
     <div className="app-container">
       <h2>랙 제품 견적</h2>
-      <OptionSelector />
-
-      <div className="price-display">
-        <h3>현재 항목 예상 가격</h3>
-        <p className="price">{currentPrice.toLocaleString()}원</p>
+      
+      {/* 새로운 레이아웃: 옵션 셀렉터와 가격 정보를 좌우로 배치 */}
+      <div className="main-layout">
+        <div className="option-section">
+          <OptionSelector />
+        </div>
+        
+        <div className="price-section">
+          <div className="price-display">
+            <h3>현재 항목 예상 가격</h3>
+            <p className="price">{currentPrice.toLocaleString()}원</p>
+          </div>
+        </div>
       </div>
 
       <div className="action-buttons" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
@@ -110,9 +118,7 @@ const HomePage = () => {
 
       {canProceed && (
         <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <button onClick={() => setShowTotalBOM(!showTotalBOM)}>
-            {showTotalBOM ? '전체 BOM 숨기기' : '전체 BOM 보기'}
-          </button>
+          {/* "전체 BOM 숨기기" 버튼을 숨김 처리 */}
           <Link 
             to="/estimate/new"
             state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
