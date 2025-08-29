@@ -281,7 +281,6 @@ const HistoryPage = () => {
               <tr>
                 <th>NO</th>
                 <th>품명</th>
-                <th>규격</th>
                 <th>단위</th>
                 <th>수량</th>
                 <th>단가</th>
@@ -294,7 +293,6 @@ const HistoryPage = () => {
                 <tr>
                   <td>${index + 1}</td>
                   <td>${item.name || ''}</td>
-                  <td>${item.specification || ''}</td>
                   <td>${item.unit || ''}</td>
                   <td>${item.quantity || ''}</td>
                   <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
@@ -410,7 +408,6 @@ const HistoryPage = () => {
               <tr>
                 <th>NO</th>
                 <th>품명</th>
-                <th>규격</th>
                 <th>단위</th>
                 <th>수량</th>
                 <th>단가</th>
@@ -423,7 +420,6 @@ const HistoryPage = () => {
                 <tr>
                   <td>${index + 1}</td>
                   <td>${item.name || ''}</td>
-                  <td>${item.specification || ''}</td>
                   <td>${item.unit || ''}</td>
                   <td>${item.quantity || ''}</td>
                   <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
