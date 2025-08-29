@@ -272,7 +272,6 @@ const EstimateForm = () => {
           <tr>
             <th>NO</th>
             <th>품명</th>
-            <th>규격</th>
             <th>단위</th>
             <th>수량</th>
             <th>단가</th>
@@ -291,14 +290,6 @@ const EstimateForm = () => {
                   value={item.name}
                   onChange={(e) => updateItem(index, 'name', e.target.value)}
                   placeholder="품명 입력"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={item.specification}
-                  onChange={(e) => updateItem(index, 'specification', e.target.value)}
-                  placeholder="규격"
                 />
               </td>
               <td>
