@@ -281,18 +281,17 @@ const PurchaseOrderForm = () => {
               />
             </td>
             <td className="label">대표자</td>
-            <td style={{ position: 'relative' }}>
-              박이삭
+            <td>
+              <span>박이삭</span>
               <img
                 src={`${import.meta.env.BASE_URL}images/도장.png`}
                 alt="도장"
                 style={{
-                  position: "absolute",
-                  top: "-10px",
-                  right: "-35px",
-                  width: "40px",
-                  height: "40px",
-                  opacity: 0.8
+                  width: "20px",
+                  height: "20px",
+                  marginLeft: "6px",
+                  verticalAlign: "middle",
+                  opacity: 0.85
                 }}
               />
             </td>

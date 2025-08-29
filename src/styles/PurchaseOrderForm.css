@@ -450,6 +450,7 @@ textarea:focus {
   .order-table th:last-child, .order-table td:last-child,
   .material-table th:last-child, .material-table td:last-child { display: none !important; }
 
-  /* placeholder 숨김 */
+  /* placeholder 숨김 (메모 제외) */
   input::placeholder, textarea::placeholder { color: transparent !important; }
+  .estimate-memo::placeholder { color: rgba(0,0,0,0.55) !important; }
 }

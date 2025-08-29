@@ -342,10 +342,9 @@
 
   /* 폼 화면의 작업 컬럼 인쇄 숨김 -> 각 폼 CSS에서 테이블별로 지정함 */
 
-  /* 인쇄 시 placeholder 감추기 */
-  input::placeholder, textarea::placeholder {
-    color: transparent !important;
-  }
+  /* 인쇄 시 placeholder 감추기 (메모는 예외로 표시) */
+  input::placeholder, textarea::placeholder { color: transparent !important; }
+  .estimate-memo::placeholder { color: rgba(0,0,0,0.55) !important; }
 
   /* 발주서 합계 테이블 */
   .balju-print .total-table {
