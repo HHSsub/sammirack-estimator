@@ -161,7 +161,7 @@ const EstimateForm = () => {
       <div className="form-header">
         <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
         <div className="document-number-field">
-          <label>문서번호:</label>
+          <label>거래번호:</label>
           <input
             type="text"
             value={formData.documentNumber}
@@ -243,6 +243,8 @@ const EstimateForm = () => {
                 src={`${import.meta.env.BASE_URL}images/도장.png`}
                 alt="도장"
                 style={{
+                  width: '35px', 
+                  height: '35px',
                   marginLeft: "6px",
                   verticalAlign: "middle",
                   opacity: 0.85
