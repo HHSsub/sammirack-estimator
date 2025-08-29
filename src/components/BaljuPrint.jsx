@@ -24,7 +24,6 @@ const BaljuPrint = ({ data }) => {
     ...itemData,
     ...Array.from({ length: Math.max(0, 8 - itemData.length) }, () => ({
       name: '',
-      specification: '',
       unit: '',
       quantity: '',
       unitPrice: '',
@@ -109,7 +108,6 @@ const BaljuPrint = ({ data }) => {
             <tr>
               <th style={{ width: '8%' }}>NO</th>
               <th style={{ width: '25%' }}>품명</th>
-              <th style={{ width: '18%' }}>규격</th>
               <th style={{ width: '8%' }}>단위</th>
               <th style={{ width: '10%' }}>수량</th>
               <th style={{ width: '12%' }}>단가</th>
@@ -122,7 +120,6 @@ const BaljuPrint = ({ data }) => {
               <tr key={index}>
                 <td>{index + 1}</td>
                 <td className="left">{kgLabelFix(item.name || '')}</td>
-                <td>{kgLabelFix(item.specification || '')}</td>
                 <td>{kgLabelFix(item.unit || '')}</td>
                 <td className="right">{item.quantity || ''}</td>
                 <td className="right">{item.unitPrice ? Number(item.unitPrice).toLocaleString() : ''}</td>
