@@ -254,7 +254,7 @@ const EstimateForm = () => {
           </tr>
           <tr>
             <td className="label">소재지</td>
-            <td>경기도 광명시 원노온사로 39, 제1동</td>
+            <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
             <td className="label">홈페이지</td>
             <td>http://www.ssmake.com</td>
           </tr>
