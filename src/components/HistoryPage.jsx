@@ -233,7 +233,7 @@ const HistoryPage = () => {
         <body>
           <div class="print-header">
             <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-            <div>문서번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
+            <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
           </div>
           
           <table class="info-table">
@@ -259,7 +259,7 @@ const HistoryPage = () => {
               </tr>
               <tr>
                 <td class="label">소재지</td>
-                <td>경기도 광명시 원노온사로 39, 제1동</td>
+                <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
               </tr>
               <tr>
                 <td class="label">TEL</td>
@@ -385,7 +385,7 @@ const HistoryPage = () => {
               </tr>
               <tr>
                 <td class="label">소재지</td>
-                <td>경기도 광명시 원노온사로 39, 제1동</td>
+                <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
               </tr>
               <tr>
                 <td class="label">TEL</td>
@@ -591,7 +591,7 @@ const HistoryPage = () => {
             <h3>기본 정보</h3>
             <div className="details-grid">
               <div className="details-item">
-                <strong>{isEstimate ? '견적번호' : '주문번호'}:</strong>
+                <strong>{isEstimate ? '거래번호' : '주문번호'}:</strong>
                 <span>{isEstimate ? selectedItem.estimateNumber : selectedItem.orderNumber}</span>
               </div>
               <div className="details-item">
@@ -608,7 +608,7 @@ const HistoryPage = () => {
               </div>
               {!isEstimate && selectedItem.estimateNumber && (
                 <div className="details-item">
-                  <strong>관련 견적번호:</strong>
+                  <strong>관련 거래번호:</strong>
                   <span>{selectedItem.estimateNumber}</span>
                 </div>
               )}
@@ -729,7 +729,7 @@ const HistoryPage = () => {
     <div className="history-list">
       <div className="list-header">
         <div className="header-cell document-type">유형</div>
-        <div className="header-cell document-id">문서번호</div>
+        <div className="header-cell document-id">거래번호</div>
         <div className="header-cell date">날짜</div>
         <div className="header-cell customer">고객명</div>
         <div className="header-cell product">제품</div>
@@ -826,11 +826,11 @@ const HistoryPage = () => {
               </div>
               
               <div className="filter-group">
-                <label>문서번호:</label>
+                <label>거래번호:</label>
                 <input
                   type="text"
                   name="documentNumber"
-                  placeholder="문서번호 검색"
+                  placeholder="거래번호 검색"
                   value={filters.documentNumber}
                   onChange={handleFilterChange}
                   className="filter-input"
