@@ -296,8 +296,6 @@ const PurchaseOrderForm = () => {
                 src={`${import.meta.env.BASE_URL}images/도장.png`}
                 alt="도장"
                 style={{
-                  width: "20px",
-                  height: "20px",
                   marginLeft: "6px",
                   verticalAlign: "middle",
                   opacity: 0.85
