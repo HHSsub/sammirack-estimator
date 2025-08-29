@@ -254,8 +254,9 @@ const PurchaseOrderForm = () => {
               textAlign: "center",
               fontWeight: "bold",
               verticalAlign: "middle",
-              padding: "16px 0",
-              background: "#f8f9fa"
+              padding: "4px 0",
+              background: "#f8f9fa",
+              lineHeight: "1.1"
             }}>
               <textarea
                 className="estimate-memo"
@@ -268,14 +269,14 @@ const PurchaseOrderForm = () => {
                   background: "#f8f9fa",
                   color: memo ? "#333" : "#999",
                   fontWeight: "bold",
-                  fontSize: "16px",
+                  fontSize: "12px",
                   textAlign: "center",
                   resize: "none",
                   outline: "none",
                   fontStyle: memo ? "normal" : "italic",
                   opacity: memo ? 1 : 0.7,
-                  minHeight: "3em",
-                  lineHeight: "1.5"
+                  minHeight: "2em",
+                  lineHeight: "1.2"
                 }}
               />
             </td>
@@ -283,7 +284,7 @@ const PurchaseOrderForm = () => {
             <td style={{ position: 'relative' }}>
               박이삭
               <img
-                src="/public/images/도장.png"
+                src={new URL('/images/도장.png', import.meta.env.BASE_URL).href}
                 alt="도장"
                 style={{
                   position: "absolute",

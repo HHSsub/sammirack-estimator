@@ -1,5 +1,5 @@
 import React from 'react';
-import stampImage from '/images/도장.png';
+const stampImage = new URL('/images/도장.png', import.meta.env.BASE_URL).href;
 
 const GyeonjukPrint = ({ data }) => {
   return (
@@ -31,11 +31,12 @@ const GyeonjukPrint = ({ data }) => {
             <td colSpan={2} rowSpan={4} style={{
               textAlign: 'center',
               fontWeight: 'bold',
-              fontSize: '15px',
               verticalAlign: 'middle',
-              padding: '16px 0',
+              padding: '2px 0',
               background: '#fff',
-              border: '1px solid #ddd'
+              border: '1px solid #ddd',
+              fontSize: '10px',
+              lineHeight: '1.1'
             }}>
               아래와 같이 견적합니다 (부가세, 운임비 별도)
             </td>
