@@ -507,3 +507,54 @@ button.nav-link:hover {
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
+
+
+/* 새로운 메인 레이아웃 스타일 */
+.main-layout {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.option-section {
+  flex: 2;
+  min-width: 0;
+}
+
+.price-section {
+  flex: 1;
+  min-width: 250px;
+}
+
+/* 반응형 디자인 - 모바일에서는 세로 배치 */
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .option-section,
+  .price-section {
+    flex: none;
+    width: 100%;
+  }
+}
+
+/* 옵션 셀렉터 내부 요소들의 세로 배치를 위한 추가 스타일 */
+.option-section select,
+.option-section input {
+  width: 100%;
+  max-width: 300px;
+}
+
+.option-section label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.option-section > div > div {
+  margin-bottom: 15px;
+}
