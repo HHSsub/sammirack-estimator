@@ -340,11 +340,7 @@
     print-color-adjust: exact !important;
   }
 
-  /* 폼 화면의 작업 컬럼 인쇄 숨김 */
-  .form-table th:last-child,
-  .form-table td:last-child {
-    display: none !important;
-  }
+  /* 폼 화면의 작업 컬럼 인쇄 숨김 -> 각 폼 CSS에서 테이블별로 지정함 */
 
   /* 인쇄 시 placeholder 감추기 */
   input::placeholder, textarea::placeholder {

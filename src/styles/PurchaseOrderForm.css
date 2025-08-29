@@ -418,10 +418,38 @@ textarea:focus {
     left: 0 !important;
     top: 0 !important;
     width: 100vw !important;
+    /* 크기 축소는 스케일 대신 폰트/패딩 축소로 처리 */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
     background: #fff !important;
     z-index: 9999 !important;
   }
   .no-print {
     display: none !important;
   }
+
+  /* 프린트용 전반 축소 (스케일 대신) */
+  .form-header h1 { font-size: 18px !important; }
+  .order-number-field label { font-size: 10px !important; }
+  .order-number-field input { font-size: 10px !important; padding: 4px 6px !important; width: 120px !important; }
+
+  .form-table { font-size: 10px !important; table-layout: fixed !important; margin-bottom: 8px !important; }
+  .form-table th, .form-table td { padding: 4px 3px !important; }
+
+  /* 상단 정보 테이블: 4등분이 항상 보이도록 고정 폭 */
+  .info-table td, .info-table th { width: 25% !important; }
+  .info-table input { font-size: 10px !important; padding: 2px 3px !important; border-radius: 2px !important; }
+  .estimate-memo { font-size: 12px !important; min-height: 28px !important; padding: 4px !important; }
+
+  /* 명세 테이블 축소 */
+  .order-table th, .order-table td,
+  .material-table th, .material-table td { font-size: 9px !important; padding: 3px 2px !important; }
+  .total-table { width: 240px !important; margin-bottom: 12px !important; }
+
+  /* 인쇄 시 작업 컬럼 숨김 */
+  .order-table th:last-child, .order-table td:last-child,
+  .material-table th:last-child, .material-table td:last-child { display: none !important; }
+
+  /* placeholder 숨김 */
+  input::placeholder, textarea::placeholder { color: transparent !important; }
 }
