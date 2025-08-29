@@ -48,7 +48,7 @@ export default function OptionSelector() {
     const opts = availableOptions[name] || [];
     if (!opts.length) return null;
     return (
-      <div style={{ minWidth: 160 }}>
+      <div>
         <label>{label}</label>
         <select
           disabled={!enabled || loading}
@@ -86,7 +86,8 @@ export default function OptionSelector() {
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+      {/* 세로 배치로 변경 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
           <label>제품 유형</label>
           <select
