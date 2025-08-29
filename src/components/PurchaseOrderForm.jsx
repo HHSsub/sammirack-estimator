@@ -224,7 +224,7 @@ const PurchaseOrderForm = () => {
               }
               updateFormData('orderNumber', e.target.value);
             }}
-            placeholder="거래번호 입력"
+            placeholder="휴대폰번호 입력"
           />
         </div>
       </div>
