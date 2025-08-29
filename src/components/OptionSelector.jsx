@@ -87,7 +87,7 @@ export default function OptionSelector() {
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
       {/* 세로 배치로 변경 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div>
           <label>제품 유형</label>
           <select
