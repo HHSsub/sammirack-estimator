@@ -94,7 +94,8 @@ const HistoryPage = () => {
       const searchTerm = filters.documentNumber.toLowerCase();
       filtered = filtered.filter(item => 
         (item.estimateNumber && item.estimateNumber.toLowerCase().includes(searchTerm)) ||
-        (item.orderNumber && item.orderNumber.toLowerCase().includes(searchTerm))
+        (item.orderNumber && item.orderNumber.toLowerCase().includes(searchTerm)) ||
+        (item.documentNumber && item.documentNumber.toLowerCase().includes(searchTerm)) // 이 부분을 추가합니다.
       );
     }
     
