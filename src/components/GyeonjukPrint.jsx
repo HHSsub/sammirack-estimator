@@ -42,7 +42,7 @@ const GyeonjukPrint = ({ data }) => {
             <td className="label">대표자</td>
             <td>
               <span>박이삭</span>
-              <img src={stampImage} alt="도장" style={{ width: '35px', height: '35px', marginLeft: '6px', verticalAlign: 'middle', opacity: 0.8 }} />
+              <img src={stampImage} alt="도장" style={{ width: '45px', height: '45px', marginLeft: '6px', verticalAlign: 'middle', opacity: 0.8 }} />
             </td>
           </tr>
           <tr>
