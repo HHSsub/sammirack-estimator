@@ -225,7 +225,7 @@ const EstimateForm = () => {
             <td style={{ position: 'relative' }}>
               박이삭
               <img
-                src={new URL('/images/도장.png', import.meta.env.BASE_URL).href}
+                src={`${import.meta.env.BASE_URL}images/도장.png`}
                 alt="도장"
                 style={{
                   position: "absolute",

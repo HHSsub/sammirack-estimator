@@ -1,5 +1,5 @@
 import React from 'react';
-const stampImage = new URL('/images/도장.png', import.meta.env.BASE_URL).href;
+const stampImage = `${import.meta.env.BASE_URL}images/도장.png`;
 
 const GyeonjukPrint = ({ data }) => {
   return (
