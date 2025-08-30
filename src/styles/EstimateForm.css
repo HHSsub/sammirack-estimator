@@ -347,3 +347,30 @@ textarea:focus {
   input, textarea, select { border: none !important; box-shadow: none !important; outline: none !important; background: transparent !important; }
   .quote-table input { border: none !important; background: transparent !important; }
 }
+
+/* 엑셀 저장 버튼 스타일 */
+.excel-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+  margin-right: 10px;
+}
+
+.excel-btn:hover {
+  background-color: #218838;
+}
+
+.excel-btn:active {
+  background-color: #1e7e34;
+}
+
+.excel-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
