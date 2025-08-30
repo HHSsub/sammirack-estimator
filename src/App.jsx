@@ -8,6 +8,7 @@ import BOMDisplay from './components/BOMDisplay';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
+import DeliveryNoteForm from './components/DeliveryNoteForm';
 import PrintPage from './components/PrintPage';
 import Login from './components/Login'; // Login 컴포넌트 임포트
 import PasswordChange from './components/PasswordChange'; // 비밀번호 변경 컴포넌트 임포트
@@ -62,6 +63,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/estimate/new" element={<EstimateForm />} />
           <Route path="/purchase-order/new" element={<PurchaseOrderForm />} />
+          <Route path="/delivery-note/new" element={<DeliveryNoteForm />} />
+          <Route path="/delivery-note/edit/:id" element={<DeliveryNoteForm />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/print" element={<PrintPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -132,6 +135,13 @@ const HomePage = () => {
             className={`create-order-button`}
           >
             발주서 작성
+          </Link>
+          <Link 
+            to="/delivery-note/new"
+            state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
+            className={`create-delivery-note-button`}
+          >
+            거래명세서 작성
           </Link>
         </div>
       )}
