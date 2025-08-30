@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { exportToExcel, generateFileName } from '../utils/excelExport';
 import '../styles/PurchaseOrderForm.css';
 
 const PurchaseOrderForm = () => {
@@ -192,6 +193,27 @@ const PurchaseOrderForm = () => {
 
     localStorage.setItem(storageKey, JSON.stringify(newPurchaseOrder));
     alert(isEditMode ? '발주서가 수정되었습니다.' : '발주서가 저장되었습니다.');
+  };
+
+  // 엑셀로 저장하기 함수
+  const handleExportToExcel = () => {
+    if (!formData.orderNumber || String(formData.orderNumber).trim() === '') {
+      alert('거래번호를 입력해주세요.');
+      return;
+    }
+
+    // 발주서용 데이터 구조 생성 (documentNumber 필드 추가)
+    const excelData = {
+      ...formData,
+      documentNumber: formData.orderNumber
+    };
+
+    const fileName = generateFileName('발주서', excelData);
+    const success = exportToExcel(excelData, fileName, 'purchase');
+    
+    if (success) {
+      alert('엑셀 파일이 다운로드되었습니다.');
+    }
   };
 
   // 인쇄하기
@@ -510,6 +532,9 @@ const PurchaseOrderForm = () => {
       <div className="form-actions no-print">
         <button type="button" onClick={handleSave} className="save-btn no-print">
           저장하기
+        </button>
+        <button type="button" onClick={handleExportToExcel} className="excel-btn no-print">
+          엑셀로 저장하기
         </button>
         <button type="button" onClick={handlePrint} className="print-btn no-print">
           인쇄하기
