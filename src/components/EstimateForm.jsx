@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { exportToExcel, generateFileName } from '../utils/excelExport';
 import '../styles/EstimateForm.css'; // 새로운 경로로 import
 
 const EstimateForm = () => {
@@ -140,6 +141,21 @@ const EstimateForm = () => {
 
     localStorage.setItem(storageKey, JSON.stringify(newEstimate));
     alert(isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.');
+  };
+
+  // 엑셀로 저장하기 함수
+  const handleExportToExcel = () => {
+    if (!formData.documentNumber || String(formData.documentNumber).trim() === '') {
+      alert('문서번호(거래번호)를 입력해주세요.');
+      return;
+    }
+
+    const fileName = generateFileName('견적서', formData);
+    const success = exportToExcel(formData, fileName, 'estimate');
+    
+    if (success) {
+      alert('엑셀 파일이 다운로드되었습니다.');
+    }
   };
 
   // 인쇄하기
@@ -383,6 +399,9 @@ const EstimateForm = () => {
       <div className="form-actions no-print">
         <button type="button" onClick={handleSave} className="save-btn no-print">
           저장하기
+        </button>
+        <button type="button" onClick={handleExportToExcel} className="excel-btn no-print">
+          엑셀로 저장하기
         </button>
         <button type="button" onClick={handlePrint} className="print-btn no-print">
           인쇄하기
