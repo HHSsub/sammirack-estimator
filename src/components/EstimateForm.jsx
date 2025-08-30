@@ -276,7 +276,7 @@ const EstimateForm = () => {
           </tr>
           <tr>
             <td class="label">TEL</td>
-            <td>(02)2611-4597</td>
+            <td>010-9548-9578  010-4311-7733</td>
             <td class="label">FAX</td>
             <td>(02)2611-4595</td>
           </tr>
