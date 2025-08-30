@@ -210,10 +210,11 @@ const HistoryPage = () => {
     // 현재 페이지에서 직접 인쇄하는 방식으로 변경
     const printWindow = window.open('', '_blank');
     const printData = item;
+    let printHTML = '';
     
     if (item.type === 'estimate') {
       // 견적서 인쇄용 HTML
-      const printHTML = `
+      printHTML = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -336,9 +337,9 @@ const HistoryPage = () => {
       `;
       
       printWindow.document.write(printHTML);
-      if (item.type === 'estimate') {
+      else if (item.type === 'delivery_note') {
       // 거래명세서 인쇄용 HTML
-      const printHTML = `
+      printHTML = '
         <!DOCTYPE html>
         <html>
         <head>
@@ -459,7 +460,6 @@ const HistoryPage = () => {
         </body>
         </html>
       `;
-      
       printWindow.document.write(printHTML);
     } else if (item.type === 'order') {
       // 발주서 인쇄용 HTML
