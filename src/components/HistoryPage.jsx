@@ -148,7 +148,7 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
     
     const confirmDelete = window.confirm(
-      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'order' ? '주문서' : '거래명세서'}를 삭제하시겠습니까? 
+      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'order' ? '발주서' : '거래명세서'}를 삭제하시겠습니까? 
       ${item.type === 'estimate' ? item.estimateNumber : item.type === 'order' ? item.orderNumber : item.documentNumber || ''}`
     );
     
@@ -688,7 +688,7 @@ const HistoryPage = () => {
       <div className="item-details">
         <div className="details-header">
           <h2>
-            {isEstimate ? '견적서' : selectedItem.type === 'order' ? '주문서' : '거래명세서'} 상세정보 
+            {isEstimate ? '견적서' : selectedItem.type === 'order' ? '발주서' : '거래명세서'} 상세정보 
             <span className={`status-badge ${getStatusClass(selectedItem.status)}`}>
               {selectedItem.status || '진행 중'}
             </span>
@@ -823,7 +823,7 @@ const HistoryPage = () => {
               </button>
               {isEstimate && (
                 <button onClick={() => convertToOrder(selectedItem)}>
-                  주문서 생성
+                  발주서 생성
                 </button>
               )}
               <button className="delete-button" onClick={() => deleteItem(selectedItem)}>
@@ -866,7 +866,7 @@ const HistoryPage = () => {
             }}
           >
             <div className="item-cell document-type">
-              {item.type === 'estimate' ? '견적서' : item.type === 'order' ? '주문서' : '거래명세서'}
+              {item.type === 'estimate' ? '견적서' : item.type === 'order' ? '발주서' : '거래명세서'}
             </div>
             <div className="item-cell document-id">
               {item.type === 'estimate' ? item.estimateNumber : item.type === 'order' ? item.orderNumber : item.documentNumber || ''}
@@ -897,7 +897,7 @@ const HistoryPage = () => {
               </button>
               {item.type === 'estimate' && (
                 <button 
-                  title="주문서 생성" 
+                  title="발주서 생성" 
                   onClick={(e) => { e.stopPropagation(); convertToOrder(item); }}
                 >
                   📋
@@ -933,7 +933,7 @@ const HistoryPage = () => {
                 >
                   <option value="all">전체</option>
                   <option value="estimate">견적서</option>
-                  <option value="order">주문서</option>
+                  <option value="order">발주서</option>
                   <option value="delivery_note">거래명세서</option>
                 </select>
               </div>
@@ -998,7 +998,7 @@ const HistoryPage = () => {
               새 견적서 작성
             </button>
             <button onClick={() => navigate('/purchase-order/new')}>
-              새 주문서 작성
+              새 발주서 작성
             </button>
             {/* 거래명세서 새로 작성 버튼도 필요하다면 추가 가능 */}
           </div>
