@@ -54,7 +54,7 @@ const HistoryPage = () => {
       // Find all estimates and orders in localStorage
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key.startsWith('estimate_') || key.startsWith('order_')) {
+        if (key.startsWith('estimate_') || key.startsWith('order_') || key.startsWith('delivery_note_')) {
           try {
             const item = JSON.parse(localStorage.getItem(key));
             if (item) {
@@ -196,6 +196,8 @@ const HistoryPage = () => {
       navigate(`/estimate/edit/${item.id}`, { state: { item } });
     } else if (item.type === 'order') {
       navigate(`/purchase-order/edit/${item.id}`, { state: { item } });
+    } else if (item.type === 'delivery_note') {
+      navigate(`/delivery-note/edit/${item.id}`, { state: { item } });
     }
   };
   
@@ -234,6 +236,131 @@ const HistoryPage = () => {
         <body>
           <div class="print-header">
             <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
+            <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
+          </div>
+          
+          <table class="info-table">
+            <tbody>
+              <tr>
+                <td class="label">견적일자</td>
+                <td>${printData.date}</td>
+                <td class="label">사업자등록번호</td>
+                <td>232-81-01750</td>
+              </tr>
+              <tr>
+                <td class="label">상호명</td>
+                <td>${printData.customerName || printData.companyName || ''}</td>
+                <td class="label">상호</td>
+                <td>삼미앵글랙산업</td>
+              </tr>
+              <tr>
+                <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
+                  아래와 같이 견적합니다 (부가세, 운임비 별도)
+                </td>
+                <td class="label">대표자</td>
+                <td>박이삭</td>
+              </tr>
+              <tr>
+                <td class="label">소재지</td>
+                <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
+              </tr>
+              <tr>
+                <td class="label">TEL</td>
+                <td>(02)2611-4597</td>
+              </tr>
+              <tr>
+                <td class="label">FAX</td>
+                <td>(02)2611-4595</td>
+              </tr>
+              <tr>
+                <td class="label">홈페이지</td>
+                <td>http://www.ssmake.com</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <table class="quote-table">
+            <thead>
+              <tr>
+                <th>NO</th>
+                <th>품명</th>
+                <th>단위</th>
+                <th>수량</th>
+                <th>단가</th>
+                <th>공급가</th>
+                <th>비고</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(printData.items || []).map((item, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.name || ''}</td>
+                  <td>${item.unit || ''}</td>
+                  <td>${item.quantity || ''}</td>
+                  <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
+                  <td class="right">${parseInt(item.totalPrice || 0).toLocaleString()}</td>
+                  <td>${item.note || ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <table class="total-table">
+            <tbody>
+              <tr>
+                <td class="label">소계</td>
+                <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td class="label">부가세</td>
+                <td class="right">${(printData.tax || 0).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td class="label"><strong>합계</strong></td>
+                <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+          
+          ${printData.notes ? `
+            <div class="notes-section">
+              <strong>비고:</strong><br>
+              ${printData.notes.replace(/\n/g, '<br>')}
+            </div>
+          ` : ''}
+          
+          <div class="form-company">(주)삼미앵글랙산업</div>
+        </body>
+        </html>
+      `;
+      
+      printWindow.document.write(printHTML);
+      if (item.type === 'estimate') {
+      // 거래명세서 인쇄용 HTML
+      const printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>거래명세서</title>
+          <style>
+            @media print {
+              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+              .print-header { text-align: center; margin-bottom: 30px; }
+              .print-header h1 { font-size: 24px; margin: 0; }
+              .info-table, .quote-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              .info-table td, .quote-table th, .quote-table td, .total-table td { border: 1px solid #000; padding: 8px; }
+              .quote-table th { background-color: #f0f0f0; text-align: center; }
+              .right { text-align: right; }
+              .label { background-color: #f8f9fa; font-weight: bold; }
+              .notes-section { margin-top: 20px; }
+              .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-header">
+            <h1>거&nbsp;&nbsp;래&nbsp;&nbsp;명&nbsp;&nbsp;세&nbsp;&nbsp;서</h1>
             <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
           </div>
           
