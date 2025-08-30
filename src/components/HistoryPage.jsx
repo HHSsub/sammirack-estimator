@@ -1,48 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HistoryPage.css';
-
 /**
- * HistoryPage component for managing estimates and purchase orders
+ * HistoryPage component for managing estimates, purchase orders, and delivery notes
  * Features:
- * - View history of estimates and orders
+ * - View history of estimates, orders, and delivery notes
  * - Filter by type, customer name, date range, etc.
  * - Convert estimates to orders
- * - Print documents
- * - Edit existing documents
+ * - Print documents including delivery notes
+ * - Edit and delete documents including delivery notes
  */
 const HistoryPage = () => {
   const navigate = useNavigate();
-  
-  // State for history items (estimates and orders)
+  // State for history items (estimates, orders, delivery notes)
   const [historyItems, setHistoryItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  
   // State for filters
   const [filters, setFilters] = useState({
-    documentType: 'all', // 'all', 'estimate', 'order'
+    documentType: 'all', // 'all', 'estimate', 'order', 'delivery_note'
     documentNumber: '',
     dateFrom: '',
     dateTo: '',
-    status: 'all', // 'all', 'pending', 'completed', 'cancelled'
+    status: 'all', // 'all', 'pending', 'completed', 'cancelled' (or Korean equivalents)
   });
-  
   // State for selected item
   const [selectedItem, setSelectedItem] = useState(null);
-  
   // State for view options
   const [view, setView] = useState('list'); // 'list' or 'details'
-  
   // Load history from localStorage on component mount
   useEffect(() => {
     loadHistory();
   }, []);
-  
   // Filter items whenever filters or history items change
   useEffect(() => {
     filterItems();
   }, [filters, historyItems]);
-  
   /**
    * Load history data from localStorage
    */
@@ -51,10 +43,14 @@ const HistoryPage = () => {
       // Get all items from localStorage
       const allItems = [];
       
-      // Find all estimates and orders in localStorage
+      // Find all estimates, orders, and delivery notes in localStorage
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key.startsWith('estimate_') || key.startsWith('order_') || key.startsWith('delivery_note_')) {
+        if (
+          key.startsWith('estimate_') || 
+          key.startsWith('order_') || 
+          key.startsWith('delivery_note_')
+        ) {
           try {
             const item = JSON.parse(localStorage.getItem(key));
             if (item) {
@@ -77,7 +73,6 @@ const HistoryPage = () => {
       console.error('Error loading history:', error);
     }
   };
-  
   /**
    * Apply filters to history items
    */
@@ -95,7 +90,7 @@ const HistoryPage = () => {
       filtered = filtered.filter(item => 
         (item.estimateNumber && item.estimateNumber.toLowerCase().includes(searchTerm)) ||
         (item.orderNumber && item.orderNumber.toLowerCase().includes(searchTerm)) ||
-        (item.documentNumber && item.documentNumber.toLowerCase().includes(searchTerm)) // 이 부분을 추가합니다.
+        (item.documentNumber && item.documentNumber.toLowerCase().includes(searchTerm))
       );
     }
     
@@ -124,7 +119,6 @@ const HistoryPage = () => {
     
     setFilteredItems(filtered);
   };
-  
   /**
    * Handle filter changes
    */
@@ -135,7 +129,6 @@ const HistoryPage = () => {
       [name]: value
     }));
   };
-  
   /**
    * Reset all filters
    */
@@ -148,7 +141,6 @@ const HistoryPage = () => {
       status: 'all'
     });
   };
-  
   /**
    * Delete a history item
    */
@@ -156,8 +148,8 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
     
     const confirmDelete = window.confirm(
-      `정말로 이 ${item.type === 'estimate' ? '견적서' : '주문서'}를 삭제하시겠습니까? 
-      ${item.type === 'estimate' ? item.estimateNumber : item.orderNumber}`
+      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'order' ? '주문서' : '거래명세서'}를 삭제하시겠습니까? 
+      ${item.type === 'estimate' ? item.estimateNumber : item.type === 'order' ? item.orderNumber : item.documentNumber || ''}`
     );
     
     if (confirmDelete) {
@@ -178,14 +170,12 @@ const HistoryPage = () => {
       }
     }
   };
-  
   /**
    * Convert an estimate to an order
    */
   const convertToOrder = (estimate) => {
     navigate(`/purchase-order/new`, { state: { fromEstimate: estimate } });
   };
-  
   /**
    * Edit an existing item
    */
@@ -200,18 +190,17 @@ const HistoryPage = () => {
       navigate(`/delivery-note/edit/${item.id}`, { state: { item } });
     }
   };
-  
   /**
    * Print an item
    */
   const printItem = (item) => {
     if (!item || !item.type) return;
-    
+
     // 현재 페이지에서 직접 인쇄하는 방식으로 변경
     const printWindow = window.open('', '_blank');
     const printData = item;
     let printHTML = '';
-    
+
     if (item.type === 'estimate') {
       // 견적서 인쇄용 HTML
       printHTML = `
@@ -239,7 +228,7 @@ const HistoryPage = () => {
             <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
             <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
           </div>
-          
+
           <table class="info-table">
             <tbody>
               <tr>
@@ -279,7 +268,7 @@ const HistoryPage = () => {
               </tr>
             </tbody>
           </table>
-          
+
           <table class="quote-table">
             <thead>
               <tr>
@@ -306,7 +295,7 @@ const HistoryPage = () => {
               `).join('')}
             </tbody>
           </table>
-          
+
           <table class="total-table">
             <tbody>
               <tr>
@@ -323,23 +312,21 @@ const HistoryPage = () => {
               </tr>
             </tbody>
           </table>
-          
+
           ${printData.notes ? `
             <div class="notes-section">
               <strong>비고:</strong><br>
               ${printData.notes.replace(/\n/g, '<br>')}
             </div>
           ` : ''}
-          
+
           <div class="form-company">(주)삼미앵글랙산업</div>
         </body>
         </html>
       `;
-      
-      printWindow.document.write(printHTML);
-      else if (item.type === 'delivery_note') {
-      // 거래명세서 인쇄용 HTML
-      printHTML = '
+    } else if (item.type === 'delivery_note') {
+      // 거래명세서 인쇄용 HTML (견적서와 디자인 동일)
+      printHTML = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -364,7 +351,7 @@ const HistoryPage = () => {
             <h1>거&nbsp;&nbsp;래&nbsp;&nbsp;명&nbsp;&nbsp;세&nbsp;&nbsp;서</h1>
             <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
           </div>
-          
+
           <table class="info-table">
             <tbody>
               <tr>
@@ -404,7 +391,7 @@ const HistoryPage = () => {
               </tr>
             </tbody>
           </table>
-          
+
           <table class="quote-table">
             <thead>
               <tr>
@@ -431,7 +418,7 @@ const HistoryPage = () => {
               `).join('')}
             </tbody>
           </table>
-          
+
           <table class="total-table">
             <tbody>
               <tr>
@@ -448,22 +435,21 @@ const HistoryPage = () => {
               </tr>
             </tbody>
           </table>
-          
+
           ${printData.notes ? `
             <div class="notes-section">
               <strong>비고:</strong><br>
               ${printData.notes.replace(/\n/g, '<br>')}
             </div>
           ` : ''}
-          
+
           <div class="form-company">(주)삼미앵글랙산업</div>
         </body>
         </html>
       `;
-      printWindow.document.write(printHTML);
     } else if (item.type === 'order') {
       // 발주서 인쇄용 HTML
-      const printHTML = `
+      printHTML = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -489,7 +475,7 @@ const HistoryPage = () => {
             <h1>발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
             <div>거래번호: ${printData.orderNumber || ''}</div>
           </div>
-          
+
           <table class="info-table">
             <tbody>
               <tr>
@@ -529,7 +515,7 @@ const HistoryPage = () => {
               </tr>
             </tbody>
           </table>
-          
+
           <h3 class="section-title">발주 명세</h3>
           <table class="order-table">
             <thead>
@@ -557,7 +543,7 @@ const HistoryPage = () => {
               `).join('')}
             </tbody>
           </table>
-          
+
           ${(printData.materials && printData.materials.length > 0) ? `
             <h3 class="section-title">원자재 명세서</h3>
             <table class="material-table">
@@ -587,7 +573,7 @@ const HistoryPage = () => {
               </tbody>
             </table>
           ` : ''}
-          
+
           <table class="total-table">
             <tbody>
               <tr>
@@ -604,31 +590,30 @@ const HistoryPage = () => {
               </tr>
             </tbody>
           </table>
-          
+
           ${printData.notes ? `
             <div class="notes-section">
               <strong>비고:</strong><br>
               ${printData.notes.replace(/\n/g, '<br>')}
             </div>
           ` : ''}
-          
+
           <div class="form-company">(주)삼미앵글랙산업</div>
         </body>
         </html>
       `;
-      
-      printWindow.document.write(printHTML);
     }
-    
+
+    printWindow.document.write(printHTML);
+
     printWindow.document.close();
-    
+
     // 인쇄 실행
     printWindow.onload = function() {
       printWindow.print();
       printWindow.close();
     };
   };
-  
   /**
    * Get status badge CSS class
    */
@@ -645,7 +630,6 @@ const HistoryPage = () => {
         return 'status-pending';
     }
   };
-  
   /**
    * Update item status
    */
@@ -679,7 +663,6 @@ const HistoryPage = () => {
       console.error('Error updating status:', error);
     }
   };
-  
   /**
    * Format date for display
    */
@@ -693,7 +676,6 @@ const HistoryPage = () => {
       return dateString;
     }
   };
-
   /**
    * Render item details view
    */
@@ -706,7 +688,7 @@ const HistoryPage = () => {
       <div className="item-details">
         <div className="details-header">
           <h2>
-            {isEstimate ? '견적서' : '주문서'} 상세정보 
+            {isEstimate ? '견적서' : selectedItem.type === 'order' ? '주문서' : '거래명세서'} 상세정보 
             <span className={`status-badge ${getStatusClass(selectedItem.status)}`}>
               {selectedItem.status || '진행 중'}
             </span>
@@ -719,8 +701,12 @@ const HistoryPage = () => {
             <h3>기본 정보</h3>
             <div className="details-grid">
               <div className="details-item">
-                <strong>{isEstimate ? '거래번호' : '주문번호'}:</strong>
-                <span>{isEstimate ? selectedItem.estimateNumber : selectedItem.orderNumber}</span>
+                <strong>
+                  {isEstimate ? '거래번호' : selectedItem.type === 'order' ? '주문번호' : '거래명세서 번호'}:
+                </strong>
+                <span>
+                  {isEstimate ? selectedItem.estimateNumber : selectedItem.type === 'order' ? selectedItem.orderNumber : selectedItem.documentNumber || ''}
+                </span>
               </div>
               <div className="details-item">
                 <strong>날짜:</strong>
@@ -734,7 +720,7 @@ const HistoryPage = () => {
                 <strong>연락처:</strong>
                 <span>{selectedItem.contactInfo}</span>
               </div>
-              {!isEstimate && selectedItem.estimateNumber && (
+              {!isEstimate && selectedItem.estimateNumber && selectedItem.type !== 'delivery_note' && (
                 <div className="details-item">
                   <strong>관련 거래번호:</strong>
                   <span>{selectedItem.estimateNumber}</span>
@@ -776,7 +762,7 @@ const HistoryPage = () => {
             </div>
           </div>
           
-          {!isEstimate && (
+          {selectedItem.type === 'order' && (
             <div className="details-section">
               <h3>배송 정보</h3>
               <div className="details-grid">
@@ -849,7 +835,6 @@ const HistoryPage = () => {
       </div>
     );
   };
-  
   /**
    * Render list of history items
    */
@@ -881,10 +866,10 @@ const HistoryPage = () => {
             }}
           >
             <div className="item-cell document-type">
-              {item.type === 'estimate' ? '견적서' : '주문서'}
+              {item.type === 'estimate' ? '견적서' : item.type === 'order' ? '주문서' : '거래명세서'}
             </div>
             <div className="item-cell document-id">
-              {item.type === 'estimate' ? item.estimateNumber : item.orderNumber}
+              {item.type === 'estimate' ? item.estimateNumber : item.type === 'order' ? item.orderNumber : item.documentNumber || ''}
             </div>
             <div className="item-cell date">
               {formatDate(item.date)}
@@ -931,7 +916,6 @@ const HistoryPage = () => {
       )}
     </div>
   );
-  
   return (
     <div className="history-page">
       {view === 'list' && (
@@ -950,6 +934,7 @@ const HistoryPage = () => {
                   <option value="all">전체</option>
                   <option value="estimate">견적서</option>
                   <option value="order">주문서</option>
+                  <option value="delivery_note">거래명세서</option>
                 </select>
               </div>
               
@@ -1015,6 +1000,7 @@ const HistoryPage = () => {
             <button onClick={() => navigate('/purchase-order/new')}>
               새 주문서 작성
             </button>
+            {/* 거래명세서 새로 작성 버튼도 필요하다면 추가 가능 */}
           </div>
           
           {renderItemsList()}
@@ -1025,5 +1011,4 @@ const HistoryPage = () => {
     </div>
   );
 };
-
 export default HistoryPage;
