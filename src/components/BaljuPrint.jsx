@@ -90,7 +90,7 @@ const BaljuPrint = ({ data }) => {
             </tr>
             <tr>
               <td className="label">TEL</td>
-              <td>(02)2611-4597</td>
+              <td>010-9548-9578  010-4311-7733</td>
             </tr>
             <tr>
               <td className="label">FAX</td>
