@@ -18,81 +18,129 @@ export const generateFileName = (prefix = 'document', data = {}) => {
   return `${prefix}${suffix}_${timestamp}.xlsx`;
 };
 
+/** 안전한 셀 병합 함수 */
+const safeMergeCells = (worksheet, range) => {
+  try {
+    worksheet.mergeCells(range);
+  } catch (error) {
+    if (error.message.includes('Cannot merge already merged cells')) {
+      console.warn(`Cells ${range} are already merged, skipping...`);
+    } else {
+      throw error;
+    }
+  }
+};
+
 /** 통합 엑셀 내보내기 함수 */
 export const exportToExcel = async (data, fileName, type = 'estimate') => {
-  let buffer;
-  
-  switch (type) {
-    case 'estimate':
-      buffer = await exportEstimateExcel(data);
-      break;
-    case 'purchase':
-      buffer = await exportPurchaseOrderExcel(data);
-      break;
-    case 'transaction':
-      buffer = await exportTransactionStatementExcel(data);
-      break;
-    default:
-      throw new Error(`Unknown export type: ${type}`);
+  try {
+    let buffer;
+    
+    switch (type) {
+      case 'estimate':
+        buffer = await exportEstimateExcel(data);
+        break;
+      case 'purchase':
+        buffer = await exportPurchaseOrderExcel(data);
+        break;
+      case 'transaction':
+        buffer = await exportTransactionStatementExcel(data);
+        break;
+      default:
+        throw new Error(`Unknown export type: ${type}`);
+    }
+    
+    // 파일 다운로드
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    
+    return buffer;
+  } catch (error) {
+    console.error('Excel export error:', error);
+    throw error;
   }
-  
-  // 파일 다운로드
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  window.URL.revokeObjectURL(url);
-  
-  return buffer;
 };
 
 /** 견적서 생성 */
 export async function exportEstimateExcel(data) {
-  const workbook = new ExcelJS.Workbook();
-  const ws = workbook.addWorksheet('견적서');
-  // 컬럼 너비
-  Object.entries(EST_COL_WIDTHS).forEach(([col,w]) => ws.getColumn(col).width = w);
-  // 레이아웃
-  const mapper = new LayoutMapper(ws, 'estimate');
-  mapper.setupColumnWidths();
-  mapper.setupEstimateLayout(data);
-  // 이미지 삽입
-  const imgH = new ExcelImageHandler(workbook);
-  if (data.companyLogo)  await imgH.addCompanyLogo(data.companyLogo, ws, 'H6:I7');
-  if (data.companyStamp) await imgH.addCompanyStamp(ws, data.companyStamp);
-  // 다운로드
-  const buffer = await workbook.xlsx.writeBuffer();
-  return buffer;
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet('견적서');
+    
+    // 컬럼 너비
+    Object.entries(EST_COL_WIDTHS).forEach(([col,w]) => ws.getColumn(col).width = w);
+    
+    // 레이아웃
+    const mapper = new LayoutMapper(ws, 'estimate');
+    mapper.setupColumnWidths();
+    mapper.setupEstimateLayout(data);
+    
+    // 이미지 삽입
+    const imgH = new ExcelImageHandler(workbook);
+    if (data.companyLogo)  await imgH.addCompanyLogo(data.companyLogo, ws, 'H6:I7');
+    if (data.companyStamp) await imgH.addCompanyStamp(ws, data.companyStamp);
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+  } catch (error) {
+    console.error('Error creating estimate Excel:', error);
+    throw error;
+  }
 }
 
 /** 거래명세서 생성 (견적서와 동일) */
 export async function exportTransactionStatementExcel(data) {
-  const workbook = new ExcelJS.Workbook();
-  const ws = workbook.addWorksheet('거래명세서');
-  Object.entries(EST_COL_WIDTHS).forEach(([col,w]) => ws.getColumn(col).width = w);
-  const mapper = new LayoutMapper(ws, 'transactionStatement');
-  mapper.setupColumnWidths();
-  mapper.setupTransactionStatementLayout(data);
-  const imgH = new ExcelImageHandler(workbook);
-  if (data.companyLogo)  await imgH.addCompanyLogo(data.companyLogo, ws, 'H6:I7');
-  if (data.companyStamp) await imgH.addCompanyStamp(ws, data.companyStamp);
-  const buffer = await workbook.xlsx.writeBuffer();
-  return buffer;
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet('거래명세서');
+    
+    Object.entries(EST_COL_WIDTHS).forEach(([col,w]) => ws.getColumn(col).width = w);
+    
+    const mapper = new LayoutMapper(ws, 'transactionStatement');
+    mapper.setupColumnWidths();
+    mapper.setupTransactionStatementLayout(data);
+    
+    const imgH = new ExcelImageHandler(workbook);
+    if (data.companyLogo)  await imgH.addCompanyLogo(data.companyLogo, ws, 'H6:I7');
+    if (data.companyStamp) await imgH.addCompanyStamp(ws, data.companyStamp);
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+  } catch (error) {
+    console.error('Error creating transaction statement Excel:', error);
+    throw error;
+  }
 }
 
 /** 발주서 생성 */
 export async function exportPurchaseOrderExcel(data) {
-  const workbook = new ExcelJS.Workbook();
-  const ws = workbook.addWorksheet('발주서');
-  Object.entries(PO_COL_WIDTHS).forEach(([col,w]) => ws.getColumn(col).width = w);
-  const mapper = new LayoutMapper(ws, 'purchaseOrder');
-  mapper.setupColumnWidths();
-  mapper.setupPurchaseOrderLayout(data);
-  const imgH = new ExcelImageHandler(workbook);
-  if (data.companyLogo)  await imgH.addCompanyLogo(data.companyLogo, ws, 'H6:I7');
-  if (data.companyStamp) await imgH.addCompanyStamp(ws, data.companyStamp);
-  const buffer = await workbook.xlsx.writeBuffer();
-  return buffer;
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet('발주서');
+    
+    Object.entries(PO_COL_WIDTHS).forEach(([col,w]) => ws.getColumn(col).width = w);
+    
+    const mapper = new LayoutMapper(ws, 'purchaseOrder');
+    mapper.setupColumnWidths();
+    
+    // 셀 병합 오류 방지를 위해 워크시트 초기화
+    ws.spliceRows(1, ws.rowCount);
+    
+    mapper.setupPurchaseOrderLayout(data);
+    
+    const imgH = new ExcelImageHandler(workbook);
+    if (data.companyLogo)  await imgH.addCompanyLogo(data.companyLogo, ws, 'H6:I7');
+    if (data.companyStamp) await imgH.addCompanyStamp(ws, data.companyStamp);
+    
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
+  } catch (error) {
+    console.error('Error creating purchase order Excel:', error);
+    throw error;
+  }
 }
