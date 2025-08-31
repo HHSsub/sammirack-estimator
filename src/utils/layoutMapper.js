@@ -213,7 +213,7 @@ function setupPurchaseOrderLayout(ws, data) {
   ws.getCell('A10').value = '견적금액(부가세포함)';
   ws.getCell('A10').style = header;
 
-  // 14) “납기” 제거 → 표 머릿글 재배치
+  // 14) “납기” 제거하고 표 머릿글 재배치
   ws.getCell('A17').value = 'NO';
   ws.getCell('A17').style = header;
   ws.mergeCells('B16:G16');
@@ -257,11 +257,9 @@ function setupPurchaseOrderLayout(ws, data) {
   ws.mergeCells('C31:G31');
   ws.getCell('C31').value = '소계';
   ws.getCell('C31').style = text;
-
   ws.mergeCells('C32:G32');
   ws.getCell('C32').value = '부가가치세';
   ws.getCell('C32').style = text;
-
   ws.mergeCells('C33:G33');
   ws.getCell('C33').value = '합계';
   ws.getCell('C33').style = text;
@@ -275,8 +273,14 @@ function setupPurchaseOrderLayout(ws, data) {
   }
 }
 
+/**
+ * 거래명세서 레이아웃 : 견적서와 동일
+ */
+const setupTransactionLayout = setupEstimateLayout;
+
 // named export
 export const LayoutMapper = {
   setupEstimateLayout,
+  setupTransactionLayout,
   setupPurchaseOrderLayout
 };
