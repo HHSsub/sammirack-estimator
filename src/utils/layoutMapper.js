@@ -17,6 +17,28 @@ export class LayoutMapper {
     this.type = documentType; // 'estimate' | 'purchaseOrder' | 'transactionStatement'
   }
 
+  // 안전한 셀 병합 함수
+  safesafeMergeCells(range) {
+    if (this.mergedRanges.has(range)) {
+      console.warn(`Range ${range} is already merged, skipping...`);
+      return false;
+    }
+    
+    try {
+      this.ws.safeMergeCells(range);
+      this.mergedRanges.add(range);
+      return true;
+    } catch (error) {
+      if (error.message.includes('Cannot merge already merged cells')) {
+        console.warn(`Cannot merge ${range}: already merged`);
+        this.mergedRanges.add(range);
+        return false;
+      } else {
+        console.error(`Error merging cells ${range}:`, error);
+        throw error;
+      }
+    }  
+
   /** 컬럼 너비 설정 */
   setupColumnWidths() {
     if (this.type === 'estimate' || this.type === 'transactionStatement') {
@@ -49,18 +71,18 @@ export class LayoutMapper {
 
     // 1) A1~A16 각각 B열과 병합
     for (let r = 1; r <= 16; r++) {
-      ws.mergeCells(`A${r}:B${r}`);
+      ws.safeMergeCells(`A${r}:B${r}`);
     }
 
     // 2) 기본 정보 영역
     ws.getCell('A5').value = '견적일자';            ws.getCell('A5').style = header;
-    ws.mergeCells('C5:D5');                       ws.getCell('C5').value = data.estimateDate;     ws.getCell('C5').style = text;
+    ws.safeMergeCells('C5:D5');                       ws.getCell('C5').value = data.estimateDate;     ws.getCell('C5').style = text;
 
     ws.getCell('A6').value = '상호명';             ws.getCell('A6').style = text;
     ws.getCell('A7').value = '담당자';             ws.getCell('A7').style = text;
 
     // 3) “아래와 같이 견적합니다” 영역
-    ws.mergeCells('D5:D9');                       ws.getCell('D5').value = '아래와 같이 견적합니다'; ws.getCell('D5').style = text;
+    ws.safeMergeCells('D5:D9');                       ws.getCell('D5').value = '아래와 같이 견적합니다'; ws.getCell('D5').style = text;
     for (let r = 6; r <= 9; r++) {
       ws.getCell(`D${r}`).style = text;
     }
@@ -74,24 +96,24 @@ export class LayoutMapper {
       });
 
     // 5) 오른쪽 값 F5~I9
-    ws.mergeCells('F5:I5'); ws.getCell('F5').value = data.companyRegistrationNumber; ws.getCell('F5').style = text;
+    ws.safeMergeCells('F5:I5'); ws.getCell('F5').value = data.companyRegistrationNumber; ws.getCell('F5').style = text;
     ws.getCell('F6').value = data.companyName;    ws.getCell('F6').style = text;
     ws.getCell('G6').value = '대표자';             ws.getCell('G6').style = text;
-    ws.mergeCells('H6:I6'); ws.getCell('H6').value = data.representative;        ws.getCell('H6').style = text;
+    ws.safeMergeCells('H6:I6'); ws.getCell('H6').value = data.representative;        ws.getCell('H6').style = text;
 
-    ws.mergeCells('F7:I7'); ws.getCell('F7').value = data.address;                ws.getCell('F7').style = text;
+    ws.safeMergeCells('F7:I7'); ws.getCell('F7').value = data.address;                ws.getCell('F7').style = text;
     ws.getCell('F8').value = data.phone;                                         ws.getCell('F8').style = text;
     ws.getCell('G8').value = 'FAX';                                              ws.getCell('G8').style = text;
-    ws.mergeCells('H8:I8'); ws.getCell('H8').value = data.fax;                   ws.getCell('H8').style = text;
+    ws.safeMergeCells('H8:I8'); ws.getCell('H8').value = data.fax;                   ws.getCell('H8').style = text;
 
-    ws.mergeCells('F9:I9'); ws.getCell('F9').value = data.website;               ws.getCell('F9').style = text;
+    ws.safeMergeCells('F9:I9'); ws.getCell('F9').value = data.website;               ws.getCell('F9').style = text;
 
     // 6) 합계 영역 머지
-    ws.mergeCells('A10:C10'); ws.getCell('A10').value = '견적금액(부가세포함)';   ws.getCell('A10').style = header;
+    ws.safeMergeCells('A10:C10'); ws.getCell('A10').value = '견적금액(부가세포함)';   ws.getCell('A10').style = header;
 
     // 7) 테이블 타이틀
     ws.getCell('A17').value = 'NO';                                              ws.getCell('A17').style = header;
-    ws.mergeCells('B16:G16'); ws.getCell('B16').value = '견적명세';              ws.getCell('B16').style = header;
+    ws.safeMergeCells('B16:G16'); ws.getCell('B16').value = '견적명세';              ws.getCell('B16').style = header;
 
     // 8) 아이템 데이터 바인딩
     data.items.forEach((item, idx) => {
@@ -121,19 +143,19 @@ export class LayoutMapper {
 
     // 1) A1~A16 병합
     for (let r = 1; r <= 16; r++) {
-      ws.mergeCells(`A${r}:B${r}`);
+      ws.safeMergeCells(`A${r}:B${r}`);
     }
 
     // 2) 발주일자
     ws.getCell('A5').value = '견적일자';            ws.getCell('A5').style = header;
-    ws.mergeCells('C5:D5');                       ws.getCell('C5').value = data.orderDate;       ws.getCell('C5').style = text;
+    ws.safeMergeCells('C5:D5');                       ws.getCell('C5').value = data.orderDate;       ws.getCell('C5').style = text;
 
     // 3) 상호명 · 담당자
     ws.getCell('A6').value = '상호명';             ws.getCell('A6').style = text;
     ws.getCell('A7').value = '담당자';             ws.getCell('A7').style = text;
 
     // 4) “아래와 같이 견적합니다”
-    ws.mergeCells('D5:D9');                       ws.getCell('D5').value = '아래와 같이 견적합니다'; ws.getCell('D5').style = text;
+    ws.safeMergeCells('D5:D9');                       ws.getCell('D5').value = '아래와 같이 견적합니다'; ws.getCell('D5').style = text;
     for (let r = 6; r <= 9; r++) {
       ws.getCell(`D${r}`).style = text;
     }
@@ -147,24 +169,24 @@ export class LayoutMapper {
       });
 
     // 6) F5:I9 값
-    ws.mergeCells('F5:I5'); ws.getCell('F5').value = data.companyRegistrationNumber; ws.getCell('F5').style = text;
+    ws.safeMergeCells('F5:I5'); ws.getCell('F5').value = data.companyRegistrationNumber; ws.getCell('F5').style = text;
     ws.getCell('F6').value = data.companyName;    ws.getCell('F6').style = text;
     ws.getCell('G6').value = '대표자';             ws.getCell('G6').style = text;
-    ws.mergeCells('H6:I6'); ws.getCell('H6').value = data.representative;        ws.getCell('H6').style = text;
+    ws.safeMergeCells('H6:I6'); ws.getCell('H6').value = data.representative;        ws.getCell('H6').style = text;
 
-    ws.mergeCells('F7:I7'); ws.getCell('F7').value = data.address;                ws.getCell('F7').style = text;
+    ws.safeMergeCells('F7:I7'); ws.getCell('F7').value = data.address;                ws.getCell('F7').style = text;
     ws.getCell('F8').value = data.phone;                                         ws.getCell('F8').style = text;
     ws.getCell('G8').value = 'FAX';                                              ws.getCell('G8').style = text;
-    ws.mergeCells('H8:I8'); ws.getCell('H8').value = data.fax;                   ws.getCell('H8').style = text;
+    ws.safeMergeCells('H8:I8'); ws.getCell('H8').value = data.fax;                   ws.getCell('H8').style = text;
 
-    ws.mergeCells('F9:I9'); ws.getCell('F9').value = data.website;               ws.getCell('F9').style = text;
+    ws.safeMergeCells('F9:I9'); ws.getCell('F9').value = data.website;               ws.getCell('F9').style = text;
 
     // 7) 합계 영역
-    ws.mergeCells('A10:C10'); ws.getCell('A10').value = '견적금액(부가세포함)';   ws.getCell('A10').style = header;
+    ws.safeMergeCells('A10:C10'); ws.getCell('A10').value = '견적금액(부가세포함)';   ws.getCell('A10').style = header;
 
     // 8) 테이블 타이틀
     ws.getCell('A17').value = 'NO';                                              ws.getCell('A17').style = header;
-    ws.mergeCells('B16:G16'); ws.getCell('B16').value = '견적명세';              ws.getCell('B16').style = header;
+    ws.safeMergeCells('B16:G16'); ws.getCell('B16').value = '견적명세';              ws.getCell('B16').style = header;
     ws.getCell('G17').value = '공급가';                                          ws.getCell('G17').style = header;
     ws.getCell('H17').value = '비고';                                            ws.getCell('H17').style = header;
 
@@ -182,9 +204,9 @@ export class LayoutMapper {
     });
 
     // 10) 소계/부가세/합계 영역 머지
-    ws.mergeCells('C31:G31'); ws.getCell('C31').value = '소계';         ws.getCell('C31').style = text;
-    ws.mergeCells('C32:G32'); ws.getCell('C32').value = '부가가치세'; ws.getCell('C32').style = text;
-    ws.mergeCells('C33:G33'); ws.getCell('C33').value = '합계';         ws.getCell('C33').style = text;
+    ws.safeMergeCells('C31:G31'); ws.getCell('C31').value = '소계';         ws.getCell('C31').style = text;
+    ws.safeMergeCells('C32:G32'); ws.getCell('C32').value = '부가가치세'; ws.getCell('C32').style = text;
+    ws.safeMergeCells('C33:G33'); ws.getCell('C33').value = '합계';         ws.getCell('C33').style = text;
 
     // 11) 전체 테두리 (A5:H62)
     for (let r = 5; r <= 62; r++) {
