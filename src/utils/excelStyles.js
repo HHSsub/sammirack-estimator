@@ -149,3 +149,36 @@ export const EXCEL_STYLES = {
     }
   }
 };
+
+
+export const COLUMN_WIDTHS = {
+  estimate: {
+    A: 5,
+    B: 32,
+    C: 15,
+    D: 10,
+    E: 15,
+    F: 15,
+    G: 15,
+    H: 15,
+    I: 15,
+  },
+  purchaseOrder: {
+    A: 5,
+    B: 32,
+    C: 15,
+    D: 10,
+    E: 15,
+    F: 15,
+    G: 15,
+    H: 15,
+    I: 15,
+  },
+  transactionStatement: {
+    // Define widths for transaction statement
+  },
+};
+
+export const ROW_HEIGHTS = {
+  // Define row heights if needed
+};
