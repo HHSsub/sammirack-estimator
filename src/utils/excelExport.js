@@ -145,18 +145,24 @@ export async function generateTransactionStatementExcel(data, options = {}) {
  * @param {Object} workbook - ExcelJS 워크북 객체
  * @param {string} fileName - 파일 이름
  */
-function downloadExcelFile(workbook, fileName) {
-  workbook.xlsx.writeBuffer().then(buffer => {
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+async function downloadExcelFile(workbook, fileName) {
+  try {
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
+    document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
-  }).catch(error => {
-    console.error("Error downloading Excel file:", error);
-  });
+    document.body.removeChild(a);
+    console.log(`${fileName} 엑셀 파일이 다운로드되었습니다.`);
+  } catch (error) {
+    console.error('Excel 파일 다운로드 중 오류 발생:', error);
+  }
 }
 
 /**
