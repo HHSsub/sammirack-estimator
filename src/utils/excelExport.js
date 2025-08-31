@@ -176,7 +176,7 @@ function getCurrentDate() {
  * @param {string} documentType - 문서 타입 (예: '견적서', '발주서')
  * @returns {string}
  */
-function generateFileName(documentType) {
+export function generateFileName(documentType) {
   return `${documentType}_${getCurrentDate()}.xlsx`;
 }
 
