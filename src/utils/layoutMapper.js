@@ -1,6 +1,5 @@
 // 웹 레이아웃을 Excel 레이아웃으로 매핑하는 유틸리티
-
-import { EXCEL_STYLES, COLUMN_WIDTHS, ROW_HEIGHTS } from './excelStyles.js';
+import { EXCEL_STYLES, COLUMN_WIDTHS, ROW_HEIGHTS } from './excelStyles';
 
 export class LayoutMapper {
   constructor(worksheet, documentType) {
@@ -14,7 +13,6 @@ export class LayoutMapper {
    */
   setupColumnWidths() {
     const widths = COLUMN_WIDTHS[this.documentType] || COLUMN_WIDTHS.estimate;
-    
     Object.entries(widths).forEach(([column, width]) => {
       this.worksheet.getColumn(column).width = width;
     });
@@ -24,499 +22,400 @@ export class LayoutMapper {
    * 견적서 레이아웃 구현
    */
   setupEstimateLayout(data) {
-    // 1. 제목(견적서): 병합 셀 B4:G4, 중앙 정렬, 큰 글씨, 굵은 글씨, 연회색 배경
-    this.worksheet.mergeCells('B4:G4');
-    const titleCell = this.worksheet.getCell('B4');
-    titleCell.value = '견 적 서';
+    const ws = this.worksheet;
+
+    // 1. 제목(견적서): 병합 셀 B4:G4, 중앙 정렬, 큰 글씨, 연한색 배경
+    ws.mergeCells("B4:G4");
+    const titleCell = ws.getCell("B4");
+    titleCell.value = "견 적 서";
     Object.assign(titleCell, EXCEL_STYLES.documentTitle);
 
-    // 2. 견적일자: C6
-    this.worksheet.getCell('C6').value = data.date || new Date().toISOString().split('T')[0];
-    Object.assign(this.worksheet.getCell('C6'), EXCEL_STYLES.date);
+    // A5셀 "견적일자" 텍스트
+    ws.getCell("A5").value = "견적일자";
+    Object.assign(ws.getCell("A5"), EXCEL_STYLES.text);
 
-    // 3. 사업자등록번호: F6:G6 병합
-    this.worksheet.mergeCells('F6:G6');
-    this.worksheet.getCell('F6').value = data.businessNumber || '';
+    // 견적일자 날짜 -> C5:D5까지 셀병합해서 공간차지
+    ws.mergeCells("C5:D5");
+    ws.getCell("C5").value = data.estimateDate; // data.estimateDate 변수 사용
+    Object.assign(ws.getCell("C5"), EXCEL_STYLES.text);
 
-    // 4. 공급자 상호명 텍스트 및 값: F7 / F8 (Bold)
-    this.worksheet.getCell('F7').value = '상호명';
-    this.worksheet.getCell('F8').value = data.companyName || '';
-    Object.assign(this.worksheet.getCell('F8'), EXCEL_STYLES.companyInfoValue);
+    // 상호명,담당자 -> 각각 A6,A7칸에 위치할 수 있도록
+    ws.getCell("A6").value = "상호명";
+    Object.assign(ws.getCell("A6"), EXCEL_STYLES.text);
+    ws.getCell("A7").value = "담당자";
+    Object.assign(ws.getCell("A7"), EXCEL_STYLES.text);
 
-    // 5. 대표자 텍스트 및 값: H7 / H8 (Bold)
-    this.worksheet.getCell('H7').value = '대표자';
-    this.worksheet.getCell('H8').value = data.representative || '';
-    Object.assign(this.worksheet.getCell('H8'), EXCEL_STYLES.companyInfoValue);
+    // D5:D9 -> "아래와 같이 견적합니다"
+    ws.mergeCells("D5:D9");
+    ws.getCell("D5").value = "아래와 같이 견적합니다";
+    Object.assign(ws.getCell("D5"), EXCEL_STYLES.text);
 
-    // 6. 담당자: C10
-    this.worksheet.getCell('C10').value = data.manager || '';
+    // E5:E9 -> 5개의 칸 각각 "사업자등록번호", "상 호", "소 재 지", "T E L", "홈페이지" 가 들어갈 수 있도록
+    ws.getCell("E5").value = "사업자등록번호";
+    Object.assign(ws.getCell("E5"), EXCEL_STYLES.text);
+    ws.getCell("E6").value = "상 호";
+    Object.assign(ws.getCell("E6"), EXCEL_STYLES.text);
+    ws.getCell("E7").value = "소 재 지";
+    Object.assign(ws.getCell("E7"), EXCEL_STYLES.text);
+    ws.getCell("E8").value = "T E L";
+    Object.assign(ws.getCell("E8"), EXCEL_STYLES.text);
+    ws.getCell("E9").value = "홈페이지";
+    Object.assign(ws.getCell("E9"), EXCEL_STYLES.text);
 
-    // 7. 소재지 텍스트 및 값: F9 / F10
-    this.worksheet.getCell('F9').value = '소재지';
-    this.worksheet.getCell('F10').value = data.address || '';
+    // F5:I5 -> 4개의 셀 병합하여, "232 - 81 - 01750" 값이 들어가 있을 수 있도록
+    ws.mergeCells("F5:I5");
+    ws.getCell("F5").value = "232 - 81 - 01750";
+    Object.assign(ws.getCell("F5"), EXCEL_STYLES.text);
 
-    // 8. 연락처 TEL/FAX 텍스트 및 값: F11/F12, H11/H12
-    this.worksheet.getCell('F11').value = 'TEL';
-    this.worksheet.getCell('F12').value = data.tel || '';
-    this.worksheet.getCell('H11').value = 'FAX';
-    this.worksheet.getCell('H12').value = data.fax || '';
+    // F6 -> "삼미앵글랙산업"이란 값이 들어가 있도록
+    ws.getCell("F6").value = "삼미앵글랙산업";
+    Object.assign(ws.getCell("F6"), EXCEL_STYLES.text);
 
-    // 9. 홈페이지: F13
-    this.worksheet.getCell('F13').value = data.homepage || '';
+    // G6,H6 -> 각각 "대표자", "박이삭"이란값이 들어가 있도록
+    ws.getCell("G6").value = "대표자";
+    Object.assign(ws.getCell("G6"), EXCEL_STYLES.text);
+    ws.getCell("H6").value = "박이삭";
+    Object.assign(ws.getCell("H6"), EXCEL_STYLES.text);
 
-    // 10. 견적금액(한글/숫자): F14 / G14 (숫자 우측 정렬, Bold)
-    this.worksheet.getCell('F14').value = data.totalAmountKorean || '';
-    this.worksheet.getCell('G14').value = data.totalAmount || 0;
-    Object.assign(this.worksheet.getCell('G14'), EXCEL_STYLES.currency);
+    // F7:I7 -> 4개의 셀 병합하여, "경기도 광명시 원노온사로 39, 철제 스틸하우스 1" 값이 들어가 있을 수 있도록
+    ws.mergeCells("F7:I7");
+    ws.getCell("F7").value = "경기도 광명시 원노온사로 39, 철제 스틸하우스 1";
+    Object.assign(ws.getCell("F7"), EXCEL_STYLES.text);
 
-    // 11. 금액명세 타이틀: 병합 셀 B16:G16, 배경 회색, 중앙 정렬, Bold
-    this.worksheet.mergeCells('B16:G16');
-    const amountTitleCell = this.worksheet.getCell('B16');
-    amountTitleCell.value = '금액명세';
-    Object.assign(amountTitleCell, EXCEL_STYLES.amountTitle);
+    // F8,G8 -> 각각 "010-9548-9578  010-4311-7733", "FAX"이란 값이 들어가 있도록
+    ws.getCell("F8").value = "010-9548-9578  010-4311-7733";
+    Object.assign(ws.getCell("F8"), EXCEL_STYLES.text);
+    ws.getCell("G8").value = "FAX";
+    Object.assign(ws.getCell("G8"), EXCEL_STYLES.text);
 
-    // 12. 테이블 헤더: B17:I17, 배경 밝은 회색, 폰트 Bold, 테두리 완성
-    const headers = ['품목명', '단위', '수량', '단가', '금액', '비고'];
-    for (let i = 0; i < headers.length; i++) {
-      const col = String.fromCharCode(66 + i); // B, C, D, E, F, G
-      const cell = this.worksheet.getCell(`${col}17`);
-      cell.value = headers[i];
-      Object.assign(cell, EXCEL_STYLES.tableHeader);
+    // H8:I8 -> 2개의 셀 병합하여, "(02)2611-4595"이란 값이 들어가 있도록
+    ws.mergeCells("H8:I8");
+    ws.getCell("H8").value = "(02)2611-4595";
+    Object.assign(ws.getCell("H8"), EXCEL_STYLES.text);
+
+    // F9:I9 -> "http://www.ssmake.com"이란 값이 들어가 있도록
+    ws.mergeCells("F9:I9");
+    ws.getCell("F9").value = "http://www.ssmake.com";
+    Object.assign(ws.getCell("F9"), EXCEL_STYLES.text);
+
+    // A10:C10 -> 3개의 셀 병합하여, "견적금액(부가세포함)"이란 값이 들어가 있도록
+    ws.mergeCells("A10:C10");
+    ws.getCell("A10").value = "견적금액(부가세포함)";
+    Object.assign(ws.getCell("A10"), EXCEL_STYLES.text);
+
+    // B16:G16 -> 병합셀에 "금액명세"란 값이 아니라, "견적명세"란 값이 사용되도록
+    ws.mergeCells("B16:G16");
+    ws.getCell("B16").value = "견적명세";
+    Object.assign(ws.getCell("B16"), EXCEL_STYLES.headerCell);
+
+    // B18품목명 -> 제목이 가려지지않도록, 열너비가 32가 되도록
+    ws.getColumn("B").width = 32;
+
+    // A17 -> "NO"라는 칼럼밸류가 들어가있도록,
+    ws.getCell("A17").value = "NO";
+    Object.assign(ws.getCell("A17"), EXCEL_STYLES.headerCell);
+
+    // A1:A16 -> 각각, 바로 우측에 있는 셀과 병합되어지도록 (빈칸으로 남아있지 않도록)
+    for (let i = 1; i <= 16; i++) {
+      ws.mergeCells(`A${i}:B${i}`);
     }
 
-    // 13. 테이블 품목 행: B18:I30, 중앙 또는 왼쪽 정렬, 테두리 완전
-    if (data.items && data.items.length > 0) {
-      data.items.forEach((item, index) => {
-        const row = 18 + index;
-        if (row <= 30) { // 최대 13개 품목
-          this.worksheet.getCell(`B${row}`).value = item.name || '';
-          Object.assign(this.worksheet.getCell(`B${row}`), EXCEL_STYLES.tableDataLeft);
-          
-          this.worksheet.getCell(`C${row}`).value = item.unit || '';
-          Object.assign(this.worksheet.getCell(`C${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`D${row}`).value = item.quantity || 0;
-          Object.assign(this.worksheet.getCell(`D${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`E${row}`).value = item.unitPrice || 0;
-          Object.assign(this.worksheet.getCell(`E${row}`), EXCEL_STYLES.currency);
-          
-          const amount = (item.quantity || 0) * (item.unitPrice || 0);
-          this.worksheet.getCell(`F${row}`).value = amount;
-          Object.assign(this.worksheet.getCell(`F${row}`), EXCEL_STYLES.currency);
-          
-          this.worksheet.getCell(`G${row}`).value = item.note || '';
-          Object.assign(this.worksheet.getCell(`G${row}`), EXCEL_STYLES.tableDataLeft);
-        }
-      });
-    }
+    // 데이터 테이블 헤더 (A17부터 시작)
+    const headers = [
+      { key: "no", header: "NO", width: 5 },
+      { key: "itemName", header: "품목명", width: 32 },
+      { key: "standard", header: "규격", width: 15 },
+      { key: "unit", header: "단위", width: 8 },
+      { key: "quantity", header: "수량", width: 8 },
+      { key: "unitPrice", header: "단가", width: 12 },
+      { key: "amount", header: "금액", width: 15 },
+    ];
 
-    // 14. 소계/부가가치세/합계: 각각 F31/G31, F32/G32, F33/G33 스타일 구분 명확히
-    this.worksheet.getCell('F31').value = '소계';
-    this.worksheet.getCell('G31').value = data.subtotal || 0;
-    Object.assign(this.worksheet.getCell('F31'), EXCEL_STYLES.subtotalRow);
-    Object.assign(this.worksheet.getCell('G31'), EXCEL_STYLES.currency);
+    let currentHeaderRow = 17;
+    headers.forEach((header, index) => {
+      const cell = ws.getCell(currentHeaderRow, index + 1);
+      cell.value = header.header;
+      Object.assign(cell, EXCEL_STYLES.headerCell);
+      if (header.width) {
+        ws.getColumn(index + 1).width = header.width;
+      }
+    });
 
-    this.worksheet.getCell('F32').value = '부가가치세';
-    this.worksheet.getCell('G32').value = data.tax || 0;
-    Object.assign(this.worksheet.getCell('F32'), EXCEL_STYLES.taxRow);
-    Object.assign(this.worksheet.getCell('G32'), EXCEL_STYLES.currency);
+    // 데이터 행 추가
+    let currentRow = currentHeaderRow + 1;
+    data.items.forEach((item, index) => {
+      ws.getCell(currentRow, 1).value = index + 1;
+      Object.assign(ws.getCell(currentRow, 1), EXCEL_STYLES.dataCell);
 
-    this.worksheet.getCell('F33').value = '합계';
-    this.worksheet.getCell('G33').value = data.totalAmount || 0;
-    Object.assign(this.worksheet.getCell('F33'), EXCEL_STYLES.totalRow);
-    Object.assign(this.worksheet.getCell('G33'), EXCEL_STYLES.currency);
+      ws.getCell(currentRow, 2).value = item.itemName;
+      Object.assign(ws.getCell(currentRow, 2), EXCEL_STYLES.dataCell);
 
-    // 15. 특기사항: 병합 셀 B35:I35, 왼쪽 정렬, 텍스트 감싸기
-    this.worksheet.mergeCells('B35:I35');
-    const remarksCell = this.worksheet.getCell('B35');
-    remarksCell.value = data.remarks || '';
-    Object.assign(remarksCell, EXCEL_STYLES.remarks);
+      ws.getCell(currentRow, 3).value = item.standard;
+      Object.assign(ws.getCell(currentRow, 3), EXCEL_STYLES.dataCell);
 
-    // 16. 회사 정보 푸터: B38:I38 병합, 작고 중앙 정렬된 회색 글씨
-    this.worksheet.mergeCells('B38:I38');
-    const footerCell = this.worksheet.getCell('B38');
-    footerCell.value = data.companyFooter || '';
-    Object.assign(footerCell, EXCEL_STYLES.companyFooter);
+      ws.getCell(currentRow, 4).value = item.unit;
+      Object.assign(ws.getCell(currentRow, 4), EXCEL_STYLES.dataCell);
 
-    this.currentRow = 39; // 다음 작업을 위한 현재 행 설정
+      ws.getCell(currentRow, 5).value = item.quantity;
+      Object.assign(ws.getCell(currentRow, 5), EXCEL_STYLES.number);
+
+      ws.getCell(currentRow, 6).value = item.unitPrice;
+      Object.assign(ws.getCell(currentRow, 6), EXCEL_STYLES.number);
+
+      ws.getCell(currentRow, 7).value = item.amount;
+      Object.assign(ws.getCell(currentRow, 7), EXCEL_STYLES.number);
+
+      currentRow++;
+    });
+
+    // 소계, 부가가치세, 합계
+    ws.mergeCells(`A${currentRow}:F${currentRow}`);
+    ws.getCell(`A${currentRow}`).value = "소계";
+    Object.assign(ws.getCell(`A${currentRow}`), EXCEL_STYLES.headerCell);
+    ws.getCell(`G${currentRow}`).value = data.subTotal;
+    Object.assign(ws.getCell(`G${currentRow}`), EXCEL_STYLES.number);
+    currentRow++;
+
+    ws.mergeCells(`A${currentRow}:F${currentRow}`);
+    ws.getCell(`A${currentRow}`).value = "부가가치세";
+    Object.assign(ws.getCell(`A${currentRow}`), EXCEL_STYLES.headerCell);
+    ws.getCell(`G${currentRow}`).value = data.vat;
+    Object.assign(ws.getCell(`G${currentRow}`), EXCEL_STYLES.number);
+    currentRow++;
+
+    ws.mergeCells(`A${currentRow}:F${currentRow}`);
+    ws.getCell(`A${currentRow}`).value = "합계";
+    Object.assign(ws.getCell(`A${currentRow}`), EXCEL_STYLES.totalAmount);
+    ws.getCell(`G${currentRow}`).value = data.totalAmount;
+    Object.assign(ws.getCell(`G${currentRow}`), EXCEL_STYLES.totalAmount);
+    currentRow++;
+
+    // 비고
+    ws.mergeCells(`A${currentRow}:G${currentRow + 4}`);
+    ws.getCell(`A${currentRow}`).value = "비고";
+    Object.assign(ws.getCell(`A${currentRow}`), EXCEL_STYLES.headerCell);
+    ws.getCell(`A${currentRow + 1}`).value = data.remarks;
+    Object.assign(ws.getCell(`A${currentRow + 1}`), EXCEL_STYLES.text);
+
+    // 서명/도장 영역
+    ws.mergeCells(`G${currentRow + 1}:H${currentRow + 3}`);
+    Object.assign(ws.getCell(`G${currentRow + 1}`), EXCEL_STYLES.signatureArea);
   }
 
   /**
    * 발주서 레이아웃 구현
    */
   setupPurchaseOrderLayout(data) {
-    // 1. 제목(발주서): 병합 셀 C4:H4, 중앙 정렬, Bold, 연회색 배경
-    this.worksheet.mergeCells('C4:H4');
-    const titleCell = this.worksheet.getCell('C4');
-    titleCell.value = '발 주 서';
+    const ws = this.worksheet;
+
+    // 1. 제목(발주서): 병합 셀 B4:G4, 중앙 정렬, 큰 글씨, 연한색 배경
+    ws.mergeCells("B4:G4");
+    const titleCell = ws.getCell("B4");
+    titleCell.value = "발 주 서";
     Object.assign(titleCell, EXCEL_STYLES.documentTitle);
 
-    // 2. 견적일자: D6
-    this.worksheet.getCell('D6').value = data.date || new Date().toISOString().split('T')[0];
-    Object.assign(this.worksheet.getCell('D6'), EXCEL_STYLES.date);
+    // A5셀 "견적일자" 텍스트
+    ws.getCell("A5").value = "견적일자";
+    Object.assign(ws.getCell("A5"), EXCEL_STYLES.text);
 
-    // 3. 사업자등록번호: G6:H6 병합
-    this.worksheet.mergeCells('G6:H6');
-    this.worksheet.getCell('G6').value = data.businessNumber || '';
+    // 견적일자 날짜 -> C5:D5까지 셀병합해서 공간차지
+    ws.mergeCells("C5:D5");
+    ws.getCell("C5").value = data.orderDate; // data.orderDate 변수 사용
+    Object.assign(ws.getCell("C5"), EXCEL_STYLES.text);
 
-    // 4. 공급자 상호명/대표자 텍스트 및 값: G7/G8, H7/H8
-    this.worksheet.getCell('G7').value = '상호명';
-    this.worksheet.getCell('G8').value = data.companyName || '';
-    Object.assign(this.worksheet.getCell('G8'), EXCEL_STYLES.companyInfoValue);
-    
-    this.worksheet.getCell('H7').value = '대표자';
-    this.worksheet.getCell('H8').value = data.representative || '';
-    Object.assign(this.worksheet.getCell('H8'), EXCEL_STYLES.companyInfoValue);
+    // 상호명,담당자 -> 각각 A6,A7칸에 위치할 수 있도록
+    ws.getCell("A6").value = "상호명";
+    Object.assign(ws.getCell("A6"), EXCEL_STYLES.text);
+    ws.getCell("A7").value = "담당자";
+    Object.assign(ws.getCell("A7"), EXCEL_STYLES.text);
 
-    // 5. 담당자: D10
-    this.worksheet.getCell('D10').value = data.manager || '';
+    // D5:D9 -> "아래와 같이 견적합니다" (발주서에서는 "아래와 같이 발주합니다"로 변경)
+    ws.mergeCells("D5:D9");
+    ws.getCell("D5").value = "아래와 같이 발주합니다";
+    Object.assign(ws.getCell("D5"), EXCEL_STYLES.text);
 
-    // 6. 소재지: G9/G10
-    this.worksheet.getCell('G9').value = '소재지';
-    this.worksheet.getCell('G10').value = data.address || '';
+    // E5:E9 -> 5개의 칸 각각 "사업자등록번호", "상 호", "소 재 지", "T E L", "홈페이지" 가 들어갈 수 있도록
+    ws.getCell("E5").value = "사업자등록번호";
+    Object.assign(ws.getCell("E5"), EXCEL_STYLES.text);
+    ws.getCell("E6").value = "상 호";
+    Object.assign(ws.getCell("E6"), EXCEL_STYLES.text);
+    ws.getCell("E7").value = "소 재 지";
+    Object.assign(ws.getCell("E7"), EXCEL_STYLES.text);
+    ws.getCell("E8").value = "T E L";
+    Object.assign(ws.getCell("E8"), EXCEL_STYLES.text);
+    ws.getCell("E9").value = "홈페이지";
+    Object.assign(ws.getCell("E9"), EXCEL_STYLES.text);
 
-    // 7. 연락처 TEL/FAX: G11/G12, H11/H12
-    this.worksheet.getCell('G11').value = 'TEL';
-    this.worksheet.getCell('G12').value = data.tel || '';
-    this.worksheet.getCell('H11').value = 'FAX';
-    this.worksheet.getCell('H12').value = data.fax || '';
+    // F5:I5 -> 4개의 셀 병합하여, "232 - 81 - 01750" 값이 들어가 있을 수 있도록
+    ws.mergeCells("F5:I5");
+    ws.getCell("F5").value = "232 - 81 - 01750";
+    Object.assign(ws.getCell("F5"), EXCEL_STYLES.text);
 
-    // 8. 홈페이지: G13
-    this.worksheet.getCell('G13').value = data.homepage || '';
+    // F6 -> "삼미앵글랙산업"이란 값이 들어가 있도록
+    ws.getCell("F6").value = "삼미앵글랙산업";
+    Object.assign(ws.getCell("F6"), EXCEL_STYLES.text);
 
-    // 9. 견적금액(한글/숫자): G14 / H14
-    this.worksheet.getCell('G14').value = data.totalAmountKorean || '';
-    this.worksheet.getCell('H14').value = data.totalAmount || 0;
-    Object.assign(this.worksheet.getCell('H14'), EXCEL_STYLES.currency);
+    // G6,H6 -> 각각 "대표자", "박이삭"이란값이 들어가 있도록
+    ws.getCell("G6").value = "대표자";
+    Object.assign(ws.getCell("G6"), EXCEL_STYLES.text);
+    ws.getCell("H6").value = "박이삭";
+    Object.assign(ws.getCell("H6"), EXCEL_STYLES.text);
 
-    // 10. 발주명세 타이틀: 병합 셀 C16:H16
-    this.worksheet.mergeCells('C16:H16');
-    const orderTitleCell = this.worksheet.getCell('C16');
-    orderTitleCell.value = '발주명세';
-    Object.assign(orderTitleCell, EXCEL_STYLES.amountTitle);
+    // F7:I7 -> 4개의 셀 병합하여, "경기도 광명시 원노온사로 39, 철제 스틸하우스 1" 값이 들어가 있을 수 있도록
+    ws.mergeCells("F7:I7");
+    ws.getCell("F7").value = "경기도 광명시 원노온사로 39, 철제 스틸하우스 1";
+    Object.assign(ws.getCell("F7"), EXCEL_STYLES.text);
 
-    // 11. 테이블 헤더: C17:J17, Bold, 테두리 완전
-    const headers = ['품목명', '규격', '수량', '단가', '금액', '납기', '비고'];
-    for (let i = 0; i < headers.length; i++) {
-      const col = String.fromCharCode(67 + i); // C, D, E, F, G, H, I
-      const cell = this.worksheet.getCell(`${col}17`);
-      cell.value = headers[i];
-      Object.assign(cell, EXCEL_STYLES.tableHeader);
-    }
+    // F8,G8 -> 각각 "010-9548-9578  010-4311-7733", "FAX"이란 값이 들어가 있도록
+    ws.getCell("F8").value = "010-9548-9578  010-4311-7733";
+    Object.assign(ws.getCell("F8"), EXCEL_STYLES.text);
+    ws.getCell("G8").value = "FAX";
+    Object.assign(ws.getCell("G8"), EXCEL_STYLES.text);
 
-    // 12. 테이블 품목 행: C18:J30
-    if (data.items && data.items.length > 0) {
-      data.items.forEach((item, index) => {
-        const row = 18 + index;
-        if (row <= 30) { // 최대 13개 품목
-          this.worksheet.getCell(`C${row}`).value = item.name || '';
-          Object.assign(this.worksheet.getCell(`C${row}`), EXCEL_STYLES.tableDataLeft);
-          
-          this.worksheet.getCell(`D${row}`).value = item.specification || '';
-          Object.assign(this.worksheet.getCell(`D${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`E${row}`).value = item.quantity || 0;
-          Object.assign(this.worksheet.getCell(`E${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`F${row}`).value = item.unitPrice || 0;
-          Object.assign(this.worksheet.getCell(`F${row}`), EXCEL_STYLES.currency);
-          
-          const amount = (item.quantity || 0) * (item.unitPrice || 0);
-          this.worksheet.getCell(`G${row}`).value = amount;
-          Object.assign(this.worksheet.getCell(`G${row}`), EXCEL_STYLES.currency);
-          
-          this.worksheet.getCell(`H${row}`).value = item.deliveryDate || '';
-          Object.assign(this.worksheet.getCell(`H${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`I${row}`).value = item.note || '';
-          Object.assign(this.worksheet.getCell(`I${row}`), EXCEL_STYLES.tableDataLeft);
-        }
-      });
-    }
+    // H8:I8 -> 2개의 셀 병합하여, "(02)2611-4595"이란 값이 들어가 있도록
+    ws.mergeCells("H8:I8");
+    ws.getCell("H8").value = "(02)2611-4595";
+    Object.assign(ws.getCell("H8"), EXCEL_STYLES.text);
 
-    // 13. 소계/부가가치세/합계: G31/H31, G32/H32, G33/H33
-    this.worksheet.getCell('G31').value = '소계';
-    this.worksheet.getCell('H31').value = data.subtotal || 0;
-    Object.assign(this.worksheet.getCell('G31'), EXCEL_STYLES.subtotalRow);
-    Object.assign(this.worksheet.getCell('H31'), EXCEL_STYLES.currency);
+    // F9:I9 -> "http://www.ssmake.com"이란 값이 들어가 있도록
+    ws.mergeCells("F9:I9");
+    ws.getCell("F9").value = "http://www.ssmake.com";
+    Object.assign(ws.getCell("F9"), EXCEL_STYLES.text);
 
-    this.worksheet.getCell('G32').value = '부가가치세';
-    this.worksheet.getCell('H32').value = data.tax || 0;
-    Object.assign(this.worksheet.getCell('G32'), EXCEL_STYLES.taxRow);
-    Object.assign(this.worksheet.getCell('H32'), EXCEL_STYLES.currency);
+    // A10:C10 -> 3개의 셀 병합하여, "견적금액(부가세포함)"이란 값이 들어가 있도록
+    ws.mergeCells("A10:C10");
+    ws.getCell("A10").value = "견적금액(부가세포함)";
+    Object.assign(ws.getCell("A10"), EXCEL_STYLES.text);
 
-    this.worksheet.getCell('G33').value = '합계';
-    this.worksheet.getCell('H33').value = data.totalAmount || 0;
-    Object.assign(this.worksheet.getCell('G33'), EXCEL_STYLES.totalRow);
-    Object.assign(this.worksheet.getCell('H33'), EXCEL_STYLES.currency);
+    // "납기"라는 칸자체를 없애고, 비고를 좌측으로 당길것
+    // 발주서의 헤더 정의 (납기 제거)
+    const poHeaders = [
+      { key: "no", header: "NO", width: 5 },
+      { key: "itemName", header: "품목명", width: 32 },
+      { key: "standard", header: "규격", width: 15 },
+      { key: "unit", header: "단위", width: 8 },
+      { key: "quantity", header: "수량", width: 8 },
+      { key: "unitPrice", header: "단가", width: 12 },
+      { key: "supplyAmount", header: "공급가", width: 15 }, // G17 "공급가" 사용
+      { key: "remarks", header: "비고", width: 15 }, // 비고 좌측으로 당김
+    ];
 
-    // 14. 원자재명세 타이틀: 병합 셀 C35:J35
-    this.worksheet.mergeCells('C35:J35');
-    const materialTitleCell = this.worksheet.getCell('C35');
-    materialTitleCell.value = '원자재명세';
-    Object.assign(materialTitleCell, EXCEL_STYLES.materialTitle);
-
-    // 15. 원자재명세 테이블 헤더: C36:I36
-    const materialHeaders = ['품목명', '규격', '수량', '단가', '금액', '비고'];
-    for (let i = 0; i < materialHeaders.length; i++) {
-      const col = String.fromCharCode(67 + i); // C, D, E, F, G, H
-      const cell = this.worksheet.getCell(`${col}36`);
-      cell.value = materialHeaders[i];
-      Object.assign(cell, EXCEL_STYLES.tableHeader);
-    }
-
-    // 16. 원자재명세 행: C37:I60
-    if (data.materials && data.materials.length > 0) {
-      data.materials.forEach((material, index) => {
-        const row = 37 + index;
-        if (row <= 60) { // 최대 24개 원자재
-          this.worksheet.getCell(`C${row}`).value = material.name || '';
-          Object.assign(this.worksheet.getCell(`C${row}`), EXCEL_STYLES.tableDataLeft);
-          
-          this.worksheet.getCell(`D${row}`).value = material.specification || '';
-          Object.assign(this.worksheet.getCell(`D${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`E${row}`).value = material.quantity || 0;
-          Object.assign(this.worksheet.getCell(`E${row}`), EXCEL_STYLES.tableData);
-          
-          this.worksheet.getCell(`F${row}`).value = material.unitPrice || 0;
-          Object.assign(this.worksheet.getCell(`F${row}`), EXCEL_STYLES.currency);
-          
-          const amount = (material.quantity || 0) * (material.unitPrice || 0);
-          this.worksheet.getCell(`G${row}`).value = amount;
-          Object.assign(this.worksheet.getCell(`G${row}`), EXCEL_STYLES.currency);
-          
-          this.worksheet.getCell(`H${row}`).value = material.note || '';
-          Object.assign(this.worksheet.getCell(`H${row}`), EXCEL_STYLES.tableDataLeft);
-        }
-      });
-    }
-
-    // 17. 특기사항: 병합 셀 C62:J62
-    this.worksheet.mergeCells('C62:J62');
-    const remarksCell = this.worksheet.getCell('C62');
-    remarksCell.value = data.remarks || '';
-    Object.assign(remarksCell, EXCEL_STYLES.remarks);
-
-    // 18. 회사 정보 푸터: C65:J65 병합, 중앙 정렬, 연한 회색
-    this.worksheet.mergeCells('C65:J65');
-    const footerCell = this.worksheet.getCell('C65');
-    footerCell.value = data.companyFooter || '';
-    Object.assign(footerCell, EXCEL_STYLES.companyFooter);
-
-    this.currentRow = 66; // 다음 작업을 위한 현재 행 설정
-  }
-
-  /**
-   * 현재 행 번호 반환
-   */
-  getCurrentRow() {
-    return this.currentRow;
-  }
-
-  /**
-   * 빈 행 추가
-   */
-  addEmptyRow(count = 1) {
-    this.currentRow += count;
-  }
-
-  // 기존 메서드들은 호환성을 위해 유지하되, 새로운 레이아웃 메서드를 우선 사용
-  /**
-   * 문서 제목 추가 (견적서/발주서/거래명세서) - 호환성 유지
-   */
-  addDocumentTitle(title, logoSpace = true) {
-    const startRow = logoSpace ? 5 : 1;
-    this.currentRow = startRow;
-
-    // 제목 행 병합
-    this.worksheet.mergeCells(`A${startRow}:H${startRow}`);
-    
-    const titleCell = this.worksheet.getCell(`A${startRow}`);
-    titleCell.value = title;
-    Object.assign(titleCell, EXCEL_STYLES.documentTitle);
-    
-    // 행 높이 설정
-    this.worksheet.getRow(startRow).height = ROW_HEIGHTS.title;
-    
-    this.currentRow++;
-    return startRow;
-  }
-
-  /**
-   * 회사 정보 섹션 추가 - 호환성 유지
-   */
-  addCompanyInfo(companyData) {
-    this.currentRow++; // 빈 행 추가
-    
-    const infoStartRow = this.currentRow;
-    
-    // 회사명
-    this.worksheet.getCell(`A${this.currentRow}`).value = '회사명:';
-    this.worksheet.getCell(`B${this.currentRow}`).value = companyData.name || '';
-    Object.assign(this.worksheet.getCell(`A${this.currentRow}`), EXCEL_STYLES.companyInfo);
-    
-    this.currentRow++;
-    
-    // 주소
-    this.worksheet.getCell(`A${this.currentRow}`).value = '주소:';
-    this.worksheet.getCell(`B${this.currentRow}`).value = companyData.address || '';
-    Object.assign(this.worksheet.getCell(`A${this.currentRow}`), EXCEL_STYLES.companyInfo);
-    
-    this.currentRow++;
-    
-    // 연락처
-    this.worksheet.getCell(`A${this.currentRow}`).value = '연락처:';
-    this.worksheet.getCell(`B${this.currentRow}`).value = companyData.phone || '';
-    Object.assign(this.worksheet.getCell(`A${this.currentRow}`), EXCEL_STYLES.companyInfo);
-    
-    this.currentRow++;
-    
-    // 날짜 (우측 상단)
-    this.worksheet.getCell(`F${infoStartRow}`).value = '작성일:';
-    this.worksheet.getCell(`G${infoStartRow}`).value = new Date();
-    Object.assign(this.worksheet.getCell(`G${infoStartRow}`), EXCEL_STYLES.date);
-    
-    return infoStartRow;
-  }
-
-  /**
-   * 고객 정보 섹션 추가 - 호환성 유지
-   */
-  addClientInfo(clientData) {
-    this.currentRow++; // 빈 행 추가
-    
-    // 고객 정보 제목
-    this.worksheet.mergeCells(`A${this.currentRow}:H${this.currentRow}`);
-    const clientTitleCell = this.worksheet.getCell(`A${this.currentRow}`);
-    clientTitleCell.value = '▣ 고객 정보';
-    Object.assign(clientTitleCell, EXCEL_STYLES.companyInfo);
-    
-    this.currentRow++;
-    
-    // 고객명
-    this.worksheet.getCell(`A${this.currentRow}`).value = '고객명:';
-    this.worksheet.getCell(`B${this.currentRow}`).value = clientData.name || '';
-    
-    this.currentRow++;
-    
-    // 고객 주소
-    this.worksheet.getCell(`A${this.currentRow}`).value = '주소:';
-    this.worksheet.getCell(`B${this.currentRow}`).value = clientData.address || '';
-    
-    this.currentRow++;
-    
-    return this.currentRow - 3;
-  }
-
-  /**
-   * 테이블 헤더 추가 - 호환성 유지
-   */
-  addTableHeader(headers) {
-    this.currentRow++; // 빈 행 추가
-    
-    const headerRow = this.currentRow;
-    
-    headers.forEach((header, index) => {
-      const column = String.fromCharCode(65 + index); // A, B, C, ...
-      const cell = this.worksheet.getCell(`${column}${headerRow}`);
-      cell.value = header;
-      Object.assign(cell, EXCEL_STYLES.tableHeader);
-    });
-    
-    // 헤더 행 높이 설정
-    this.worksheet.getRow(headerRow).height = ROW_HEIGHTS.header;
-    
-    this.currentRow++;
-    return headerRow;
-  }
-
-  /**
-   * 테이블 데이터 행 추가 - 호환성 유지
-   */
-  addTableRow(rowData, isTotal = false) {
-    const row = this.currentRow;
-    
-    rowData.forEach((cellData, index) => {
-      const column = String.fromCharCode(65 + index);
-      const cell = this.worksheet.getCell(`${column}${row}`);
-      
-      cell.value = cellData;
-      
-      if (isTotal) {
-        Object.assign(cell, EXCEL_STYLES.totalRow);
-      } else {
-        // 숫자인지 확인하여 통화 스타일 적용
-        if (typeof cellData === 'number' || (typeof cellData === 'string' && /^\d+$/.test(cellData.replace(/,/g, '')))) {
-          Object.assign(cell, EXCEL_STYLES.currency);
-        } else {
-          Object.assign(cell, EXCEL_STYLES.tableData);
-        }
+    let currentPOHeaderRow = 17;
+    poHeaders.forEach((header, index) => {
+      const cell = ws.getCell(currentPOHeaderRow, index + 1);
+      cell.value = header.header;
+      Object.assign(cell, EXCEL_STYLES.headerCell);
+      if (header.width) {
+        ws.getColumn(index + 1).width = header.width;
       }
     });
-    
-    // 행 높이 설정
-    this.worksheet.getRow(row).height = isTotal ? ROW_HEIGHTS.total : ROW_HEIGHTS.data;
-    
-    this.currentRow++;
-    return row;
+
+    // 데이터 행 추가
+    let currentPORow = currentPOHeaderRow + 1;
+    data.items.forEach((item, index) => {
+      ws.getCell(currentPORow, 1).value = index + 1;
+      Object.assign(ws.getCell(currentPORow, 1), EXCEL_STYLES.dataCell);
+
+      ws.getCell(currentPORow, 2).value = item.itemName;
+      Object.assign(ws.getCell(currentPORow, 2), EXCEL_STYLES.dataCell);
+
+      ws.getCell(currentPORow, 3).value = item.standard;
+      Object.assign(ws.getCell(currentPORow, 3), EXCEL_STYLES.dataCell);
+
+      ws.getCell(currentPORow, 4).value = item.unit;
+      Object.assign(ws.getCell(currentPORow, 4), EXCEL_STYLES.dataCell);
+
+      ws.getCell(currentPORow, 5).value = item.quantity;
+      Object.assign(ws.getCell(currentPORow, 5), EXCEL_STYLES.number);
+
+      ws.getCell(currentPORow, 6).value = item.unitPrice;
+      Object.assign(ws.getCell(currentPORow, 6), EXCEL_STYLES.number);
+
+      ws.getCell(currentPORow, 7).value = item.supplyAmount; // 공급가
+      Object.assign(ws.getCell(currentPORow, 7), EXCEL_STYLES.number);
+
+      ws.getCell(currentPORow, 8).value = item.remarks; // 비고
+      Object.assign(ws.getCell(currentPORow, 8), EXCEL_STYLES.dataCell);
+
+      currentPORow++;
+    });
+
+    // 소계, 부가가치세, 합계
+    // G31:H33 -> "소계"는 C31:G31까지 셀 병합하여 공간차지, "부가가치세"는 C32:G32까지 셀 병합하여 공간차지, "합계"는 C33:G33까지 셀 병합하여 공간차지
+    ws.mergeCells(`C${currentPORow}:G${currentPORow}`);
+    ws.getCell(`C${currentPORow}`).value = "소계";
+    Object.assign(ws.getCell(`C${currentPORow}`), EXCEL_STYLES.headerCell);
+    ws.getCell(`H${currentPORow}`).value = data.subTotal;
+    Object.assign(ws.getCell(`H${currentPORow}`), EXCEL_STYLES.number);
+    currentPORow++;
+
+    ws.mergeCells(`C${currentPORow}:G${currentPORow}`);
+    ws.getCell(`C${currentPORow}`).value = "부가가치세";
+    Object.assign(ws.getCell(`C${currentPORow}`), EXCEL_STYLES.headerCell);
+    ws.getCell(`H${currentPORow}`).value = data.vat;
+    Object.assign(ws.getCell(`H${currentPORow}`), EXCEL_STYLES.number);
+    currentPORow++;
+
+    ws.mergeCells(`C${currentPORow}:G${currentPORow}`);
+    ws.getCell(`C${currentPORow}`).value = "합계";
+    Object.assign(ws.getCell(`C${currentPORow}`), EXCEL_STYLES.totalAmount);
+    ws.getCell(`H${currentPORow}`).value = data.totalAmount;
+    Object.assign(ws.getCell(`H${currentPORow}`), EXCEL_STYLES.totalAmount);
+    currentPORow++;
+
+    // 서명/도장 영역
+    ws.mergeCells(`G${currentPORow + 1}:H${currentPORow + 3}`);
+    Object.assign(ws.getCell(`G${currentPORow + 1}`), EXCEL_STYLES.signatureArea);
   }
 
   /**
-   * 합계 행 추가 - 호환성 유지
+   * 거래명세서 레이아웃 구현
    */
-  addTotalRow(totalData, mergeColumns = 3) {
-    // 합계 라벨 셀 병합
-    const totalRow = this.currentRow;
-    
-    if (mergeColumns > 1) {
-      this.worksheet.mergeCells(`A${totalRow}:${String.fromCharCode(64 + mergeColumns)}${totalRow}`);
-    }
-    
-    const labelCell = this.worksheet.getCell(`A${totalRow}`);
-    labelCell.value = '합계';
-    Object.assign(labelCell, EXCEL_STYLES.totalRow);
-    
-    // 합계 금액
-    const totalCell = this.worksheet.getCell(`${String.fromCharCode(65 + mergeColumns)}${totalRow}`);
-    totalCell.value = totalData.total || 0;
-    Object.assign(totalCell, { ...EXCEL_STYLES.totalRow, ...EXCEL_STYLES.currency });
-    
-    // 행 높이 설정
-    this.worksheet.getRow(totalRow).height = ROW_HEIGHTS.total;
-    
-    this.currentRow++;
-    return totalRow;
+  setupTransactionStatementLayout(data) {
+    const ws = this.worksheet;
+
+    // TODO: Implement transaction statement layout
   }
 
-  /**
-   * 비고란 추가 - 호환성 유지
-   */
-  addRemarksSection(remarks) {
-    this.currentRow++; // 빈 행 추가
-    
-    // 비고 제목
-    this.worksheet.getCell(`A${this.currentRow}`).value = '비고:';
-    Object.assign(this.worksheet.getCell(`A${this.currentRow}`), EXCEL_STYLES.companyInfo);
-    
-    this.currentRow++;
-    
-    // 비고 내용 (여러 행에 걸쳐 병합)
-    const remarksStartRow = this.currentRow;
-    const remarksEndRow = this.currentRow + 2;
-    
-    this.worksheet.mergeCells(`A${remarksStartRow}:H${remarksEndRow}`);
-    const remarksCell = this.worksheet.getCell(`A${remarksStartRow}`);
-    remarksCell.value = remarks || '';
-    Object.assign(remarksCell, EXCEL_STYLES.remarks);
-    
-    // 비고란 행 높이 설정
-    for (let i = remarksStartRow; i <= remarksEndRow; i++) {
-      this.worksheet.getRow(i).height = ROW_HEIGHTS.remarks / 3;
-    }
-    
-    this.currentRow = remarksEndRow + 1;
-    return remarksStartRow;
+  // 헬퍼 함수: 컬럼명(예: 'A')을 인덱스(0부터 시작)로 변환
+  getColumnIndex(col) {
+    return col.charCodeAt(0) - 65;
+  }
+
+  // 헬퍼 함수: 행 번호(예: '1')를 인덱스(0부터 시작)로 변환
+  getRowIndex(row) {
+    return parseInt(row) - 1;
   }
 }
+
+export const COLUMN_WIDTHS = {
+  estimate: {
+    A: 5,
+    B: 32,
+    C: 15,
+    D: 10,
+    E: 15,
+    F: 15,
+    G: 15,
+    H: 15,
+    I: 15,
+  },
+  purchaseOrder: {
+    A: 5,
+    B: 32,
+    C: 15,
+    D: 10,
+    E: 15,
+    F: 15,
+    G: 15,
+    H: 15,
+    I: 15,
+  },
+  transactionStatement: {
+    // Define widths for transaction statement
+  },
+};
+
+export const ROW_HEIGHTS = {
+  // Define row heights if needed
+};
