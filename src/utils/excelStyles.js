@@ -17,12 +17,6 @@ export const EXCEL_STYLES = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: 'FFF0F0F0' }
-    },
-    border: {
-      top: { style: 'thick', color: { argb: 'FF000000' } },
-      left: { style: 'thick', color: { argb: 'FF000000' } },
-      bottom: { style: 'thick', color: { argb: 'FF000000' } },
-      right: { style: 'thick', color: { argb: 'FF000000' } }
     }
   },
 
@@ -39,13 +33,26 @@ export const EXCEL_STYLES = {
     }
   },
 
-  // 테이블 헤더 스타일
-  tableHeader: {
+  // 회사 정보 값 스타일 (굵은 글씨)
+  companyInfoValue: {
     font: { 
       name: 'Arial', 
-      size: 11, 
+      size: 12, 
+      bold: true 
+    },
+    alignment: { 
+      horizontal: 'left', 
+      vertical: 'middle' 
+    }
+  },
+
+  // 금액명세 타이틀 스타일
+  amountTitle: {
+    font: { 
+      name: 'Arial', 
+      size: 12, 
       bold: true, 
-      color: { argb: 'FFFFFFFF' } 
+      color: { argb: 'FF000000' } 
     },
     alignment: { 
       horizontal: 'center', 
@@ -54,7 +61,26 @@ export const EXCEL_STYLES = {
     fill: {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF4472C4' }
+      fgColor: { argb: 'FFD3D3D3' } // 회색 배경
+    }
+  },
+
+  // 테이블 헤더 스타일 (밝은 회색 배경으로 수정)
+  tableHeader: {
+    font: { 
+      name: 'Arial', 
+      size: 11, 
+      bold: true, 
+      color: { argb: 'FF000000' } 
+    },
+    alignment: { 
+      horizontal: 'center', 
+      vertical: 'middle' 
+    },
+    fill: {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' } // 밝은 회색 배경으로 수정
     },
     border: {
       top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -82,17 +108,74 @@ export const EXCEL_STYLES = {
     }
   },
 
-  // 숫자/금액 스타일
-  currency: {
+  // 테이블 데이터 왼쪽 정렬 스타일
+  tableDataLeft: {
     font: { 
       name: 'Arial', 
       size: 10 
+    },
+    alignment: { 
+      horizontal: 'left', 
+      vertical: 'middle' 
+    },
+    border: {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    }
+  },
+
+  // 숫자/금액 스타일 (우측 정렬, 굵은 글씨)
+  currency: {
+    font: { 
+      name: 'Arial', 
+      size: 10,
+      bold: true 
     },
     alignment: { 
       horizontal: 'right', 
       vertical: 'middle' 
     },
     numFmt: '#,##0',
+    border: {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    }
+  },
+
+  // 소계 스타일
+  subtotalRow: {
+    font: { 
+      name: 'Arial', 
+      size: 11, 
+      bold: false 
+    },
+    alignment: { 
+      horizontal: 'center', 
+      vertical: 'middle' 
+    },
+    border: {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    }
+  },
+
+  // 부가가치세 스타일
+  taxRow: {
+    font: { 
+      name: 'Arial', 
+      size: 11, 
+      bold: false 
+    },
+    alignment: { 
+      horizontal: 'center', 
+      vertical: 'middle' 
+    },
     border: {
       top: { style: 'thin', color: { argb: 'FF000000' } },
       left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -111,11 +194,6 @@ export const EXCEL_STYLES = {
     alignment: { 
       horizontal: 'center', 
       vertical: 'middle' 
-    },
-    fill: {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFFFE699' }
     },
     border: {
       top: { style: 'thick', color: { argb: 'FF000000' } },
@@ -155,30 +233,65 @@ export const EXCEL_STYLES = {
       vertical: 'middle' 
     },
     numFmt: 'yyyy-mm-dd'
+  },
+
+  // 회사 정보 푸터 스타일 (작고 중앙 정렬된 회색 글씨)
+  companyFooter: {
+    font: { 
+      name: 'Arial', 
+      size: 8, 
+      color: { argb: 'FF808080' } // 회색 글씨
+    },
+    alignment: { 
+      horizontal: 'center', 
+      vertical: 'middle' 
+    }
+  },
+
+  // 원자재명세 타이틀 스타일
+  materialTitle: {
+    font: { 
+      name: 'Arial', 
+      size: 12, 
+      bold: true, 
+      color: { argb: 'FF000000' } 
+    },
+    alignment: { 
+      horizontal: 'center', 
+      vertical: 'middle' 
+    },
+    fill: {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFE0E0E0' } // 밝은 회색 배경
+    }
   }
 };
 
 // 컬럼 너비 설정
 export const COLUMN_WIDTHS = {
   estimate: {
-    A: 20, // 품목명
-    B: 8,  // 단위
-    C: 8,  // 수량
-    D: 12, // 단가
-    E: 12, // 금액
-    F: 15, // 비고
-    G: 10, // 여백
-    H: 10  // 여백
+    A: 5,  // 여백
+    B: 20, // 품목명
+    C: 8,  // 단위
+    D: 8,  // 수량
+    E: 12, // 단가
+    F: 12, // 금액
+    G: 12, // 금액(한글)
+    H: 10, // 도장/로고
+    I: 10  // 도장/로고
   },
   purchaseOrder: {
-    A: 20, // 품목명/품명
-    B: 12, // 단위/규격
-    C: 8,  // 수량
-    D: 12, // 단가
-    E: 12, // 금액
-    F: 10, // 납기
-    G: 15, // 비고
-    H: 10  // 여백
+    A: 5,  // 여백
+    B: 5,  // 여백
+    C: 20, // 품목명/품명
+    D: 12, // 단위/규격
+    E: 8,  // 수량
+    F: 12, // 단가
+    G: 12, // 금액(한글)
+    H: 12, // 금액(숫자)/대표자
+    I: 10, // 납기
+    J: 15  // 비고
   },
   transactionStatement: {
     A: 12, // 거래일자
