@@ -66,12 +66,12 @@ export class ExcelImageHandler {
   }
 
   /**
-   * 회사 로고 추가 (표준 위치)
+   * 견적서 회사 로고 추가 (H6:I7)
    * @param {string} logoData - 로고 이미지 데이터 (base64 또는 URL)
    * @param {object} worksheet - 워크시트
    */
-  async addCompanyLogo(logoData, worksheet) {
-    const logoRange = 'A1:C4';
+  async addEstimateCompanyLogo(logoData, worksheet) {
+    const logoRange = 'H6:I7'; // 견적서 로고 위치
     
     if (logoData.startsWith('data:image') || logoData.startsWith('/9j/') || logoData.startsWith('iVBORw0KGgo')) {
       // Base64 이미지
@@ -83,6 +83,41 @@ export class ExcelImageHandler {
     } else {
       console.warn('지원하지 않는 이미지 형식:', logoData);
       return null;
+    }
+  }
+
+  /**
+   * 발주서 회사 로고 추가 (H6:H9)
+   * @param {string} logoData - 로고 이미지 데이터 (base64 또는 URL)
+   * @param {object} worksheet - 워크시트
+   */
+  async addPurchaseOrderCompanyLogo(logoData, worksheet) {
+    const logoRange = 'H6:H9'; // 발주서 로고 위치
+    
+    if (logoData.startsWith('data:image') || logoData.startsWith('/9j/') || logoData.startsWith('iVBORw0KGgo')) {
+      // Base64 이미지
+      const extension = this.getBase64Extension(logoData) || 'png';
+      return this.addBase64Image(logoData, extension, logoRange, { worksheet });
+    } else if (logoData.startsWith('http')) {
+      // URL 이미지
+      return await this.addImageFromUrl(logoData, logoRange, { worksheet });
+    } else {
+      console.warn('지원하지 않는 이미지 형식:', logoData);
+      return null;
+    }
+  }
+
+  /**
+   * 회사 로고 추가 (문서 타입에 따라 자동 선택)
+   * @param {string} logoData - 로고 이미지 데이터
+   * @param {object} worksheet - 워크시트
+   * @param {string} documentType - 문서 타입 ('estimate' 또는 'purchaseOrder')
+   */
+  async addCompanyLogo(logoData, worksheet, documentType = 'estimate') {
+    if (documentType === 'purchaseOrder') {
+      return await this.addPurchaseOrderCompanyLogo(logoData, worksheet);
+    } else {
+      return await this.addEstimateCompanyLogo(logoData, worksheet);
     }
   }
 
