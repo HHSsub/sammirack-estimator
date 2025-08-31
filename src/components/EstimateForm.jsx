@@ -151,11 +151,14 @@ const EstimateForm = () => {
     }
 
     const fileName = generateFileName('견적서', formData);
-    const success = exportToExcel(formData, fileName, 'estimate');
-    
-    if (success) {
-      alert('엑셀 파일이 다운로드되었습니다.');
-    }
+    exportToExcel(formData, fileName, 'estimate')
+      .then(() => {
+        alert('엑셀 파일이 다운로드되었습니다.');
+      })
+      .catch(error => {
+        console.error('Error exporting to Excel:', error);
+        alert('엑셀 파일 다운로드 중 오류가 발생했습니다.');
+      });
   };
 
   // 인쇄하기
