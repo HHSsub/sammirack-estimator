@@ -180,8 +180,18 @@ export function generateFileName(documentType) {
   return `${documentType}_${getCurrentDate()}.xlsx`;
 }
 
-export const exportToExcel = {
-  generateEstimateExcel,
-  generatePurchaseOrderExcel,
-  generateTransactionStatementExcel,
+export const exportToExcel = async (data, fileName, type) => {
+  switch (type) {
+    case 'estimate':
+      await generateEstimateExcel(data);
+      break;
+    case 'purchase':
+      await generatePurchaseOrderExcel(data);
+      break;
+    case 'transaction':
+      await generateTransactionStatementExcel(data);
+      break;
+    default:
+      console.error('Unknown document type for Excel export');
+  }
 };
