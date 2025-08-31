@@ -1,203 +1,106 @@
-// 고급 ExcelJS 내보내기 유틸리티 - 웹 프린트 레이아웃 완벽 복제
+// ----------------------------------------------------------------------------
+// src/utils/excelExport.js
+// ----------------------------------------------------------------------------
 import ExcelJS from 'exceljs';
 import { ExcelImageHandler } from './excelImageHandler';
 import { LayoutMapper } from './layoutMapper';
 import { EXCEL_STYLES } from './excelStyles';
 
-/**
- * 견적서 Excel 생성
- * @param {Object} data - 견적서 데이터
- * @param {Object} options - 추가 옵션
- */
-export async function generateEstimateExcel(data, options = {}) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('견적서');
-
-  // 이미지 핸들러 초기화
-  const imageHandler = new ExcelImageHandler(workbook);
-
-  // 레이아웃 매퍼 초기화
-  const layoutMapper = new LayoutMapper(worksheet, 'estimate');
-
-  try {
-    // 1. 컬럼 너비 설정
-    layoutMapper.setupColumnWidths();
-
-    // 2. 견적서 레이아웃 구현 (새로운 정확한 레이아웃)
-    layoutMapper.setupEstimateLayout(data);
-
-    // 3. 회사 로고 추가 (견적서 위치: H6:I7)
-    if (data.companyLogo) {
-      await imageHandler.addCompanyLogo(data.companyLogo, worksheet, 'H6:I7');
-    }
-
-    // 4. 도장 이미지 추가 (견적서 위치: G32:H34)
-    if (data.companyStamp) {
-      await imageHandler.addCompanyStamp(worksheet, data.companyStamp);
-    }
-
-    // 5. 모든 셀에 테두리 적용 (A5:G35)
-    for (let row = 5; row <= 35; row++) {
-      for (let col = 1; col <= 7; col++) { // A부터 G까지
-        const cell = worksheet.getCell(row, col);
-        Object.assign(cell, EXCEL_STYLES.allBorders);
-      }
-    }
-
-    // 6. 파일 다운로드
-    downloadExcelFile(workbook, generateFileName('견적서'));
-
-  } catch (error) {
-    console.error("Error generating estimate Excel:", error);
-  }
-}
-
-/**
- * 발주서 Excel 생성
- * @param {Object} data - 발주서 데이터
- * @param {Object} options - 추가 옵션
- */
-export async function generatePurchaseOrderExcel(data, options = {}) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('발주서');
-
-  // 이미지 핸들러 초기화
-  const imageHandler = new ExcelImageHandler(workbook);
-
-  // 레이아웃 매퍼 초기화
-  const layoutMapper = new LayoutMapper(worksheet, 'purchaseOrder');
-
-  try {
-    // 1. 컬럼 너비 설정
-    layoutMapper.setupColumnWidths();
-
-    // 2. 발주서 레이아웃 구현 (새로운 정확한 레이아웃)
-    layoutMapper.setupPurchaseOrderLayout(data);
-
-    // 3. 회사 로고 추가 (발주서 위치: H6:I7)
-    if (data.companyLogo) {
-      await imageHandler.addCompanyLogo(data.companyLogo, worksheet, 'H6:I7');
-    }
-
-    // 4. 도장 이미지 추가 (발주서 위치: G32:H34)
-    if (data.companyStamp) {
-      await imageHandler.addCompanyStamp(worksheet, data.companyStamp);
-    }
-
-    // 5. 모든 셀에 테두리 적용 (A5:H62)
-    for (let row = 5; row <= 62; row++) {
-      for (let col = 1; col <= 8; col++) { // A부터 H까지
-        const cell = worksheet.getCell(row, col);
-        Object.assign(cell, EXCEL_STYLES.allBorders);
-      }
-    }
-
-    // 6. 파일 다운로드
-    downloadExcelFile(workbook, generateFileName('발주서'));
-
-  } catch (error) {
-    console.error("Error generating purchase order Excel:", error);
-  }
-}
-
-/**
- * 거래명세서 Excel 생성
- * @param {Object} data - 거래명세서 데이터
- * @param {Object} options - 추가 옵션
- */
-export async function generateTransactionStatementExcel(data, options = {}) {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('거래명세서');
-
-  // 이미지 핸들러 초기화
-  const imageHandler = new ExcelImageHandler(workbook);
-
-  // 레이아웃 매퍼 초기화
-  const layoutMapper = new LayoutMapper(worksheet, 'transactionStatement');
-
-  try {
-    // 1. 컬럼 너비 설정
-    layoutMapper.setupColumnWidths();
-
-    // 2. 거래명세서 레이아웃 구현
-    layoutMapper.setupTransactionStatementLayout(data);
-
-    // 3. 회사 로고 추가
-    if (data.companyLogo) {
-      await imageHandler.addCompanyLogo(data.companyLogo, worksheet, 'H6:I7');
-    }
-
-    // 4. 도장 이미지 추가
-    if (data.companyStamp) {
-      await imageHandler.addCompanyStamp(worksheet, data.companyStamp);
-    }
-
-    // 5. 파일 다운로드
-    downloadExcelFile(workbook, generateFileName('거래명세서'));
-
-  } catch (error) {
-    console.error("Error generating transaction statement Excel:", error);
-  }
-}
-
-/**
- * Excel 파일 다운로드
- * @param {Object} workbook - ExcelJS 워크북 객체
- * @param {string} fileName - 파일 이름
- */
-async function downloadExcelFile(workbook, fileName) {
-  try {
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    console.log(`${fileName} 엑셀 파일이 다운로드되었습니다.`);
-  } catch (error) {
-    console.error('Excel 파일 다운로드 중 오류 발생:', error);
-  }
-}
-
-/**
- * 현재 날짜를 YYYYMMDD 형식으로 반환
- * @returns {string}
- */
-function getCurrentDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}${month}${day}`;
-}
-
-/**
- * 파일 이름 생성
- * @param {string} documentType - 문서 타입 (예: '견적서', '발주서')
- * @returns {string}
- */
-export function generateFileName(documentType) {
-  return `${documentType}_${getCurrentDate()}.xlsx`;
-}
-
-export const exportToExcel = async (data, fileName, type) => {
-  switch (type) {
-    case 'estimate':
-      await generateEstimateExcel(data);
-      break;
-    case 'purchase':
-      await generatePurchaseOrderExcel(data);
-      break;
-    case 'transaction':
-      await generateTransactionStatementExcel(data);
-      break;
-    default:
-      console.error('Unknown document type for Excel export');
-  }
+const EST_COL_WIDTHS = {
+  A: 5,   // No
+  B: 32,  // 품목명
+  C: 15,  // 규격
+  D: 10,  // 수량
+  E: 15,  // 단가
+  F: 15,  // 공급가
+  G: 15   // 비고
 };
+
+const PO_COL_WIDTHS = {
+  A: 5,   // No
+  B: 30,  // 품목명
+  C: 15,  // 규격
+  D: 10,  // 수량
+  E: 15,  // 단가
+  F: 15,  // 금액
+  G: 15,  // 공급가
+  H: 15   // 비고
+};
+
+/**
+ * 견적서 엑셀 생성
+ */
+export async function exportEstimateExcel(data) {
+  const workbook = new ExcelJS.Workbook();
+  const ws = workbook.addWorksheet('견적서', {
+    views: [{ state: 'frozen', xSplit: 0, ySplit: 16 }]
+  });
+
+  // 컬럼 너비 설정
+  Object.entries(EST_COL_WIDTHS).forEach(([col, width]) => {
+    ws.getColumn(col).width = width;
+  });
+
+  // 레이아웃 매핑
+  LayoutMapper.setupEstimateLayout(ws, data);
+
+  // 총합계 셀 스타일 및 값
+  ws.getCell('F10').value = data.totalAmount;
+  ws.getCell('F10').style = EXCEL_STYLES.number;
+
+  return workbook.xlsx.writeBuffer();
+}
+
+/**
+ * 거래명세서 엑셀 생성
+ */
+export async function exportTransactionExcel(data) {
+  const workbook = new ExcelJS.Workbook();
+  const ws = workbook.addWorksheet('거래명세서', {
+    views: [{ state: 'frozen', xSplit: 0, ySplit: 16 }]
+  });
+
+  // 컬럼 너비는 견적서와 동일
+  Object.entries(EST_COL_WIDTHS).forEach(([col, width]) => {
+    ws.getColumn(col).width = width;
+  });
+
+  // 레이아웃 매핑 (견적서와 동일)
+  LayoutMapper.setupTransactionLayout(ws, data);
+
+  // 총합계 셀 스타일 및 값
+  ws.getCell('F10').value = data.totalAmount;
+  ws.getCell('F10').style = EXCEL_STYLES.number;
+
+  return workbook.xlsx.writeBuffer();
+}
+
+/**
+ * 발주서 엑셀 생성
+ */
+export async function exportPurchaseOrderExcel(data) {
+  const workbook = new ExcelJS.Workbook();
+  const ws = workbook.addWorksheet('발주서', {
+    views: [{ state: 'frozen', xSplit: 0, ySplit: 16 }]
+  });
+
+  // 컬럼 너비 설정
+  Object.entries(PO_COL_WIDTHS).forEach(([col, width]) => {
+    ws.getColumn(col).width = width;
+  });
+
+  // 레이아웃 매핑
+  LayoutMapper.setupPurchaseOrderLayout(ws, data);
+
+  // 소계/부가세/합계 값 및 스타일
+  ws.getCell('G31').value = data.subTotal;
+  ws.getCell('G31').style = EXCEL_STYLES.number;
+
+  ws.getCell('G32').value = data.vat;
+  ws.getCell('G32').style = EXCEL_STYLES.number;
+
+  ws.getCell('G33').value = data.grandTotal;
+  ws.getCell('G33').style = EXCEL_STYLES.number;
+
+  return workbook.xlsx.writeBuffer();
+}
