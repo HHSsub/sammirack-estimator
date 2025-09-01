@@ -208,7 +208,7 @@ const PurchaseOrderForm = () => {
       documentNumber: formData.orderNumber
     };
 
-    const fileName = generateFileName('발주서', excelData);
+    const fileName = generateFileName('purchase');
     exportToExcel(excelData, 'purchase')
       .then(() => {
         alert('엑셀 파일이 다운로드되었습니다.');
