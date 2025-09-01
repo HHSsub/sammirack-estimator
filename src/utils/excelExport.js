@@ -60,7 +60,7 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
     XLSX.utils.book_append_sheet(workbook, worksheet, '문서');
     
     // 파일 다운로드
-    const fileName = generateFileName(type, data.customerName, new Date());
+    const fileName = generateFileName(type, new Date());
     XLSX.writeFile(workbook, fileName);
     
     console.log(`${fileName} 파일이 성공적으로 생성되었습니다.`);
