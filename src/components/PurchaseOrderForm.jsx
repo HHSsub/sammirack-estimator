@@ -209,7 +209,7 @@ const PurchaseOrderForm = () => {
     };
 
     const fileName = generateFileName('발주서', excelData);
-    exportToExcel(excelData, fileName, 'purchase')
+    exportToExcel(excelData, 'purchase')
       .then(() => {
         alert('엑셀 파일이 다운로드되었습니다.');
       })
