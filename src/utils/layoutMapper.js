@@ -1,21 +1,22 @@
-// ----------------------------------------------------------------------------
+// -----------------------------------------------
 // src/utils/layoutMapper.js
-// ----------------------------------------------------------------------------
+// -----------------------------------------------
+
 import { EXCEL_STYLES as styles } from './excelStyles';
 
 const { header, text, number, allBorders } = styles;
 
 /**
  * LayoutMapper 클래스
- * - setupEstimateLayout: 견적서 + 거래명세서 공통 레이아웃
- * - setupPurchaseOrderLayout: 발주서 레이아웃
- * - setupTransactionStatementLayout: 거래명세서는 견적서 레이아웃 재활용
+ * - setupEstimateLayout: 견적서 + 거래명세서 + 거래내역 레이아웃 구성
+ * - setupPurchaseOrderLayout: 발주서 레이아웃 구성
+ * - setupTransactionStatementLayout: 거래명세서만의 레이아웃 구성
  */
 export class LayoutMapper {
   constructor(worksheet, documentType) {
     this.ws = worksheet;
     this.type = documentType; // 'estimate' | 'purchaseOrder' | 'transactionStatement'
-    this.mergedRanges = new Set(); // 병합된 범위를 추적
+    this.mergedRanges = new Set(); // 병합된 범위 추적
   }
 
   // 안전한 셀 병합 함수
@@ -30,250 +31,596 @@ export class LayoutMapper {
       this.mergedRanges.add(range);
       return true;
     } catch (error) {
-      if (error.message.includes('Cannot merge already merged cells')) {
-        console.warn(`Cannot merge ${range}: already merged`);
-        this.mergedRanges.add(range);
-        return false;
-      } else {
-        console.error(`Error merging cells ${range}:`, error);
-        throw error;
-      }
+      console.error(`Failed to merge cells ${range}:`, error);
+      return false;
     }
   }
 
-  /** 컬럼 너비 설정 */
+  // 컬럼 너비 설정
   setupColumnWidths() {
-    if (this.type === 'estimate' || this.type === 'transactionStatement') {
-      this.ws.columns = [
-        { key: 'A', width: 5  }, // NO
-        { key: 'B', width: 32 }, // 품목명
-        { key: 'C', width: 15 }, // 규격
-        { key: 'D', width: 10 }, // 수량
-        { key: 'E', width: 15 }, // 단가
-        { key: 'F', width: 15 }, // 공급가
-        { key: 'G', width: 15 }, // 비고
-      ];
+    if (this.type === 'estimate') {
+      // 견적서 컬럼 너비
+      this.ws.getColumn('A').width = 5.0;
+      this.ws.getColumn('B').width = 32.0;
+      this.ws.getColumn('C').width = 15.0;
+      this.ws.getColumn('D').width = 10.0;
+      this.ws.getColumn('E').width = 15.0;
+      // F~H열은 기본값
     } else if (this.type === 'purchaseOrder') {
-      this.ws.columns = [
-        { key: 'A', width: 5  }, // NO
-        { key: 'B', width: 30 }, // 품목명
-        { key: 'C', width: 15 }, // 규격
-        { key: 'D', width: 10 }, // 수량
-        { key: 'E', width: 15 }, // 단가
-        { key: 'F', width: 15 }, // 금액
-        { key: 'G', width: 15 }, // 공급가
-        { key: 'H', width: 15 }, // 비고
-      ];
+      // 발주서 컬럼 너비
+      this.ws.getColumn('A').width = 5.0;
+      this.ws.getColumn('B').width = 30.0;
+      this.ws.getColumn('C').width = 15.0;
+      this.ws.getColumn('D').width = 10.0;
+      this.ws.getColumn('E').width = 15.0;
+      // F~H열은 기본값
     }
   }
 
-  /** 견적서 레이아웃 구현 */
-  setupEstimateLayout(data) {
-    const ws = this.ws;
+  // 견적서 레이아웃 설정
+  async setupEstimateLayout(data) {
+    this.setupColumnWidths();
     
-    // 병합 범위 초기화
-    this.mergedRanges.clear();
-
-    // 1) A1~A16 각각 B열과 병합
-    for (let r = 1; r <= 16; r++) {
-      this.safeMergeCells(`A${r}:B${r}`);
+    // 행 높이 설정
+    this.ws.getRow(9).height = 25.5;
+    for (let i = 13; i <= 28; i++) {
+      this.ws.getRow(i).height = 24.95;
     }
+    this.ws.getRow(29).height = 30.0;
+    this.ws.getRow(30).height = 30.0;
+    this.ws.getRow(31).height = 30.0;
 
-    // 2) 기본 정보 영역
-    ws.getCell('A5').value = '견적일자';            ws.getCell('A5').style = header;
-    this.safeMergeCells('C5:D5');                   ws.getCell('C5').value = data.estimateDate;     ws.getCell('C5').style = text;
+    // 헤더 영역 병합 및 설정
+    this.setupEstimateHeader(data);
+    
+    // 견적 내역 테이블 설정
+    this.setupEstimateTable(data);
+    
+    // 합계 영역 설정
+    this.setupEstimateSummary(data);
+    
+    // 특기사항 설정
+    this.setupEstimateNotes(data);
+  }
 
-    ws.getCell('A6').value = '상호명';             ws.getCell('A6').style = text;
-    ws.getCell('A7').value = '담당자';             ws.getCell('A7').style = text;
+  // 발주서 레이아웃 설정
+  async setupPurchaseOrderLayout(data) {
+    this.setupColumnWidths();
+    
+    // 행 높이 설정
+    this.ws.getRow(7).height = 16.5;
+    this.ws.getRow(8).height = 25.5;
+    this.ws.getRow(9).height = 16.5;
+    this.ws.getRow(56).height = 16.5;
 
-    // 3) "아래와 같이 견적합니다" 영역
-    this.safeMergeCells('D5:D9');                   ws.getCell('D5').value = '아래와 같이 견적합니다'; ws.getCell('D5').style = text;
-    for (let r = 6; r <= 9; r++) {
-      ws.getCell(`D${r}`).style = text;
+    // 헤더 영역 설정
+    this.setupPurchaseOrderHeader(data);
+    
+    // 발주 내역 테이블 설정
+    this.setupPurchaseOrderTable(data);
+    
+    // 원자재 명세서 설정
+    this.setupMaterialSpecification(data);
+    
+    // 특기사항 설정
+    this.setupPurchaseOrderNotes(data);
+  }
+
+  // 거래명세서 레이아웃 설정
+  async setupTransactionStatementLayout(data) {
+    // 거래명세서 전용 레이아웃 구성
+    // 기본적으로 견적서와 유사하지만 일부 차이점 있음
+    
+    this.setupColumnWidths();
+    
+    // 헤더 설정
+    this.setupTransactionStatementHeader(data);
+    
+    // 거래 내역 테이블 설정
+    this.setupTransactionTable(data);
+    
+    // 합계 및 특기사항 설정
+    this.setupTransactionSummary(data);
+  }
+
+  // 견적서 헤더 설정
+  setupEstimateHeader(data) {
+    // A1:B1, A2:B2, A3:B3, A4:B4 병합
+    this.safeMergeCells('A1:B1');
+    this.safeMergeCells('A2:B2');
+    this.safeMergeCells('A3:B3');
+    this.safeMergeCells('A4:B4');
+    
+    // A5:H5 병합 (견적서 제목)
+    this.safeMergeCells('A5:H5');
+    this.ws.getCell('A5').value = '견적서';
+    this.ws.getCell('A5').style = {
+      ...styles.documentTitle,
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }
+    };
+    
+    // A6:B6, A7:B7, A8:B8 병합
+    this.safeMergeCells('A6:B6');
+    this.safeMergeCells('A7:B7');
+    this.safeMergeCells('A8:B8');
+    
+    // 발주업체 정보
+    this.ws.getCell('A6').value = '발주업체';
+    this.ws.getCell('A6').style = styles.companyInfo;
+    this.ws.getCell('C6').value = data.companyName || '';
+    
+    this.ws.getCell('A7').value = '상호명';
+    this.ws.getCell('A7').style = styles.companyInfo;
+    this.ws.getCell('C7').value = data.companyName || '';
+    
+    this.ws.getCell('A8').value = '담당자';
+    this.ws.getCell('A8').style = styles.companyInfo;
+    this.ws.getCell('C8').value = data.manager || '';
+    
+    // D6:D10 병합
+    this.safeMergeCells('D6:D10');
+    
+    // 우측 회사 정보
+    this.ws.getCell('F6').value = '사업자등록번호';
+    this.ws.getCell('G6').value = '232-81-01750';
+    
+    this.ws.getCell('F7').value = '상 호';
+    this.ws.getCell('G7').value = '삼미랙특수산업';
+    
+    this.ws.getCell('F8').value = '소 재 지';
+    this.ws.getCell('G8').value = '경기도 광명시 하안로 39 광명테크노파크 B동 1층';
+    
+    this.ws.getCell('F9').value = 'TEL';
+    this.ws.getCell('G9').value = '010-9548-9578\n010-4311-7733';
+    
+    this.ws.getCell('F10').value = 'FAX';
+    this.ws.getCell('G10').value = '(02)2611-4595';
+    
+    this.ws.getCell('F11').value = '홈페이지';
+    this.ws.getCell('G11').value = 'http://www.ssmake.com';
+    
+    // A9:C10 병합 (인사말)
+    this.safeMergeCells('A9:C10');
+    this.ws.getCell('A9').value = '아래와 같이 발주합니다';
+    this.ws.getCell('A9').style = styles.greeting;
+  }
+
+  // 견적서 테이블 설정
+  setupEstimateTable(data) {
+    // A11:H11 병합 (견적내역 제목)
+    this.safeMergeCells('A11:H11');
+    this.ws.getCell('A11').value = '견적내역';
+    this.ws.getCell('A11').style = {
+      ...styles.sectionTitle,
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E6E6' } }
+    };
+    
+    // A11:H12 영역에 배경색 적용
+    this.safeMergeCells('A12:H12');
+    this.ws.getCell('A12').style = {
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E6E6' } }
+    };
+    
+    // 테이블 헤더 (13행)
+    this.ws.getCell('A13').value = 'NO';
+    this.ws.getCell('B13').value = '품목';
+    this.ws.getCell('C13').value = '단위';
+    this.ws.getCell('D13').value = '수량';
+    this.ws.getCell('E13').value = '단가';
+    this.ws.getCell('F13').value = '공급가';
+    
+    // G13:H13 병합
+    this.safeMergeCells('G13:H13');
+    this.ws.getCell('G13').value = '비고';
+    
+    // 헤더 스타일 적용
+    for (let col = 1; col <= 8; col++) {
+      const cell = this.ws.getCell(13, col);
+      cell.style = styles.header;
     }
+    
+    // 데이터 행 (14-25행)
+    const items = data.items || [];
+    let totalAmount = 0;
+    
+    for (let i = 0; i < 12; i++) {
+      const rowNum = 14 + i;
+      const item = items[i];
+      
+      if (item) {
+        this.ws.getCell(`A${rowNum}`).value = i + 1;
+        this.ws.getCell(`B${rowNum}`).value = item.name || '';
+        this.ws.getCell(`C${rowNum}`).value = item.unit || '개';
+        this.ws.getCell(`D${rowNum}`).value = item.quantity || 1;
+        this.ws.getCell(`E${rowNum}`).value = item.price || 0;
+        this.ws.getCell(`F${rowNum}`).value = (item.quantity || 1) * (item.price || 0);
+        
+        totalAmount += (item.quantity || 1) * (item.price || 0);
+      }
+      
+      // G행:H행 병합
+      this.safeMergeCells(`G${rowNum}:H${rowNum}`);
+      if (item && item.note) {
+        this.ws.getCell(`G${rowNum}`).value = item.note;
+      }
+      
+      // 테두리 적용
+      for (let col = 1; col <= 8; col++) {
+        const cell = this.ws.getCell(rowNum, col);
+        cell.style = {
+          ...styles.dataCell,
+          border: {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          }
+        };
+      }
+    }
+    
+    return totalAmount;
+  }
 
-    // 4) 왼쪽 라벨 E5~E9
-    ['사업자등록번호','상 호','소 재 지','T E L','홈페이지']
-      .forEach((lbl, i) => {
-        const cell = ws.getCell(`E${5 + i}`);
-        cell.value = lbl;
-        cell.style = text;
-      });
+  // 견적서 합계 설정
+  setupEstimateSummary(data) {
+    const totalAmount = this.calculateTotalAmount(data.items || []);
+    const vat = Math.round(totalAmount * 0.1);
+    const grandTotal = totalAmount + vat;
+    
+    // A26:F26, A27:F27, A28:F28 병합
+    this.safeMergeCells('A26:F26');
+    this.safeMergeCells('A27:F27');
+    this.safeMergeCells('A28:F28');
+    
+    // G26:H26, G27:H27, G28:H28 병합
+    this.safeMergeCells('G26:H26');
+    this.safeMergeCells('G27:H27');
+    this.safeMergeCells('G28:H28');
+    
+    // 소계
+    this.ws.getCell('A26').value = '소계';
+    this.ws.getCell('A26').style = styles.totalRow;
+    this.ws.getCell('G26').value = totalAmount;
+    this.ws.getCell('G26').style = styles.totalAmount;
+    
+    // 부가가치세
+    this.ws.getCell('A27').value = '부가가치세';
+    this.ws.getCell('A27').style = styles.totalRow;
+    this.ws.getCell('G27').value = vat;
+    this.ws.getCell('G27').style = styles.totalAmount;
+    
+    // 합계
+    this.ws.getCell('A28').value = '합계';
+    this.ws.getCell('A28').style = styles.totalRow;
+    this.ws.getCell('G28').value = grandTotal;
+    this.ws.getCell('G28').style = styles.totalAmount;
+  }
 
-    // 5) 오른쪽 값 F5~I9
-    this.safeMergeCells('F5:I5'); ws.getCell('F5').value = data.companyRegistrationNumber; ws.getCell('F5').style = text;
-    ws.getCell('F6').value = data.companyName;    ws.getCell('F6').style = text;
-    ws.getCell('G6').value = '대표자';             ws.getCell('G6').style = text;
-    this.safeMergeCells('H6:I6'); ws.getCell('H6').value = data.representative;        ws.getCell('H6').style = text;
+  // 견적서 특기사항 설정
+  setupEstimateNotes(data) {
+    // A29:H29, A30:H30, A31:H31 병합
+    this.safeMergeCells('A29:H29');
+    this.safeMergeCells('A30:H30');
+    this.safeMergeCells('A31:H31');
+    
+    this.ws.getCell('A29').value = '특기사항';
+    this.ws.getCell('A29').style = styles.notesTitle;
+    
+    this.ws.getCell('A30').value = data.notes || '';
+    this.ws.getCell('A30').style = styles.notesContent;
+    
+    this.ws.getCell('A31').value = '(주)삼미랙특수산업';
+    this.ws.getCell('A31').style = styles.companyName;
+  }
 
-    this.safeMergeCells('F7:I7'); ws.getCell('F7').value = data.address;                ws.getCell('F7').style = text;
-    ws.getCell('F8').value = data.phone;                                         ws.getCell('F8').style = text;
-    ws.getCell('G8').value = 'FAX';                                              ws.getCell('G8').style = text;
-    this.safeMergeCells('H8:I8'); ws.getCell('H8').value = data.fax;                   ws.getCell('H8').style = text;
+  // 발주서 헤더 설정
+  setupPurchaseOrderHeader(data) {
+    // A1:B1, A2:B2, A3:B3 병합
+    this.safeMergeCells('A1:B1');
+    this.safeMergeCells('A2:B2');
+    this.safeMergeCells('A3:B3');
+    
+    // A4:H4 병합 (발주서 제목)
+    this.safeMergeCells('A4:H4');
+    this.ws.getCell('A4').value = '발주서';
+    this.ws.getCell('A4').style = {
+      ...styles.documentTitle,
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }
+    };
+    
+    // A5:B5, A6:B6, A7:B7 병합
+    this.safeMergeCells('A5:B5');
+    this.safeMergeCells('A6:B6');
+    this.safeMergeCells('A7:B7');
+    
+    // A8:C9 병합 (인사말)
+    this.safeMergeCells('A8:C9');
+    this.ws.getCell('A8').value = '아래와 같이 발주합니다';
+    this.ws.getCell('A8').style = styles.greeting;
+    
+    // D5:D9 병합
+    this.safeMergeCells('D5:D9');
+    
+    // 발주업체 정보
+    this.ws.getCell('A5').value = '발주업체';
+    this.ws.getCell('A5').style = styles.companyInfo;
+    this.ws.getCell('E5').value = data.companyName || '';
+    
+    this.ws.getCell('A6').value = '상호명';
+    this.ws.getCell('A6').style = styles.companyInfo;
+    this.ws.getCell('E6').value = data.companyName || '';
+    
+    this.ws.getCell('A7').value = '담당자';
+    this.ws.getCell('A7').style = styles.companyInfo;
+    this.ws.getCell('E7').value = data.manager || '';
+    
+    // F5:H5부터 F10:H10까지 우측 회사 정보 영역 병합
+    for (let i = 5; i <= 10; i++) {
+      this.safeMergeCells(`F${i}:H${i}`);
+    }
+    
+    // 우측 회사 정보
+    this.ws.getCell('F5').value = '사업자등록번호: 232-81-01750';
+    this.ws.getCell('F6').value = '상 호: 삼미랙특수산업';
+    this.ws.getCell('F7').value = '소 재 지: 경기도 광명시 하안로 39 광명테크노파크 B동 1층';
+    this.ws.getCell('F8').value = 'TEL: 010-9548-9578 / 010-4311-7733';
+    this.ws.getCell('F9').value = 'FAX: (02)2611-4595';
+    this.ws.getCell('F10').value = '홈페이지: http://www.ssmake.com';
+  }
 
-    this.safeMergeCells('F9:I9'); ws.getCell('F9').value = data.website;               ws.getCell('F9').style = text;
+  // 발주서 테이블 설정
+  setupPurchaseOrderTable(data) {
+    // A10:H10 병합 (발주내역 제목)
+    this.safeMergeCells('A10:H10');
+    this.ws.getCell('A10').value = '발주내역';
+    this.ws.getCell('A10').style = styles.sectionTitle;
+    
+    // 테이블 헤더 (11행)
+    this.ws.getCell('A11').value = 'NO';
+    this.ws.getCell('B11').value = '품목';
+    this.ws.getCell('C11').value = '단위';
+    this.ws.getCell('D11').value = '수량';
+    this.ws.getCell('E11').value = '단가';
+    this.ws.getCell('F11').value = '공급가';
+    
+    // G11:H11 병합
+    this.safeMergeCells('G11:H11');
+    this.ws.getCell('G11').value = '비고';
+    
+    // A11:H12 영역에 배경색 적용
+    this.safeMergeCells('A12:H12');
+    this.ws.getCell('A12').style = {
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E6E6' } }
+    };
+    
+    // 헤더 스타일 적용
+    for (let col = 1; col <= 8; col++) {
+      const cell = this.ws.getCell(11, col);
+      cell.style = styles.header;
+    }
+    
+    // 데이터 행 및 합계 설정
+    const items = data.items || [];
+    let totalAmount = 0;
+    
+    // 데이터 행 (12-19행)
+    for (let i = 0; i < 8; i++) {
+      const rowNum = 12 + i;
+      const item = items[i];
+      
+      if (item) {
+        this.ws.getCell(`A${rowNum}`).value = i + 1;
+        this.ws.getCell(`B${rowNum}`).value = item.name || '';
+        this.ws.getCell(`C${rowNum}`).value = item.unit || '개';
+        this.ws.getCell(`D${rowNum}`).value = item.quantity || 1;
+        this.ws.getCell(`E${rowNum}`).value = item.price || 0;
+        this.ws.getCell(`F${rowNum}`).value = (item.quantity || 1) * (item.price || 0);
+        
+        totalAmount += (item.quantity || 1) * (item.price || 0);
+      }
+      
+      // G행:H행 병합
+      this.safeMergeCells(`G${rowNum}:H${rowNum}`);
+      if (item && item.note) {
+        this.ws.getCell(`G${rowNum}`).value = item.note;
+      }
+    }
+    
+    // 합계 행 (20-22행)
+    const vat = Math.round(totalAmount * 0.1);
+    const grandTotal = totalAmount + vat;
+    
+    // A20:F20, A21:F21, A22:F22 병합
+    this.safeMergeCells('A20:F20');
+    this.safeMergeCells('A21:F21');
+    this.safeMergeCells('A22:F22');
+    
+    // G20:H20, G21:H21, G22:H22 병합
+    this.safeMergeCells('G20:H20');
+    this.safeMergeCells('G21:H21');
+    this.safeMergeCells('G22:H22');
+    
+    this.ws.getCell('A20').value = '소계';
+    this.ws.getCell('A20').style = styles.totalRow;
+    this.ws.getCell('G20').value = totalAmount;
+    this.ws.getCell('G20').style = styles.totalAmount;
+    
+    this.ws.getCell('A21').value = '부가가치세';
+    this.ws.getCell('A21').style = styles.totalRow;
+    this.ws.getCell('G21').value = vat;
+    this.ws.getCell('G21').style = styles.totalAmount;
+    
+    this.ws.getCell('A22').value = '합계';
+    this.ws.getCell('A22').style = styles.totalRow;
+    this.ws.getCell('G22').value = grandTotal;
+    this.ws.getCell('G22').style = styles.totalAmount;
+  }
 
-    // 6) 합계 영역 머지
-    this.safeMergeCells('A10:C10'); ws.getCell('A10').value = '견적금액(부가세포함)';   ws.getCell('A10').style = header;
+  // 원자재 명세서 설정
+  setupMaterialSpecification(data) {
+    // A23:H23 병합 (원자재 명세서 제목)
+    this.safeMergeCells('A23:H23');
+    this.ws.getCell('A23').value = '원자재 명세서';
+    this.ws.getCell('A23').style = {
+      ...styles.documentTitle,
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }
+    };
+    
+    // 테이블 헤더 (24행)
+    this.ws.getCell('A24').value = 'NO';
+    this.ws.getCell('B24').value = '품목명';
+    this.ws.getCell('C24').value = '규격';
+    this.ws.getCell('D24').value = '단위';
+    this.ws.getCell('E24').value = '수량';
+    this.ws.getCell('F24').value = '공급가';
+    
+    // G24:H24 병합
+    this.safeMergeCells('G24:H24');
+    this.ws.getCell('G24').value = '비고';
+    
+    // 헤더 스타일 적용
+    for (let col = 1; col <= 8; col++) {
+      const cell = this.ws.getCell(24, col);
+      cell.style = styles.header;
+    }
+    
+    // 원자재 데이터 (25-54행)
+    const materials = [
+      { name: '기둥(750)', spec: '2', unit: '개', quantity: 0, price: 0 },
+      { name: '상판대', spec: '4', unit: '개', quantity: 0, price: 0 },
+      { name: '선반', spec: '2', unit: '개', quantity: 0, price: 0 },
+      { name: '후면보강대', spec: '2', unit: '개', quantity: 0, price: 0 },
+      { name: '보강대', spec: '10', unit: '개', quantity: 0, price: 0 },
+      { name: '연결대', spec: '2', unit: '개', quantity: 0, price: 0 },
+      { name: '지지대', spec: '8', unit: '개', quantity: 0, price: 0 }
+    ];
+    
+    for (let i = 0; i < 30; i++) {
+      const rowNum = 25 + i;
+      const material = materials[i];
+      
+      if (material) {
+        this.ws.getCell(`A${rowNum}`).value = i + 1;
+        this.ws.getCell(`B${rowNum}`).value = material.name;
+        this.ws.getCell(`C${rowNum}`).value = material.spec;
+        this.ws.getCell(`D${rowNum}`).value = material.unit;
+        this.ws.getCell(`E${rowNum}`).value = material.quantity;
+        this.ws.getCell(`F${rowNum}`).value = material.price;
+      }
+      
+      // G행:H행 병합
+      this.safeMergeCells(`G${rowNum}:H${rowNum}`);
+    }
+  }
 
-    // 7) 테이블 타이틀
-    ws.getCell('A17').value = 'NO';                                              ws.getCell('A17').style = header;
-    this.safeMergeCells('B16:G16'); ws.getCell('B16').value = '견적명세';              ws.getCell('B16').style = header;
+  // 발주서 특기사항 설정
+  setupPurchaseOrderNotes(data) {
+    // A55:H55, A56:H56, A57:H57 병합
+    this.safeMergeCells('A55:H55');
+    this.safeMergeCells('A56:H56');
+    this.safeMergeCells('A57:H57');
+    
+    this.ws.getCell('A55').value = '특기사항';
+    this.ws.getCell('A55').style = styles.notesTitle;
+    
+    this.ws.getCell('A56').value = data.notes || '';
+    this.ws.getCell('A56').style = styles.notesContent;
+    
+    this.ws.getCell('A57').value = '(주)삼미랙특수산업';
+    this.ws.getCell('A57').style = styles.companyName;
+  }
 
-    // 8) 아이템 데이터 바인딩
-    data.items.forEach((item, idx) => {
-      const row = 17 + idx;
+  // 거래명세서 헤더 설정
+  setupTransactionStatementHeader(data) {
+    // 거래명세서 전용 헤더 구성
+    this.safeMergeCells('A1:H1');
+    this.ws.getCell('A1').value = '거래명세서';
+    this.ws.getCell('A1').style = styles.documentTitle;
+    
+    // 기본 회사 정보 설정
+    this.ws.getCell('A2').value = '거래업체';
+    this.ws.getCell('C2').value = data.companyName || '';
+    
+    this.ws.getCell('A3').value = '거래일자';
+    this.ws.getCell('C3').value = data.transactionDate || new Date().toISOString().split('T')[0];
+  }
 
-      ws.getCell(`A${row}`).value = idx + 1;   ws.getCell(`A${row}`).style = text;
-      ws.getCell(`B${row}`).value = item.name; ws.getCell(`B${row}`).style = text;
-      ws.getCell(`C${row}`).value = item.spec; ws.getCell(`C${row}`).style = text;
-      ws.getCell(`D${row}`).value = item.quantity;  ws.getCell(`D${row}`).style = number;
-      ws.getCell(`E${row}`).value = item.unitPrice; ws.getCell(`E${row}`).style = number;
-      ws.getCell(`F${row}`).value = item.supplyAmount; ws.getCell(`F${row}`).style = number;
-      ws.getCell(`G${row}`).value = item.remarks || ''; ws.getCell(`G${row}`).style = text;
-    });
-
-    // 9) 전체 테두리 (A5:G35)
-    for (let r = 5; r <= 35; r++) {
-      for (let c = 1; c <= 7; c++) {
-        const cell = ws.getCell(r, c);
-        cell.style = { ...cell.style, ...allBorders };
+  // 거래 테이블 설정
+  setupTransactionTable(data) {
+    // 거래 내역 테이블 구성
+    this.safeMergeCells('A5:H5');
+    this.ws.getCell('A5').value = '거래내역';
+    this.ws.getCell('A5').style = styles.sectionTitle;
+    
+    // 테이블 헤더
+    this.ws.getCell('A6').value = 'NO';
+    this.ws.getCell('B6').value = '품목';
+    this.ws.getCell('C6').value = '단위';
+    this.ws.getCell('D6').value = '수량';
+    this.ws.getCell('E6').value = '단가';
+    this.ws.getCell('F6').value = '금액';
+    this.safeMergeCells('G6:H6');
+    this.ws.getCell('G6').value = '비고';
+    
+    // 헤더 스타일 적용
+    for (let col = 1; col <= 8; col++) {
+      const cell = this.ws.getCell(6, col);
+      cell.style = styles.header;
+    }
+    
+    // 데이터 행 설정
+    const items = data.items || [];
+    for (let i = 0; i < Math.max(items.length, 10); i++) {
+      const rowNum = 7 + i;
+      const item = items[i];
+      
+      if (item) {
+        this.ws.getCell(`A${rowNum}`).value = i + 1;
+        this.ws.getCell(`B${rowNum}`).value = item.name || '';
+        this.ws.getCell(`C${rowNum}`).value = item.unit || '개';
+        this.ws.getCell(`D${rowNum}`).value = item.quantity || 1;
+        this.ws.getCell(`E${rowNum}`).value = item.price || 0;
+        this.ws.getCell(`F${rowNum}`).value = (item.quantity || 1) * (item.price || 0);
+      }
+      
+      this.safeMergeCells(`G${rowNum}:H${rowNum}`);
+      if (item && item.note) {
+        this.ws.getCell(`G${rowNum}`).value = item.note;
       }
     }
   }
 
-  /** 발주서 레이아웃 세팅 */
-  setupPurchaseOrderLayout(data) {
-    const ws = this.ws;
+  // 거래명세서 합계 설정
+  setupTransactionSummary(data) {
+    const totalAmount = this.calculateTotalAmount(data.items || []);
+    const vat = Math.round(totalAmount * 0.1);
+    const grandTotal = totalAmount + vat;
     
-    // 병합 범위 초기화
-    this.mergedRanges.clear();
-
-    // 1) A1~A16 병합
-    for (let r = 1; r <= 16; r++) {
-      this.safeMergeCells(`A${r}:B${r}`);
-    }
-
-    // 2) 발주일자
-    ws.getCell('A5').value = '발주일자';            ws.getCell('A5').style = header;
-    this.safeMergeCells('C5:D5');                   ws.getCell('C5').value = data.date || data.orderDate;       ws.getCell('C5').style = text;
-
-    // 3) 상호명 · 담당자
-    ws.getCell('A6').value = '상호명';             ws.getCell('A6').style = text;
-    ws.getCell('C6').value = data.companyName;     ws.getCell('C6').style = text;
-    ws.getCell('A7').value = '담당자';             ws.getCell('A7').style = text;
-
-    // 4) "아래와 같이 발주합니다"
-    this.safeMergeCells('D5:D9');                   ws.getCell('D5').value = '아래와 같이 발주합니다'; ws.getCell('D5').style = text;
-    for (let r = 6; r <= 9; r++) {
-      ws.getCell(`D${r}`).style = text;
-    }
-
-    // 5) E5~E9 라벨 (회사 정보)
-    ['사업자등록번호','상 호','소 재 지','T E L','홈페이지']
-      .forEach((lbl, i) => {
-        const cell = ws.getCell(`E${5 + i}`);
-        cell.value = lbl;
-        cell.style = text;
-      });
-
-    // 6) F5:I9 값 (회사 정보)
-    this.safeMergeCells('F5:I5'); ws.getCell('F5').value = '123-45-67890'; ws.getCell('F5').style = text;
-    ws.getCell('F6').value = '삼미앵글랙산업';    ws.getCell('F6').style = text;
-    ws.getCell('G6').value = '대표자';             ws.getCell('G6').style = text;
-    this.safeMergeCells('H6:I6'); ws.getCell('H6').value = '박이삭';        ws.getCell('H6').style = text;
-
-    this.safeMergeCells('F7:I7'); ws.getCell('F7').value = '경기도 광명시 원노온사로 39, 철제 스틸하우스 1'; ws.getCell('F7').style = text;
-    ws.getCell('F8').value = '010-9548-9578';     ws.getCell('F8').style = text;
-    ws.getCell('G8').value = 'FAX';               ws.getCell('G8').style = text;
-    this.safeMergeCells('H8:I8'); ws.getCell('H8').value = '(02)2611-4595'; ws.getCell('H8').style = text;
-
-    this.safeMergeCells('F9:I9'); ws.getCell('F9').value = 'http://www.ssmake.com'; ws.getCell('F9').style = text;
-
-    // 7) 합계 영역
-    this.safeMergeCells('A10:C10'); ws.getCell('A10').value = '발주금액(부가세포함)';   ws.getCell('A10').style = header;
-
-    // 8) 발주 명세 테이블 헤더
-    ws.getCell('A17').value = 'NO';       ws.getCell('A17').style = header;
-    ws.getCell('B17').value = '품명';     ws.getCell('B17').style = header;
-    ws.getCell('C17').value = '단위';     ws.getCell('C17').style = header;
-    ws.getCell('D17').value = '수량';     ws.getCell('D17').style = header;
-    ws.getCell('E17').value = '단가';     ws.getCell('E17').style = header;
-    ws.getCell('F17').value = '공급가';   ws.getCell('F17').style = header;
-    ws.getCell('G17').value = '비고';     ws.getCell('G17').style = header;
-
-    // 9) 발주 아이템 데이터
-    if (data.items && data.items.length > 0) {
-      data.items.forEach((item, idx) => {
-        const row = 18 + idx;
-        ws.getCell(`A${row}`).value = idx + 1;           ws.getCell(`A${row}`).style = text;
-        ws.getCell(`B${row}`).value = item.name || '';   ws.getCell(`B${row}`).style = text;
-        ws.getCell(`C${row}`).value = item.unit || '';   ws.getCell(`C${row}`).style = text;
-        ws.getCell(`D${row}`).value = item.quantity || 0; ws.getCell(`D${row}`).style = number;
-        ws.getCell(`E${row}`).value = item.unitPrice || 0; ws.getCell(`E${row}`).style = number;
-        ws.getCell(`F${row}`).value = item.totalPrice || 0; ws.getCell(`F${row}`).style = number;
-        ws.getCell(`G${row}`).value = item.note || '';   ws.getCell(`G${row}`).style = text;
-      });
-    }
-
-    // 10) 원자재 명세서 헤더 (아이템 테이블 아래)
-    const materialStartRow = 25; // 아이템이 끝나는 지점 + 여백
-    this.safeMergeCells(`A${materialStartRow}:H${materialStartRow}`); 
-    ws.getCell(`A${materialStartRow}`).value = '원자재 명세서'; 
-    ws.getCell(`A${materialStartRow}`).style = header;
-
-    const materialHeaderRow = materialStartRow + 1;
-    ws.getCell(`A${materialHeaderRow}`).value = 'NO';       ws.getCell(`A${materialHeaderRow}`).style = header;
-    ws.getCell(`B${materialHeaderRow}`).value = '부품명';   ws.getCell(`B${materialHeaderRow}`).style = header;
-    ws.getCell(`C${materialHeaderRow}`).value = '수량';     ws.getCell(`C${materialHeaderRow}`).style = header;
-    ws.getCell(`D${materialHeaderRow}`).value = '단가';     ws.getCell(`D${materialHeaderRow}`).style = header;
-    ws.getCell(`E${materialHeaderRow}`).value = '금액';     ws.getCell(`E${materialHeaderRow}`).style = header;
-    ws.getCell(`F${materialHeaderRow}`).value = '비고';     ws.getCell(`F${materialHeaderRow}`).style = header;
-
-    // 11) 원자재 데이터
-    if (data.materials && data.materials.length > 0) {
-      data.materials.forEach((material, idx) => {
-        const row = materialHeaderRow + 1 + idx;
-        ws.getCell(`A${row}`).value = idx + 1;                    ws.getCell(`A${row}`).style = text;
-        ws.getCell(`B${row}`).value = material.name || '';        ws.getCell(`B${row}`).style = text;
-        ws.getCell(`C${row}`).value = material.quantity || 0;     ws.getCell(`C${row}`).style = number;
-        ws.getCell(`D${row}`).value = material.unitPrice || 0;    ws.getCell(`D${row}`).style = number;
-        ws.getCell(`E${row}`).value = material.totalPrice || 0;   ws.getCell(`E${row}`).style = number;
-        ws.getCell(`F${row}`).value = material.note || '';        ws.getCell(`F${row}`).style = text;
-      });
-    }
-
-    // 12) 소계/부가세/합계 영역
-    const totalStartRow = 35;
-    this.safeMergeCells(`A${totalStartRow}:F${totalStartRow}`); 
-    ws.getCell(`A${totalStartRow}`).value = '소계';     
-    ws.getCell(`A${totalStartRow}`).style = text;
-    ws.getCell(`G${totalStartRow}`).value = data.subtotal || 0; 
-    ws.getCell(`G${totalStartRow}`).style = number;
-
-    this.safeMergeCells(`A${totalStartRow + 1}:F${totalStartRow + 1}`); 
-    ws.getCell(`A${totalStartRow + 1}`).value = '부가가치세'; 
-    ws.getCell(`A${totalStartRow + 1}`).style = text;
-    ws.getCell(`G${totalStartRow + 1}`).value = data.tax || 0; 
-    ws.getCell(`G${totalStartRow + 1}`).style = number;
-
-    this.safeMergeCells(`A${totalStartRow + 2}:F${totalStartRow + 2}`); 
-    ws.getCell(`A${totalStartRow + 2}`).value = '합계'; 
-    ws.getCell(`A${totalStartRow + 2}`).style = header;
-    ws.getCell(`G${totalStartRow + 2}`).value = data.totalAmount || 0; 
-    ws.getCell(`G${totalStartRow + 2}`).style = number;
-
-    // 13) 전체 테두리 적용
-    for (let r = 5; r <= 40; r++) {
-      for (let c = 1; c <= 8; c++) {
-        const cell = ws.getCell(r, c);
-        cell.style = { ...cell.style, ...allBorders };
-      }
-    }
+    const summaryRow = 17; // 거래명세서 합계 시작 행
+    
+    this.safeMergeCells(`A${summaryRow}:E${summaryRow}`);
+    this.ws.getCell(`A${summaryRow}`).value = '합계';
+    this.ws.getCell(`A${summaryRow}`).style = styles.totalRow;
+    
+    this.safeMergeCells(`F${summaryRow}:H${summaryRow}`);
+    this.ws.getCell(`F${summaryRow}`).value = grandTotal;
+    this.ws.getCell(`F${summaryRow}`).style = styles.totalAmount;
+    
+    // 특기사항
+    this.safeMergeCells(`A${summaryRow + 2}:H${summaryRow + 2}`);
+    this.ws.getCell(`A${summaryRow + 2}`).value = '특기사항';
+    this.ws.getCell(`A${summaryRow + 2}`).style = styles.notesTitle;
+    
+    this.safeMergeCells(`A${summaryRow + 3}:H${summaryRow + 3}`);
+    this.ws.getCell(`A${summaryRow + 3}`).value = data.notes || '';
+    this.ws.getCell(`A${summaryRow + 3}`).style = styles.notesContent;
   }
 
-  /** 거래명세서 레이아웃은 견적서와 동일하게 재활용 */
-  setupTransactionStatementLayout(data) {
-    this.setupEstimateLayout(data);
+  // 총 금액 계산
+  calculateTotalAmount(items) {
+    return items.reduce((total, item) => {
+      return total + ((item.quantity || 1) * (item.price || 0));
+    }, 0);
   }
 }
