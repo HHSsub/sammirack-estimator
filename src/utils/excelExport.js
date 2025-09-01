@@ -4,7 +4,7 @@ import { addImageToWorkbook } from './excelImageHandler.js';
 import { createEstimateLayout, createPurchaseOrderLayout, createTransactionLayout, validateAndCleanData } from './layoutMapper.js';
 
 // 파일명 생성 함수 (빌드 에러 해결)
-export const generateFileName = (type, customerName = '', date = new Date()) => {
+export const generateFileName = (type, date = new Date()) => {
   const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
   const typeMap = {
     'estimate': '견적서',
@@ -13,9 +13,8 @@ export const generateFileName = (type, customerName = '', date = new Date()) => 
   };
   
   const typeName = typeMap[type] || '문서';
-  const customer = customerName ? `_${customerName}` : '';
   
-  return `${typeName}${customer}_${dateStr}.xlsx`;
+  return `${typeName}_${dateStr}.xlsx`;
 };
 
 // 메인 엑셀 내보내기 함수
