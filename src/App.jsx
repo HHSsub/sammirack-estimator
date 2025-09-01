@@ -130,18 +130,18 @@ const HomePage = () => {
             견적서 작성
           </Link>
           <Link 
-            to="/purchase-order/new"
-            state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
-            className={`create-order-button`}
-          >
-            발주서 작성
-          </Link>
-          <Link 
             to="/delivery-note/new"
             state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
             className={`create-delivery-note-button`}
           >
             거래명세서 작성
+          </Link>
+          <Link 
+            to="/purchase-order/new"
+            state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
+            className={`create-order-button`}
+          >
+            발주서 작성
           </Link>
         </div>
       )}
