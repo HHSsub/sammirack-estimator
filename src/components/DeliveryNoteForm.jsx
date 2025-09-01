@@ -150,8 +150,8 @@ const DeliveryNoteForm = () => {
       return;
     }
 
-    const fileName = generateFileName('거래명세서', formData);
-    const success = exportToExcel(formData, 'delivery');
+    const fileName = generateFileName('transaction');
+    const success = exportToExcel(formData, 'transaction');
     
     if (success) {
       alert('엑셀 파일이 다운로드되었습니다.');
