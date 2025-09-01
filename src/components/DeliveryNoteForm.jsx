@@ -151,7 +151,7 @@ const DeliveryNoteForm = () => {
     }
 
     const fileName = generateFileName('거래명세서', formData);
-    const success = exportToExcel(formData, fileName, 'delivery');
+    const success = exportToExcel(formData, 'delivery');
     
     if (success) {
       alert('엑셀 파일이 다운로드되었습니다.');
