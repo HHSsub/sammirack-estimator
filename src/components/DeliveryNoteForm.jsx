@@ -234,7 +234,7 @@ const DeliveryNoteForm = () => {
                 className="estimate-memo"
                 value={memo}
                 onChange={e => setMemo(e.target.value)}
-                placeholder="아래와 같이 거래명세합니다 (부가세, 운임비 별도)"
+                placeholder="아래와 같이 거래합니다 (부가세, 운임비 별도)"
                 style={{
                   width: "96%",
                   border: "none",
@@ -276,7 +276,7 @@ const DeliveryNoteForm = () => {
           </tr>
           <tr>
             <td class="label">TEL</td>
-            <td>(02)2611-4597</td>
+            <td>010-9548-9578  010-4311-7733</td>
             <td class="label">FAX</td>
             <td>(02)2611-4595</td>
           </tr>
