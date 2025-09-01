@@ -144,7 +144,7 @@ export class LayoutMapper {
     this.safeMergeCells('A7:B7');
     this.safeMergeCells('A8:B8');
     
-    // 발주업체 정보
+    // 발주업체 정보 (사용자 입력 데이터 활용)
     this.ws.getCell('A6').value = '발주업체';
     this.ws.getCell('A6').style = styles.companyInfo;
     this.ws.getCell('C6').value = data.companyName || '';
@@ -155,12 +155,12 @@ export class LayoutMapper {
     
     this.ws.getCell('A8').value = '담당자';
     this.ws.getCell('A8').style = styles.companyInfo;
-    this.ws.getCell('C8').value = data.manager || '';
+    this.ws.getCell('C8').value = data.manager || data.contactInfo || '';
     
     // D6:D10 병합
     this.safeMergeCells('D6:D10');
     
-    // 우측 회사 정보
+    // 우측 회사 정보 (고정 정보)
     this.ws.getCell('F6').value = '사업자등록번호';
     this.ws.getCell('G6').value = '232-81-01750';
     
@@ -219,7 +219,7 @@ export class LayoutMapper {
       cell.style = styles.header;
     }
     
-    // 데이터 행 (14-25행)
+    // 데이터 행 (14-25행) - 사용자 입력 데이터 활용
     const items = data.items || [];
     let totalAmount = 0;
     
@@ -231,11 +231,11 @@ export class LayoutMapper {
         this.ws.getCell(`A${rowNum}`).value = i + 1;
         this.ws.getCell(`B${rowNum}`).value = item.name || '';
         this.ws.getCell(`C${rowNum}`).value = item.unit || '개';
-        this.ws.getCell(`D${rowNum}`).value = item.quantity || 1;
-        this.ws.getCell(`E${rowNum}`).value = item.price || 0;
-        this.ws.getCell(`F${rowNum}`).value = (item.quantity || 1) * (item.price || 0);
+        this.ws.getCell(`D${rowNum}`).value = parseInt(item.quantity) || 1;
+        this.ws.getCell(`E${rowNum}`).value = parseInt(item.unitPrice) || 0;
+        this.ws.getCell(`F${rowNum}`).value = parseInt(item.totalPrice) || ((parseInt(item.quantity) || 1) * (parseInt(item.unitPrice) || 0));
         
-        totalAmount += (item.quantity || 1) * (item.price || 0);
+        totalAmount += parseInt(item.totalPrice) || ((parseInt(item.quantity) || 1) * (parseInt(item.unitPrice) || 0));
       }
       
       // G행:H행 병합
@@ -264,9 +264,10 @@ export class LayoutMapper {
 
   // 견적서 합계 설정
   setupEstimateSummary(data) {
-    const totalAmount = this.calculateTotalAmount(data.items || []);
-    const vat = Math.round(totalAmount * 0.1);
-    const grandTotal = totalAmount + vat;
+    // 사용자 입력 데이터에서 합계 정보 가져오기
+    const totalAmount = data.subtotal || this.calculateTotalAmount(data.items || []);
+    const vat = data.tax || Math.round(totalAmount * 0.1);
+    const grandTotal = data.totalAmount || (totalAmount + vat);
     
     // A26:F26, A27:F27, A28:F28 병합
     this.safeMergeCells('A26:F26');
@@ -342,7 +343,7 @@ export class LayoutMapper {
     // D5:D9 병합
     this.safeMergeCells('D5:D9');
     
-    // 발주업체 정보
+    // 발주업체 정보 (사용자 입력 데이터 활용)
     this.ws.getCell('A5').value = '발주업체';
     this.ws.getCell('A5').style = styles.companyInfo;
     this.ws.getCell('E5').value = data.companyName || '';
@@ -353,14 +354,14 @@ export class LayoutMapper {
     
     this.ws.getCell('A7').value = '담당자';
     this.ws.getCell('A7').style = styles.companyInfo;
-    this.ws.getCell('E7').value = data.manager || '';
+    this.ws.getCell('E7').value = data.manager || data.contactInfo || '';
     
     // F5:H5부터 F10:H10까지 우측 회사 정보 영역 병합
     for (let i = 5; i <= 10; i++) {
       this.safeMergeCells(`F${i}:H${i}`);
     }
     
-    // 우측 회사 정보
+    // 우측 회사 정보 (고정 정보)
     this.ws.getCell('F5').value = '사업자등록번호: 232-81-01750';
     this.ws.getCell('F6').value = '상 호: 삼미랙특수산업';
     this.ws.getCell('F7').value = '소 재 지: 경기도 광명시 하안로 39 광명테크노파크 B동 1층';
@@ -400,7 +401,7 @@ export class LayoutMapper {
       cell.style = styles.header;
     }
     
-    // 데이터 행 및 합계 설정
+    // 데이터 행 및 합계 설정 - 사용자 입력 데이터 활용
     const items = data.items || [];
     let totalAmount = 0;
     
@@ -413,11 +414,11 @@ export class LayoutMapper {
         this.ws.getCell(`A${rowNum}`).value = i + 1;
         this.ws.getCell(`B${rowNum}`).value = item.name || '';
         this.ws.getCell(`C${rowNum}`).value = item.unit || '개';
-        this.ws.getCell(`D${rowNum}`).value = item.quantity || 1;
-        this.ws.getCell(`E${rowNum}`).value = item.price || 0;
-        this.ws.getCell(`F${rowNum}`).value = (item.quantity || 1) * (item.price || 0);
+        this.ws.getCell(`D${rowNum}`).value = parseInt(item.quantity) || 1;
+        this.ws.getCell(`E${rowNum}`).value = parseInt(item.unitPrice) || 0;
+        this.ws.getCell(`F${rowNum}`).value = parseInt(item.totalPrice) || ((parseInt(item.quantity) || 1) * (parseInt(item.unitPrice) || 0));
         
-        totalAmount += (item.quantity || 1) * (item.price || 0);
+        totalAmount += parseInt(item.totalPrice) || ((parseInt(item.quantity) || 1) * (parseInt(item.unitPrice) || 0));
       }
       
       // G행:H행 병합
@@ -427,9 +428,9 @@ export class LayoutMapper {
       }
     }
     
-    // 합계 행 (20-22행)
-    const vat = Math.round(totalAmount * 0.1);
-    const grandTotal = totalAmount + vat;
+    // 합계 행 (20-22행) - 사용자 입력 데이터 활용
+    const vat = data.tax || Math.round(totalAmount * 0.1);
+    const grandTotal = data.totalAmount || (totalAmount + vat);
     
     // A20:F20, A21:F21, A22:F22 병합
     this.safeMergeCells('A20:F20');
@@ -459,7 +460,7 @@ export class LayoutMapper {
 
   // 원자재 명세서 설정
   setupMaterialSpecification(data) {
-    // A23:H23 병합 (원자재 명세서 제목)
+    // 원자재 명세서 제목
     this.safeMergeCells('A23:H23');
     this.ws.getCell('A23').value = '원자재 명세서';
     this.ws.getCell('A23').style = {
@@ -485,7 +486,7 @@ export class LayoutMapper {
       cell.style = styles.header;
     }
     
-    // 원자재 데이터 (25-54행)
+    // 원자재 데이터 (25-54행) - 기본 템플릿 사용
     const materials = [
       { name: '기둥(750)', spec: '2', unit: '개', quantity: 0, price: 0 },
       { name: '상판대', spec: '4', unit: '개', quantity: 0, price: 0 },
@@ -538,12 +539,12 @@ export class LayoutMapper {
     this.ws.getCell('A1').value = '거래명세서';
     this.ws.getCell('A1').style = styles.documentTitle;
     
-    // 기본 회사 정보 설정
+    // 기본 회사 정보 설정 (사용자 입력 데이터 활용)
     this.ws.getCell('A2').value = '거래업체';
     this.ws.getCell('C2').value = data.companyName || '';
     
     this.ws.getCell('A3').value = '거래일자';
-    this.ws.getCell('C3').value = data.transactionDate || new Date().toISOString().split('T')[0];
+    this.ws.getCell('C3').value = data.date || new Date().toISOString().split('T')[0];
   }
 
   // 거래 테이블 설정
@@ -569,7 +570,7 @@ export class LayoutMapper {
       cell.style = styles.header;
     }
     
-    // 데이터 행 설정
+    // 데이터 행 설정 (사용자 입력 데이터 활용)
     const items = data.items || [];
     for (let i = 0; i < Math.max(items.length, 10); i++) {
       const rowNum = 7 + i;
@@ -579,9 +580,9 @@ export class LayoutMapper {
         this.ws.getCell(`A${rowNum}`).value = i + 1;
         this.ws.getCell(`B${rowNum}`).value = item.name || '';
         this.ws.getCell(`C${rowNum}`).value = item.unit || '개';
-        this.ws.getCell(`D${rowNum}`).value = item.quantity || 1;
-        this.ws.getCell(`E${rowNum}`).value = item.price || 0;
-        this.ws.getCell(`F${rowNum}`).value = (item.quantity || 1) * (item.price || 0);
+        this.ws.getCell(`D${rowNum}`).value = parseInt(item.quantity) || 1;
+        this.ws.getCell(`E${rowNum}`).value = parseInt(item.unitPrice) || 0;
+        this.ws.getCell(`F${rowNum}`).value = parseInt(item.totalPrice) || ((parseInt(item.quantity) || 1) * (parseInt(item.unitPrice) || 0));
       }
       
       this.safeMergeCells(`G${rowNum}:H${rowNum}`);
@@ -593,9 +594,10 @@ export class LayoutMapper {
 
   // 거래명세서 합계 설정
   setupTransactionSummary(data) {
-    const totalAmount = this.calculateTotalAmount(data.items || []);
-    const vat = Math.round(totalAmount * 0.1);
-    const grandTotal = totalAmount + vat;
+    // 사용자 입력 데이터에서 합계 정보 가져오기
+    const totalAmount = data.subtotal || this.calculateTotalAmount(data.items || []);
+    const vat = data.tax || Math.round(totalAmount * 0.1);
+    const grandTotal = data.totalAmount || (totalAmount + vat);
     
     const summaryRow = 17; // 거래명세서 합계 시작 행
     
@@ -607,7 +609,7 @@ export class LayoutMapper {
     this.ws.getCell(`F${summaryRow}`).value = grandTotal;
     this.ws.getCell(`F${summaryRow}`).style = styles.totalAmount;
     
-    // 특기사항
+    // 특기사항 (사용자 입력 데이터 활용)
     this.safeMergeCells(`A${summaryRow + 2}:H${summaryRow + 2}`);
     this.ws.getCell(`A${summaryRow + 2}`).value = '특기사항';
     this.ws.getCell(`A${summaryRow + 2}`).style = styles.notesTitle;
@@ -620,7 +622,7 @@ export class LayoutMapper {
   // 총 금액 계산
   calculateTotalAmount(items) {
     return items.reduce((total, item) => {
-      return total + ((item.quantity || 1) * (item.price || 0));
+      return total + (parseInt(item.totalPrice) || ((parseInt(item.quantity) || 1) * (parseInt(item.unitPrice) || 0)));
     }, 0);
   }
 }
