@@ -1,212 +1,164 @@
-// 이미지 처리 유틸리티 (로고, 도장 등)
-
-export class ExcelImageHandler {
-  constructor(workbook) {
-    this.workbook = workbook;
-  }
-
-  /**
-   * Base64 이미지를 Excel에 추가
-   * @param {string} base64Data - Base64 인코딩된 이미지 데이터
-   * @param {string} extension - 이미지 확장자 (png, jpg, jpeg)
-   * @param {string} range - 이미지를 삽입할 셀 범위 ('A1:C3')
-   * @param {object} options - 추가 옵션
-   */
-  addBase64Image(base64Data, extension, range, options = {}) {
-    try {
-      // Base64 데이터에서 헤더 제거
-      const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+// 도장 이미지를 엑셀에 추가하는 함수
+export const addImageToWorkbook = async (workbook, worksheet, cellRef = 'H7') => {
+  try {
+    // public/images/도장.png 이미지 로드
+    const imageUrl = `${process.env.PUBLIC_URL || ''}/images/도장.png`;
+    
+    // 이미지를 base64로 변환
+    const imageBase64 = await loadImageAsBase64(imageUrl);
+    
+    if (imageBase64) {
+      // 이미지 정보 객체 생성
+      const imageInfo = {
+        name: '도장',
+        data: imageBase64,
+        type: 'image',
+        position: {
+          type: 'twoCellAnchor',
+          from: parseCell(cellRef),
+          to: { col: parseCell(cellRef).col + 1, row: parseCell(cellRef).row + 2 }
+        }
+      };
       
-      const imageId = this.workbook.addImage({
-        base64: cleanBase64,
-        extension: extension.toLowerCase()
-      });
-
-      const worksheet = options.worksheet || this.workbook.worksheets[0];
+      // 워크시트에 이미지 추가
+      if (!worksheet['!images']) {
+        worksheet['!images'] = [];
+      }
+      worksheet['!images'].push(imageInfo);
       
-      worksheet.addImage(imageId, {
-        tl: { col: this.getColumnIndex(range.split(':')[0]), row: this.getRowIndex(range.split(':')[0]) - 1 },
-        br: { col: this.getColumnIndex(range.split(':')[1]), row: this.getRowIndex(range.split(':')[1]) - 1 },
-        editAs: 'oneCell'
-      });
-    } catch (error) {
-      console.error('Base64 이미지 추가 실패:', error);
+      console.log('도장 이미지가 성공적으로 추가되었습니다.');
     }
+  } catch (error) {
+    console.warn('이미지 추가 중 오류:', error);
+    // 이미지 추가 실패해도 엑셀 생성은 계속 진행
   }
+};
 
-  /**
-   * URL에서 이미지를 가져와서 Excel에 추가
-   * @param {string} imageUrl - 이미지 URL
-   * @param {string} range - 이미지를 삽입할 셀 범위
-   * @param {object} options - 추가 옵션
-   */
-  async addImageFromUrl(imageUrl, range, options = {}) {
-    return new Promise((resolve, reject) => {
+// 이미지를 Base64로 변환하는 함수
+const loadImageAsBase64 = (imageUrl) => {
+  return new Promise((resolve, reject) => {
+    // 개발 환경에서는 이미지 로딩 스킵
+    if (process.env.NODE_ENV === 'development') {
+      console.log('개발 환경에서는 이미지를 스킵합니다.');
+      resolve(null);
+      return;
+    }
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
       try {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+        // Canvas를 사용해 이미지를 Base64로 변환
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            
-            const base64Data = canvas.toDataURL('image/png');
-            this.addBase64Image(base64Data, 'png', range, options);
-            resolve();
-          } catch (error) {
-            console.error('이미지 처리 실패:', error);
-            reject(error);
-          }
-        };
+        canvas.width = img.width;
+        canvas.height = img.height;
         
-        img.onerror = () => {
-          console.error('이미지 로드 실패:', imageUrl);
-          reject(new Error('이미지 로드 실패'));
-        };
+        ctx.drawImage(img, 0, 0);
         
-        img.src = imageUrl;
+        // PNG 형식으로 Base64 변환
+        const dataUrl = canvas.toDataURL('image/png');
+        const base64 = dataUrl.split(',')[1];
+        
+        resolve(base64);
       } catch (error) {
-        console.error('이미지 URL 처리 실패:', error);
-        reject(error);
+        console.warn('이미지 변환 실패:', error);
+        resolve(null);
       }
-    });
-  }
-
-  /**
-   * 견적서용 회사 로고 추가
-   * @param {object} worksheet - 워크시트 객체
-   * @param {string} range - 로고를 삽입할 셀 범위
-   */
-  async addEstimateCompanyLogo(worksheet, range) {
+    };
+    
+    img.onerror = () => {
+      console.warn('이미지 로드 실패:', imageUrl);
+      resolve(null);
+    };
+    
+    // 이미지 로드 시도
     try {
-      // 회사 로고 이미지 경로 (public/images/logo.png 등)
-      const logoPath = '/images/logo.png';
-      await this.addImageFromUrl(logoPath, range, { worksheet });
+      img.src = imageUrl;
     } catch (error) {
-      console.warn('견적서 로고 추가 실패:', error);
-      // 로고 추가 실패 시 무시하고 계속 진행
+      console.warn('이미지 src 설정 실패:', error);
+      resolve(null);
     }
-  }
+  });
+};
 
-  /**
-   * 발주서용 회사 로고 추가
-   * @param {object} worksheet - 워크시트 객체
-   * @param {string} range - 로고를 삽입할 셀 범위
-   */
-  async addPurchaseOrderCompanyLogo(worksheet, range) {
-    try {
-      // 회사 로고 이미지 경로
-      const logoPath = '/images/logo.png';
-      await this.addImageFromUrl(logoPath, range, { worksheet });
-    } catch (error) {
-      console.warn('발주서 로고 추가 실패:', error);
-      // 로고 추가 실패 시 무시하고 계속 진행
+// 셀 참조를 행/열 객체로 변환
+const parseCell = (cellRef) => {
+  const match = cellRef.match(/([A-Z]+)(\d+)/);
+  if (!match) return { col: 0, row: 0 };
+  
+  const colStr = match[1];
+  const rowNum = parseInt(match[2]) - 1;
+  
+  // 컬럼 문자를 숫자로 변환
+  let colNum = 0;
+  for (let i = 0; i < colStr.length; i++) {
+    colNum = colNum * 26 + (colStr.charCodeAt(i) - 64);
+  }
+  colNum--; // 0 기반 인덱스로 변환
+  
+  return { col: colNum, row: rowNum };
+};
+
+// 이미지 크기 조정 함수
+export const resizeImage = (canvas, maxWidth = 100, maxHeight = 50) => {
+  const ctx = canvas.getContext('2d');
+  const { width, height } = canvas;
+  
+  // 비율 계산
+  const ratio = Math.min(maxWidth / width, maxHeight / height);
+  const newWidth = width * ratio;
+  const newHeight = height * ratio;
+  
+  // 새 캔버스 생성
+  const newCanvas = document.createElement('canvas');
+  const newCtx = newCanvas.getContext('2d');
+  
+  newCanvas.width = newWidth;
+  newCanvas.height = newHeight;
+  
+  // 이미지 리사이즈
+  newCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
+  
+  return newCanvas;
+};
+
+// 이미지 포맷 검증
+export const validateImageFormat = (file) => {
+  const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+  return validTypes.includes(file.type);
+};
+
+// 이미지 파일을 Base64로 변환
+export const convertFileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    if (!validateImageFormat(file)) {
+      reject(new Error('지원되지 않는 이미지 형식입니다.'));
+      return;
     }
-  }
+    
+    const reader = new FileReader();
+    
+    reader.onload = (event) => {
+      const base64 = event.target.result.split(',')[1];
+      resolve(base64);
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('파일 읽기 실패'));
+    };
+    
+    reader.readAsDataURL(file);
+  });
+};
 
-  /**
-   * 일반 회사 로고 추가
-   * @param {object} worksheet - 워크시트 객체
-   * @param {string} range - 로고를 삽입할 셀 범위
-   */
-  async addCompanyLogo(worksheet, range) {
-    try {
-      // 회사 로고 이미지 경로
-      const logoPath = '/images/logo.png';
-      await this.addImageFromUrl(logoPath, range, { worksheet });
-    } catch (error) {
-      console.warn('회사 로고 추가 실패:', error);
-      // 로고 추가 실패 시 무시하고 계속 진행
-    }
-  }
-
-  /**
-   * 회사 도장 추가
-   * @param {object} worksheet - 워크시트 객체
-   * @param {string} range - 도장을 삽입할 셀 범위
-   */
-  async addCompanyStamp(worksheet, range) {
-    try {
-      // 도장 이미지 경로 - public/images/도장.png
-      const stampPath = '/images/도장.png';
-      await this.addImageFromUrl(stampPath, range, { worksheet });
-    } catch (error) {
-      console.warn('회사 도장 추가 실패:', error);
-      // 도장 추가 실패 시에도 계속 진행
-      
-      // 대안: Base64로 인코딩된 기본 도장 이미지 사용
-      try {
-        await this.addDefaultStamp(worksheet, range);
-      } catch (fallbackError) {
-        console.warn('기본 도장 추가도 실패:', fallbackError);
-      }
-    }
-  }
-
-  /**
-   * 기본 도장 이미지 추가 (Base64 인코딩된 이미지)
-   * @param {object} worksheet - 워크시트 객체
-   * @param {string} range - 도장을 삽입할 셀 범위
-   */
-  async addDefaultStamp(worksheet, range) {
-    try {
-      // 기본 도장 이미지 (작은 원형 도장 모양의 Base64 데이터)
-      // 실제 프로젝트에서는 실제 도장 이미지를 Base64로 변환하여 사용
-      const defaultStampBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-      
-      this.addBase64Image(defaultStampBase64, 'png', range, { worksheet });
-    } catch (error) {
-      console.error('기본 도장 추가 실패:', error);
-    }
-  }
-
-  /**
-   * 컬럼 문자를 인덱스로 변환 (A=0, B=1, ...)
-   * @param {string} range - 셀 범위 (예: 'A1')
-   * @returns {number} 컬럼 인덱스
-   */
-  getColumnIndex(range) {
-    const col = range.match(/[A-Z]+/)[0];
-    let result = 0;
-    for (let i = 0; i < col.length; i++) {
-      result = result * 26 + (col.charCodeAt(i) - 'A'.charCodeAt(0) + 1);
-    }
-    return result - 1;
-  }
-
-  /**
-   * 행 번호를 인덱스로 변환
-   * @param {string} range - 셀 범위 (예: 'A1')
-   * @returns {number} 행 인덱스
-   */
-  getRowIndex(range) {
-    const row = range.match(/\d+/)[0];
-    return parseInt(row);
-  }
-
-  /**
-   * 이미지 확장자 추출
-   * @param {string} filename - 파일명
-   * @returns {string} 확장자
-   */
-  getImageExtension(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    return ['png', 'jpg', 'jpeg', 'gif'].includes(ext) ? ext : 'png';
-  }
-
-  /**
-   * Base64 데이터에서 확장자 추출
-   * @param {string} base64Data - Base64 데이터
-   * @returns {string} 확장자
-   */
-  getBase64Extension(base64Data) {
-    if (base64Data.startsWith('data:image/png')) return 'png';
-    if (base64Data.startsWith('data:image/jpg') || base64Data.startsWith('data:image/jpeg')) return 'jpg';
-    if (base64Data.startsWith('data:image/gif')) return 'gif';
-    return 'png'; // 기본값
-  }
-}
+// 기본 export
+export default {
+  addImageToWorkbook,
+  loadImageAsBase64,
+  resizeImage,
+  validateImageFormat,
+  convertFileToBase64
+};
