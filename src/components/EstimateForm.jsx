@@ -150,7 +150,7 @@ const EstimateForm = () => {
       return;
     }
 
-    const fileName = generateFileName('견적서', formData);
+    const fileName = generateFileName('estimate', formData);
     exportToExcel(formData, 'estimate')
       .then(() => {
         alert('엑셀 파일이 다운로드되었습니다.');
