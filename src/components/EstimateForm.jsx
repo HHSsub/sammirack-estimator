@@ -150,6 +150,8 @@ const EstimateForm = () => {
       return;
     }
 
+    console.log('견적서 export 데이터:', formData);
+
     const fileName = generateFileName('estimate');
     exportToExcel(formData, 'estimate')
       .then(() => {
