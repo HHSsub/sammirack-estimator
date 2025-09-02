@@ -230,7 +230,7 @@ function buildEstimateOrTransaction(ws, items = [], totals, notes) {
 
   // 회사명 푸터 H32
   ws.getCell('H32').value = '(주)삼미앵글산업';
-  ws.getCell('H32').font = { ...fontDefault, bold: true, size: 12 };
+  ws.getCell('H32').font = { ...fontDefault, size: 10 };
   ws.getCell('H32').alignment = alignCenter;
 
   // 전체 테두리(5~32행)
@@ -342,7 +342,7 @@ function buildPurchase(ws, items = [], materials = [], totals, notes) {
 
   // 회사명 H59
   ws.getCell('H59').value = '(주)삼미앵글산업';
-  ws.getCell('H59').font = { ...fontDefault, bold: true, size: 12 };
+  ws.getCell('H59').font = { ...fontDefault, size: 10 };
   ws.getCell('H59').alignment = alignCenter;
 
   // 전체 테두리(5~59행)
@@ -356,7 +356,7 @@ async function placeStamp(workbook, ws) {
     const imgId = workbook.addImage({ base64, extension: 'png' });
     // 적당히 보이도록 H7:I9 영역에 배치
     ws.addImage(imgId, {
-      tl: { col: 7.9, row: 5.8 }, // H7 근처 (0-index 기반)
+      tl: { col: 8.2, row: 8.8 }, // H7 근처 (0-index 기반)
       ext: { width: 40, height: 40 },
       editAs: 'oneCell',
     });
