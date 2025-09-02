@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import { getEstimateStyles, getPurchaseOrderStyles, getTransactionStyles } from './excelStyles.js';
+import { getEstimateStyles, getPurchaseOrderStyles, getTransactionStyles, baseStyles } from './excelStyles.js';
 import { addImageToWorkbook } from './excelImageHandler.js';
 import { createEstimateLayout, createPurchaseOrderLayout, createTransactionLayout, validateAndCleanData } from './layoutMapper.js';
 
@@ -46,17 +46,17 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
     
     // 컬럼 너비 설정
     worksheet['!cols'] = getColumnWidths();
-    
-    // 이미지 추가 (도장) - 비동기 처리
     try {
       const imageCell = type === 'purchase' ? 'H7' : 'H7';
       await addImageToWorkbook(workbook, worksheet, imageCell);
       console.log('이미지 추가 완료');
     } catch (imageError) {
       console.warn('이미지 추가 실패, 계속 진행:', imageError);
-    }
     
-    // 워크시트를 워크북에 추가
+    // 테두리 적용
+    applyBorders(worksheet, layout.borders.start, layout.borders.end, baseStyles.defaultCell.border);
+    console.log('테두리 적용 완료');
+
     XLSX.utils.book_append_sheet(workbook, worksheet, '문서');
     
     // 파일 다운로드
@@ -88,12 +88,34 @@ const createDocumentLayout = (data, type) => {
 
 // 스타일 적용
 const applyStyles = (worksheet, styles, type) => {
+  // 모든 셀에 기본 스타일 적용
+  for (let r = 0; r < worksheet['!rows'].length; r++) {
+    for (let c = 0; c < getColumnWidths().length; c++) {
+      const cellRef = `${String.fromCharCode(65 + c)}${r + 1}`;
+      if (!worksheet[cellRef]) {
+        worksheet[cellRef] = { v: '', t: 's' };
+      }
+      worksheet[cellRef].s = baseStyles.defaultCell;
+    }
+  }
+
+  // 특정 셀 스타일 적용
   Object.keys(styles).forEach(cellRef => {
     if (!worksheet[cellRef]) {
       worksheet[cellRef] = { v: '', t: 's' };
     }
-    worksheet[cellRef].s = styles[cellRef];
+    worksheet[cellRef].s = { ...worksheet[cellRef].s, ...styles[cellRef] };
   });
+
+  // 행 높이 설정
+  if (styles["9"] && styles["9"].hpt) {
+    worksheet['!rows'] = worksheet['!rows'] || [];
+    worksheet['!rows'][8] = { hpt: styles["9"].hpt }; // 9번째 행 (인덱스 8)
+  }
+  if (styles["5"] && styles["5"].hpt) {
+    worksheet['!rows'] = worksheet['!rows'] || [];
+    worksheet['!rows'][4] = { hpt: styles["5"].hpt }; // 5번째 행 (인덱스 4)
+  }
 };
 
 // 셀 병합 적용
@@ -107,7 +129,7 @@ const applyMerges = (worksheet, merges) => {
 // 컬럼 너비 설정
 const getColumnWidths = () => [
   { wch: 5 },   // A: NO
-  { wch: 25 },  // B: 품명
+  { wch: 39 },  // B: 품명
   { wch: 8 },   // C: 단위
   { wch: 8 },   // D: 수량
   { wch: 12 },  // E: 단가
@@ -136,4 +158,24 @@ export default {
   exportPurchaseOrder,
   exportTransaction,
   generateFileName
+};
+
+
+// 범위에 테두리 적용
+const applyBorders = (worksheet, startCell, endCell, style) => {
+  const startCol = startCell.charCodeAt(0) - 65;
+  const startRow = parseInt(startCell.substring(1)) - 1;
+  const endCol = endCell.charCodeAt(0) - 65;
+  const endRow = parseInt(endCell.substring(1)) - 1;
+
+  for (let r = startRow; r <= endRow; r++) {
+    for (let c = startCol; c <= endCol; c++) {
+      const cellRef = `${String.fromCharCode(65 + c)}${r + 1}`;
+      if (!worksheet[cellRef]) {
+        worksheet[cellRef] = { v: '', t: 's' };
+      }
+      worksheet[cellRef].s = worksheet[cellRef].s || {};
+      worksheet[cellRef].s.border = style;
+    }
+  }
 };
