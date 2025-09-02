@@ -37,7 +37,10 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
     if (!layout || !Array.isArray(layout.data)) {
     throw new Error(`레이아웃 데이터가 올바르지 않습니다: ${JSON.stringify(layout)}`);
     }
-    
+
+    // 빈 값 방어코드 ?
+    layout.data = layout.data.filter(row => Array.isArray(row));
+
     // 워크시트 생성
     const worksheet = XLSX.utils.aoa_to_sheet(layout.data);
     
