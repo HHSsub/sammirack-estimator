@@ -1,5 +1,5 @@
 // 기본 스타일 정의
-const baseStyles = {
+export const baseStyles = {
   // 문서 제목 스타일 (짙은 회색 35%, 굵은 글씨)
   documentTitle: {
     font: { bold: true, size: 14, name: "맑은 고딕" },
