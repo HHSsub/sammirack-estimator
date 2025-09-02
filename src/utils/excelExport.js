@@ -76,6 +76,15 @@ const applyStyle = (cell, style) => {
   Object.assign(cell, { ...style });
 };
 
+// 파일명 자동 생성
+export const generateFileName = (type = 'estimate') => {
+  const date = new Date();
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${type}_${y}${m}${d}.xlsx`;
+};
+
 // 메인 엑셀 생성 함수
 export const exportExcel = async ({
   type = 'estimate', // 'estimate', 'purchase', 'transaction'
