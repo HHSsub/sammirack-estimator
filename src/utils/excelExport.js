@@ -51,7 +51,7 @@ const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFF
 const columnWidths = [
   { width: 5 },  // A: NO
   { width: 39 }, // B: 품명/부품명
-  { width: 8 },  // C: 단위
+  { width: 11 },  // C: 단위
   { width: 8 },  // D: 수량
   { width: 18 }, // E: 단가(3 정도 더 넓힘)
   { width: 18 }, // F: 공급가/금액(3 정도 더 넓힘)
@@ -105,7 +105,7 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
   const title = type === 'purchase' ? '발주서' : type === 'transaction' ? '거래명세서' : '견적서';
   const titleCell = ws.getCell('A5');
   titleCell.value = title;
-  titleCell.font = { ...fontDefault, bold: true, size: 14 };
+  titleCell.font = { bold: true, size: 20 };
   titleCell.fill = fillDocTitle;
   titleCell.alignment = alignCenter;
   setRowHeights(ws, { 5: 45 });
@@ -163,6 +163,7 @@ function buildEstimateOrTransaction(ws, items = [], totals, notes) {
   ws.getCell('A11').value = '견적명세';
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
+  ws.getCell('A11').font = { bold: true, size: 16 };
   styleRange(ws, 11, 1, 11, 8, { font: fontDefault, border: borderThin });
 
   // 헤더 A12:H12 (G:H 비고 합치기)
@@ -213,7 +214,18 @@ function buildEstimateOrTransaction(ws, items = [], totals, notes) {
 
   // 특기사항 A29:H31 (흰색 배경, 좌상단 정렬)
   ws.mergeCells('A29:H31');
-  ws.getCell('A29').value = notes || '';
+  
+  // 특기사항 제목
+  ws.getCell('A29').value = "특기사항";
+  ws.getCell('A29').font = { bold: true };
+  ws.getCell('A29').alignment = { vertical: "top", horizontal: "left" };
+  
+  // notes 내용 (있으면)
+  if (notes) {
+    ws.getCell('A30').value = notes;
+    ws.getCell('A30').alignment = { vertical: "top", horizontal: "left", wrapText: true };
+  }
+  
   styleRange(ws, 29, 1, 31, 8, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
   // 회사명 푸터 H32
@@ -232,6 +244,7 @@ function buildPurchase(ws, items = [], materials = [], totals, notes) {
   ws.getCell('A11').value = '발주 명세';
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
+  ws.getCell('A11').font = { bold: true, size: 16 };
   styleRange(ws, 11, 1, 11, 8, { font: fontDefault, border: borderThin });
 
   // 헤더(명세) A12:H12 (G:H 비고 합치기)
@@ -282,6 +295,7 @@ function buildPurchase(ws, items = [], materials = [], totals, notes) {
   ws.getCell('A24').value = '원자재 명세서';
   ws.getCell('A24').fill = fillItemHeader;
   ws.getCell('A24').alignment = alignCenter;
+  ws.getCell('A24').font = { bold: true, size: 16 };
   styleRange(ws, 24, 1, 24, 8, { font: fontDefault, border: borderThin });
 
   // 원자재 헤더 A25:H25 — F~H 비고 병합
@@ -312,7 +326,18 @@ function buildPurchase(ws, items = [], materials = [], totals, notes) {
 
   // 특기사항 A56:H58
   ws.mergeCells('A56:H58');
-  ws.getCell('A56').value = notes || '';
+  // 특기사항 제목
+  ws.getCell('A56').value = "특기사항";
+  ws.getCell('A56').font = { bold: true };
+  ws.getCell('A56').alignment = { vertical: "top", horizontal: "left" };
+  
+  // notes 내용 (있으면)
+  if (notes) {
+    ws.getCell('A57').value = notes;
+    ws.getCell('A57').alignment = { vertical: "top", horizontal: "left", wrapText: true };
+  }
+  
+  
   styleRange(ws, 56, 1, 58, 8, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
   // 회사명 H59
@@ -332,7 +357,7 @@ async function placeStamp(workbook, ws) {
     // 적당히 보이도록 H7:I9 영역에 배치
     ws.addImage(imgId, {
       tl: { col: 7.2, row: 6.3 }, // H7 근처 (0-index 기반)
-      ext: { width: 120, height: 120 },
+      ext: { width: 17, height: 17 },
       editAs: 'oneCell',
     });
   } catch (e) {
