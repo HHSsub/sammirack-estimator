@@ -356,7 +356,7 @@ async function placeStamp(workbook, ws) {
     const imgId = workbook.addImage({ base64, extension: 'png' });
     // 적당히 보이도록 H7:I9 영역에 배치
     ws.addImage(imgId, {
-      tl: { col: 7.2, row: 6.3 }, // H7 근처 (0-index 기반)
+      tl: { col: 7.9, row: 5.8 }, // H7 근처 (0-index 기반)
       ext: { width: 40, height: 40 },
       editAs: 'oneCell',
     });
@@ -401,7 +401,7 @@ export async function exportToExcel(rawData, type = 'estimate') {
   }
 
   // 셀 전체 가운데 정렬 유지 (특기사항 제외 이미 따로 처리)
-  styleRange(ws, 5, 1, ws.rowCount, 8, { font: fontDefault, alignment: alignCenter });
+  styleRange(ws, 5, 1, ws.rowCount, 8, { alignment: alignCenter });
 
   // 도장 이미지
   await placeStamp(workbook, ws);
