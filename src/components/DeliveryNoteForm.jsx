@@ -152,6 +152,8 @@ const DeliveryNoteForm = () => {
 
     const fileName = generateFileName('transaction');
     const success = exportToExcel(formData, 'transaction');
+
+    console.log('거래명세서 export 데이터:', formData);
     
     if (success) {
       alert('엑셀 파일이 다운로드되었습니다.');
