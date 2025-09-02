@@ -35,25 +35,36 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
     console.log('레이아웃 생성 완료');
 
     if (!layout || !Array.isArray(layout.data)) {
-    throw new Error(`레이아웃 데이터가 올바르지 않습니다: ${JSON.stringify(layout)}`);
+      throw new Error(`레이아웃 데이터가 올바르지 않습니다: ${JSON.stringify(layout)}`);
     }
 
-    // 빈 값 방어코드 ?
+    // 빈 값 방어코드
     layout.data = layout.data.filter(row => Array.isArray(row));
 
     // 워크시트 생성
     const worksheet = XLSX.utils.aoa_to_sheet(layout.data);
-    
+
+    // 방어 코드: merges 범위가 layout.data를 벗어나지 않도록 필터링
+    const maxRow = layout.data.length - 1;
+    const maxCol = layout.data[0]?.length - 1 || 0;
+
+    const safeMerges = (layout.merges || []).filter(m =>
+      m && m.s && m.e &&
+      m.s.r <= maxRow && m.e.r <= maxRow &&
+      m.s.c <= maxCol && m.e.c <= maxCol
+    );
+
+    // 병합 셀 적용
+    worksheet['!merges'] = safeMerges;
+
     // 스타일 적용
     applyStyles(worksheet, layout.styles, type);
     console.log('스타일 적용 완료');
-    
-    // 병합 셀 적용
-    applyMerges(worksheet, layout.merges);
-    console.log('셀 병합 완료');
-    
+
     // 컬럼 너비 설정
     worksheet['!cols'] = getColumnWidths();
+
+    // 이미지 삽입
     try {
       const imageCell = type === 'purchase' ? 'H7' : 'H7';
       await addImageToWorkbook(workbook, worksheet, imageCell);
@@ -61,20 +72,20 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
     } catch (imageError) {
       console.warn('이미지 추가 실패, 계속 진행:', imageError);
     }
-    
+
     // 테두리 적용
     applyBorders(worksheet, layout.borders.start, layout.borders.end, baseStyles.defaultCell.border);
     console.log('테두리 적용 완료');
 
     XLSX.utils.book_append_sheet(workbook, worksheet, '문서');
-    
+
     // 파일 다운로드
     const fileName = generateFileName(type, new Date());
     XLSX.writeFile(workbook, fileName);
-    
+
     console.log(`${fileName} 파일이 성공적으로 생성되었습니다.`);
     return true;
-    
+
   } catch (error) {
     console.error('엑셀 내보내기 중 오류:', error);
     alert('엑셀 파일 생성 중 오류가 발생했습니다: ' + error.message);
@@ -97,19 +108,21 @@ const createDocumentLayout = (data, type) => {
 
 // 스타일 적용
 const applyStyles = (worksheet, styles, type) => {
+  worksheet['!rows'] = worksheet['!rows'] || [];
+
   // 모든 셀에 기본 스타일 적용
-  for (let r = 0; r < worksheet['!rows'].length; r++) {
+  for (let r = 0; r < worksheet['!rows'].length || worksheet['!rows'].length === 0 ? worksheet['!rows'].length : worksheet['!rows'].length; r++) {
     for (let c = 0; c < getColumnWidths().length; c++) {
       const cellRef = `${String.fromCharCode(65 + c)}${r + 1}`;
       if (!worksheet[cellRef]) {
         worksheet[cellRef] = { v: '', t: 's' };
       }
-      worksheet[cellRef].s = excelStyles.baseStyles.defaultCell;
+      worksheet[cellRef].s = baseStyles.defaultCell;
     }
   }
 
   // 특정 셀 스타일 적용
-  Object.keys(styles).forEach(cellRef => {
+  Object.keys(styles || {}).forEach(cellRef => {
     if (!worksheet[cellRef]) {
       worksheet[cellRef] = { v: '', t: 's' };
     }
@@ -118,12 +131,10 @@ const applyStyles = (worksheet, styles, type) => {
 
   // 행 높이 설정
   if (styles["9"] && styles["9"].hpt) {
-    worksheet['!rows'] = worksheet['!rows'] || [];
-    worksheet['!rows'][8] = { hpt: styles["9"].hpt }; // 9번째 행 (인덱스 8)
+    worksheet['!rows'][8] = { hpt: styles["9"].hpt };
   }
   if (styles["5"] && styles["5"].hpt) {
-    worksheet['!rows'] = worksheet['!rows'] || [];
-    worksheet['!rows'][4] = { hpt: styles["5"].hpt }; // 5번째 행 (인덱스 4)
+    worksheet['!rows'][4] = { hpt: styles["5"].hpt };
   }
 };
 
@@ -132,7 +143,7 @@ const applyMerges = (worksheet, merges) => {
   if (!worksheet['!merges']) {
     worksheet['!merges'] = [];
   }
-  worksheet['!merges'].push(...merges);
+  worksheet['!merges'].push(...(merges || []));
 };
 
 // 컬럼 너비 설정
@@ -168,7 +179,6 @@ export default {
   exportTransaction,
   generateFileName
 };
-
 
 // 범위에 테두리 적용
 const applyBorders = (worksheet, startCell, endCell, style) => {
