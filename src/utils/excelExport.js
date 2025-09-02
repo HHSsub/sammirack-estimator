@@ -153,7 +153,7 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
   ws.getCell('F10').alignment = alignCenter;
 
   // 전체 상단구간 스타일(폰트/정렬/보더)
-  styleRange(ws, 5, 1, 10, 8, { font: fontDefault, alignment: alignCenter, border: borderThin });
+  styleRange(ws, 5, 1, 10, 8, { alignment: alignCenter, border: borderThin });
 }
 
 /** 견적/거래 공통명세 (A11~) */
@@ -357,7 +357,7 @@ async function placeStamp(workbook, ws) {
     // 적당히 보이도록 H7:I9 영역에 배치
     ws.addImage(imgId, {
       tl: { col: 7.2, row: 6.3 }, // H7 근처 (0-index 기반)
-      ext: { width: 17, height: 17 },
+      ext: { width: 40, height: 40 },
       editAs: 'oneCell',
     });
   } catch (e) {
