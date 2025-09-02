@@ -52,7 +52,7 @@ const baseStyles = {
   // 고객 정보 값 스타일
   customerValue: {
     font: { size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "center", vertical: "center" }
+    alignment: { horizontal: "center", vertical: "center" },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
@@ -102,7 +102,7 @@ const baseStyles = {
   // 품명 데이터 스타일 (좌측 정렬)
   itemName: {
     font: { size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "center", vertical: "center" }
+    alignment: { horizontal: "center", vertical: "center" },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
