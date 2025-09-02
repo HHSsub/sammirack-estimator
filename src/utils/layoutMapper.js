@@ -33,13 +33,13 @@ export const createEstimateLayout = (data, type = 'estimate') => {
   
   // 고객 정보 섹션
   layout[5][0] = '거래일자';
-  layout[5][2] = safeData.date || new Date().toISOString().slice(0, 10);
+  layout[5][1] = safeData.date || new Date().toISOString().slice(0, 10);
   
   layout[6][0] = '상호명';
-  layout[6][2] = safeData.customerName || '';
+  layout[6][1] = safeData.customerName || '';
   
   layout[7][0] = '담당자';
-  layout[7][2] = safeData.contactPerson || '';
+  layout[7][1] = safeData.contactPerson || '';
   
   layout[8][0] = actionText;
   
@@ -122,9 +122,9 @@ export const createEstimateLayout = (data, type = 'estimate') => {
   // 병합 정보
   const merges = [
     { s: { r: 4, c: 0 }, e: { r: 4, c: 7 } },   // 문서제목 A5:H5
-    { s: { r: 5, c: 0 }, e: { r: 5, c: 1 } },   // 거래일자 A6:B6
-    { s: { r: 6, c: 0 }, e: { r: 6, c: 1 } },   // 상호명 A7:B7
-    { s: { r: 7, c: 0 }, e: { r: 7, c: 1 } },   // 담당자 A8:B8
+    { s: { r: 5, c: 1 }, e: { r: 5, c: 2 } },   // 거래일자 값 B6:C6
+    { s: { r: 6, c: 1 }, e: { r: 6, c: 2 } },   // 상호명 값 B7:C7
+    { s: { r: 7, c: 1 }, e: { r: 7, c: 2 } },   // 담당자 값 B8:C8
     { s: { r: 8, c: 0 }, e: { r: 9, c: 2 } },   // 아래와 같이 견적합니다 A9:C10
     { s: { r: 5, c: 3 }, e: { r: 9, c: 3 } },   // 공급자 D6:D10
     { s: { r: 5, c: 5 }, e: { r: 5, c: 7 } },   // 사업자등록번호 F6:H6
@@ -151,7 +151,8 @@ export const createEstimateLayout = (data, type = 'estimate') => {
   return {
     data: layout,
     merges: merges,
-    styles: getEstimateStyles()
+    styles: getEstimateStyles(),
+    borders: { start: 'A5', end: 'H31' }
   };
 };
 
@@ -173,13 +174,13 @@ export const createPurchaseOrderLayout = (data) => {
   
   // 고객 정보 섹션
   layout[5][0] = '거래일자';
-  layout[5][2] = safeData.date || new Date().toISOString().slice(0, 10);
+  layout[5][1] = safeData.date || new Date().toISOString().slice(0, 10);
   
   layout[6][0] = '상호명';
-  layout[6][2] = safeData.customerName || '';
+  layout[6][1] = safeData.customerName || '';
   
   layout[7][0] = '담당자';
-  layout[7][2] = safeData.contactPerson || '';
+  layout[7][1] = safeData.contactPerson || '';
   
   layout[8][0] = '아래와 같이 발주합니다';
   
@@ -294,9 +295,9 @@ export const createPurchaseOrderLayout = (data) => {
   // 병합 정보
   const merges = [
     { s: { r: 4, c: 0 }, e: { r: 4, c: 7 } },   // 문서제목 A5:H5
-    { s: { r: 5, c: 0 }, e: { r: 5, c: 1 } },   // 거래일자 A6:B6
-    { s: { r: 6, c: 0 }, e: { r: 6, c: 1 } },   // 상호명 A7:B7
-    { s: { r: 7, c: 0 }, e: { r: 7, c: 1 } },   // 담당자 A8:B8
+    { s: { r: 5, c: 1 }, e: { r: 5, c: 2 } },   // 거래일자 값 B6:C6
+    { s: { r: 6, c: 1 }, e: { r: 6, c: 2 } },   // 상호명 값 B7:C7
+    { s: { r: 7, c: 1 }, e: { r: 7, c: 2 } },   // 담당자 값 B8:C8
     { s: { r: 8, c: 0 }, e: { r: 9, c: 2 } },   // 아래와 같이 발주합니다 A9:C10
     { s: { r: 5, c: 3 }, e: { r: 9, c: 3 } },   // 공급자 D6:D10
     { s: { r: 5, c: 5 }, e: { r: 5, c: 7 } },   // 사업자등록번호 F6:H6
@@ -330,7 +331,8 @@ export const createPurchaseOrderLayout = (data) => {
   return {
     data: layout,
     merges: merges,
-    styles: getPurchaseOrderStyles()
+    styles: getPurchaseOrderStyles(),
+    borders: { start: 'A5', end: 'H58' }
   };
 };
 
