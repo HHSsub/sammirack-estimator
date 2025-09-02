@@ -51,7 +51,7 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
       await addImageToWorkbook(workbook, worksheet, imageCell);
       console.log('이미지 추가 완료');
     } catch (imageError) {
-      console.warn(\'이미지 추가 실패, 계속 진행:\', imageError);
+      console.warn('이미지 추가 실패, 계속 진행:', imageError);
     }
     
     // 테두리 적용
