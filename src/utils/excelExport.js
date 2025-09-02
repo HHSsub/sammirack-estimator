@@ -1,4 +1,6 @@
+// src/utils/excelExport.js
 import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 // 파일명 자동 생성
 export const generateFileName = (type = 'estimate') => {
@@ -9,154 +11,170 @@ export const generateFileName = (type = 'estimate') => {
   return `${type}_${y}${m}${d}.xlsx`;
 };
 
-// 엑셀 내보내기 함수
+// 공통 스타일
+const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } }; // 연한 회색
+const lightGrayFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } }; // 옅은 회색
+const darkGrayFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 중간 회색
+
+const centerAlign = { vertical: 'middle', horizontal: 'center', wrapText: true };
+
+// 컬럼 너비
+const columnsWidth = [
+  { wch: 5 },  // A: NO
+  { wch: 39 }, // B: 품명
+  { wch: 8 },  // C: 단위
+  { wch: 8 },  // D: 수량
+  { wch: 15 }, // E: 단가
+  { wch: 15 }, // F: 공급가/금액
+  { wch: 15 }, // G: 비고
+  { wch: 15 }, // H: 비고 확장
+];
+
 export const exportToExcel = async (data, type = 'estimate') => {
   const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet(type === 'purchase' ? '발주서' : '견적서');
+  workbook.creator = '삼미앵글랙';
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const worksheet = workbook.addWorksheet(type === 'purchase' ? '발주서' : '견적서');
 
   // 컬럼 너비 설정
-  sheet.columns = [
-    { width: 5 },  // A: NO
-    { width: 39 }, // B: 품명
-    { width: 8 },  // C: 단위
-    { width: 8 },  // D: 수량
-    { width: 12 }, // E: 단가
-    { width: 12 }, // F: 공급가/금액
-    { width: 15 }, // G: 비고
-    { width: 15 }  // H: 비고 확장
-  ];
+  worksheet.columns = columnsWidth;
 
   // 행 높이 설정
-  sheet.getRow(5).height = 45;  // 문서 제목
-  sheet.getRow(9).height = 40;  // 특이사항 / 안내문
-
+  worksheet.getRow(5).height = 45;  // 문서제목
+  worksheet.getRow(9).height = 40;  // "아래와 같이 ..."
+  
   // 문서제목
-  sheet.mergeCells('A5:H5');
-  const titleCell = sheet.getCell('A5');
-  titleCell.value = type === 'purchase' ? '발주서' : (data.type === 'estimate' ? '견적서' : '거래명세서');
+  worksheet.mergeCells('A5:H5');
+  const titleCell = worksheet.getCell('A5');
+  titleCell.value = type === 'purchase' ? '발주서' : '견적서';
+  titleCell.fill = headerFill;
+  titleCell.alignment = centerAlign;
   titleCell.font = { bold: true, size: 14 };
-  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '595959' } }; // 어두운 회색 35%
 
-  // 상단 정보
-  sheet.mergeCells('A6:B6');
-  sheet.getCell('A6').value = '거래일자';
-  sheet.mergeCells('A7:B7');
-  sheet.getCell('A7').value = '상호명';
-  sheet.mergeCells('A8:B8');
-  sheet.getCell('A8').value = '담당자';
-  sheet.mergeCells('A9:C10');
-  sheet.getCell('A9').value = type === 'purchase' ? '아래와 같이 발주합니다' : '아래와 같이 견적합니다';
+  // 거래일자, 상호명, 담당자
+  worksheet.mergeCells('A6:B6');
+  worksheet.getCell('A6').value = '거래일자';
+  worksheet.getCell('A6').alignment = centerAlign;
+  worksheet.mergeCells('A7:B7');
+  worksheet.getCell('A7').value = '상호명';
+  worksheet.getCell('A7').alignment = centerAlign;
+  worksheet.mergeCells('A8:B8');
+  worksheet.getCell('A8').value = '담당자';
+  worksheet.getCell('A8').alignment = centerAlign;
 
-  sheet.mergeCells('D6:D10');
-  sheet.getCell('D6').value = '공급자';
-  sheet.getCell('E6').value = '사업자등록번호';
-  sheet.mergeCells('F6:H6');
-  sheet.getCell('F6').value = '232-81-01750';
-  sheet.getCell('E7').value = '상호';
-  sheet.getCell('F7').value = '삼미앵글랙산업';
-  sheet.getCell('G7').value = '대표자';
-  sheet.getCell('H7').value = '박이삭';
-  sheet.getCell('E8').value = '소재지';
-  sheet.mergeCells('F8:H8');
-  sheet.getCell('F8').value = '경기도 광명시 원노온사로 39, 철제 스틸하우스 1';
-  sheet.getCell('E9').value = 'TEL';
-  sheet.getCell('F9').value = '010-9548-9578  010-4311-7733';
-  sheet.getCell('G9').value = 'FAX';
-  sheet.getCell('H9').value = '(02)2611-4595';
-  sheet.getCell('E10').value = '홈페이지';
-  sheet.mergeCells('F10:H10');
-  sheet.getCell('F10').value = 'http://www.ssmake.com';
+  // 아래와 같이 ~
+  worksheet.mergeCells('A9:C10');
+  worksheet.getCell('A9').value = type === 'purchase' ? '아래와 같이 발주합니다' : '아래와 같이 견적합니다';
+  worksheet.getCell('A9').alignment = centerAlign;
 
-  // 견적/발주/거래명세서 표 헤더
-  sheet.mergeCells('A11:H11');
-  sheet.getCell('A11').value = type === 'purchase' ? '발주 명세' : '견적명세';
-  sheet.getCell('A11').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'D9D9D9' } }; // 옅은 회색
-  sheet.getCell('A11').alignment = { horizontal: 'center', vertical: 'middle' };
+  // 공급자 및 사업자등록번호
+  worksheet.mergeCells('D6:D10');
+  worksheet.getCell('D6').value = '삼미앵글랙';
+  worksheet.getCell('D6').alignment = centerAlign;
 
-  // 컬럼 헤더
-  const headerRow = sheet.getRow(12);
-  headerRow.values = ['NO','품명','단위','수량','단가','공급가','비고','비고'];
-  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E5E5E5' } };
-  headerRow.font = { bold: true };
-  headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getCell('E6').value = '사업자등록번호';
+  worksheet.getCell('F6').value = '232-81-01750';
+  worksheet.mergeCells('F6:H6');
+  worksheet.getCell('F6').alignment = centerAlign;
 
-  // 아이템 데이터 삽입
-  (data.items || []).forEach((item, index) => {
-    const rowIndex = 13 + index;
-    sheet.getCell(`A${rowIndex}`).value = index + 1;
-    sheet.getCell(`B${rowIndex}`).value = item.name || '';
-    sheet.getCell(`C${rowIndex}`).value = item.unit || '';
-    sheet.getCell(`D${rowIndex}`).value = item.quantity || 0;
-    sheet.getCell(`E${rowIndex}`).value = item.unitPrice || 0;
-    sheet.getCell(`F${rowIndex}`).value = item.totalPrice || 0;
-    sheet.mergeCells(`G${rowIndex}:H${rowIndex}`);
-    sheet.getCell(`G${rowIndex}`).value = item.note || '';
+  // 상호/대표자/소재지 등
+  worksheet.getCell('E7').value = '상호';
+  worksheet.getCell('F7').value = '삼미앵글랙산업';
+  worksheet.getCell('G7').value = '대표자';
+  worksheet.getCell('H7').value = '박이삭';
+
+  worksheet.getCell('E8').value = '소재지';
+  worksheet.mergeCells('F8:H8');
+  worksheet.getCell('F8').value = '경기도 광명시 원노온사로 39, 철제 스틸하우스 1';
+  worksheet.getCell('F8').alignment = centerAlign;
+
+  worksheet.getCell('E9').value = 'TEL';
+  worksheet.getCell('F9').value = '010-9548-9578 010-4311-7733';
+  worksheet.getCell('G9').value = 'FAX';
+  worksheet.getCell('H9').value = '(02)2611-4595';
+
+  worksheet.getCell('E10').value = '홈페이지';
+  worksheet.mergeCells('F10:H10');
+  worksheet.getCell('F10').value = 'http://www.ssmake.com';
+  worksheet.getCell('F10').alignment = centerAlign;
+
+  // 견적/발주 명세 제목
+  worksheet.mergeCells('A11:H11');
+  worksheet.getCell('A11').value = type === 'purchase' ? '발주 명세' : '견적명세';
+  worksheet.getCell('A11').fill = lightGrayFill;
+  worksheet.getCell('A11').alignment = centerAlign;
+
+  // 테이블 헤더
+  worksheet.getRow(12).values = ['NO', '품명', '단위', '수량', '단가', '공급가', '비고', '비고'];
+  worksheet.getRow(12).fill = lightGrayFill;
+  worksheet.getRow(12).alignment = centerAlign;
+
+  // 아이템 행 최소값
+  const items = data.items && data.items.length > 0 ? data.items : Array(13).fill({ name:'', unit:'', quantity:'', unitPrice:'', totalPrice:'', note:''});
+  
+  // 데이터 입력
+  items.forEach((item, idx) => {
+    const rowIndex = 13 + idx;
+    worksheet.getCell(`A${rowIndex}`).value = idx + 1;
+    worksheet.getCell(`B${rowIndex}`).value = item.name;
+    worksheet.getCell(`C${rowIndex}`).value = item.unit;
+    worksheet.getCell(`D${rowIndex}`).value = item.quantity;
+    worksheet.getCell(`E${rowIndex}`).value = item.unitPrice;
+    worksheet.getCell(`F${rowIndex}`).value = item.totalPrice;
+    // 비고 병합
+    worksheet.mergeCells(`G${rowIndex}:H${rowIndex}`);
+    worksheet.getCell(`G${rowIndex}`).value = item.note;
+    worksheet.getCell(`G${rowIndex}`).alignment = centerAlign;
   });
 
-  // 발주서 전용 원자재 명세
-  if (type === 'purchase' && data.materials) {
-    const matStartRow = 26;
-    sheet.mergeCells(`A24:H24`);
-    sheet.getCell('A24').value = '원자재 명세서';
-    sheet.getCell('A24').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'BFBFBF' } };
-    sheet.getCell('A24').alignment = { horizontal: 'center', vertical: 'middle' };
+  // 합계 계산 (하단 위치 자동)
+  const totalRowIndex = 13 + items.length;
+  worksheet.mergeCells(`A${totalRowIndex}:F${totalRowIndex}`);
+  worksheet.getCell(`A${totalRowIndex}`).value = '소계';
+  worksheet.getCell(`A${totalRowIndex}`).alignment = centerAlign;
+  worksheet.mergeCells(`G${totalRowIndex}:H${totalRowIndex}`);
+  worksheet.getCell(`G${totalRowIndex}`).value = data.subtotal || 0;
+  worksheet.getCell(`G${totalRowIndex}`).alignment = centerAlign;
 
-    const matHeaderRow = sheet.getRow(25);
-    matHeaderRow.values = ['NO','부품명','수량','단가','금액','비고','비고','비고'];
-    matHeaderRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'E5E5E5' } };
-    matHeaderRow.font = { bold: true };
-    matHeaderRow.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.mergeCells(`A${totalRowIndex + 1}:F${totalRowIndex + 1}`);
+  worksheet.getCell(`A${totalRowIndex + 1}`).value = '부가세';
+  worksheet.getCell(`A${totalRowIndex + 1}`).alignment = centerAlign;
+  worksheet.mergeCells(`G${totalRowIndex + 1}:H${totalRowIndex + 1}`);
+  worksheet.getCell(`G${totalRowIndex + 1}`).value = data.tax || 0;
+  worksheet.getCell(`G${totalRowIndex + 1}`).alignment = centerAlign;
 
-    (data.materials || []).forEach((mat, idx) => {
-      const r = matStartRow + idx;
-      sheet.getCell(`A${r}`).value = idx + 1;
-      sheet.getCell(`B${r}`).value = mat.name || '';
-      sheet.getCell(`C${r}`).value = mat.quantity || 0;
-      sheet.getCell(`D${r}`).value = mat.unitPrice || 0;
-      sheet.getCell(`E${r}`).value = mat.totalPrice || 0;
-      sheet.mergeCells(`F${r}:H${r}`);
-      sheet.getCell(`F${r}`).value = mat.note || '';
-    });
-  }
-
-  // 합계
-  const lastItemRow = 12 + (data.items?.length || 0);
-  sheet.mergeCells(`A${lastItemRow+1}:F${lastItemRow+1}`);
-  sheet.getCell(`A${lastItemRow+1}`).value = '소계';
-  sheet.getCell(`G${lastItemRow+1}`).value = data.subtotal || 0;
-
-  sheet.mergeCells(`A${lastItemRow+2}:F${lastItemRow+2}`);
-  sheet.getCell(`A${lastItemRow+2}`).value = '부가가치세';
-  sheet.getCell(`G${lastItemRow+2}`).value = data.tax || 0;
-
-  sheet.mergeCells(`A${lastItemRow+3}:F${lastItemRow+3}`);
-  sheet.getCell(`A${lastItemRow+3}`).value = '합계';
-  sheet.getCell(`G${lastItemRow+3}`).value = data.totalAmount || 0;
+  worksheet.mergeCells(`A${totalRowIndex + 2}:F${totalRowIndex + 2}`);
+  worksheet.getCell(`A${totalRowIndex + 2}`).value = '합계';
+  worksheet.getCell(`A${totalRowIndex + 2}`).alignment = centerAlign;
+  worksheet.mergeCells(`G${totalRowIndex + 2}:H${totalRowIndex + 2}`);
+  worksheet.getCell(`G${totalRowIndex + 2}`).value = data.totalAmount || 0;
+  worksheet.getCell(`G${totalRowIndex + 2}`).alignment = centerAlign;
 
   // 특기사항
-  const specialRow = lastItemRow+4;
-  sheet.mergeCells(`A${specialRow}:H${specialRow+2}`);
-  sheet.getCell(`A${specialRow}`).value = data.notes || '';
+  const specialIndex = totalRowIndex + 3;
+  worksheet.mergeCells(`A${specialIndex}:H${specialIndex + 2}`);
+  worksheet.getCell(`A${specialIndex}`).value = data.notes || '';
+  worksheet.getCell(`A${specialIndex}`).alignment = { vertical:'top', horizontal:'left', wrapText:true };
 
-  // 하단 회사명
-  sheet.getCell(`H${specialRow+3}`).value = '(주)삼미앵글랙산업';
-  sheet.getCell(`H${specialRow+3}`).font = { bold: true };
+  // (주)삼미앵글랙산업
+  worksheet.getCell(`H${specialIndex + 3}`).value = '(주)삼미앵글랙산업';
+  worksheet.getCell(`H${specialIndex + 3}`).alignment = centerAlign;
+  worksheet.getCell(`H${specialIndex + 3}`).font = { bold:true };
 
-  // 이미지 삽입 (BASE_URL 기준)
-  if (type === 'purchase') {
+  // 도장 이미지 삽입
+  try {
     const imageId = workbook.addImage({
-      filename: `${import.meta.env.BASE_URL}images/도장.png`,
-      extension: 'png'
+      filename: './public/images/도장.png',
+      extension: 'png',
     });
-    sheet.addImage(imageId, 'G7:H9'); // 대표자 도장 위치
+    worksheet.addImage(imageId, 'H7:H7');
+  } catch (err) {
+    console.warn('도장 이미지 로드 실패:', err);
   }
 
-  // 브라우저에서 다운로드
+  // 엑셀 다운로드
   const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = generateFileName(type);
-  link.click();
+  saveAs(new Blob([buffer], { type: 'application/octet-stream' }), generateFileName(type));
 };
