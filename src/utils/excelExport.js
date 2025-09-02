@@ -51,7 +51,8 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
       await addImageToWorkbook(workbook, worksheet, imageCell);
       console.log('이미지 추가 완료');
     } catch (imageError) {
-      console.warn('이미지 추가 실패, 계속 진행:', imageError);
+      console.warn(\'이미지 추가 실패, 계속 진행:\', imageError);
+    }
     
     // 테두리 적용
     applyBorders(worksheet, layout.borders.start, layout.borders.end, baseStyles.defaultCell.border);
@@ -95,7 +96,7 @@ const applyStyles = (worksheet, styles, type) => {
       if (!worksheet[cellRef]) {
         worksheet[cellRef] = { v: '', t: 's' };
       }
-      worksheet[cellRef].s = baseStyles.defaultCell;
+      worksheet[cellRef].s = excelStyles.baseStyles.defaultCell;
     }
   }
 
