@@ -1,200 +1,199 @@
-import * as XLSX from 'xlsx';
-import { getEstimateStyles, getPurchaseOrderStyles, getTransactionStyles, baseStyles } from './excelStyles.js';
-import { addImageToWorkbook } from './excelImageHandler.js';
-import { createEstimateLayout, createPurchaseOrderLayout, createTransactionLayout, validateAndCleanData } from './layoutMapper.js';
+// src/utils/excelExport.js
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import { addImageToWorkbook } from "./excelImageHandler.js";
 
-// 파일명 생성 함수 (빌드 에러 해결)
+// 파일명 생성
 export const generateFileName = (type, date = new Date()) => {
-  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+  const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
   const typeMap = {
-    'estimate': '견적서',
-    'purchase': '발주서',
-    'transaction': '거래명세서'
+    estimate: "견적서",
+    purchase: "발주서",
+    transaction: "거래명세서",
   };
-  
-  const typeName = typeMap[type] || '문서';
-  
+  const typeName = typeMap[type] || "문서";
   return `${typeName}_${dateStr}.xlsx`;
 };
 
-// 메인 엑셀 내보내기 함수
-export const exportToExcel = async (rawData, type = 'estimate') => {
-  try {
-    console.log('엑셀 내보내기 시작:', { type, rawData });
-    
-    // 데이터 검증 및 정제
-    const data = validateAndCleanData(rawData, type);
-    console.log('정제된 데이터:', data);
-    
-    // 새 워크북 생성
-    const workbook = XLSX.utils.book_new();
-    
-    // 문서 타입에 따른 레이아웃 생성
-    const layout = createDocumentLayout(data, type);
-    console.log('layout 객체:', layout);
-    console.log('레이아웃 생성 완료');
-
-    if (!layout || !Array.isArray(layout.data)) {
-      throw new Error(`레이아웃 데이터가 올바르지 않습니다: ${JSON.stringify(layout)}`);
-    }
-
-    // 빈 값 방어코드
-    layout.data = layout.data.filter(row => Array.isArray(row));
-
-    // 워크시트 생성
-    const worksheet = XLSX.utils.aoa_to_sheet(layout.data);
-
-    // 방어 코드: merges 범위가 layout.data를 벗어나지 않도록 필터링
-    const maxRow = layout.data.length - 1;
-    const maxCol = layout.data[0]?.length - 1 || 0;
-
-    const safeMerges = (layout.merges || []).filter(m =>
-      m && m.s && m.e &&
-      m.s.r <= maxRow && m.e.r <= maxRow &&
-      m.s.c <= maxCol && m.e.c <= maxCol
-    );
-
-    // 병합 셀 적용
-    worksheet['!merges'] = safeMerges;
-
-    // 스타일 적용
-    applyStyles(worksheet, layout.styles, type);
-    console.log('스타일 적용 완료');
-
-    // 컬럼 너비 설정
-    worksheet['!cols'] = getColumnWidths();
-
-    // 이미지 삽입
-    try {
-      const imageCell = type === 'purchase' ? 'H7' : 'H7';
-      await addImageToWorkbook(workbook, worksheet, imageCell);
-      console.log('이미지 추가 완료');
-    } catch (imageError) {
-      console.warn('이미지 추가 실패, 계속 진행:', imageError);
-    }
-
-    // 테두리 적용
-    applyBorders(worksheet, layout.borders.start, layout.borders.end, baseStyles.defaultCell.border);
-    console.log('테두리 적용 완료');
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, '문서');
-
-    // 파일 다운로드
-    const fileName = generateFileName(type, new Date());
-    XLSX.writeFile(workbook, fileName);
-
-    console.log(`${fileName} 파일이 성공적으로 생성되었습니다.`);
-    return true;
-
-  } catch (error) {
-    console.error('엑셀 내보내기 중 오류:', error);
-    alert('엑셀 파일 생성 중 오류가 발생했습니다: ' + error.message);
-    return false;
-  }
+// 기본 스타일
+const baseFont = { name: "맑은 고딕", size: 10 };
+const borderThin = {
+  top: { style: "thin", color: { argb: "000000" } },
+  bottom: { style: "thin", color: { argb: "000000" } },
+  left: { style: "thin", color: { argb: "000000" } },
+  right: { style: "thin", color: { argb: "000000" } },
 };
 
-// 문서 타입별 레이아웃 생성
-const createDocumentLayout = (data, type) => {
-  switch (type) {
-    case 'estimate':
-    case 'transaction':
-      return createEstimateLayout(data, type);
-    case 'purchase':
-      return createPurchaseOrderLayout(data);
-    default:
-      throw new Error(`지원되지 않는 문서 타입: ${type}`);
-  }
-};
-
-// 스타일 적용
-const applyStyles = (worksheet, styles, type) => {
-  worksheet['!rows'] = worksheet['!rows'] || [];
-
-  // 모든 셀에 기본 스타일 적용
-  for (let r = 0; r < worksheet['!rows'].length || worksheet['!rows'].length === 0 ? worksheet['!rows'].length : worksheet['!rows'].length; r++) {
-    for (let c = 0; c < getColumnWidths().length; c++) {
-      const cellRef = `${String.fromCharCode(65 + c)}${r + 1}`;
-      if (!worksheet[cellRef]) {
-        worksheet[cellRef] = { v: '', t: 's' };
-      }
-      worksheet[cellRef].s = baseStyles.defaultCell;
-    }
-  }
-
-  // 특정 셀 스타일 적용
-  Object.keys(styles || {}).forEach(cellRef => {
-    if (!worksheet[cellRef]) {
-      worksheet[cellRef] = { v: '', t: 's' };
-    }
-    worksheet[cellRef].s = { ...worksheet[cellRef].s, ...styles[cellRef] };
-  });
-
-  // 행 높이 설정
-  if (styles["9"] && styles["9"].hpt) {
-    worksheet['!rows'][8] = { hpt: styles["9"].hpt };
-  }
-  if (styles["5"] && styles["5"].hpt) {
-    worksheet['!rows'][4] = { hpt: styles["5"].hpt };
-  }
-};
-
-// 셀 병합 적용
-const applyMerges = (worksheet, merges) => {
-  if (!worksheet['!merges']) {
-    worksheet['!merges'] = [];
-  }
-  worksheet['!merges'].push(...(merges || []));
-};
-
-// 컬럼 너비 설정
+// 컬럼 너비
 const getColumnWidths = () => [
-  { wch: 5 },   // A: NO
-  { wch: 39 },  // B: 품명
-  { wch: 8 },   // C: 단위
-  { wch: 8 },   // D: 수량
-  { wch: 12 },  // E: 단가
-  { wch: 12 },  // F: 공급가/금액
-  { wch: 15 },  // G: 비고
-  { wch: 15 }   // H: 비고 확장
+  5, // A
+  39, // B
+  8, // C
+  8, // D
+  12, // E
+  12, // F
+  15, // G
+  15, // H
 ];
 
-// 개별 export 함수들
-export const exportEstimate = (estimateData) => {
-  exportToExcel(estimateData, 'estimate');
-};
+// 행 높이
+const rowHeights = { 5: 25, 9: 40 };
 
-export const exportPurchaseOrder = (purchaseData) => {
-  exportToExcel(purchaseData, 'purchase');
-};
+// 색상
+const darkGray = "BFBFBF";
+const lightGray = "D9D9D9";
+const white = "FFFFFF";
 
-export const exportTransaction = (transactionData) => {
-  exportToExcel(transactionData, 'transaction');
-};
+// 메인 엑셀 내보내기
+export const exportToExcel = async (rawData, type = "estimate") => {
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("문서");
 
-// 기본 export
-export default {
-  exportToExcel,
-  exportEstimate,
-  exportPurchaseOrder,
-  exportTransaction,
-  generateFileName
-};
+    // 열 너비 설정
+    worksheet.columns = getColumnWidths().map((wch) => ({ width: wch }));
 
-// 범위에 테두리 적용
-const applyBorders = (worksheet, startCell, endCell, style) => {
-  const startCol = startCell.charCodeAt(0) - 65;
-  const startRow = parseInt(startCell.substring(1)) - 1;
-  const endCol = endCell.charCodeAt(0) - 65;
-  const endRow = parseInt(endCell.substring(1)) - 1;
+    // 행 높이 설정
+    Object.keys(rowHeights).forEach((r) => {
+      worksheet.getRow(parseInt(r)).height = rowHeights[r];
+    });
 
-  for (let r = startRow; r <= endRow; r++) {
-    for (let c = startCol; c <= endCol; c++) {
-      const cellRef = `${String.fromCharCode(65 + c)}${r + 1}`;
-      if (!worksheet[cellRef]) {
-        worksheet[cellRef] = { v: '', t: 's' };
-      }
-      worksheet[cellRef].s = worksheet[cellRef].s || {};
-      worksheet[cellRef].s.border = style;
+    // 문서 제목
+    worksheet.mergeCells("A5:H5");
+    const titleCell = worksheet.getCell("A5");
+    titleCell.value =
+      type === "estimate"
+        ? "견적서"
+        : type === "purchase"
+        ? "발주서"
+        : "거래명세서";
+    titleCell.font = { ...baseFont, bold: true, size: 14 };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: darkGray } };
+    titleCell.border = borderThin;
+
+    // 고객/공급자 정보 영역
+    // 예시: 거래일자, 상호명, 담당자 등
+    const infoCells = [
+      { ref: "A6:B6", value: rawData.date, style: "customer" },
+      { ref: "A7:B7", value: rawData.customerName, style: "customer" },
+      { ref: "A8:B8", value: rawData.contactPerson, style: "customer" },
+      { ref: "A9:C10", value: "아래와 같이 견적합니다", style: "customer" },
+      { ref: "D6:D10", value: rawData.companyName, style: "company" },
+      { ref: "E6", value: rawData.companyNumber, style: "company" },
+      { ref: "E7", value: rawData.companyName, style: "company" },
+      { ref: "F7", value: rawData.ceoName, style: "company" },
+      { ref: "G7", value: "대표자", style: "company" },
+      { ref: "H7", value: rawData.ceoName, style: "company" },
+      { ref: "E8", value: rawData.addressLabel, style: "company" },
+      { ref: "F8:H8", value: rawData.addressValue, style: "company" },
+      { ref: "E9", value: "TEL", style: "company" },
+      { ref: "F9", value: rawData.tel1, style: "company" },
+      { ref: "G9", value: "FAX", style: "company" },
+      { ref: "H9", value: rawData.fax, style: "company" },
+      { ref: "F10:H10", value: rawData.homepage, style: "company" },
+    ];
+
+    infoCells.forEach((cell) => {
+      worksheet.mergeCells(cell.ref);
+      const c = worksheet.getCell(cell.ref.split(":")[0]);
+      c.value = cell.value;
+      c.font = baseFont;
+      c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      c.border = borderThin;
+      if (cell.style === "customer") c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightGray } };
+      if (cell.style === "company") c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: white } };
+    });
+
+    // 견적명세 헤더
+    worksheet.mergeCells("A11:H11");
+    const specTitle = worksheet.getCell("A11");
+    specTitle.value = type === "purchase" ? "원자재 명세서" : "견적명세";
+    specTitle.font = { ...baseFont, bold: true };
+    specTitle.alignment = { horizontal: "center", vertical: "middle" };
+    specTitle.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightGray } };
+    specTitle.border = borderThin;
+
+    // 명세 컬럼 헤더
+    const headers = ["NO", "품명", "단위", "수량", "단가", "공급가", "비고"];
+    headers.forEach((text, i) => {
+      const col = String.fromCharCode(65 + i) + "12";
+      const cell = worksheet.getCell(col);
+      cell.value = text;
+      cell.font = { ...baseFont, bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightGray } };
+      cell.border = borderThin;
+    });
+    worksheet.mergeCells("G12:H12"); // 비고 병합
+
+    // 실제 데이터 넣기
+    let startRow = 13;
+    rawData.items?.forEach((item, idx) => {
+      const r = startRow + idx;
+      worksheet.getCell(`A${r}`).value = idx + 1;
+      worksheet.getCell(`B${r}`).value = item.name;
+      worksheet.getCell(`C${r}`).value = item.unit;
+      worksheet.getCell(`D${r}`).value = item.qty;
+      worksheet.getCell(`E${r}`).value = item.price;
+      worksheet.getCell(`F${r}`).value = item.total;
+      worksheet.getCell(`G${r}`).value = item.note;
+      worksheet.mergeCells(`G${r}:H${r}`);
+
+      ["A", "B", "C", "D", "E", "F", "G", "H"].forEach((col) => {
+        const cell = worksheet.getCell(`${col}${r}`);
+        cell.font = baseFont;
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = borderThin;
+        if (["E", "F"].includes(col)) cell.numFmt = "#,##0";
+      });
+    });
+
+    // 소계/부가세/합계
+    const totalStartRow = startRow + rawData.items.length;
+    const totalLabels = ["소계", "부가가치세", "합계"];
+    totalLabels.forEach((label, i) => {
+      const r = totalStartRow + i;
+      worksheet.mergeCells(`A${r}:F${r}`);
+      worksheet.getCell(`A${r}`).value = label;
+      worksheet.getCell(`G${r}`).value = rawData.totals?.[i];
+      worksheet.getCell(`H${r}`).value = rawData.totals?.[i];
+      worksheet.mergeCells(`G${r}:H${r}`);
+      ["A","B","C","D","E","F","G","H"].forEach(col=>{
+        const cell = worksheet.getCell(`${col}${r}`);
+        cell.font = baseFont;
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = borderThin;
+        if (["G","H"].includes(col)) cell.numFmt = "#,##0";
+      })
+    });
+
+    // 특기사항
+    const noteStart = totalStartRow + 3;
+    worksheet.mergeCells(`A${noteStart}:H${noteStart+2}`);
+    const noteCell = worksheet.getCell(`A${noteStart}`);
+    noteCell.value = rawData.specialNotes || "";
+    noteCell.font = baseFont;
+    noteCell.alignment = { horizontal: "left", vertical: "top", wrapText: true };
+    noteCell.border = borderThin;
+    noteCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: white } };
+
+    // 회사명 푸터
+    const footerRow = type === "purchase" ? noteStart + 3 : noteStart + 1;
+    worksheet.getCell(`H${footerRow}`).value = rawData.companyName;
+    worksheet.getCell(`H${footerRow}`).font = { ...baseFont, bold: true };
+    worksheet.getCell(`H${footerRow}`).alignment = { horizontal: "center", vertical: "middle" };
+
+    // 이미지 삽입
+    if (rawData.logoImageBase64) {
+      await addImageToWorkbook(workbook, worksheet, rawData.logoImageBase64, "G7:H8");
     }
+
+    // 브라우저 다운로드
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(blob, generateFileName(type));
+  } catch (err) {
+    console.error("엑셀 내보내기 실패:", err);
   }
 };
