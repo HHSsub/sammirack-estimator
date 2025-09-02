@@ -208,6 +208,8 @@ const PurchaseOrderForm = () => {
       documentNumber: formData.orderNumber
     };
 
+    console.log('발주서 export 데이터:', excelData);
+    
     const fileName = generateFileName('purchase');
     exportToExcel(excelData, 'purchase')
       .then(() => {
