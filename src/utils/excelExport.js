@@ -356,7 +356,7 @@ async function placeStamp(workbook, ws) {
     const imgId = workbook.addImage({ base64, extension: 'png' });
     // 적당히 보이도록 H7:I9 영역에 배치
     ws.addImage(imgId, {
-      tl: { col: 7.5, row: 7.5 }, // H7 근처 (0-index 기반)
+      tl: { col: 7.7, row: 6.6 }, // H7 근처 (0-index 기반)
       ext: { width: 40, height: 40 },
       editAs: 'oneCell',
     });
