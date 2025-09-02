@@ -3,7 +3,7 @@ const baseStyles = {
   // 문서 제목 스타일 (짙은 회색 35%, 굵은 글씨)
   documentTitle: {
     font: { bold: true, size: 14, name: "맑은 고딕" },
-    fill: { fgColor: { rgb: "A6A6A6" } }, // 35% 회색
+    fill: { fgColor: { rgb: "BFBFBF" } }, // 25% 회색
     alignment: { horizontal: "center", vertical: "center" },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
@@ -28,7 +28,7 @@ const baseStyles = {
   // 회사 정보 값 스타일
   companyValue: {
     font: { size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "left", vertical: "center" },
+    alignment: { horizontal: "center", vertical: "center", wrapText: true },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
@@ -40,7 +40,7 @@ const baseStyles = {
   // 고객 정보 라벨 스타일
   customerLabel: {
     font: { bold: true, size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "left", vertical: "center" },
+    alignment: { horizontal: "center", vertical: "center" }
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
@@ -52,7 +52,7 @@ const baseStyles = {
   // 고객 정보 값 스타일
   customerValue: {
     font: { size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "left", vertical: "center" },
+    alignment: { horizontal: "center", vertical: "center" }
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
@@ -64,7 +64,20 @@ const baseStyles = {
   // 명세 헤더 스타일 (옅은 회색 15%)
   itemHeader: {
     font: { bold: true, size: 10, name: "맑은 고딕" },
-    fill: { fgColor: { rgb: "F2F2F2" } }, // 15% 회색
+    fill: { fgColor: { rgb: "BFBFBF" } }, // 25% 회색
+    alignment: { horizontal: "center", vertical: "center" },
+    border: {
+      top: { style: "thin", color: { rgb: "000000" } },
+      bottom: { style: "thin", color: { rgb: "000000" } },
+      left: { style: "thin", color: { rgb: "000000" } },
+      right: { style: "thin", color: { rgb: "000000" } }
+    }
+  },
+
+  // 명세 서브 헤더 스타일 (덜 어두운 회색 15%)
+  itemSubHeader: {
+    font: { bold: true, size: 10, name: "맑은 고딕" },
+    fill: { fgColor: { rgb: "D9D9D9" } }, // 15% 회색
     alignment: { horizontal: "center", vertical: "center" },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
@@ -89,7 +102,7 @@ const baseStyles = {
   // 품명 데이터 스타일 (좌측 정렬)
   itemName: {
     font: { size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "left", vertical: "center" },
+    alignment: { horizontal: "center", vertical: "center" }
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
@@ -158,6 +171,7 @@ const baseStyles = {
   // 기본 셀 스타일
   defaultCell: {
     font: { size: 10, name: "맑은 고딕" },
+    alignment: { horizontal: "center", vertical: "center" },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
@@ -169,7 +183,12 @@ const baseStyles = {
 
 // 견적서/거래명세서 스타일 생성
 export const getEstimateStyles = () => {
-  const styles = {};
+  const styles = {
+    // 9번째 행 높이 2배
+    "9": { hpt: 40 }, // 40 = 20 * 2 (기본 20)
+    // 5번행 전체 높이 45
+    "5": { hpt: 45 },
+  };
   
   // 문서 제목 (A5:H5)
   for (let col = 0; col < 8; col++) {
@@ -235,7 +254,7 @@ export const getEstimateStyles = () => {
   
   // 명세 컬럼 헤더 (A12:H12)
   for (let col = 0; col < 8; col++) {
-    styles[`${String.fromCharCode(65 + col)}12`] = baseStyles.itemHeader;
+    styles[`${String.fromCharCode(65 + col)}12`] = baseStyles.itemSubHeader;
   }
   
   // 명세 데이터 (A13:H25)
@@ -308,7 +327,7 @@ export const getPurchaseOrderStyles = () => {
   
   // 원자재 컬럼 헤더 (A25:H25)
   for (let col = 0; col < 8; col++) {
-    styles[`${String.fromCharCode(65 + col)}25`] = baseStyles.itemHeader;
+    styles[`${String.fromCharCode(65 + col)}25`] = baseStyles.itemSubHeader;
   }
   
   // 원자재 데이터 (A26:H55)
