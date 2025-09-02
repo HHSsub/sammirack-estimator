@@ -31,7 +31,12 @@ export const exportToExcel = async (rawData, type = 'estimate') => {
     
     // 문서 타입에 따른 레이아웃 생성
     const layout = createDocumentLayout(data, type);
+    console.log('layout 객체:', layout);
     console.log('레이아웃 생성 완료');
+
+    if (!layout || !Array.isArray(layout.data)) {
+    throw new Error(`레이아웃 데이터가 올바르지 않습니다: ${JSON.stringify(layout)}`);
+    }
     
     // 워크시트 생성
     const worksheet = XLSX.utils.aoa_to_sheet(layout.data);
