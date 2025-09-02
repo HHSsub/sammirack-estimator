@@ -35,53 +35,16 @@ export const addImageToWorkbook = async (workbook, worksheet, cellRef = 'H7') =>
 };
 
 // 이미지를 Base64로 변환하는 함수
-const loadImageAsBase64 = (imageUrl) => {
-  return new Promise((resolve, reject) => {
-    // 개발 환경에서는 이미지 로딩 스킵
-    if (process.env.NODE_ENV === 'development') {
-      console.log('개발 환경에서는 이미지를 스킵합니다.');
-      resolve(null);
-      return;
-    }
-    
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      try {
-        // Canvas를 사용해 이미지를 Base64로 변환
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = img.width;
-        canvas.height = img.height;
-        
-        ctx.drawImage(img, 0, 0);
-        
-        // PNG 형식으로 Base64 변환
-        const dataUrl = canvas.toDataURL('image/png');
-        const base64 = dataUrl.split(',')[1];
-        
-        resolve(base64);
-      } catch (error) {
-        console.warn('이미지 변환 실패:', error);
-        resolve(null);
-      }
-    };
-    
-    img.onerror = () => {
-      console.warn('이미지 로드 실패:', imageUrl);
-      resolve(null);
-    };
-    
-    // 이미지 로드 시도
-    try {
-      img.src = imageUrl;
-    } catch (error) {
-      console.warn('이미지 src 설정 실패:', error);
-      resolve(null);
-    }
-  });
+const loadImageAsBase64 = async (imageUrl) => {
+  try {
+    const axios = require('axios');
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const base64 = Buffer.from(response.data, 'binary').toString('base64');
+    return base64;
+  } catch (error) {
+    console.warn('이미지 로드 실패:', error);
+    return null;
+  }
 };
 
 // 셀 참조를 행/열 객체로 변환
