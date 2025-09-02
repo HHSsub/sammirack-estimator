@@ -2,7 +2,7 @@
 export const addImageToWorkbook = async (workbook, worksheet, cellRef = 'H7') => {
   try {
     // public/images/도장.png 이미지 로드
-    const imageUrl = `${process.env.PUBLIC_URL || ''}/images/도장.png`;
+    const imageUrl = `${import.meta.env.BASE_URL}images/도장.png`;
     
     // 이미지를 base64로 변환
     const imageBase64 = await loadImageAsBase64(imageUrl);
