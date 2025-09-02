@@ -40,7 +40,7 @@ const baseStyles = {
   // 고객 정보 라벨 스타일
   customerLabel: {
     font: { bold: true, size: 10, name: "맑은 고딕" },
-    alignment: { horizontal: "center", vertical: "center" }
+    alignment: { horizontal: "center", vertical: "center" },
     border: {
       top: { style: "thin", color: { rgb: "000000" } },
       bottom: { style: "thin", color: { rgb: "000000" } },
