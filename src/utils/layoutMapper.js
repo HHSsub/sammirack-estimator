@@ -26,7 +26,7 @@ export const createEstimateLayout = (data, type = 'estimate') => {
   const actionText = type === 'estimate' ? '아래와 같이 견적합니다' : '아래와 같이 거래합니다';
   
   // 2차원 배열로 엑셀 데이터 구성 (35행 x 8열)
-  const layout = Array(35).fill().map(() => Array(8).fill(''));
+  const layout = Array.from({ length: 35 }, () => Array(8).fill(''));
   
   // 문서 제목 (A5:H5)
   layout[4][0] = documentTitle;
@@ -167,7 +167,7 @@ export const createPurchaseOrderLayout = (data) => {
   const safeData = data || {};
   
   // 2차원 배열로 엑셀 데이터 구성 (62행 x 8열)
-  const layout = Array(62).fill().map(() => Array(8).fill(''));
+  const layout = Array.from({ length: 62 }, () => Array(8).fill(''));
   
   // 문서 제목 (A5:H5)
   layout[4][0] = '발주서';
