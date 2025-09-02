@@ -145,8 +145,14 @@ export const createEstimateLayout = (data, type = 'estimate') => {
     merges.push({ s: { r: row, c: 6 }, e: { r: row, c: 7 } }); // G26:H26 등
   }
   
-  // 특기사항 병합
-  merges.push({ s: { r: 28, c: 0 }, e: { r: 30, c: 7 } }); // A29:H31
+  // 기존 특기사항 병합
+  // merges.push({ s: { r: 28, c: 0 }, e: { r: 30, c: 7 } }); // A29:H31
+  // 특기사항 병합 (행 28~30 → 총 3줄)
+  if (layout.length > 30) {
+    merges.push({ s: { r: 28, c: 0 }, e: { r: 30, c: 7 } });
+  }
+
+
   
   return {
     data: layout,
@@ -325,8 +331,12 @@ export const createPurchaseOrderLayout = (data) => {
     merges.push({ s: { r: row, c: 5 }, e: { r: row, c: 7 } });
   }
   
-  // 특기사항 병합
-  merges.push({ s: { r: 55, c: 0 }, e: { r: 57, c: 7 } }); // A56:H58
+  // 기존 특기사항 병합
+  // merges.push({ s: { r: 55, c: 0 }, e: { r: 57, c: 7 } }); // A56:H58
+  // 특기사항 병합 (행 55~57 → 총 3줄)
+  if (layout.length > 57) {
+    merges.push({ s: { r: 55, c: 0 }, e: { r: 57, c: 7 } });
+  }
   
   return {
     data: layout,
