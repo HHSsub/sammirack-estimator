@@ -66,7 +66,7 @@ const parseWD = (size = "") => {
   return m ? { w: Number(m[1]), d: Number(m[2]) } : { w: null, d: null };
 };
 
-// 파렛트랙 철판형 선반 수량 계산 함수 (새로 추가)
+// 파렛트랙 철판형 선반 수량 계산 함수 (새로 추가), 아래에서 단수당 이 규칙에 곱셈이 되도록 처리하고있음
 const calcPalletIronShelfCount = (size) => {
   const { w } = parseWD(size);
   if (w === 1380) return 2;
@@ -191,9 +191,12 @@ export const ProductProvider = ({ children }) => {
     if (formTypeRacks.includes(selectedType)) {
       const bd = bomData[selectedType] || {};
       const next = { size: [], height: [], level: [], formType: [] };
-
-      next.size = sortSizes(Object.keys(bd || {}));
-
+  
+      // size 옵션에 EXTRA_OPTIONS도 포함
+      const sizesFromData = Object.keys(bd || {}); // 기존의 next.size = sortSizes(Object.keys(bd || {})); 코드를 이걸로 표현
+      const extraSizes = EXTRA_OPTIONS[selectedType]?.size || [];
+      next.size = sortSizes([...sizesFromData, ...extraSizes]);
+      
       if (selectedOptions.size) {
         const heightsFromData = Object.keys(bd[selectedOptions.size] || {});
         next.height = sortHeights([
@@ -556,13 +559,13 @@ export const ProductProvider = ({ children }) => {
 
       // 파렛트랙 철판형의 경우 선반 추가
       if (selectedType === "파렛트랙 철판형") {
-        const shelfCount = calcPalletIronShelfCount(sz);
+        const shelfPerLevel = calcPalletIronShelfCount(sz); // 단당 개수
         base.push({
           rackType: selectedType,
           size: sz,
           name: "선반",
           specification: `사이즈 ${sz}`,
-          quantity: shelfCount * lvl * qty,
+          quantity: shelfPerLevel * lvl * qty, // 단당개수 × 단수 × 수량
           unitPrice: 0,
           totalPrice: 0
         });
@@ -645,27 +648,43 @@ export const ProductProvider = ({ children }) => {
         const loadSpec = w != null ? String(Math.floor(w / 100) * 100) : `규격 ${sz}`;
         const tieSpec = d != null ? String(d) : `규격 ${sz}`;
 
-        const base = rec.components.map((c) => {
-          let spec = c.specification ?? "";
-          // 로드빔/타이빔은 표시 규칙 강제 적용(선택한 규격 기반)
-          if (String(c.name).includes("로드빔")) spec = loadSpec;
-          if (String(c.name).includes("타이빔")) spec = tieSpec;
+        const base = rec.components
+          .filter(c => c.name !== "베이스(안전좌)") // 베이스(안전좌) 제거
+          .map((c) => {
+            let spec = c.specification ?? "";
+            // 로드빔/타이빔은 표시 규칙 강제 적용(선택한 규격 기반)
+            if (String(c.name).includes("로드빔")) spec = loadSpec;
+            if (String(c.name).includes("타이빔")) spec = tieSpec;
+        
+            return {
+              rackType: selectedType,
+              size: sz,
+              name: c.name,
+              specification: spec,
+              note: c.note ?? "",
+              quantity: (Number(c.quantity) || 0) * q,
+              unitPrice: Number(c.unit_price) || 0,
+              totalPrice:
+                Number(c.total_price) > 0
+                  ? Number(c.total_price) * q
+                  : (Number(c.unit_price) || 0) * (Number(c.quantity) || 0) * q,
+            };
+          });
 
-          return {
+        // 파렛트랙 철판형의 경우 선반 추가
+        if (selectedType === "파렛트랙 철판형") {
+          const shelfPerLevel = calcPalletIronShelfCount(sz);
+          base.push({
             rackType: selectedType,
             size: sz,
-            name: c.name,
-            specification: spec,
-            note: c.note ?? "",
-            quantity: (Number(c.quantity) || 0) * q,
-            unitPrice: Number(c.unit_price) || 0,
-            totalPrice:
-              Number(c.total_price) > 0
-                ? Number(c.total_price) * q
-                : (Number(c.unit_price) || 0) * (Number(c.quantity) || 0) * q,
-          };
-        });
-
+            name: "선반",
+            specification: `사이즈 ${sz}`,
+            quantity: shelfPerLevel * parseInt(selectedOptions.level || "1") * q,
+            unitPrice: 0,
+            totalPrice: 0
+          });
+        }
+                
         appendCommonHardwareIfMissing(base, q);
         return [...base, ...makeExtraOptionBOM()];
       }
