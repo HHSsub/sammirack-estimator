@@ -90,7 +90,7 @@ const calcPalletHardwareCounts = (heightMm, isConn, qty) => {
   const step = heightMm / 500;
 
   const baseDiagonal = isConn ? 2 : 4; // 기준 개수
-  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / heightStep));
+  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / step));
   const additionalDiagonal = (isConn ? 1 : 2) * additionalSteps;
   const diagonal = (baseDiagonal + additionalDiagonal) * qty;
 
