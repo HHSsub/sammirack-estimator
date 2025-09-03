@@ -16,7 +16,10 @@ const formTypeRacks = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 �
 // ▸ 타입별 보조 노출(데이터에 없더라도 보여줄 값)
 const EXTRA_OPTIONS = {
   파렛트랙: { height: ["H4500", "H5000", "H5500", "H6000"] },
-  "파렛트랙 철판형": { height: ["H4500", "H5000", "H5500", "H6000"] },
+  파렛트랙 철판형: { 
+    height: ["H4500", "H5000", "H5500", "H6000"],
+    size: ["2080x800", "2080x1000"]
+  }, // 사이즈 추가 (2080x800, 2080x1000)
   하이랙: { size: ["45x150"], height: ["150", "200", "250"], level: ["5단", "6단"] },
   스텐랙: { level: ["5단", "6단"], height: ["210"] },
   경량랙: { height: ["H750"] },
@@ -63,16 +66,28 @@ const parseWD = (size = "") => {
   return m ? { w: Number(m[1]), d: Number(m[2]) } : { w: null, d: null };
 };
 
+// 파렛트랙 철판형 선반 수량 계산 함수 (새로 추가)
+const calcPalletIronShelfCount = (size) => {
+  const { w } = parseWD(size);
+  if (w === 1380) return 2;
+  if (w === 2080) return 3;  
+  if (w === 2580) return 4;
+  return 1; // 기본값
+};
+
 // 파렛트랙(철판형 포함) 브레싱/볼트 수량 규칙
 // 독립형: 수평=4, 경사=2*(h/500-1), 앙카=4, 베이스볼트=4, 브레싱볼트=2*(h/500)+4
 // 연결형: 수평=2, 경사=(h/500-1),   앙카=2, 베이스볼트=4, 브레싱볼트=(h/500)+2
 const calcPalletHardwareCounts = (heightMm, isConn, qty) => {
   const step = heightMm / 500;
   const horizontal = (isConn ? 2 : 4) * qty;
-  const diagonal = Math.max(0, (isConn ? (step - 1) : 2 * (step - 1))) * qty;
+
+  const diagonalBase = Math.max(0, step - 1);
+  const diagonal = (isConn ? diagonalBase : diagonalBase * 2) * qty;
   const anchor = (isConn ? 2 : 4) * qty;
-  const baseBolt = 4 * qty;
-  const braceBolt = (isConn ? (step + 2) : (2 * step + 4)) * qty;
+  const baseBolt = 0;
+  
+  const braceBolt = diagonal; // 경사브레싱과 동일한 수량
   const rubber = 4 * qty; // 브레싱고무는 항상 4개 × 수량
   return { horizontal, diagonal, anchor, baseBolt, braceBolt, rubber };
 };
@@ -358,7 +373,11 @@ export const ProductProvider = ({ children }) => {
           selectedOptions.level
         ];
       if (p) basePrice = p * quantity;
-    } else if (selectedType === "하이랙") {
+    } else if (selectedType === "하이랙") {      
+      // 로드빔 규격 추출 (80x108 -> 108)
+      const { d } = parseWD(size);
+      const loadBeamSpec = d ? String(d) : size;
+              
       const color = selectedOptions.color;
       const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
       const dataSizeKey = isHeaviest
@@ -500,7 +519,6 @@ export const ProductProvider = ({ children }) => {
       pushIfAbsent("수평브레싱", horizontal);
       pushIfAbsent("경사브레싱", diagonal);
       pushIfAbsent("앙카볼트", anchor);
-      pushIfAbsent("베이스볼트", baseBolt);
       pushIfAbsent("브레싱볼트", braceBolt);
       pushIfAbsent("브레싱고무", rubber);
       return;
@@ -510,7 +528,6 @@ export const ProductProvider = ({ children }) => {
     pushIfAbsent("수평브레싱", 2 * qty);
     pushIfAbsent("경사브레싱", 3 * qty);
     pushIfAbsent("앙카볼트", 4 * qty);
-    pushIfAbsent("베이스볼트", 4 * qty);
     pushIfAbsent("브레싱볼트", 4 * qty);
     pushIfAbsent("브레싱고무", 4 * qty);
   };
@@ -534,17 +551,67 @@ export const ProductProvider = ({ children }) => {
         { rackType: selectedType, size: sz, name: `기둥(${ht})`, specification: `높이 ${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "타이빔", specification: tieSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "베이스(안전좌)", specification: "", quantity: 2 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
       ];
+
+      // 파렛트랙 철판형의 경우 선반 추가
+      if (selectedType === "파렛트랙 철판형") {
+        const shelfCount = calcPalletIronShelfCount(sz);
+        base.push({
+          rackType: selectedType,
+          size: sz,
+          name: "선반",
+          specification: `사이즈 ${sz}`,
+          quantity: shelfCount * lvl * qty,
+          unitPrice: 0,
+          totalPrice: 0
+        });
+      }
+      
       appendCommonHardwareIfMissing(base, qty);
       return [...base, ...makeExtraOptionBOM()];
     }
-
+    
     if (selectedType === "하이랙") {
+      const qty = Number(quantity) || 1;
+      const level = parseInt(selectedOptions.level) || 5;
+      const size = selectedOptions.size || "";
+      
+      // 로드빔 규격별 수량 계산
+      let shelfPerLevel = 1; // 기본값
+      if (size === "80x150" || size === "80x200") {
+        shelfPerLevel = 2;
+      }
+      
+      // 로드빔 규격 추출 (80x108 -> 108)
+      const { d } = parseWD(size);
+      const loadBeamSpec = d ? String(d) : size;
+      
       return [
-        { rackType: selectedType, name: "기둥", specification: `높이 ${selectedOptions.height || ""}`, quantity: 4 * (Number(quantity) || 1), unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, name: "선반", specification: `사이즈 ${selectedOptions.size || ""}`, quantity: (parseInt(selectedOptions.level) || 5) * (Number(quantity) || 1), unitPrice: 0, totalPrice: 0 },
+        { 
+          rackType: selectedType, 
+          name: "기둥", 
+          specification: `높이 ${selectedOptions.height || ""}`, 
+          quantity: 4 * qty, 
+          unitPrice: 0, 
+          totalPrice: 0 
+        },
+        {
+          rackType: selectedType,
+          name: "로드빔",
+          specification: loadBeamSpec,
+          quantity: 2 * level * qty, // 단마다 무조건 2개씩
+          unitPrice: 0,
+          totalPrice: 0
+        },
+        { 
+          rackType: selectedType, 
+          name: "선반", 
+          specification: `사이즈 ${size}`, 
+          quantity: shelfPerLevel * level * qty, 
+          unitPrice: 0, 
+          totalPrice: 0 
+        },
         ...makeExtraOptionBOM(),
       ];
     }
