@@ -47,7 +47,7 @@ function App() {
         <div className="nav-links">
           <Link to="/" className="nav-link">홈</Link>
           <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
-          <Link to="/purchase-order/new" className="nav-link">발주서 작성</Link>
+          <Link to="/purchase-order/new" className="nav-link">청구서 작성</Link>
           {currentUser?.role === 'admin' && (
             <Link to="/history" className="nav-link">문서 관리</Link>
           )}
@@ -141,7 +141,7 @@ const HomePage = () => {
             state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
             className={`create-order-button`}
           >
-            발주서 작성
+            청구서 작성
           </Link>
         </div>
       )}
