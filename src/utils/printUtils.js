@@ -59,7 +59,7 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   };
 };
 
-// 발주서 데이터 포맷팅
+// 청구서 데이터 포맷팅
 export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const last4 = extractLast4Digits(formData?.contactInfo);
