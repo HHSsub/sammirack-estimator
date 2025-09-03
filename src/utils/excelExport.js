@@ -44,7 +44,7 @@ const alignLeftTop = { horizontal: 'left', vertical: 'top', wrapText: true };
 // 색
 const fillDocTitle = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 문서제목: 덜 어두운 회색
 const fillHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };    // 15% 회색
-const fillItemHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 25% 회색 (발주서 원자재 헤더 등)
+const fillItemHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 25% 회색 (청구서 원자재 헤더 등)
 const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
 
 // 컬럼 너비(요청 반영: E,F 더 넓게)
@@ -102,7 +102,7 @@ function setRowHeights(ws, map) {
 function buildTop(ws, type, { date, companyName, contact } = {}) {
   // 문서 제목 A5:H5
   ws.mergeCells('A5:H5');
-  const title = type === 'purchase' ? '발주서' : type === 'transaction' ? '거래명세서' : '견적서';
+  const title = type === 'purchase' ? '청구서' : type === 'transaction' ? '거래명세서' : '견적서';
   const titleCell = ws.getCell('A5');
   titleCell.value = title;
   titleCell.font = { bold: true, size: 20 };
@@ -121,7 +121,7 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
 
   // 아래 문구 A9:C10 병합
   ws.mergeCells('A9:C10');
-  ws.getCell('A9').value = type === 'purchase' ? '아래와 같이 발주합니다' : '아래와 같이 견적합니다';
+  ws.getCell('A9').value = type === 'purchase' ? '아래와 같이 청구합니다' : '아래와 같이 견적합니다';
   ws.getCell('A9').alignment = alignCenter;
   setRowHeights(ws, { 9: 40 });
 
@@ -237,11 +237,11 @@ function buildEstimateOrTransaction(ws, items = [], totals, notes) {
   fullBorder(ws, 5, 32, 1, 8);
 }
 
-/** 발주서 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
+/** 청구서 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
 function buildPurchase(ws, items = [], materials = [], totals, notes) {
   // 섹션 타이틀 A11:H11
   ws.mergeCells('A11:H11');
-  ws.getCell('A11').value = '발주 명세';
+  ws.getCell('A11').value = '청구 명세';
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
   ws.getCell('A11').font = { bold: true, size: 16 };
@@ -371,7 +371,7 @@ async function placeStamp(workbook, ws) {
 export async function exportToExcel(rawData, type = 'estimate') {
   // rawData: { date, companyName, items, materials, subtotal, tax, totalAmount, notes, ... }
   const workbook = new ExcelJS.Workbook();
-  const sheetName = type === 'purchase' ? '발주서' : (type === 'transaction' ? '거래명세서' : '견적서');
+  const sheetName = type === 'purchase' ? '청구서' : (type === 'transaction' ? '거래명세서' : '견적서');
   const ws = workbook.addWorksheet(sheetName);
 
   // 컬럼 너비
