@@ -60,6 +60,21 @@ const HIGHRACK_550_ALIAS_DATA_FROM_VIEW = { "80x108": "80x146", "80x150": "80x20
 // ── 추가 유틸: 높이/규격 파싱과 파렛트 하드웨어 계산 ──
 const parseHeightMm = (h) => Number(String(h || "").replace(/[^\d]/g, "")) || 0;
 
+// "L2", "L3", "L4" 또는 "2단", "3단", "4단" 모두 처리
+const parseLevel = (levelStr, rackType) => {
+  if (!levelStr) return 1;
+  
+  if (rackType === "파렛트랙 철판형") {
+    // "L2", "L3", "L4" 형식 처리
+    const match = String(levelStr).match(/L?(\d+)/);
+    return match ? parseInt(match[1]) : 1;
+  } else {
+    // "2단", "3단", "4단" 형식 처리
+    const match = String(levelStr).match(/(\d+)/);
+    return match ? parseInt(match[1]) : 1;
+  }
+};
+
 // "2780x1000" → {w:2780, d:1000}
 const parseWD = (size = "") => {
   const m = String(size).replace(/\s+/g, "").match(/(\d+)\s*[xX]\s*(\d+)/);
@@ -551,7 +566,7 @@ export const ProductProvider = ({ children }) => {
   // Fallback BOM : 안전우 제외
   const getFallbackBOM = () => {
     if (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") {
-      const lvl = parseInt(selectedOptions.level || "") || 1;
+      const lvl = parseLevel(selectedOptions.level, selectedType); // ← 수정
       const sz = selectedOptions.size || "";
       const ht = selectedOptions.height || "";
       const form = selectedOptions.formType || "독립형";
@@ -685,7 +700,7 @@ export const ProductProvider = ({ children }) => {
         // 파렛트랙 철판형의 경우 선반 추가
         if (selectedType === "파렛트랙 철판형") {
           const shelfPerLevel = calcPalletIronShelfPerLevel(sz); // 단당 개수
-          const lvl = parseInt(selectedOptions.level || "1"); // 단수
+          const lvl = parseLevel(selectedOptions.level, selectedType); // ← 수정
           
           base.push({
             rackType: selectedType,
