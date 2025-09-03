@@ -585,16 +585,14 @@ export const ProductProvider = ({ children }) => {
       return [...base, ...makeExtraOptionBOM()];
     }
     
+  
     if (selectedType === "하이랙") {
       const qty = Number(quantity) || 1;
       const level = parseInt(selectedOptions.level) || 5;
       const size = selectedOptions.size || "";
       
-      // 로드빔 규격별 수량 계산
-      let shelfPerLevel = 1; // 기본값
-      if (size === "80x150" || size === "80x200") {
-        shelfPerLevel = 2;
-      }
+      // 선반 규격별 단당 수량 계산 (함수 활용)
+      const shelfPerLevel = calcHighRackShelfPerLevel(size);
       
       // 로드빔 규격 추출 (80x108 -> 108)
       const { d } = parseWD(size);
@@ -621,7 +619,7 @@ export const ProductProvider = ({ children }) => {
           rackType: selectedType, 
           name: "선반", 
           specification: `사이즈 ${size}`, 
-          quantity: shelfPerLevel * level * qty, 
+          quantity: shelfPerLevel * level * qty, // 함수로 계산된 단당 수량 × 단수 × 수량
           unitPrice: 0, 
           totalPrice: 0 
         },
