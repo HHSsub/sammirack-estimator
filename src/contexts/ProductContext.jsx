@@ -75,19 +75,31 @@ const calcPalletIronShelfPerLevel = (size) => {
   return 1; // 기본값
 };
 
+const calcHighRackShelfPerLevel = (size) => {
+  const { d } = parseWD(size);
+  if (d === 108) return 1;        // ?x108 → 1개
+  if (d === 150 || d === 200) return 2;  // ?x150, ?x200 → 2개
+  return 1; // 기본값
+};
+
 // 파렛트랙(철판형 포함) 브레싱/볼트 수량 규칙
 // 독립형: 수평=4, 경사=2*(h/500-1), 앙카=4, 베이스볼트=4, 브레싱볼트=2*(h/500)+4
 // 연결형: 수평=2, 경사=(h/500-1),   앙카=2, 베이스볼트=4, 브레싱볼트=(h/500)+2
 const calcPalletHardwareCounts = (heightMm, isConn, qty) => {
+  const baseHeight = 1500; // 기준 높이
   const step = heightMm / 500;
-  const horizontal = (isConn ? 2 : 4) * qty;
 
-  const diagonalBase = Math.max(0, step - 1);
-  const diagonal = (isConn ? diagonalBase : diagonalBase * 2) * qty;
+  const baseDiagonal = isConn ? 2 : 4; // 기준 개수
+  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / heightStep));
+  const additionalDiagonal = (isConn ? 1 : 2) * additionalSteps;
+  const diagonal = (baseDiagonal + additionalDiagonal) * qty;
+
+  const braceBolt = diagonal; // 경사브레싱과 동일한 수량
+  
+  const horizontal = (isConn ? 2 : 4) * qty;
   const anchor = (isConn ? 2 : 4) * qty;
   const baseBolt = 0;
   
-  const braceBolt = diagonal; // 경사브레싱과 동일한 수량
   const rubber = 4 * qty; // 브레싱고무는 항상 4개 × 수량
   return { horizontal, diagonal, anchor, baseBolt, braceBolt, rubber };
 };
