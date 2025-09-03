@@ -179,7 +179,7 @@ const PurchaseOrderForm = () => {
       totalPrice: formData.totalAmount,
       contactInfo: '', // 필요시 추가 필드
       selectedOptions: {}, // 필요시 추가 필드
-      // 발주서 전용 필드들
+      // 청구서 전용 필드들
       deliveryDate: formData.deliveryDate || '',
       deliveryAddress: formData.deliveryAddress || '',
       paymentTerms: formData.paymentTerms || '계약금 50%, 잔금 50% (출고 전)',
@@ -192,7 +192,7 @@ const PurchaseOrderForm = () => {
     }
 
     localStorage.setItem(storageKey, JSON.stringify(newPurchaseOrder));
-    alert(isEditMode ? '발주서가 수정되었습니다.' : '발주서가 저장되었습니다.');
+    alert(isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.');
   };
 
   // 엑셀로 저장하기 함수
@@ -202,13 +202,13 @@ const PurchaseOrderForm = () => {
       return;
     }
 
-    // 발주서용 데이터 구조 생성 (documentNumber 필드 추가)
+    // 청구서용 데이터 구조 생성 (documentNumber 필드 추가)
     const excelData = {
       ...formData,
       documentNumber: formData.orderNumber
     };
 
-    console.log('발주서 export 데이터:', excelData);
+    console.log('청구서 export 데이터:', excelData);
     
     const fileName = generateFileName('purchase');
     exportToExcel(excelData, 'purchase')
@@ -238,7 +238,7 @@ const PurchaseOrderForm = () => {
   return (
     <div className="purchase-order-form-container">
       <div className="form-header">
-        <h1>발&nbsp;&nbsp;&nbsp;&nbsp;주&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
+        <h1>청&nbsp;&nbsp;&nbsp;&nbsp;구&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
         <div className="order-number-field">
           <label>거레번호:</label>
           <input
@@ -297,7 +297,7 @@ const PurchaseOrderForm = () => {
                 className="estimate-memo"
                 value={memo}
                 onChange={e => setMemo(e.target.value)}
-                placeholder="아래와 같이 발주합니다 (부가세, 운임비 별도)"
+                placeholder="아래와 같이 청구합니다 (부가세, 운임비 별도)"
                 style={{
                   width: "96%",
                   border: "none",
@@ -345,8 +345,8 @@ const PurchaseOrderForm = () => {
         </tbody>
       </table>
 
-      {/* 발주 명세 테이블 */}
-      <h3 className="section-title">발주 명세</h3>
+      {/* 청구 명세 테이블 */}
+      <h3 className="section-title">청구 명세</h3>
       <table className="form-table order-table">
         <thead>
           <tr>
@@ -425,7 +425,7 @@ const PurchaseOrderForm = () => {
       {/* 아이템 추가 버튼 */}
       <div className="item-controls no-print">
         <button type="button" onClick={addItem} className="add-item-btn no-print">
-          + 발주 품목 추가
+          + 청구 품목 추가
         </button>
       </div>
 
