@@ -50,7 +50,7 @@ const BaljuPrint = ({ data }) => {
         프린트 미리보기 - 실제 인쇄 시 이 메시지는 표시되지 않습니다
       </div>
       <div className="print-header">
-        <h1>발&nbsp;주&nbsp;서</h1>
+        <h1>청&nbsp;구&nbsp;서</h1>
         <table className="print-table info-table">
           <tbody>
             <tr>
@@ -76,7 +76,7 @@ const BaljuPrint = ({ data }) => {
                 fontSize: '9px',
                 lineHeight: '1.0'
               }}>
-                아래와 같이 발주합니다 (부가세, 운임비 별도)
+                아래와 같이 청구합니다 (부가세, 운임비 별도)
               </td>
               <td className="label">대표자</td>
               <td>
@@ -102,7 +102,7 @@ const BaljuPrint = ({ data }) => {
             </tr>
           </tbody>
         </table>
-        <div className="section-divider">발주명세</div>
+        <div className="section-divider">청구명세</div>
         <table className="print-table order-table">
           <thead>
             <tr>
