@@ -87,20 +87,23 @@ const calcHighRackShelfPerLevel = (size) => {
 // 연결형: 수평=2, 경사=(h/500-1),   앙카=2, 베이스볼트=4, 브레싱볼트=(h/500)+2
 const calcPalletHardwareCounts = (heightMm, isConn, qty) => {
   const baseHeight = 1500; // 기준 높이
-  const step = heightMm / 500;
-
-  const baseDiagonal = isConn ? 2 : 4; // 기준 개수
-  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / step));
+  const heightStep = 500; // ← 누락된 변수 추가
+  
+  // 기본 수량 (1500mm 기준)
+  const baseDiagonal = isConn ? 2 : 4;
+  
+  // 추가 단계 계산
+  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / heightStep));
   const additionalDiagonal = (isConn ? 1 : 2) * additionalSteps;
+  
   const diagonal = (baseDiagonal + additionalDiagonal) * qty;
-
-  const braceBolt = diagonal; // 경사브레싱과 동일한 수량
+  const braceBolt = diagonal; // 경사브레싱과 동일
   
   const horizontal = (isConn ? 2 : 4) * qty;
   const anchor = (isConn ? 2 : 4) * qty;
   const baseBolt = 0;
+  const rubber = 4 * qty;
   
-  const rubber = 4 * qty; // 브레싱고무는 항상 4개 × 수량
   return { horizontal, diagonal, anchor, baseBolt, braceBolt, rubber };
 };
 
@@ -681,13 +684,15 @@ export const ProductProvider = ({ children }) => {
 
         // 파렛트랙 철판형의 경우 선반 추가
         if (selectedType === "파렛트랙 철판형") {
-          const shelfPerLevel = calcPalletIronShelfPerLevel(sz); // 단당 개수만
+          const shelfPerLevel = calcPalletIronShelfPerLevel(sz); // 단당 개수
+          const lvl = parseInt(selectedOptions.level || "1"); // 단수
+          
           base.push({
             rackType: selectedType,
             size: sz,
             name: "선반",
             specification: `사이즈 ${sz}`,
-            quantity: shelfPerLevel * parseInt(selectedOptions.level || "1") * q, // 단당개수 × 단수 × 수량
+            quantity: shelfPerLevel * lvl * q, // 단당개수 × 단수 × 수량
             unitPrice: 0,
             totalPrice: 0
           });
