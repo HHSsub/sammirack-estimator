@@ -121,7 +121,8 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
 
   // 아래 문구 A9:C10 병합
   ws.mergeCells('A9:C10');
-  ws.getCell('A9').value = type === 'purchase' ? '아래와 같이 청구합니다' : '아래와 같이 견적합니다';
+  const bottomText = type === 'purchase' ? '아래와 같이 청구합니다' : type === 'transaction' ? '아래와 같이 거래합니다' : '아래와 같이 견적합니다';
+  ws.getCell('A9').value = bottomText;
   ws.getCell('A9').alignment = alignCenter;
   setRowHeights(ws, { 9: 40 });
 
@@ -156,8 +157,8 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
   styleRange(ws, 5, 1, 10, 8, { alignment: alignCenter, border: borderThin });
 }
 
-/** 견적/거래 공통명세 (A11~) */
-function buildEstimateOrTransaction(ws, items = [], totals, notes) {
+/** 견적서 전용 (기존 estimate 타입만) */
+function buildEstimate(ws, items = [], totals, notes) {
   // 섹션 타이틀 A11:H11
   ws.mergeCells('A11:H11');
   ws.getCell('A11').value = '견적명세';
@@ -237,11 +238,12 @@ function buildEstimateOrTransaction(ws, items = [], totals, notes) {
   fullBorder(ws, 5, 32, 1, 8);
 }
 
-/** 청구서 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
-function buildPurchase(ws, items = [], materials = [], totals, notes) {
+/** 청구서 & 거래명세서 공통 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
+function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals, notes) {
   // 섹션 타이틀 A11:H11
   ws.mergeCells('A11:H11');
-  ws.getCell('A11').value = '청구 명세';
+  const sectionTitle = type === 'purchase' ? '청구 명세' : '거래 명세';
+  ws.getCell('A11').value = sectionTitle;
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
   ws.getCell('A11').font = { bold: true, size: 16 };
@@ -337,7 +339,6 @@ function buildPurchase(ws, items = [], materials = [], totals, notes) {
     ws.getCell('A57').alignment = { vertical: "top", horizontal: "left", wrapText: true };
   }
   
-  
   styleRange(ws, 56, 1, 58, 8, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
   // 회사명 H59
@@ -394,10 +395,12 @@ export async function exportToExcel(rawData, type = 'estimate') {
   };
   const notes = rawData?.notes || '';
 
-  if (type === 'purchase') {
-    buildPurchase(ws, items, materials, totals, notes);
+  if (type === 'purchase' || type === 'transaction') {
+    // 청구서와 거래명세서는 동일한 레이아웃 (원자재 명세서 포함)
+    buildPurchaseOrTransaction(ws, type, items, materials, totals, notes);
   } else {
-    buildEstimateOrTransaction(ws, items, totals, notes);
+    // 견적서는 기존 레이아웃 (원자재 명세서 없음)
+    buildEstimate(ws, items, totals, notes);
   }
 
   // 셀 전체 가운데 정렬 유지 (특기사항 제외 이미 따로 처리)
