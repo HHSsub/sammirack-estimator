@@ -581,7 +581,9 @@ export const ProductProvider = ({ children }) => {
       const base = [
         { rackType: selectedType, size: sz, name: `기둥(${ht})`, specification: `높이 ${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "타이빔", specification: tieSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
+     ...(selectedType === "파렛트랙 철판형" ? [] : [
+       { rackType: selectedType, size: sz, name: "타이빔", specification: tieSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 }
+     ]),
         { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
       ];
 
@@ -676,6 +678,7 @@ export const ProductProvider = ({ children }) => {
 
         const base = rec.components
           .filter(c => c.name !== "베이스(안전좌)") // 베이스(안전좌) 제거
+          .filter(c => !(selectedType === "파렛트랙 철판형" && c.name.includes("타이빔"))) // ← 타이빔 제거
           .map((c) => {
             let spec = c.specification ?? "";
             // 로드빔/타이빔은 표시 규칙 강제 적용(선택한 규격 기반)
