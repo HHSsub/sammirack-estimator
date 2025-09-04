@@ -178,34 +178,50 @@ const DeliveryNoteForm = () => {
     <div className="estimate-form-container">
       <div className="form-header">
         <h1>거&nbsp;&nbsp;&nbsp;&nbsp;래&nbsp;&nbsp;&nbsp;&nbsp;명&nbsp;&nbsp;&nbsp;&nbsp;세&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-        <div className="document-number-field">
-          <label>거래번호:</label>
-          <input
-            type="text"
-            value={formData.documentNumber}
-            ref={documentNumberInputRef}
-            onChange={(e) => {
-              if (documentNumberInputRef.current) {
-                documentNumberInputRef.current.classList.remove('invalid');
-              }
-              updateFormData('documentNumber', e.target.value);
-            }}
-            placeholder="휴대폰번호 입력"
-          />
-        </div>
       </div>
-
       {/* 상단 정보 테이블 - GyeonjukPrint와 동일한 구조 */}
+      {/* 상단 정보 테이블 - 견적일자와 거래번호를 세로로 배치 */}
       <table className="form-table info-table">
         <tbody>
           <tr>
             <td className="label">거래일자</td>
             <td>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => updateFormData('date', e.target.value)}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => updateFormData('date', e.target.value)}
+                  style={{ 
+                    width: '100%',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    padding: '6px 8px'
+                  }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ whiteSpace: 'nowrap', fontSize: '11px', color: '#666' }}>거래번호:</span>
+                  <input
+                    type="text"
+                    value={formData.documentNumber}
+                    ref={documentNumberInputRef}
+                    onChange={(e) => {
+                      if (documentNumberInputRef.current) {
+                        documentNumberInputRef.current.classList.remove('invalid');
+                      }
+                      updateFormData('documentNumber', e.target.value);
+                    }}
+                    placeholder="휴대폰번호 입력"
+                    style={{
+                      flex: '1',
+                      padding: '3px 6px',
+                      border: '1px solid #ddd',
+                      borderRadius: '3px',
+                      fontSize: '11px'
+                    }}
+                  />
+                </div>
+              </div>
             </td>
             <td className="label">사업자등록번호</td>
             <td>232-81-01750</td>
