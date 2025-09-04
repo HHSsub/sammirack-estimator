@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
-import '../styles/EstimateForm.css';
+import '../styles/PurchaseOrderForm.css';
 
 const DeliveryNoteForm = () => {
   const { id } = useParams();
@@ -9,17 +9,22 @@ const DeliveryNoteForm = () => {
   const navigate = useNavigate();
   const isEditMode = !!id;
   
-  // ref 선언을 최상단에 배치
+  // ref를 최상단에 선언
+  const orderNumberInputRef = useRef(null);
   const documentNumberInputRef = useRef(null);
   
   // state 선언
   const [memo, setMemo] = useState('');
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
+    orderNumber: '',
     companyName: '',
     documentNumber: '',
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
+    ],
+    materials: [
+      { name: '', specification: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
     subtotal: 0,
     tax: 0,
@@ -31,27 +36,28 @@ const DeliveryNoteForm = () => {
   const cartData = location.state || {};
   const { cart = [], cartTotal = 0, totalBom = [] } = cartData;
 
-  // 문서번호 검증 함수 - useCallback으로 메모이제이션
+  // 문서번호 검증 함수
   const validateDocumentNumber = useCallback(() => {
-    const documentNumber = formData.documentNumber;
+    const documentNumber = formData.documentNumber || formData.orderNumber;
     if (!documentNumber || String(documentNumber).trim() === '') {
-      // documentNumberInputRef가 존재하는지 먼저 확인
-      if (documentNumberInputRef.current) {
+      // ref가 존재하는지 먼저 확인
+      const inputRef = documentNumberInputRef.current || orderNumberInputRef.current;
+      if (inputRef) {
         try {
-          documentNumberInputRef.current.classList.add('invalid');
-          documentNumberInputRef.current.focus();
-          documentNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          inputRef.classList.add('invalid');
+          inputRef.focus();
+          inputRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch (error) {
           console.warn('Input focus error:', error);
         }
       }
-      alert('문서번호(거래번호)를 입력해주세요.');
+      alert('거래번호를 입력해주세요.');
       return false;
     }
     return true;
-  }, [formData.documentNumber]);
+  }, [formData.documentNumber, formData.orderNumber]);
 
-  // documentNumber 입력 변경 핸들러
+  // 거래번호 입력 변경 핸들러
   const handleDocumentNumberChange = useCallback((e) => {
     const value = e.target.value;
     // invalid 클래스 제거 시 안전성 체크
@@ -64,7 +70,8 @@ const DeliveryNoteForm = () => {
     }
     setFormData(prev => ({
       ...prev,
-      documentNumber: value
+      documentNumber: value,
+      orderNumber: value // orderNumber도 동시에 업데이트
     }));
   }, []);
 
@@ -85,9 +92,10 @@ const DeliveryNoteForm = () => {
     }
   }, [id, isEditMode]);
 
-  // 장바구니 데이터를 items로 변환
+  // 장바구니 데이터를 items와 materials로 변환
   useEffect(() => {
-    if (!isEditMode && cart.length > 0) {
+    if (!isEditMode && (cart.length > 0 || totalBom.length > 0)) {
+      // cart 데이터를 items로 변환
       const cartItems = cart.map((item) => ({
         name: item.displayName || item.name || '',
         unit: '개',
@@ -97,16 +105,29 @@ const DeliveryNoteForm = () => {
         note: ''
       }));
 
+      // totalBom 데이터를 materials로 변환
+      const bomMaterials = totalBom.map((bom) => ({
+        name: bom.name || '',
+        specification: bom.specification || '',
+        quantity: bom.quantity || 0,
+        unitPrice: bom.unitPrice || 0,
+        totalPrice: bom.totalPrice || (bom.quantity * bom.unitPrice) || 0,
+        note: bom.note || ''
+      }));
+
       setFormData(prev => ({
         ...prev,
-        items: cartItems.length > 0 ? cartItems : prev.items
+        items: cartItems.length > 0 ? cartItems : prev.items,
+        materials: bomMaterials.length > 0 ? bomMaterials : prev.materials
       }));
     }
-  }, [cart, isEditMode]);
+  }, [cart, totalBom, isEditMode]);
 
   // 전체 금액 계산
   useEffect(() => {
-    const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
+    const itemSubtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
+    const materialSubtotal = formData.materials.reduce((sum, material) => sum + (parseFloat(material.totalPrice) || 0), 0);
+    const subtotal = itemSubtotal + materialSubtotal;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     
@@ -116,7 +137,7 @@ const DeliveryNoteForm = () => {
       tax,
       totalAmount
     }));
-  }, [formData.items]);
+  }, [formData.items, formData.materials]);
 
   // 아이템 추가
   const addItem = useCallback(() => {
@@ -134,6 +155,22 @@ const DeliveryNoteForm = () => {
     }));
   }, []);
 
+  // 원자재 추가
+  const addMaterial = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      materials: [...prev.materials, { name: '', specification: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+    }));
+  }, []);
+
+  // 원자재 삭제
+  const removeMaterial = useCallback((index) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.filter((_, i) => i !== index)
+    }));
+  }, []);
+
   // 아이템 업데이트
   const updateItem = useCallback((index, field, value) => {
     setFormData(prev => {
@@ -148,6 +185,23 @@ const DeliveryNoteForm = () => {
       }
       
       return { ...prev, items: newItems };
+    });
+  }, []);
+
+  // 원자재 업데이트
+  const updateMaterial = useCallback((index, field, value) => {
+    setFormData(prev => {
+      const newMaterials = [...prev.materials];
+      newMaterials[index][field] = value;
+      
+      // 수량과 단가가 입력되면 금액 자동 계산
+      if (field === 'quantity' || field === 'unitPrice') {
+        const quantity = parseFloat(newMaterials[index].quantity) || 0;
+        const unitPrice = parseFloat(newMaterials[index].unitPrice) || 0;
+        newMaterials[index].totalPrice = quantity * unitPrice;
+      }
+      
+      return { ...prev, materials: newMaterials };
     });
   }, []);
 
@@ -174,7 +228,7 @@ const DeliveryNoteForm = () => {
         id: itemId,
         type: 'delivery_note',
         status: formData.status || '진행 중',
-        deliveryNoteNumber: formData.documentNumber,
+        orderNumber: formData.documentNumber || formData.orderNumber,
         customerName: formData.companyName,
         productType: formData.items.length > 0 ? formData.items[0].name : '',
         quantity: formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0),
@@ -182,6 +236,9 @@ const DeliveryNoteForm = () => {
         totalPrice: formData.totalAmount,
         contactInfo: '',
         selectedOptions: {},
+        deliveryDate: formData.deliveryDate || '',
+        deliveryAddress: formData.deliveryAddress || '',
+        paymentTerms: formData.paymentTerms || '계약금 50%, 잔금 50% (출고 전)',
         updatedAt: new Date().toISOString()
       };
 
@@ -204,10 +261,15 @@ const DeliveryNoteForm = () => {
     }
 
     try {
-      const fileName = generateFileName('transaction');
-      const success = exportToExcel(formData, 'transaction');
+      const excelData = {
+        ...formData,
+        documentNumber: formData.documentNumber || formData.orderNumber
+      };
 
-      console.log('거래명세서 export 데이터:', formData);
+      console.log('거래명세서 export 데이터:', excelData);
+      
+      const fileName = generateFileName('transaction');
+      const success = exportToExcel(excelData, 'transaction');
       
       if (success) {
         alert('엑셀 파일이 다운로드되었습니다.');
@@ -229,11 +291,11 @@ const DeliveryNoteForm = () => {
   }, [validateDocumentNumber]);
 
   return (
-    <div className="estimate-form-container">
+    <div className="purchase-order-form-container">
       <div className="form-header">
         <h1>거&nbsp;&nbsp;&nbsp;&nbsp;래&nbsp;&nbsp;&nbsp;&nbsp;명&nbsp;&nbsp;&nbsp;&nbsp;세&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
-      
+
       <table className="form-table info-table">
         <tbody>
           <tr>
@@ -325,8 +387,7 @@ const DeliveryNoteForm = () => {
                 src={`${import.meta.env.BASE_URL}images/도장.png`}
                 alt="도장"
                 style={{
-                  width: '45px', 
-                  height: '45px',
+                  width: '45px', height: '45px',
                   marginLeft: "6px",
                   verticalAlign: "middle",
                   opacity: 0.85
@@ -352,7 +413,8 @@ const DeliveryNoteForm = () => {
         </tbody>
       </table>
 
-      <table className="form-table quote-table">
+      <h3 className="section-title">거래 명세</h3>
+      <table className="form-table order-table">
         <thead>
           <tr>
             <th>NO</th>
@@ -429,7 +491,80 @@ const DeliveryNoteForm = () => {
 
       <div className="item-controls no-print">
         <button type="button" onClick={addItem} className="add-item-btn no-print">
-          + 품목 추가
+          + 거래 품목 추가
+        </button>
+      </div>
+
+      <h3 className="section-title">원자재 명세서</h3>
+      <table className="form-table material-table">
+        <thead>
+          <tr>
+            <th>NO</th>
+            <th>부품명</th>
+            <th>수량</th>
+            <th>단가</th>
+            <th>금액</th>
+            <th>비고</th>
+            <th>작업</th>
+          </tr>
+        </thead>
+        <tbody>
+          {formData.materials.map((material, index) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>
+                <input
+                  type="text"
+                  value={material.name}
+                  onChange={(e) => updateMaterial(index, 'name', e.target.value)}
+                  placeholder="부품명 입력"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={material.quantity}
+                  onChange={(e) => updateMaterial(index, 'quantity', e.target.value)}
+                  placeholder="수량"
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={material.unitPrice}
+                  onChange={(e) => updateMaterial(index, 'unitPrice', e.target.value)}
+                  placeholder="단가"
+                />
+              </td>
+              <td className="right">
+                {material.totalPrice ? parseInt(material.totalPrice).toLocaleString() : '0'}
+              </td>
+              <td>
+                <input
+                  type="text"
+                  value={material.note}
+                  onChange={(e) => updateMaterial(index, 'note', e.target.value)}
+                  placeholder="비고"
+                />
+              </td>
+              <td>
+                <button
+                  type="button"
+                  onClick={() => removeMaterial(index)}
+                  className="remove-btn no-print"
+                  disabled={formData.materials.length === 1}
+                >
+                  삭제
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="item-controls no-print">
+        <button type="button" onClick={addMaterial} className="add-material-btn no-print">
+          + 원자재 추가
         </button>
       </div>
 
