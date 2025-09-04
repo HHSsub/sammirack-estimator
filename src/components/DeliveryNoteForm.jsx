@@ -1,23 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
-import '../styles/EstimateForm.css'; // 새로운 경로로 import
+import '../styles/EstimateForm.css';
 
 const DeliveryNoteForm = () => {
   const { id } = useParams();
   const location = useLocation();
-  const navigate = useNavigate(); // useNavigate 훅 추가
+  const navigate = useNavigate();
   const isEditMode = !!id;
   
-  // ref는 컴포넌트 최상단에 선언
+  // ref 선언을 최상단에 배치
   const documentNumberInputRef = useRef(null);
   
+  // state 선언
   const [memo, setMemo] = useState('');
-  
-  // 장바구니에서 전달받은 데이터
-  const cartData = location.state || {};
-  const { cart = [], cartTotal = 0, totalBom = [] } = cartData;
-  
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     companyName: '',
@@ -30,28 +26,69 @@ const DeliveryNoteForm = () => {
     totalAmount: 0,
     notes: ''
   });
+  
+  // 장바구니에서 전달받은 데이터
+  const cartData = location.state || {};
+  const { cart = [], cartTotal = 0, totalBom = [] } = cartData;
+
+  // 문서번호 검증 함수 - useCallback으로 메모이제이션
+  const validateDocumentNumber = useCallback(() => {
+    const documentNumber = formData.documentNumber;
+    if (!documentNumber || String(documentNumber).trim() === '') {
+      // documentNumberInputRef가 존재하는지 먼저 확인
+      if (documentNumberInputRef.current) {
+        try {
+          documentNumberInputRef.current.classList.add('invalid');
+          documentNumberInputRef.current.focus();
+          documentNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (error) {
+          console.warn('Input focus error:', error);
+        }
+      }
+      alert('문서번호(거래번호)를 입력해주세요.');
+      return false;
+    }
+    return true;
+  }, [formData.documentNumber]);
+
+  // documentNumber 입력 변경 핸들러
+  const handleDocumentNumberChange = useCallback((e) => {
+    const value = e.target.value;
+    // invalid 클래스 제거 시 안전성 체크
+    if (documentNumberInputRef.current) {
+      try {
+        documentNumberInputRef.current.classList.remove('invalid');
+      } catch (error) {
+        console.warn('Class removal error:', error);
+      }
+    }
+    setFormData(prev => ({
+      ...prev,
+      documentNumber: value
+    }));
+  }, []);
 
   // 편집 모드일 때 기존 데이터 로드
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && id) {
       const storageKey = `delivery_note_${id}`;
-      const savedData = localStorage.getItem(storageKey);
-      if (savedData) {
-        try {
+      try {
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
           const deliveryNoteData = JSON.parse(savedData);
           setFormData(deliveryNoteData);
-        } catch (error) {
-          console.error('데이터 로드 중 오류:', error);
-          alert('데이터를 불러오는 중 오류가 발생했습니다.');
         }
+      } catch (error) {
+        console.error('데이터 로드 중 오류:', error);
+        alert('데이터를 불러오는 중 오류가 발생했습니다.');
       }
     }
   }, [id, isEditMode]);
 
-  // 장바구니 데이터를 items로 변환하는 useEffect 추가
+  // 장바구니 데이터를 items로 변환
   useEffect(() => {
     if (!isEditMode && cart.length > 0) {
-      const cartItems = cart.map((item, index) => ({
+      const cartItems = cart.map((item) => ({
         name: item.displayName || item.name || '',
         unit: '개',
         quantity: item.quantity || 1,
@@ -67,37 +104,6 @@ const DeliveryNoteForm = () => {
     }
   }, [cart, isEditMode]);
 
-  // 아이템 추가
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
-    }));
-  };
-
-  // 아이템 삭제
-  const removeItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index)
-    }));
-  };
-
-  // 아이템 업데이트
-  const updateItem = (index, field, value) => {
-    const newItems = [...formData.items];
-    newItems[index][field] = value;
-    
-    // 수량과 단가가 입력되면 공급가 자동 계산
-    if (field === 'quantity' || field === 'unitPrice') {
-      const quantity = parseFloat(newItems[index].quantity) || 0;
-      const unitPrice = parseFloat(newItems[index].unitPrice) || 0;
-      newItems[index].totalPrice = quantity * unitPrice;
-    }
-    
-    setFormData(prev => ({ ...prev, items: newItems }));
-  };
-
   // 전체 금액 계산
   useEffect(() => {
     const subtotal = formData.items.reduce((sum, item) => sum + (parseFloat(item.totalPrice) || 0), 0);
@@ -112,30 +118,49 @@ const DeliveryNoteForm = () => {
     }));
   }, [formData.items]);
 
+  // 아이템 추가
+  const addItem = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+    }));
+  }, []);
+
+  // 아이템 삭제
+  const removeItem = useCallback((index) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  // 아이템 업데이트
+  const updateItem = useCallback((index, field, value) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      newItems[index][field] = value;
+      
+      // 수량과 단가가 입력되면 공급가 자동 계산
+      if (field === 'quantity' || field === 'unitPrice') {
+        const quantity = parseFloat(newItems[index].quantity) || 0;
+        const unitPrice = parseFloat(newItems[index].unitPrice) || 0;
+        newItems[index].totalPrice = quantity * unitPrice;
+      }
+      
+      return { ...prev, items: newItems };
+    });
+  }, []);
+
   // 폼 데이터 업데이트
-  const updateFormData = (field, value) => {
+  const updateFormData = useCallback((field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
-  // 문서번호 검증 함수
-  const validateDocumentNumber = () => {
-    if (!formData.documentNumber || String(formData.documentNumber).trim() === '') {
-      if (documentNumberInputRef.current) {
-        documentNumberInputRef.current.classList.add('invalid');
-        documentNumberInputRef.current.focus();
-        documentNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      alert('문서번호(거래번호)를 입력해주세요.');
-      return false;
-    }
-    return true;
-  };
-
-  // 저장 함수 (편집 모드 지원)
-  const handleSave = () => {
+  // 저장 함수
+  const handleSave = useCallback(() => {
     if (!validateDocumentNumber()) {
       return;
     }
@@ -151,17 +176,15 @@ const DeliveryNoteForm = () => {
         status: formData.status || '진행 중',
         deliveryNoteNumber: formData.documentNumber,
         customerName: formData.companyName,
-        // HistoryPage에서 필요한 추가 필드들
         productType: formData.items.length > 0 ? formData.items[0].name : '',
         quantity: formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0),
         unitPrice: formData.items.length > 0 ? parseInt(formData.items[0].unitPrice) || 0 : 0,
         totalPrice: formData.totalAmount,
-        contactInfo: '', // 필요시 추가 필드
-        selectedOptions: {}, // 필요시 추가 필드
+        contactInfo: '',
+        selectedOptions: {},
         updatedAt: new Date().toISOString()
       };
 
-      // createdAt은 새 문서일 때만 설정
       if (!isEditMode) {
         newDeliveryNote.createdAt = new Date().toISOString();
       }
@@ -172,10 +195,10 @@ const DeliveryNoteForm = () => {
       console.error('저장 중 오류:', error);
       alert('저장 중 오류가 발생했습니다.');
     }
-  };
+  }, [validateDocumentNumber, isEditMode, id, formData]);
 
-  // 엑셀로 저장하기 함수
-  const handleExportToExcel = () => {
+  // 엑셀로 저장하기
+  const handleExportToExcel = useCallback(() => {
     if (!validateDocumentNumber()) {
       return;
     }
@@ -195,31 +218,22 @@ const DeliveryNoteForm = () => {
       console.error('엑셀 내보내기 중 오류:', error);
       alert('엑셀 파일 생성 중 오류가 발생했습니다.');
     }
-  };
+  }, [validateDocumentNumber, formData]);
 
   // 인쇄하기
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (!validateDocumentNumber()) {
       return;
     }
     window.print();
-  };
-
-  // documentNumber 입력 시 invalid 클래스 제거
-  const handleDocumentNumberChange = (e) => {
-    if (documentNumberInputRef.current) {
-      documentNumberInputRef.current.classList.remove('invalid');
-    }
-    updateFormData('documentNumber', e.target.value);
-  };
+  }, [validateDocumentNumber]);
 
   return (
     <div className="estimate-form-container">
       <div className="form-header">
         <h1>거&nbsp;&nbsp;&nbsp;&nbsp;래&nbsp;&nbsp;&nbsp;&nbsp;명&nbsp;&nbsp;&nbsp;&nbsp;세&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
-      {/* 상단 정보 테이블 - GyeonjukPrint와 동일한 구조 */}
-      {/* 상단 정보 테이블 - 견적일자와 거래번호를 세로로 배치 */}
+      
       <table className="form-table info-table">
         <tbody>
           <tr>
@@ -317,6 +331,9 @@ const DeliveryNoteForm = () => {
                   verticalAlign: "middle",
                   opacity: 0.85
                 }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
               />
             </td>
           </tr>
@@ -335,7 +352,6 @@ const DeliveryNoteForm = () => {
         </tbody>
       </table>
 
-      {/* 거래명세 명세 테이블 */}
       <table className="form-table quote-table">
         <thead>
           <tr>
@@ -411,14 +427,12 @@ const DeliveryNoteForm = () => {
         </tbody>
       </table>
 
-      {/* 아이템 추가 버튼 */}
       <div className="item-controls no-print">
         <button type="button" onClick={addItem} className="add-item-btn no-print">
           + 품목 추가
         </button>
       </div>
 
-      {/* 합계 테이블 */}
       <table className="form-table total-table">
         <tbody>
           <tr>
@@ -436,7 +450,6 @@ const DeliveryNoteForm = () => {
         </tbody>
       </table>
 
-      {/* 비고 */}
       <div className="notes-section">
         <label>비고:</label>
         <textarea
@@ -447,7 +460,6 @@ const DeliveryNoteForm = () => {
         />
       </div>
 
-      {/* 하단 버튼들 */}
       <div className="form-actions no-print">
         <button type="button" onClick={handleSave} className="save-btn no-print">
           저장하기
@@ -460,7 +472,6 @@ const DeliveryNoteForm = () => {
         </button>
       </div>
 
-      {/* 하단 회사명 */}
       <div className="form-company">(주)삼미앵글랙산업</div>
     </div>
   );
