@@ -239,37 +239,46 @@ const PurchaseOrderForm = () => {
     <div className="purchase-order-form-container">
       <div className="form-header">
         <h1>청&nbsp;&nbsp;&nbsp;&nbsp;구&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-        <div className="order-number-field">
-          <label>거레번호:</label>
-          <input
-            type="text"
-            value={formData.orderNumber}
-            ref={orderNumberInputRef}
-            onChange={(e) => {
-              if (orderNumberInputRef.current) {
-                orderNumberInputRef.current.classList.remove('invalid');
-              }
-              updateFormData('orderNumber', e.target.value);
-            }}
-            placeholder="휴대폰번호 입력"
-          />
-        </div>
       </div>
 
-      {/* 상단 정보 테이블 - BaljuPrint와 동일한 구조 */}
+      {/* 상단 정보 테이블 - 거래일자와 거래번호를 같은 칸에 배치 */}
       <table className="form-table info-table">
         <tbody>
           <tr>
             <td className="label">거래일자</td>
             <td>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => updateFormData('date', e.target.value)}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => updateFormData('date', e.target.value)}
+                  style={{ width: '100%' }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span style={{ whiteSpace: 'nowrap', fontSize: '12px', color: '#666' }}>거래번호:</span>
+                  <input
+                    type="text"
+                    value={formData.orderNumber}
+                    ref={orderNumberInputRef}
+                    onChange={(e) => {
+                      if (orderNumberInputRef.current) {
+                        orderNumberInputRef.current.classList.remove('invalid');
+                      }
+                      updateFormData('orderNumber', e.target.value);
+                    }}
+                    placeholder="휴대폰번호 입력"
+                    style={{
+                      flex: '1',
+                      padding: '4px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '3px'
+                    }}
+                  />
+                </div>
+              </div>
             </td>
-            <td className="label">거래번호</td>
-            <td>{formData.orderNumber}</td>
+            <td className="label">사업자등록번호</td>
+            <td>232-81-01750</td>
           </tr>
           <tr>
             <td className="label">상호명</td>
