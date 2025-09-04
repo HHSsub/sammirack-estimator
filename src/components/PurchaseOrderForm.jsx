@@ -252,26 +252,33 @@ const PurchaseOrderForm = () => {
                   type="date"
                   value={formData.date}
                   onChange={(e) => updateFormData('date', e.target.value)}
-                  style={{ width: '100%' }}
+                  style={{ 
+                    width: '100%',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    padding: '6px 8px'
+                  }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span style={{ whiteSpace: 'nowrap', fontSize: '12px', color: '#666' }}>거래번호:</span>
+                  <span style={{ whiteSpace: 'nowrap', fontSize: '11px', color: '#666' }}>거래번호:</span>
                   <input
                     type="text"
-                    value={formData.orderNumber}
-                    ref={orderNumberInputRef}
+                    value={formData.documentNumber}
+                    ref={documentNumberInputRef}
                     onChange={(e) => {
-                      if (orderNumberInputRef.current) {
-                        orderNumberInputRef.current.classList.remove('invalid');
+                      if (documentNumberInputRef.current) {
+                        documentNumberInputRef.current.classList.remove('invalid');
                       }
-                      updateFormData('orderNumber', e.target.value);
+                      updateFormData('documentNumber', e.target.value);
                     }}
                     placeholder="휴대폰번호 입력"
                     style={{
                       flex: '1',
-                      padding: '4px 8px',
+                      padding: '3px 6px',
                       border: '1px solid #ddd',
-                      borderRadius: '3px'
+                      borderRadius: '3px',
+                      fontSize: '11px'
                     }}
                   />
                 </div>
