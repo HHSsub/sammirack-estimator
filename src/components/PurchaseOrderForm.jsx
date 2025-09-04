@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import '../styles/PurchaseOrderForm.css';
@@ -6,19 +6,20 @@ import '../styles/PurchaseOrderForm.css';
 const PurchaseOrderForm = () => {
   const { id } = useParams();
   const location = useLocation();
-  const navigate = useNavigate(); // navigate 변수 추가
+  const navigate = useNavigate();
   const isEditMode = !!id;
+  
+  // ref를 최상단에 선언
   const orderNumberInputRef = useRef(null);
+  const documentNumberInputRef = useRef(null);
+  
+  // state 선언
   const [memo, setMemo] = useState('');
-  
-  // 장바구니에서 전달받은 데이터
-  const cartData = location.state || {};
-  const { cart = [], cartTotal = 0, totalBom = [] } = cartData;
-  
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     orderNumber: '',
     companyName: '',
+    documentNumber: '',
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
@@ -30,24 +31,72 @@ const PurchaseOrderForm = () => {
     totalAmount: 0,
     notes: ''
   });
+  
+  // 장바구니에서 전달받은 데이터
+  const cartData = location.state || {};
+  const { cart = [], cartTotal = 0, totalBom = [] } = cartData;
+
+  // 문서번호 검증 함수
+  const validateDocumentNumber = useCallback(() => {
+    const documentNumber = formData.documentNumber || formData.orderNumber;
+    if (!documentNumber || String(documentNumber).trim() === '') {
+      // ref가 존재하는지 먼저 확인
+      const inputRef = documentNumberInputRef.current || orderNumberInputRef.current;
+      if (inputRef) {
+        try {
+          inputRef.classList.add('invalid');
+          inputRef.focus();
+          inputRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (error) {
+          console.warn('Input focus error:', error);
+        }
+      }
+      alert('거래번호를 입력해주세요.');
+      return false;
+    }
+    return true;
+  }, [formData.documentNumber, formData.orderNumber]);
+
+  // 거래번호 입력 변경 핸들러
+  const handleDocumentNumberChange = useCallback((e) => {
+    const value = e.target.value;
+    // invalid 클래스 제거 시 안전성 체크
+    if (documentNumberInputRef.current) {
+      try {
+        documentNumberInputRef.current.classList.remove('invalid');
+      } catch (error) {
+        console.warn('Class removal error:', error);
+      }
+    }
+    setFormData(prev => ({
+      ...prev,
+      documentNumber: value,
+      orderNumber: value // orderNumber도 동시에 업데이트
+    }));
+  }, []);
 
   // 편집 모드일 때 기존 데이터 로드
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && id) {
       const storageKey = `order_${id}`;
-      const savedData = localStorage.getItem(storageKey);
-      if (savedData) {
-        const orderData = JSON.parse(savedData);
-        setFormData(orderData);
+      try {
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
+          const orderData = JSON.parse(savedData);
+          setFormData(orderData);
+        }
+      } catch (error) {
+        console.error('데이터 로드 중 오류:', error);
+        alert('데이터를 불러오는 중 오류가 발생했습니다.');
       }
     }
   }, [id, isEditMode]);
 
-  // 장바구니 데이터를 items와 materials로 변환하는 useEffect 추가
+  // 장바구니 데이터를 items와 materials로 변환
   useEffect(() => {
     if (!isEditMode && (cart.length > 0 || totalBom.length > 0)) {
       // cart 데이터를 items로 변환
-      const cartItems = cart.map((item, index) => ({
+      const cartItems = cart.map((item) => ({
         name: item.displayName || item.name || '',
         unit: '개',
         quantity: item.quantity || 1,
@@ -57,7 +106,7 @@ const PurchaseOrderForm = () => {
       }));
 
       // totalBom 데이터를 materials로 변환
-      const bomMaterials = totalBom.map((bom, index) => ({
+      const bomMaterials = totalBom.map((bom) => ({
         name: bom.name || '',
         specification: bom.specification || '',
         quantity: bom.quantity || 0,
@@ -73,68 +122,6 @@ const PurchaseOrderForm = () => {
       }));
     }
   }, [cart, totalBom, isEditMode]);
-
-  // 아이템 추가
-  const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
-    }));
-  };
-
-  // 아이템 삭제
-  const removeItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index)
-    }));
-  };
-
-  // 원자재 추가
-  const addMaterial = () => {
-    setFormData(prev => ({
-      ...prev,
-      materials: [...prev.materials, { name: '', specification: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
-    }));
-  };
-
-  // 원자재 삭제
-  const removeMaterial = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      materials: prev.materials.filter((_, i) => i !== index)
-    }));
-  };
-
-  // 아이템 업데이트
-  const updateItem = (index, field, value) => {
-    const newItems = [...formData.items];
-    newItems[index][field] = value;
-    
-    // 수량과 단가가 입력되면 공급가 자동 계산
-    if (field === 'quantity' || field === 'unitPrice') {
-      const quantity = parseFloat(newItems[index].quantity) || 0;
-      const unitPrice = parseFloat(newItems[index].unitPrice) || 0;
-      newItems[index].totalPrice = quantity * unitPrice;
-    }
-    
-    setFormData(prev => ({ ...prev, items: newItems }));
-  };
-
-  // 원자재 업데이트
-  const updateMaterial = (index, field, value) => {
-    const newMaterials = [...formData.materials];
-    newMaterials[index][field] = value;
-    
-    // 수량과 단가가 입력되면 금액 자동 계산
-    if (field === 'quantity' || field === 'unitPrice') {
-      const quantity = parseFloat(newMaterials[index].quantity) || 0;
-      const unitPrice = parseFloat(newMaterials[index].unitPrice) || 0;
-      newMaterials[index].totalPrice = quantity * unitPrice;
-    }
-    
-    setFormData(prev => ({ ...prev, materials: newMaterials }));
-  };
 
   // 전체 금액 계산
   useEffect(() => {
@@ -152,88 +139,156 @@ const PurchaseOrderForm = () => {
     }));
   }, [formData.items, formData.materials]);
 
+  // 아이템 추가
+  const addItem = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+    }));
+  }, []);
+
+  // 아이템 삭제
+  const removeItem = useCallback((index) => {
+    setFormData(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  // 원자재 추가
+  const addMaterial = useCallback(() => {
+    setFormData(prev => ({
+      ...prev,
+      materials: [...prev.materials, { name: '', specification: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+    }));
+  }, []);
+
+  // 원자재 삭제
+  const removeMaterial = useCallback((index) => {
+    setFormData(prev => ({
+      ...prev,
+      materials: prev.materials.filter((_, i) => i !== index)
+    }));
+  }, []);
+
+  // 아이템 업데이트
+  const updateItem = useCallback((index, field, value) => {
+    setFormData(prev => {
+      const newItems = [...prev.items];
+      newItems[index][field] = value;
+      
+      // 수량과 단가가 입력되면 공급가 자동 계산
+      if (field === 'quantity' || field === 'unitPrice') {
+        const quantity = parseFloat(newItems[index].quantity) || 0;
+        const unitPrice = parseFloat(newItems[index].unitPrice) || 0;
+        newItems[index].totalPrice = quantity * unitPrice;
+      }
+      
+      return { ...prev, items: newItems };
+    });
+  }, []);
+
+  // 원자재 업데이트
+  const updateMaterial = useCallback((index, field, value) => {
+    setFormData(prev => {
+      const newMaterials = [...prev.materials];
+      newMaterials[index][field] = value;
+      
+      // 수량과 단가가 입력되면 금액 자동 계산
+      if (field === 'quantity' || field === 'unitPrice') {
+        const quantity = parseFloat(newMaterials[index].quantity) || 0;
+        const unitPrice = parseFloat(newMaterials[index].unitPrice) || 0;
+        newMaterials[index].totalPrice = quantity * unitPrice;
+      }
+      
+      return { ...prev, materials: newMaterials };
+    });
+  }, []);
+
   // 폼 데이터 업데이트
-  const updateFormData = (field, value) => {
+  const updateFormData = useCallback((field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
-  };
+  }, []);
 
-  // 저장 함수 (편집 모드 지원)
-  const handleSave = () => {
-    const itemId = isEditMode ? id : Date.now();
-    const storageKey = `order_${itemId}`;
-    
-    const newPurchaseOrder = {
-      ...formData,
-      id: itemId,
-      type: 'order',
-      status: formData.status || '진행 중',
-      orderNumber: formData.orderNumber,
-      customerName: formData.companyName,
-      // HistoryPage에서 필요한 추가 필드들
-      productType: formData.items.length > 0 ? formData.items[0].name : '',
-      quantity: formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0),
-      unitPrice: formData.items.length > 0 ? parseInt(formData.items[0].unitPrice) || 0 : 0,
-      totalPrice: formData.totalAmount,
-      contactInfo: '', // 필요시 추가 필드
-      selectedOptions: {}, // 필요시 추가 필드
-      // 청구서 전용 필드들
-      deliveryDate: formData.deliveryDate || '',
-      deliveryAddress: formData.deliveryAddress || '',
-      paymentTerms: formData.paymentTerms || '계약금 50%, 잔금 50% (출고 전)',
-      updatedAt: new Date().toISOString()
-    };
-
-    // createdAt은 새 문서일 때만 설정
-    if (!isEditMode) {
-      newPurchaseOrder.createdAt = new Date().toISOString();
-    }
-
-    localStorage.setItem(storageKey, JSON.stringify(newPurchaseOrder));
-    alert(isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.');
-  };
-
-  // 엑셀로 저장하기 함수
-  const handleExportToExcel = () => {
-    if (!formData.orderNumber || String(formData.orderNumber).trim() === '') {
-      alert('거래번호를 입력해주세요.');
+  // 저장 함수
+  const handleSave = useCallback(() => {
+    if (!validateDocumentNumber()) {
       return;
     }
 
-    // 청구서용 데이터 구조 생성 (documentNumber 필드 추가)
-    const excelData = {
-      ...formData,
-      documentNumber: formData.orderNumber
-    };
+    try {
+      const itemId = isEditMode ? id : Date.now();
+      const storageKey = `order_${itemId}`;
+      
+      const newPurchaseOrder = {
+        ...formData,
+        id: itemId,
+        type: 'order',
+        status: formData.status || '진행 중',
+        orderNumber: formData.documentNumber || formData.orderNumber,
+        customerName: formData.companyName,
+        productType: formData.items.length > 0 ? formData.items[0].name : '',
+        quantity: formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0),
+        unitPrice: formData.items.length > 0 ? parseInt(formData.items[0].unitPrice) || 0 : 0,
+        totalPrice: formData.totalAmount,
+        contactInfo: '',
+        selectedOptions: {},
+        deliveryDate: formData.deliveryDate || '',
+        deliveryAddress: formData.deliveryAddress || '',
+        paymentTerms: formData.paymentTerms || '계약금 50%, 잔금 50% (출고 전)',
+        updatedAt: new Date().toISOString()
+      };
 
-    console.log('청구서 export 데이터:', excelData);
-    
-    const fileName = generateFileName('purchase');
-    exportToExcel(excelData, 'purchase')
-      .then(() => {
+      if (!isEditMode) {
+        newPurchaseOrder.createdAt = new Date().toISOString();
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(newPurchaseOrder));
+      alert(isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.');
+    } catch (error) {
+      console.error('저장 중 오류:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  }, [validateDocumentNumber, isEditMode, id, formData]);
+
+  // 엑셀로 저장하기
+  const handleExportToExcel = useCallback(() => {
+    if (!validateDocumentNumber()) {
+      return;
+    }
+
+    try {
+      const excelData = {
+        ...formData,
+        documentNumber: formData.documentNumber || formData.orderNumber
+      };
+
+      console.log('청구서 export 데이터:', excelData);
+      
+      const fileName = generateFileName('purchase');
+      const success = exportToExcel(excelData, 'purchase');
+      
+      if (success) {
         alert('엑셀 파일이 다운로드되었습니다.');
-      })
-      .catch(error => {
-        console.error('Error exporting to Excel:', error);
-        alert('엑셀 파일 다운로드 중 오류가 발생했습니다.');
-      });
-  };
+      } else {
+        alert('엑셀 파일 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('엑셀 내보내기 중 오류:', error);
+      alert('엑셀 파일 생성 중 오류가 발생했습니다.');
+    }
+  }, [validateDocumentNumber, formData]);
 
   // 인쇄하기
-  const handlePrint = () => {
-    if (!formData.orderNumber || String(formData.orderNumber).trim() === '') {
-      if (orderNumberInputRef.current) {
-        orderNumberInputRef.current.classList.add('invalid');
-        orderNumberInputRef.current.focus();
-        orderNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-      alert('거래번호를 입력해주세요.');
+  const handlePrint = useCallback(() => {
+    if (!validateDocumentNumber()) {
       return;
     }
     window.print();
-  };
+  }, [validateDocumentNumber]);
 
   return (
     <div className="purchase-order-form-container">
@@ -241,7 +296,6 @@ const PurchaseOrderForm = () => {
         <h1>청&nbsp;&nbsp;&nbsp;&nbsp;구&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
 
-      {/* 상단 정보 테이블 - 거래일자와 거래번호를 같은 칸에 배치 */}
       <table className="form-table info-table">
         <tbody>
           <tr>
@@ -266,12 +320,7 @@ const PurchaseOrderForm = () => {
                     type="text"
                     value={formData.documentNumber}
                     ref={documentNumberInputRef}
-                    onChange={(e) => {
-                      if (documentNumberInputRef.current) {
-                        documentNumberInputRef.current.classList.remove('invalid');
-                      }
-                      updateFormData('documentNumber', e.target.value);
-                    }}
+                    onChange={handleDocumentNumberChange}
                     placeholder="휴대폰번호 입력"
                     style={{
                       flex: '1',
@@ -343,6 +392,9 @@ const PurchaseOrderForm = () => {
                   verticalAlign: "middle",
                   opacity: 0.85
                 }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
               />
             </td>
           </tr>
@@ -353,15 +405,14 @@ const PurchaseOrderForm = () => {
             <td>http://www.ssmake.com</td>
           </tr>
           <tr>
-            <td class="label">TEL</td>
+            <td className="label">TEL</td>
             <td>010-9548-9578  010-4311-7733</td>
-            <td class="label">FAX</td>
+            <td className="label">FAX</td>
             <td>(02)2611-4595</td>
           </tr>
         </tbody>
       </table>
 
-      {/* 청구 명세 테이블 */}
       <h3 className="section-title">청구 명세</h3>
       <table className="form-table order-table">
         <thead>
@@ -438,14 +489,12 @@ const PurchaseOrderForm = () => {
         </tbody>
       </table>
 
-      {/* 아이템 추가 버튼 */}
       <div className="item-controls no-print">
         <button type="button" onClick={addItem} className="add-item-btn no-print">
           + 청구 품목 추가
         </button>
       </div>
 
-      {/* 원자재 명세서 테이블 */}
       <h3 className="section-title">원자재 명세서</h3>
       <table className="form-table material-table">
         <thead>
@@ -513,14 +562,12 @@ const PurchaseOrderForm = () => {
         </tbody>
       </table>
 
-      {/* 원자재 추가 버튼 */}
       <div className="item-controls no-print">
         <button type="button" onClick={addMaterial} className="add-material-btn no-print">
           + 원자재 추가
         </button>
       </div>
 
-      {/* 합계 테이블 */}
       <table className="form-table total-table">
         <tbody>
           <tr>
@@ -538,7 +585,6 @@ const PurchaseOrderForm = () => {
         </tbody>
       </table>
 
-      {/* 비고 */}
       <div className="notes-section">
         <label>비고:</label>
         <textarea
@@ -549,7 +595,6 @@ const PurchaseOrderForm = () => {
         />
       </div>
 
-      {/* 하단 버튼들 */}
       <div className="form-actions no-print">
         <button type="button" onClick={handleSave} className="save-btn no-print">
           저장하기
@@ -562,7 +607,6 @@ const PurchaseOrderForm = () => {
         </button>
       </div>
 
-      {/* 하단 회사명 */}
       <div className="form-company">(주)삼미앵글랙산업</div>
     </div>
   );
