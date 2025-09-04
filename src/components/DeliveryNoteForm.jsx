@@ -8,7 +8,10 @@ const DeliveryNoteForm = () => {
   const location = useLocation();
   const navigate = useNavigate(); // useNavigate 훅 추가
   const isEditMode = !!id;
+  
+  // ref는 컴포넌트 최상단에 선언
   const documentNumberInputRef = useRef(null);
+  
   const [memo, setMemo] = useState('');
   
   // 장바구니에서 전달받은 데이터
@@ -34,8 +37,13 @@ const DeliveryNoteForm = () => {
       const storageKey = `delivery_note_${id}`;
       const savedData = localStorage.getItem(storageKey);
       if (savedData) {
-        const deliveryNoteData = JSON.parse(savedData);
-        setFormData(deliveryNoteData);
+        try {
+          const deliveryNoteData = JSON.parse(savedData);
+          setFormData(deliveryNoteData);
+        } catch (error) {
+          console.error('데이터 로드 중 오류:', error);
+          alert('데이터를 불러오는 중 오류가 발생했습니다.');
+        }
       }
     }
   }, [id, isEditMode]);
@@ -112,56 +120,8 @@ const DeliveryNoteForm = () => {
     }));
   };
 
-  // 저장 함수 (편집 모드 지원)
-  const handleSave = () => {
-    const itemId = isEditMode ? id : Date.now();
-    const storageKey = `delivery_note_${itemId}`;
-    
-    const newDeliveryNote = {
-      ...formData,
-      id: itemId,
-      type: 'delivery_note',
-      status: formData.status || '진행 중',
-      deliveryNoteNumber: formData.documentNumber,
-      customerName: formData.companyName,
-      // HistoryPage에서 필요한 추가 필드들
-      productType: formData.items.length > 0 ? formData.items[0].name : '',
-      quantity: formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0),
-      unitPrice: formData.items.length > 0 ? parseInt(formData.items[0].unitPrice) || 0 : 0,
-      totalPrice: formData.totalAmount,
-      contactInfo: '', // 필요시 추가 필드
-      selectedOptions: {}, // 필요시 추가 필드
-      updatedAt: new Date().toISOString()
-    };
-
-    // createdAt은 새 문서일 때만 설정
-    if (!isEditMode) {
-      newDeliveryNote.createdAt = new Date().toISOString();
-    }
-
-    localStorage.setItem(storageKey, JSON.stringify(newDeliveryNote));
-    alert(isEditMode ? '거래명세서가 수정되었습니다.' : '거래명세서가 저장되었습니다.');
-  };
-
-  // 엑셀로 저장하기 함수
-  const handleExportToExcel = () => {
-    if (!formData.documentNumber || String(formData.documentNumber).trim() === '') {
-      alert('문서번호(거래번호)를 입력해주세요.');
-      return;
-    }
-
-    const fileName = generateFileName('transaction');
-    const success = exportToExcel(formData, 'transaction');
-
-    console.log('거래명세서 export 데이터:', formData);
-    
-    if (success) {
-      alert('엑셀 파일이 다운로드되었습니다.');
-    }
-  };
-
-  // 인쇄하기
-  const handlePrint = () => {
+  // 문서번호 검증 함수
+  const validateDocumentNumber = () => {
     if (!formData.documentNumber || String(formData.documentNumber).trim() === '') {
       if (documentNumberInputRef.current) {
         documentNumberInputRef.current.classList.add('invalid');
@@ -169,9 +129,88 @@ const DeliveryNoteForm = () => {
         documentNumberInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       alert('문서번호(거래번호)를 입력해주세요.');
+      return false;
+    }
+    return true;
+  };
+
+  // 저장 함수 (편집 모드 지원)
+  const handleSave = () => {
+    if (!validateDocumentNumber()) {
+      return;
+    }
+
+    try {
+      const itemId = isEditMode ? id : Date.now();
+      const storageKey = `delivery_note_${itemId}`;
+      
+      const newDeliveryNote = {
+        ...formData,
+        id: itemId,
+        type: 'delivery_note',
+        status: formData.status || '진행 중',
+        deliveryNoteNumber: formData.documentNumber,
+        customerName: formData.companyName,
+        // HistoryPage에서 필요한 추가 필드들
+        productType: formData.items.length > 0 ? formData.items[0].name : '',
+        quantity: formData.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0),
+        unitPrice: formData.items.length > 0 ? parseInt(formData.items[0].unitPrice) || 0 : 0,
+        totalPrice: formData.totalAmount,
+        contactInfo: '', // 필요시 추가 필드
+        selectedOptions: {}, // 필요시 추가 필드
+        updatedAt: new Date().toISOString()
+      };
+
+      // createdAt은 새 문서일 때만 설정
+      if (!isEditMode) {
+        newDeliveryNote.createdAt = new Date().toISOString();
+      }
+
+      localStorage.setItem(storageKey, JSON.stringify(newDeliveryNote));
+      alert(isEditMode ? '거래명세서가 수정되었습니다.' : '거래명세서가 저장되었습니다.');
+    } catch (error) {
+      console.error('저장 중 오류:', error);
+      alert('저장 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 엑셀로 저장하기 함수
+  const handleExportToExcel = () => {
+    if (!validateDocumentNumber()) {
+      return;
+    }
+
+    try {
+      const fileName = generateFileName('transaction');
+      const success = exportToExcel(formData, 'transaction');
+
+      console.log('거래명세서 export 데이터:', formData);
+      
+      if (success) {
+        alert('엑셀 파일이 다운로드되었습니다.');
+      } else {
+        alert('엑셀 파일 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('엑셀 내보내기 중 오류:', error);
+      alert('엑셀 파일 생성 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 인쇄하기
+  const handlePrint = () => {
+    if (!validateDocumentNumber()) {
       return;
     }
     window.print();
+  };
+
+  // documentNumber 입력 시 invalid 클래스 제거
+  const handleDocumentNumberChange = (e) => {
+    if (documentNumberInputRef.current) {
+      documentNumberInputRef.current.classList.remove('invalid');
+    }
+    updateFormData('documentNumber', e.target.value);
   };
 
   return (
@@ -205,12 +244,7 @@ const DeliveryNoteForm = () => {
                     type="text"
                     value={formData.documentNumber}
                     ref={documentNumberInputRef}
-                    onChange={(e) => {
-                      if (documentNumberInputRef.current) {
-                        documentNumberInputRef.current.classList.remove('invalid');
-                      }
-                      updateFormData('documentNumber', e.target.value);
-                    }}
+                    onChange={handleDocumentNumberChange}
                     placeholder="휴대폰번호 입력"
                     style={{
                       flex: '1',
@@ -293,9 +327,9 @@ const DeliveryNoteForm = () => {
             <td>http://www.ssmake.com</td>
           </tr>
           <tr>
-            <td class="label">TEL</td>
+            <td className="label">TEL</td>
             <td>010-9548-9578  010-4311-7733</td>
-            <td class="label">FAX</td>
+            <td className="label">FAX</td>
             <td>(02)2611-4595</td>
           </tr>
         </tbody>
