@@ -21,6 +21,10 @@ const normalizeName = (n = "") =>
    .replace(/경사브레싱/g, "경사브레싱"); // 최종 통일 형태 하나로
 
 export const materialComparator = (a, b) => {
+  if (a.rackType !== b.rackType) {
+    return String(a.rackType).localeCompare(String(b.rackType), "ko");
+  }
+
   const an = normalizeName(a.name || "");
   const bn = normalizeName(b.name || "");
   const ga = getGroupIndex(an);
