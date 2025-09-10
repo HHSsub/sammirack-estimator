@@ -687,9 +687,9 @@ export const ProductProvider=({children})=>{
     cart.forEach(item=>{
       item.bom?.forEach(c=>{
         if(/베이스볼트/.test(c.name)) return;
-        const key = c.rackType==="하이랙"
+        const key = (c.rackType==="파렛트랙" || c.rackType==="파렛트랙 철판형")
           ? `${c.name}__${c.specification||""}`
-          : c.name;
+          : `${c.rackType}__${c.name}__${c.specification||""}`;
         if(map[key]){
           map[key].quantity+=c.quantity;
           map[key].totalPrice+=c.totalPrice||0;
