@@ -110,9 +110,12 @@ const ensureSpecification=(row,ctx={})=>{
       row.specification=`사이즈 ${size||""}${weightOnly?` ${weightOnly}`:""}`;
     } else if(/받침\(상\)\(/.test(nm)||/받침\(하\)\(/.test(nm)){
       row.specification=row.specification || (d?`D${d}`:"");
-    } else if(/안전핀/.test(nm)&&/파렛트랙/.test(nm)){
-      row.specification="파렛트랙";
-    } else if(/브레싱|브레싱고무|브레싱볼트|앙카볼트/.test(nm)){
+    } else if(/안전핀/.test(nm)&&(/파렛트랙/.test(nm)||/파렛트랙 철판형/.test(nm))){
+      row.specification="";
+    } else if(/브레싱/.test(nm)){
+      const {d}=parseWD(size||"");
+      row.specification=d?`D${d}`:"";
+    } else if(/브레싱고무|브레싱볼트|앙카볼트/.test(nm)){
       row.specification=row.specification||"";
     } else if(!row.specification && size){
       row.specification=`사이즈 ${size}${weightOnly?` ${weightOnly}`:""}`;
