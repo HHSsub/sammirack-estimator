@@ -252,7 +252,7 @@ export const ProductProvider=({children})=>{
           : sizeViewList;
 
         (EXTRA_OPTIONS["하이랙"]?.size||[]).forEach(s=>{
-          if(hide45 && s==="45x150") return;
+            if(hide45 && s==="45x150") return;
           if(!baseSizes.includes(s)) baseSizes.push(s);
         });
         if(isHeaviest && !baseSizes.includes("80x200")) baseSizes.push("80x200");
@@ -513,13 +513,16 @@ export const ProductProvider=({children})=>{
       const size=selectedOptions.size||"";
       const color=selectedOptions.color||"";
       const heightValue=selectedOptions.height||"";
+      const formType=selectedOptions.formType||"독립형";
       const shelfPerLevel=calcHighRackShelfPerLevel(size);
       const sizeMatch=String(size).replace(/\s+/g,"").match(/(\d+)[xX](\d+)/);
       const rodBeamNum = sizeMatch ? sizeMatch[2] : "";
       const shelfNum = sizeMatch ? sizeMatch[1] : "";
       const weightOnly=extractWeightOnly(color);
+      // >>> CHANGED: 하이랙 연결형 기둥 수량 = 2 * level * qty / 독립형 = 4 * qty
+      const pillarQty = formType==="연결형" ? 2*level*qty : 4*qty;
       const list=[
-        { rackType:selectedType, name:`기둥(${heightValue})`, specification:`높이 ${heightValue}${weightOnly?` ${weightOnly}`:""}`, quantity:4*qty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, name:`기둥(${heightValue})`, specification:`높이 ${heightValue}${weightOnly?` ${weightOnly}`:""}`, quantity:pillarQty, unitPrice:0, totalPrice:0 },
         { rackType:selectedType, name:`로드빔(${rodBeamNum})`, specification:`${rodBeamNum}${weightOnly?` ${weightOnly}`:""}`, quantity:2*level*qty, unitPrice:0, totalPrice:0 },
         { rackType:selectedType, name:`선반(${shelfNum})`, specification:`사이즈 ${size}${weightOnly?` ${weightOnly}`:""}`, quantity:shelfPerLevel*level*qty, unitPrice:0, totalPrice:0 },
         ...makeExtraOptionBOM(),
