@@ -56,11 +56,11 @@ export default function OptionSelector() {
           onChange={e => handleOptionChange(name, e.target.value)}
         >
           <option value="">{label} 선택</option>
-            {opts.map(o => (
-              <option key={o} value={o}>
-                {map && map[o] ? map[o] : kgLabelFix(o)}
-              </option>
-            ))}
+          {opts.map(o => (
+            <option key={o} value={o}>
+              {map && map[o] ? map[o] : kgLabelFix(o)}
+            </option>
+          ))}
         </select>
       </div>
     );
@@ -77,34 +77,33 @@ export default function OptionSelector() {
 
   if (loading) return <div>데이터 로드 중...</div>;
 
-  // >>> CHANGED: 필수 선택 검증 로직 (하이랙 포함 formType 강제)
+  // 필수 선택 검증 (하이랙 formType 포함)
   const hasRequiredSelections = (() => {
     if (!selectedType) return false;
     if (formTypeRacks.includes(selectedType)) {
       return !!(selectedOptions.size &&
-                selectedOptions.height &&
-                selectedOptions.level &&
-                selectedOptions.formType &&
-                quantity > 0);
+        selectedOptions.height &&
+        selectedOptions.level &&
+        selectedOptions.formType &&
+        quantity > 0);
     }
     if (selectedType === '하이랙') {
       return !!(selectedOptions.color &&
-                selectedOptions.size &&
-                selectedOptions.height &&
-                selectedOptions.level &&
-                selectedOptions.formType &&
-                quantity > 0);
+        selectedOptions.size &&
+        selectedOptions.height &&
+        selectedOptions.level &&
+        selectedOptions.formType &&
+        quantity > 0);
     }
     if (selectedType === '스텐랙') {
       return !!(selectedOptions.size &&
-                selectedOptions.height &&
-                selectedOptions.level &&
-                quantity > 0);
+        selectedOptions.height &&
+        selectedOptions.level &&
+        quantity > 0);
     }
     return quantity > 0;
   })();
 
-  // >>> CHANGED: formType 미선택 시(필수 누락) 목록 추가 비활성화
   const canAddItem = (customPrice > 0 || currentPrice > 0) && hasRequiredSelections;
 
   // 현재 타입의 extra 옵션 카테고리
@@ -115,17 +114,16 @@ export default function OptionSelector() {
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
-      {/* 세로 배치로 변경 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div>
           <label>제품 유형</label>
-          <select
-            value={selectedType}
-            onChange={e => {
-              setExtraOpen(false); // 타입 바꾸면 패널 닫기
-              handleOptionChange('type', e.target.value);
-            }}
-          >
+            <select
+              value={selectedType}
+              onChange={e => {
+                setExtraOpen(false);
+                handleOptionChange('type', e.target.value);
+              }}
+            >
             <option value="">제품 유형 선택</option>
             {allOptions.types.map(t => (
               <option key={t} value={t}>
@@ -148,8 +146,8 @@ export default function OptionSelector() {
               'formType',
               '형식',
               !!selectedOptions.size &&
-                !!selectedOptions.height &&
-                !!selectedOptions.level
+              !!selectedOptions.height &&
+              !!selectedOptions.level
             )}
           </>
         )}
@@ -167,18 +165,40 @@ export default function OptionSelector() {
               'level',
               '단수',
               !!selectedOptions.color &&
-                !!selectedOptions.size &&
-                !!selectedOptions.height
+              !!selectedOptions.size &&
+              !!selectedOptions.height
             )}
-            {/* >>> CHANGED: 하이랙 형식(독립형/연결형) 필수 선택 */}
-            {renderOptionSelect(
-              'formType',
-              '형식',
-              !!selectedOptions.color &&
+            {/* 하이랙 형식: availableOptions에 없어도 Fallback 렌더 */}
+            {availableOptions.formType?.length
+              ? renderOptionSelect(
+                'formType',
+                '형식',
+                !!selectedOptions.color &&
                 !!selectedOptions.size &&
                 !!selectedOptions.height &&
                 !!selectedOptions.level
-            )}
+              )
+              : (
+                <div>
+                  <label>형식</label>
+                  <select
+                    disabled={
+                      !(
+                        selectedOptions.color &&
+                        selectedOptions.size &&
+                        selectedOptions.height &&
+                        selectedOptions.level
+                      ) || loading
+                    }
+                    value={selectedOptions.formType || ''}
+                    onChange={e => handleOptionChange('formType', e.target.value)}
+                  >
+                    <option value="">형식 선택</option>
+                    <option value="독립형">독립형</option>
+                    <option value="연결형">연결형</option>
+                  </select>
+                </div>
+              )}
           </>
         )}
 
@@ -217,7 +237,6 @@ export default function OptionSelector() {
         </div>
       </div>
 
-      {/* ▸ 기타 추가 옵션 토글 (모든 타입에서 공통) */}
       <button
         onClick={() => setExtraOpen(o => !o)}
         style={{ margin: '10px 0' }}
@@ -226,13 +245,9 @@ export default function OptionSelector() {
         {extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}
       </button>
 
-      {/* ▸ 패널 내용 */}
       {extraOpen && selectedType && (
         <>
           {selectedType === '경량랙' ? (
-            // ─────────────────────────────────────────
-            // 경량랙: 사용자 정의 추가자재(여러 개) 전용 UI
-            // ─────────────────────────────────────────
             <div
               style={{
                 padding: '12px',
@@ -245,7 +260,6 @@ export default function OptionSelector() {
                 사용자 정의 추가자재 (여러개)
               </div>
 
-              {/* 입력 행 */}
               <div
                 style={{
                   display: 'grid',
@@ -279,7 +293,6 @@ export default function OptionSelector() {
                 </button>
               </div>
 
-              {/* 목록 테이블 */}
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#f3f7fd' }}>
@@ -345,9 +358,6 @@ export default function OptionSelector() {
               </table>
             </div>
           ) : (
-            // ─────────────────────────────────────────
-            // 경량랙 외: extra_options.json 기반 체크박스 UI
-            // ─────────────────────────────────────────
             <div
               style={{
                 padding: '12px',
