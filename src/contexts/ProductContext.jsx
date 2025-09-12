@@ -91,7 +91,7 @@ const extractWeightOnly = (color="")=>{
   return m?m[1]:"";
 };
 
-// >>> CHANGED: 명칭 정규화 (브레싱고무 -> 브러싱고무)
+// 명칭 정규화
 const normalizePartName=(name="")=>{
   return name.replace(/브레싱고무/g,"브러싱고무");
 };
@@ -99,17 +99,22 @@ const normalizePartName=(name="")=>{
 // 규격 보정
 const ensureSpecification=(row,ctx={})=>{
   if(!row) return row;
-  const {size,height,w,d,weight}=ctx;
-  row.name = normalizePartName(row.name||""); // >>> CHANGED
+  const {size,height,weight}=ctx;
+  row.name = normalizePartName(row.name||"");
   const weightOnly = weight ? extractWeightOnly(weight) : "";
   if(!row.specification || !row.specification.trim()){
     const nm=row.name||"";
     if(/안전좌|안전핀/.test(nm) && row.rackType && row.rackType!=="하이랙" && !/파렛트랙/.test(nm)){
       row.specification=row.rackType;
     }
-    // >>> CHANGED: 브러싱고무 / 브레싱볼트 / 앙카볼트는 규격 부여 금지 (D값 제거)
+    // 브러싱고무 / 브레싱볼트 / 앙카볼트 규격 제거
     if(/브러싱고무|브레싱고무|브레싱볼트|앙카볼트/.test(nm)){
-      row.specification=""; // 강제 빈값
+      row.specification="";
+    }
+    // 수평 / 경사 브레싱 : 깊이 숫자만 (D prefix 제거)
+    else if(/(수평|경사)브레?싱/.test(nm)){
+      const {d}=parseWD(size||"");
+      row.specification=d?`${d}`:"";
     }
     else if(/기둥\(/.test(nm)&&height) row.specification=`높이 ${height}${weightOnly?` ${weightOnly}`:""}`;
     else if(/로드빔\(/.test(nm)){
@@ -119,16 +124,16 @@ const ensureSpecification=(row,ctx={})=>{
     } else if(/선반\(/.test(nm)){
       row.specification=`사이즈 ${size||""}${weightOnly?` ${weightOnly}`:""}`;
     } else if(/받침\(상\)\(/.test(nm)||/받침\(하\)\(/.test(nm)){
-      row.specification=row.specification || (d?`D${d}`:"");
-    } 
-    // >>> CHANGED: 팔레트랙 안전핀 규격 '안전핀'
+      const {d}=parseWD(size||""); row.specification=row.specification || (d?`D${d}`:"");
+    }
     else if(/안전핀/.test(nm)&&(/파렛트랙/.test(nm)||/파렛트랙 철판형/.test(nm))){
       row.specification="안전핀";
-    } 
-    else if(/브레싱/.test(nm)){ // 수평/경사 브레싱만 여기 도달 (고무/볼트는 위에서 처리)
+    }
+    else if(/브레싱/.test(nm)){ // 기타 브레싱(위 조건 제외) : 깊이 숫자만
       const {d}=parseWD(size||"");
-      row.specification=d?`D${d}`:"";
-    } else if(!row.specification && size){
+      row.specification=d?`${d}`:"";
+    }
+    else if(!row.specification && size){
       row.specification=`사이즈 ${size}${weightOnly?` ${weightOnly}`:""}`;
     }
   } else {
@@ -207,7 +212,7 @@ export const ProductProvider=({children})=>{
       if(selectedOptions.size && selectedOptions.height){
         if(selectedType==="경량랙"&&selectedOptions.height==="H750"){
           const lk=Object.keys(bd[selectedOptions.size]?.["H900"]||{});
-            next.level=lk.length?lk:[];
+          next.level=lk.length?lk:[];
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];
@@ -283,7 +288,7 @@ export const ProductProvider=({children})=>{
           }
         }
       }
-      // >>> CHANGED: 하이랙 formType 항상 제공 (필수 선택)
+      // 하이랙 형식(독립형/연결형) 항상 표시
       opts.formType=["독립형","연결형"];
       setAvailableOptions(opts);
       return;
@@ -323,7 +328,6 @@ export const ProductProvider=({children})=>{
 
   const calculatePrice=useCallback(()=>{
     if(!selectedType||quantity<=0) return 0;
-    // >>> CHANGED: 하이랙 formType 미선택 시 0 반환
     if(selectedType==="하이랙" && !selectedOptions.formType) return 0;
     if(customPrice>0) return Math.round(customPrice*quantity*(applyRate/100));
     let basePrice=0;
@@ -344,7 +348,7 @@ export const ProductProvider=({children})=>{
         const rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
         if(rec){
           const labelled=Number(rec.total_price)||0;
-            basePrice=(labelled>0?labelled:sumComponents(rec.components||[]))*(Number(quantity)||0);
+          basePrice=(labelled>0?labelled:sumComponents(rec.components||[]))*(Number(quantity)||0);
         }
       }
     } else if(selectedType==="스텐랙"){
@@ -388,7 +392,7 @@ export const ProductProvider=({children})=>{
             const unit=Number(opt.price)||0;
             result.push({
               rackType:selectedType,
-              name:normalizePartName(opt.name), // >>> CHANGED
+              name:normalizePartName(opt.name),
               specification:opt.specification||"",
               quantity:qty,
               unitPrice:unit,
@@ -407,7 +411,7 @@ export const ProductProvider=({children})=>{
           name:normalizePartName(m.name),
           specification:"",
           quantity:qty,
-            unitPrice:unit,
+          unitPrice:unit,
           totalPrice:unit*qty,
           note:"추가옵션",
         });
@@ -465,7 +469,7 @@ export const ProductProvider=({children})=>{
       pushIfAbsent("경사브레싱",diagonal);
       pushIfAbsent("앙카볼트",anchor);
       pushIfAbsent("브레싱볼트",braceBolt);
-      pushIfAbsent("브러싱고무",rubber); // >>> CHANGED
+      pushIfAbsent("브러싱고무",rubber);
     }
   };
 
@@ -485,7 +489,6 @@ export const ProductProvider=({children})=>{
         ...(selectedType==="파렛트랙 철판형"?[]:[
           {rackType:selectedType,size:sz,name:`타이빔(${tieSpec})`,specification:tieSpec,quantity:2*lvl*qty,unitPrice:0,totalPrice:0},
         ]),
-        // >>> CHANGED: 안전핀 규격 '안전핀'
         {rackType:selectedType,size:sz,name:"안전핀(파렛트랙)",specification:"안전핀",quantity:2*lvl*2*qty,unitPrice:0,totalPrice:0},
       ];
       if(selectedType==="파렛트랙 철판형"){
@@ -542,7 +545,6 @@ export const ProductProvider=({children})=>{
 
   const calculateCurrentBOM=useCallback(()=> {
     if(!selectedType||quantity<=0) return [];
-    // >>> CHANGED: 하이랙 formType 미선택 시 BOM 생성 안함
     if(selectedType==="하이랙" && !selectedOptions.formType) return [];
     if(selectedType==="파렛트랙"||selectedType==="파렛트랙 철판형"){
       const rec=bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
@@ -552,7 +554,8 @@ export const ProductProvider=({children})=>{
         const ht=selectedOptions.height||"";
         const lvl=parseLevel(selectedOptions.level,selectedType);
         const {w,d}=parseWD(sz);
-        const hardwareNames=new Set(["수평브레싱","경사브레싱","앙카볼트","브레싱볼트","브러싱고무","안전핀","베이스(안전좌)"]); // >>> CHANGED 고무명
+        // 하드웨어 이름(양쪽 표기 변형 포함)
+        const hardwareNames=new Set(["수평브레싱","수평브래싱","경사브레싱","경사브래싱","앙카볼트","브레싱볼트","브러싱고무","브레싱고무","안전핀","베이스(안전좌)"]);
         const base=rec.components
           .filter(c=>!hardwareNames.has(normalizePartName(c.name)))
           .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("철판")))
@@ -565,7 +568,7 @@ export const ProductProvider=({children})=>{
             else if(nm.includes("타이빔")){ nm=`타이빔(${d})`; spec=String(d); }
             else if(nm.includes("선반")){ nm=`선반(${w})`; spec=`사이즈 W${w}xD${d}`; }
             else if(nm.includes("안전좌")) return null;
-            else if(nm.includes("안전핀")){ nm="안전핀(파렛트랙)"; spec="안전핀"; } // >>> CHANGED
+            else if(nm.includes("안전핀")){ nm="안전핀(파렛트랙)"; spec="안전핀"; }
             else if(nm.includes("받침")){
               nm=nm.includes("상")?`받침(상)(${d})`:`받침(하)(${d})`; spec=`D${d}`;
             } else spec=c.specification??"";
@@ -590,7 +593,7 @@ export const ProductProvider=({children})=>{
         }
         if(!base.some(b=>b.name.startsWith("안전핀"))){
           base.push({
-            rackType:selectedType,size:sz,name:"안전핀(파렛트랙)",specification:"안전핀", // >>> CHANGED
+            rackType:selectedType,size:sz,name:"안전핀(파렛트랙)",specification:"안전핀",
             note:"",quantity:2*lvl*2*q,unitPrice:0,totalPrice:0
           });
         }
@@ -660,7 +663,6 @@ export const ProductProvider=({children})=>{
 
   const addToCart=()=>{
     if(!selectedType||quantity<=0) return;
-    // >>> CHANGED: 하이랙 formType 필수
     if(selectedType==="하이랙" && !selectedOptions.formType) return;
     setCart(prev=>[...prev,{
       id:`${Date.now()}`,
