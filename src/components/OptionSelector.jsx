@@ -56,11 +56,11 @@ export default function OptionSelector() {
           onChange={e => handleOptionChange(name, e.target.value)}
         >
           <option value="">{label} 선택</option>
-          {opts.map(o => (
-            <option key={o} value={o}>
-              {map && map[o] ? map[o] : kgLabelFix(o)}
-            </option>
-          ))}
+            {opts.map(o => (
+              <option key={o} value={o}>
+                {map && map[o] ? map[o] : kgLabelFix(o)}
+              </option>
+            ))}
         </select>
       </div>
     );
@@ -76,7 +76,36 @@ export default function OptionSelector() {
   };
 
   if (loading) return <div>데이터 로드 중...</div>;
-  const canAddItem = customPrice > 0 || currentPrice > 0;
+
+  // >>> CHANGED: 필수 선택 검증 로직 (하이랙 포함 formType 강제)
+  const hasRequiredSelections = (() => {
+    if (!selectedType) return false;
+    if (formTypeRacks.includes(selectedType)) {
+      return !!(selectedOptions.size &&
+                selectedOptions.height &&
+                selectedOptions.level &&
+                selectedOptions.formType &&
+                quantity > 0);
+    }
+    if (selectedType === '하이랙') {
+      return !!(selectedOptions.color &&
+                selectedOptions.size &&
+                selectedOptions.height &&
+                selectedOptions.level &&
+                selectedOptions.formType &&
+                quantity > 0);
+    }
+    if (selectedType === '스텐랙') {
+      return !!(selectedOptions.size &&
+                selectedOptions.height &&
+                selectedOptions.level &&
+                quantity > 0);
+    }
+    return quantity > 0;
+  })();
+
+  // >>> CHANGED: formType 미선택 시(필수 누락) 목록 추가 비활성화
+  const canAddItem = (customPrice > 0 || currentPrice > 0) && hasRequiredSelections;
 
   // 현재 타입의 extra 옵션 카테고리
   const extraCatList =
@@ -140,6 +169,15 @@ export default function OptionSelector() {
               !!selectedOptions.color &&
                 !!selectedOptions.size &&
                 !!selectedOptions.height
+            )}
+            {/* >>> CHANGED: 하이랙 형식(독립형/연결형) 필수 선택 */}
+            {renderOptionSelect(
+              'formType',
+              '형식',
+              !!selectedOptions.color &&
+                !!selectedOptions.size &&
+                !!selectedOptions.height &&
+                !!selectedOptions.level
             )}
           </>
         )}
