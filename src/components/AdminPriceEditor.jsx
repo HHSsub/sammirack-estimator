@@ -35,14 +35,17 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
     }
   };
 
-  // 가격 변경 히스토리 저장
-  const savePriceHistory = (oldPrice, newPrice) => {
+  /**
+   * 가격 변경 히스토리 저장 (로컬 구조 유지)
+   * 시그니처를 util 형태(partId, oldPrice, newPrice, rackOption)로 맞춰 호출부 혼동 최소화
+   */
+  const savePriceHistory = (partIdArg, oldPrice, newPrice, rackOption) => {
     try {
       const stored = localStorage.getItem('admin_price_history') || '{}';
       const historyData = JSON.parse(stored);
       
-      if (!historyData[partId]) {
-        historyData[partId] = [];
+      if (!historyData[partIdArg]) {
+        historyData[partIdArg] = [];
       }
 
       const newEntry = {
@@ -51,18 +54,18 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
         account: 'admin', // 현재는 admin만 접근 가능
         oldPrice: Number(oldPrice),
         newPrice: Number(newPrice),
-        rackOption: item.displayName || `${item.rackType} ${item.specification || ''}`.trim()
+        rackOption: rackOption || item.displayName || `${item.rackType} ${item.specification || ''}`.trim()
       };
 
-      historyData[partId].unshift(newEntry); // 최신 순으로 정렬
-      
-      // 히스토리 최대 50개로 제한
-      if (historyData[partId].length > 50) {
-        historyData[partId] = historyData[partId].slice(0, 50);
+      historyData[partIdArg].unshift(newEntry); // 최신 순
+
+      // 히스토리 최대 50개 제한
+      if (historyData[partIdArg].length > 50) {
+        historyData[partIdArg] = historyData[partIdArg].slice(0, 50);
       }
 
       localStorage.setItem('admin_price_history', JSON.stringify(historyData));
-      setHistory(historyData[partId]);
+      setHistory(historyData[partIdArg]);
     } catch (error) {
       console.error('히스토리 저장 실패:', error);
     }
@@ -89,13 +92,13 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
       if (newPrice && newPrice > 0) {
         priceData[partId] = {
           price: Number(newPrice),
-          timestamp: new Date().toISOString(),
-          account: 'admin',
-          partInfo: {
-            rackType: item.rackType,
-            name: item.name,
-            specification: item.specification || ''
-          }
+            timestamp: new Date().toISOString(),
+            account: 'admin',
+            partInfo: {
+              rackType: item.rackType,
+              name: item.name,
+              specification: item.specification || ''
+            }
         };
       } else {
         // 가격이 0이거나 null이면 삭제 (기본값 사용)
@@ -121,8 +124,13 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
     setLoading(true);
 
     try {
-      // 1. 히스토리 저장
-      savePriceHistory(oldPrice, newPrice);
+      // 1. 히스토리 저장 (시그니처 수정)
+      savePriceHistory(
+        partId,
+        oldPrice,
+        newPrice,
+        item.displayName || `${item.rackType} ${item.specification || ''}`.trim()
+      );
       
       // 2. 관리자 수정 단가 저장
       saveAdminEditPrice(newPrice);
