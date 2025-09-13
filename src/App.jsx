@@ -60,7 +60,7 @@ function App() {
       </nav>
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage currentUser={currentUser} />} />
           <Route path="/estimate/new" element={<EstimateForm />} />
           <Route path="/purchase-order/new" element={<PurchaseOrderForm />} />
           <Route path="/delivery-note/new" element={<DeliveryNoteForm />} />
@@ -84,8 +84,8 @@ function App() {
 }
 
 // ---------- HomePage ----------
-const HomePage = () => {
-  const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView } = useProducts();
+const HomePage = ({ currentUser }) => {
+  const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, selectedType, selectedOptions } = useProducts();
   // 🔹 기본값 true → 항상 보이는 상태
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
@@ -94,6 +94,19 @@ const HomePage = () => {
   const canProceed = cart.length > 0;
 
   const totalBomForDisplay = cartBOMView || [];
+
+  // 현재 선택된 랙옵션 이름 생성
+  const getCurrentRackOptionName = () => {
+    if (!selectedType) return '';
+    return [
+      selectedType,
+      selectedOptions.formType,
+      selectedOptions.size,
+      selectedOptions.height,
+      selectedOptions.level,
+      selectedOptions.color || ""
+    ].filter(Boolean).join(" ");
+  };
 
   return (
     <div className="app-container">
@@ -147,7 +160,14 @@ const HomePage = () => {
       )}
 
       {/* 🔹 항상 표시 + 숨기기 가능 */}
-      {showTotalBOM && <BOMDisplay bom={totalBomForDisplay} title="전체 부품 목록 (BOM)" />}
+      {showTotalBOM && (
+        <BOMDisplay 
+          bom={totalBomForDisplay} 
+          title="전체 부품 목록 (BOM)" 
+          currentUser={currentUser}
+          selectedRackOption={getCurrentRackOptionName()}
+        />
+      )}
     </div>
   );
 };
