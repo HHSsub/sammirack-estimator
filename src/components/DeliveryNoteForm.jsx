@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel } from '../utils/excelExport';
+import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHelper';
 import '../styles/PurchaseOrderForm.css';
 
 const PROVIDER = {
@@ -23,6 +24,8 @@ const DeliveryNoteForm = () => {
   const cartData = location.state || {};
   const { cart = [], totalBom = [] } = cartData;
 
+  const adminPricesRef = useRef({});
+
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     documentNumber: '',
@@ -40,6 +43,11 @@ const DeliveryNoteForm = () => {
     topMemo: ''
   });
 
+  // 관리자 단가 로드
+  useEffect(() => {
+    adminPricesRef.current = loadAdminPricesDirect();
+  }, []);
+
   // 기존 저장 데이터 로드
   useEffect(() => {
     if (isEditMode && id) {
@@ -54,22 +62,35 @@ const DeliveryNoteForm = () => {
   // 초기 cart / BOM 반영
   useEffect(() => {
     if (!isEditMode && cart.length) {
-      const cartItems = cart.map(item => ({
-        name: item.displayName || item.name || '',
-        unit: '개',
-        quantity: item.quantity || 1,
-        unitPrice: Math.round((item.price || 0)/(item.quantity || 1)),
-        totalPrice: item.price || 0,
-        note: ''
-      }));
-      const bomMaterials = (totalBom || []).map(m => ({
-        name: m.name,
-        specification: m.specification || '',
-        quantity: m.quantity || 0,
-        unitPrice: m.unitPrice || 0,
-        totalPrice: (m.unitPrice || 0) * (m.quantity || 0),
-        note: m.note || ''
-      }));
+      adminPricesRef.current = loadAdminPricesDirect();
+      const cartItems = cart.map(item => {
+        const qty = item.quantity || 1;
+        const unitPrice = Math.round((item.price || 0)/(qty || 1));
+        return {
+          name: item.displayName || item.name || '',
+          unit: '개',
+          quantity: qty,
+          unitPrice,
+          totalPrice: unitPrice * qty,
+          note: ''
+        };
+      });
+      const bomMaterials = (totalBom || []).map(m => {
+        const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
+        const appliedUnitPrice = adminPrice && adminPrice > 0
+          ? adminPrice
+          : (Number(m.unitPrice) || 0);
+        const quantity = Number(m.quantity) || 0;
+        return {
+          name: m.name,
+          rackType: m.rackType,
+          specification: m.specification || '',
+          quantity,
+          unitPrice: appliedUnitPrice,
+          totalPrice: appliedUnitPrice * quantity,
+          note: m.note || ''
+        };
+      });
       setFormData(prev => ({
         ...prev,
         items: cartItems.length ? cartItems : prev.items,
@@ -78,16 +99,28 @@ const DeliveryNoteForm = () => {
     }
   }, [cart, totalBom, isEditMode]);
 
-  // 합계 계산 (BOM 우선, BOM 합계가 0이면 품목 합계로 대체)
+  // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
+    const materialsRecalc = formData.materials.map(mat => {
+      const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
+      const quantity = Number(mat.quantity) || 0;
+      const unitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(mat.unitPrice) || 0);
+      return {
+        ...mat,
+        unitPrice,
+        totalPrice: unitPrice * quantity
+      };
+    });
     const itemSum = formData.items.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
-    const matSum = formData.materials.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
-    const subtotal = (formData.materials.length > 0 && matSum > 0)
-      ? matSum
-      : itemSum;
+    const matSum = materialsRecalc.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
+    const subtotal = (materialsRecalc.length > 0 && matSum > 0) ? matSum : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-    setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
+    if (JSON.stringify(materialsRecalc) !== JSON.stringify(formData.materials)) {
+      setFormData(prev => ({ ...prev, materials: materialsRecalc, subtotal, tax, totalAmount }));
+    } else {
+      setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
+    }
   }, [formData.items, formData.materials]);
 
   const updateFormData = (f,v) => setFormData(prev => ({ ...prev, [f]: v }));
