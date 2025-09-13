@@ -80,7 +80,8 @@ const PurchaseOrderForm = () => {
   useEffect(() => {
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const matSum = formData.materials.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    const subtotal = itemSum + matSum;
+    // 정책 B: BOM(원자재) 합계만 사용, BOM 없으면 품목(Item) 합계 fallback
+    const subtotal = formData.materials.length > 0 ? matSum : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
@@ -290,7 +291,7 @@ const PurchaseOrderForm = () => {
         </table>
       </div>
 
-      {/* 품목 목록 이하 기존 내용 그대로 (요청사항 외 변경 없음) */}
+      {/* 품목 목록 */}
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>품목 목록</h3>
       <table className="form-table order-table">
         <thead>
@@ -372,7 +373,7 @@ const PurchaseOrderForm = () => {
       <table className="form-table total-table">
         <tbody>
           <tr><td className="label">소계</td><td className="right">{formData.subtotal.toLocaleString()}</td></tr>
-            <tr><td className="label">부가세</td><td className="right">{formData.tax.toLocaleString()}</td></tr>
+          <tr><td className="label">부가세</td><td className="right">{formData.tax.toLocaleString()}</td></tr>
           <tr><td className="label"><strong>합계</strong></td><td className="right"><strong>{formData.totalAmount.toLocaleString()}</strong></td></tr>
         </tbody>
       </table>
