@@ -1,3 +1,4 @@
+// 견적서는 현재 BOM 테이블이 없지만 구조 통일을 위해 관리자 단가 헬퍼 import (미사용 상태)
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
@@ -50,20 +51,23 @@ const EstimateForm = () => {
 
   useEffect(() => {
     if (!isEditMode && cart.length > 0) {
-      const cartItems = cart.map(item => ({
-        name: item.displayName || item.name || '',
-        unit: '개',
-        quantity: item.quantity || 1,
-        unitPrice: Math.round((item.price || 0) / (item.quantity || 1)),
-        totalPrice: item.price || 0,
-        note: ''
-      }));
+      const cartItems = cart.map(item => {
+        const qty = item.quantity || 1;
+        const unitPrice = Math.round((item.price || 0) / (qty || 1));
+        return {
+          name: item.displayName || item.name || '',
+          unit: '개',
+          quantity: qty,
+          unitPrice,
+          totalPrice: unitPrice * qty,
+          note: ''
+        };
+      });
       setFormData(prev => ({ ...prev, items: cartItems.length ? cartItems : prev.items }));
     }
   }, [cart, isEditMode]);
 
   useEffect(() => {
-    // 정책 B: 원칙적으로 BOM 합계를 사용, 견적서는 현재 BOM 목록 미포함 → 품목 합계 fallback
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
@@ -160,7 +164,6 @@ const EstimateForm = () => {
               <td className="label" style={{width:110}}>거래일자</td>
               <td>
                 <div style={{display:'flex', gap:'8px', alignItems:'center', width:'100%'}}>
-                  {/* MOD: 날짜 / 거래번호 비율 60:40 */}
                   <div style={{flex:'0 0 60%'}}>
                     <input
                       type="date"
@@ -300,14 +303,14 @@ const EstimateForm = () => {
             <td className="label">소계</td>
             <td className="right">{formData.subtotal.toLocaleString()}</td>
           </tr>
-          <tr>
-            <td className="label">부가세</td>
-            <td className="right">{formData.tax.toLocaleString()}</td>
-          </tr>
-          <tr>
-            <td className="label"><strong>합계</strong></td>
-            <td className="right"><strong>{formData.totalAmount.toLocaleString()}</strong></td>
-          </tr>
+            <tr>
+              <td className="label">부가세</td>
+              <td className="right">{formData.tax.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td className="label"><strong>합계</strong></td>
+              <td className="right"><strong>{formData.totalAmount.toLocaleString()}</strong></td>
+            </tr>
         </tbody>
       </table>
 
