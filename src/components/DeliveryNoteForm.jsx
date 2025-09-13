@@ -78,11 +78,13 @@ const DeliveryNoteForm = () => {
     }
   }, [cart, totalBom, isEditMode]);
 
-  // 합계 계산 (BOM 우선, BOM 없으면 품목 합계)
+  // 합계 계산 (BOM 우선, BOM 합계가 0이면 품목 합계로 대체)
   useEffect(() => {
     const itemSum = formData.items.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
     const matSum = formData.materials.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
-    const subtotal = formData.materials.length > 0 ? matSum : itemSum;
+    const subtotal = (formData.materials.length > 0 && matSum > 0)
+      ? matSum
+      : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
@@ -176,7 +178,6 @@ const DeliveryNoteForm = () => {
             <tr>
               <td className="label" style={{width:110}}>거래일자</td>
               <td>
-                {/* MOD: 날짜 / 거래번호 비율 60:40 */}
                 <div style={{display:'flex',gap:'8px',alignItems:'center',width:'100%'}}>
                   <div style={{flex:'0 0 60%'}}>
                     <input
@@ -229,7 +230,6 @@ const DeliveryNoteForm = () => {
               </td>
               <td className="label">대표자</td>
               <td className="rep-cell" style={{whiteSpace:'nowrap'}}>
-                {/* MOD: 도장 구조 ceo-inline */}
                 <span className="ceo-inline">
                   <span className="ceo-name">{PROVIDER.ceo}</span>
                   {PROVIDER.stampImage && (
@@ -245,7 +245,6 @@ const DeliveryNoteForm = () => {
             <tr>
               <td className="label" rowSpan={4}>메모</td>
               <td rowSpan={4}>
-                {/* MOD: 메모 높이 CSS */}
                 <textarea
                   className="estimate-memo memo-narrow"
                   value={formData.topMemo}
