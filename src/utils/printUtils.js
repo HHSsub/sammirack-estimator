@@ -42,7 +42,7 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
     };
   });
 
-  // 정책: 견적서는 현재 materials 구조가 없으므로 Item 합계 사용 (BOM 존재 시 별도 매개 추가 가능)
+  // 견적서는 현재 별도의 BOM(materials) 구조를 받지 않으므로 itemSum만.
   const itemSum = items.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0);
   let subtotal = extractSubtotal({
     itemSum,
@@ -50,10 +50,8 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
     materialCount: 0,
     policy: 'BOM_ONLY_WITH_ITEM_FALLBACK'
   });
-  // cartTotal 이 따로 전달되고 subtotal이 0인 경우(안전 fallback)
-  if (subtotal === 0 && cartTotal) {
-    subtotal = Number(cartTotal) || 0;
-  }
+  // cartTotal fallback (혹시 외부 전달값이 더 신뢰도 있을 경우)
+  if (!subtotal && cartTotal) subtotal = Number(cartTotal) || 0;
 
   const tax = Math.floor(subtotal * 0.1);
   const totalAmount = subtotal + tax;
@@ -73,7 +71,7 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   };
 };
 
-// 청구서 데이터 포맷팅
+// 청구서(발주/주문) 데이터 포맷팅
 export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const last4 = extractLast4Digits(formData?.contactInfo);
