@@ -96,6 +96,38 @@ const normalizePartName=(name="")=>{
   return name.replace(/브레싱고무/g,"브러싱고무");
 };
 
+// 부품 고유 ID 생성 (관리자 단가와 매칭용)
+const generatePartId = (item) => {
+  const { rackType, name, specification } = item;
+  const cleanName = name.replace(/[^\w가-힣]/g, '');
+  const cleanSpec = (specification || '').replace(/[^\w가-힣]/g, '');
+  return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
+};
+
+// 관리자 수정 단가 적용
+const applyAdminEditPrice = (item) => {
+  try {
+    const stored = localStorage.getItem('admin_edit_prices') || '{}';
+    const priceData = JSON.parse(stored);
+    const partId = generatePartId(item);
+    const adminPrice = priceData[partId];
+    
+    if (adminPrice && adminPrice.price > 0) {
+      return {
+        ...item,
+        unitPrice: adminPrice.price,
+        totalPrice: adminPrice.price * (Number(item.quantity) || 0),
+        hasAdminPrice: true,
+        originalUnitPrice: item.unitPrice
+      };
+    }
+  } catch (error) {
+    console.error('관리자 단가 적용 실패:', error);
+  }
+  
+  return item;
+};
+
 // 규격 보정
 const ensureSpecification=(row,ctx={})=>{
   if(!row) return row;
@@ -347,8 +379,13 @@ export const ProductProvider=({children})=>{
       else {
         const rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
         if(rec){
+          // >>> 관리자 단가 적용하여 계산
+          const componentsWithAdminPrice = (rec.components || []).map(applyAdminEditPrice);
           const labelled=Number(rec.total_price)||0;
-          basePrice=(labelled>0?labelled:sumComponents(rec.components||[]))*(Number(quantity)||0);
+          const calculatedFromComponents = sumComponents(componentsWithAdminPrice);
+          basePrice=(labelled>0&&!componentsWithAdminPrice.some(c=>c.hasAdminPrice)
+            ? labelled 
+            : calculatedFromComponents)*(Number(quantity)||0);
         }
       }
     } else if(selectedType==="스텐랙"){
@@ -445,7 +482,9 @@ export const ProductProvider=({children})=>{
       {rackType:selectedType,size:sizeStr,name:`안전핀(${selectedType})`,specification:selectedType,quantity:pinQty,unitPrice:0,totalPrice:0},
       ...makeExtraOptionBOM(),
     ].map(r=>ensureSpecification(r,{size:selectedOptions.size}));
-    return sortBOMByMaterialRule(list.filter(r=>!/베이스볼트/.test(r.name)));
+    // >>> 관리자 단가 적용
+    const listWithAdminPrices = list.map(applyAdminEditPrice);
+    return sortBOMByMaterialRule(listWithAdminPrices.filter(r=>!/베이스볼트/.test(r.name)));
   };
 
   const appendCommonHardwareIfMissing=(list,qty)=>{
@@ -505,7 +544,9 @@ export const ProductProvider=({children})=>{
       const filtered=[...filteredBase,...makeExtraOptionBOM()]
         .filter(r=>!/베이스볼트/.test(r.name))
         .map(r=>ensureSpecification(r,{size:sz,height:ht,...parseWD(sz)}));
-      return sortBOMByMaterialRule(filtered);
+      // >>> 관리자 단가 적용
+      const filteredWithAdminPrices = filtered.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(filteredWithAdminPrices);
     }
     if(selectedType==="하이랙"){
       const qty=Number(quantity)||1;
@@ -527,7 +568,9 @@ export const ProductProvider=({children})=>{
         { rackType:selectedType, name:`선반(${shelfNum})`, specification:`사이즈 ${size}${weightOnly?` ${weightOnly}`:""}`, quantity:shelfPerLevel*level*qty, unitPrice:0, totalPrice:0 },
         ...makeExtraOptionBOM(),
       ].map(r=>ensureSpecification(r,{size,height:heightValue,...parseWD(size),weight:weightOnly}));
-      return sortBOMByMaterialRule(list.filter(r=>!/베이스볼트/.test(r.name)));
+      // >>> 관리자 단가 적용
+      const listWithAdminPrices = list.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(listWithAdminPrices.filter(r=>!/베이스볼트/.test(r.name)));
     }
     if(selectedType==="스텐랙"){
       const heightValue=selectedOptions.height||"";
@@ -539,11 +582,15 @@ export const ProductProvider=({children})=>{
         {rackType:selectedType,name:`선반(${sizeFront})`,specification:`사이즈 ${sz}`,quantity:(parseInt((selectedOptions.level||"").replace(/[^\d]/g,""))||0)*q,unitPrice:0,totalPrice:0},
         ...makeExtraOptionBOM(),
       ].map(r=>ensureSpecification(r,{size:sz,height:heightValue,...parseWD(sz)}));
-      return sortBOMByMaterialRule(list.filter(r=>!/베이스볼트/.test(r.name)));
+      // >>> 관리자 단가 적용
+      const listWithAdminPrices = list.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(listWithAdminPrices.filter(r=>!/베이스볼트/.test(r.name)));
     }
-    return makeExtraOptionBOM()
+    const extraBOM = makeExtraOptionBOM()
       .filter(r=>!/베이스볼트/.test(r.name))
       .map(r=>ensureSpecification(r,{size:r.size}));
+    // >>> 관리자 단가 적용
+    return extraBOM.map(applyAdminEditPrice);
   };
 
   const calculateCurrentBOM=useCallback(()=> {
@@ -604,7 +651,9 @@ export const ProductProvider=({children})=>{
         const finalized=[...base,...makeExtraOptionBOM()]
           .filter(r=>!/베이스볼트/.test(r.name))
           .map(r=>ensureSpecification(r,{size:sz,height:ht,...parseWD(sz)}));
-        return sortBOMByMaterialRule(finalized);
+        // >>> 관리자 단가 적용
+        const finalizedWithAdminPrices = finalized.map(applyAdminEditPrice);
+        return sortBOMByMaterialRule(finalizedWithAdminPrices);
       }
       return getFallbackBOM();
     }
@@ -638,13 +687,17 @@ export const ProductProvider=({children})=>{
         };
         return ensureSpecification(row,{size:sz,height:ht,...parseWD(sz)});
       });
+      // >>> 관리자 단가 적용
+      const baseWithAdminPrices = base.map(applyAdminEditPrice);
       return sortBOMByMaterialRule(
-        [...base,...makeExtraOptionBOM()].filter(r=>!/베이스볼트/.test(r.name))
+        [...baseWithAdminPrices,...makeExtraOptionBOM()].filter(r=>!/베이스볼트/.test(r.name))
       );
     }
-    return makeExtraOptionBOM()
+    const extraBOM = makeExtraOptionBOM()
       .filter(r=>!/베이스볼트/.test(r.name))
       .map(r=>ensureSpecification(r,{size:r.size}));
+    // >>> 관리자 단가 적용
+    return extraBOM.map(applyAdminEditPrice);
   },[selectedType,selectedOptions,quantity,customPrice,bomData,extraOptionsSel,extraProducts,customMaterials]);
 
   const handleOptionChange=(k,v)=>{
@@ -708,6 +761,37 @@ export const ProductProvider=({children})=>{
     }));
   };
 
+  // >>> 전체 BOM 수량 변경 함수 추가 (관리자 단가 고려)
+  const setTotalBomQuantity = (key, newQuantity) => {
+    const qty = Math.max(0, Number(newQuantity) || 0);
+    
+    setCart(prevCart => prevCart.map(item => {
+      const updatedBOM = (item.bom || []).map(bomItem => {
+        const bomKey = `${bomItem.rackType} ${bomItem.size || ''} ${bomItem.name}`;
+        if (bomKey === key) {
+          const effectiveUnitPrice = bomItem.hasAdminPrice ? bomItem.unitPrice : (Number(bomItem.unitPrice) || 0);
+          return {
+            ...bomItem,
+            quantity: qty,
+            totalPrice: effectiveUnitPrice * qty
+          };
+        }
+        return bomItem;
+      });
+      
+      // 아이템 총가격 재계산 (BOM 기반)
+      const newItemTotal = updatedBOM.reduce((sum, bomItem) => {
+        return sum + (Number(bomItem.totalPrice) || 0);
+      }, 0);
+      
+      return {
+        ...item,
+        bom: updatedBOM,
+        price: newItemTotal
+      };
+    }));
+  };
+
   useEffect(()=>{
     const map={};
     cart.forEach(item=>{
@@ -752,6 +836,7 @@ export const ProductProvider=({children})=>{
       currentPrice,currentBOM,cart,cartTotal,cartBOM,cartBOMView,loading,
       extraProducts,extraOptionsSel,handleExtraOptionChange,
       customMaterials,addCustomMaterial,removeCustomMaterial,clearCustomMaterials,
+      setTotalBomQuantity, // >>> BOM 수량 변경 함수 추가
     }}>
       {children}
     </ProductContext.Provider>
