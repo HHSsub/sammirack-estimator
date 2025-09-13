@@ -244,7 +244,7 @@ export const ProductProvider=({children})=>{
       if(selectedOptions.size && selectedOptions.height){
         if(selectedType==="경량랙"&&selectedOptions.height==="H750"){
           const lk=Object.keys(bd[selectedOptions.size]?.["H900"]||{});
-          next.level=lk.length?lk:[];
+            next.level=lk.length?lk:[];
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];
@@ -383,7 +383,7 @@ export const ProductProvider=({children})=>{
           const componentsWithAdminPrice = (rec.components || []).map(applyAdminEditPrice);
           const labelled=Number(rec.total_price)||0;
           const calculatedFromComponents = sumComponents(componentsWithAdminPrice);
-          basePrice=(labelled>0&&!componentsWithAdminPrice.some(c=>c.hasAdminPrice)
+            basePrice=(labelled>0&&!componentsWithAdminPrice.some(c=>c.hasAdminPrice)
             ? labelled 
             : calculatedFromComponents)*(Number(quantity)||0);
         }
@@ -465,7 +465,8 @@ export const ProductProvider=({children})=>{
     const connectBarQty=4*qty;
     const shelfQty=lvl*qty;
     const padTopQty=2*qty;
-    const padBottomQty=(isConn?8:10)*qty;
+    // FIX: 받침(하) 수량 기존 (isConn?8:10)*qty -> 요구사항에 따라 상/하 동일 2개로 통일
+    const padBottomQty=2*qty;
     const seatQty=(isConn?2:4)*qty;
     const pinQty=8*qty;
     const sizeStr=selectedOptions.size||"";
@@ -616,7 +617,7 @@ export const ProductProvider=({children})=>{
             if(nm.includes("기둥")){ nm=`기둥(${ht})`; spec=`높이 ${ht}`; }
             else if(nm.includes("로드빔")){ nm=`로드빔(${w})`; spec=String(w); }
             else if(nm.includes("타이빔")){ nm=`타이빔(${d})`; spec=String(d); }
-            else if(nm.includes("선반")){ nm=`선반(${w})`; spec=`사이즈 W${w}xD${d}`; }
+            else if(nm.includes("선반")){ nm=`선판(${w})`; spec=`사이즈 W${w}xD${d}`; }
             else if(nm.includes("안전좌")) return null;
             else if(nm.includes("안전핀")){ nm="안전핀(파렛트랙)"; spec="안전핀"; }
             else if(nm.includes("받침")){
