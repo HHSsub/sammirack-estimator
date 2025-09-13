@@ -63,6 +63,7 @@ const EstimateForm = () => {
   }, [cart, isEditMode]);
 
   useEffect(() => {
+    // 정책 B: 원칙적으로 BOM 합계를 사용, 견적서는 현재 BOM 목록 미포함 → 품목 합계 fallback
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
