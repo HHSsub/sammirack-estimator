@@ -80,8 +80,10 @@ const PurchaseOrderForm = () => {
   useEffect(() => {
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const matSum = formData.materials.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    // 정책 B: BOM(원자재) 합계만 사용, BOM 없으면 품목(Item) 합계 fallback
-    const subtotal = formData.materials.length > 0 ? matSum : itemSum;
+    // BOM 항목이 있고(matCount>0) matSum>0 이면 BOM 사용, 그렇지 않으면(0원 BOM) itemSum fallback
+    const subtotal = (formData.materials.length > 0 && matSum > 0)
+      ? matSum
+      : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
@@ -196,7 +198,6 @@ const PurchaseOrderForm = () => {
               <td className="label" style={{width:110}}>거래일자</td>
               <td>
                 <div style={{display:'flex', gap:'8px', alignItems:'center', width:'100%'}}>
-                  {/* MOD: 날짜 / 거래번호 비율 60:40 */}
                   <div style={{flex:'0 0 60%'}}>
                     <input
                       type="date"
@@ -291,7 +292,6 @@ const PurchaseOrderForm = () => {
         </table>
       </div>
 
-      {/* 품목 목록 */}
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>품목 목록</h3>
       <table className="form-table order-table">
         <thead>
