@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
+import { loadAdminPricesDirect, resolveAdminPrice, generatePartId } from '../utils/adminPriceHelper';
 import '../styles/PurchaseOrderForm.css';
 
 const PROVIDER = {
@@ -20,6 +21,7 @@ const PurchaseOrderForm = () => {
   const isEditMode = !!id;
 
   const documentNumberInputRef = useRef(null);
+  const adminPricesRef = useRef({}); // 최신 관리자 단가 캐시
 
   const cartData = location.state || {};
   const { cart = [], totalBom = [] } = cartData;
@@ -41,6 +43,12 @@ const PurchaseOrderForm = () => {
     topMemo: ''
   });
 
+  // 관리자 단가 로드
+  useEffect(() => {
+    adminPricesRef.current = loadAdminPricesDirect();
+  }, []);
+
+  // 기존 저장 문서 로드
   useEffect(() => {
     if (isEditMode && id) {
       const storageKey = `order_${id}`;
@@ -51,24 +59,40 @@ const PurchaseOrderForm = () => {
     }
   }, [id, isEditMode]);
 
+  // 초기 cart / BOM 반영 (관리자 단가 재적용)
   useEffect(() => {
     if (!isEditMode && cart.length > 0) {
-      const cartItems = cart.map(item => ({
-        name: item.displayName || item.name || '',
-        unit: '개',
-        quantity: item.quantity || 1,
-        unitPrice: Math.round((item.price || 0) / (item.quantity || 1)),
-        totalPrice: item.price || 0,
-        note: ''
-      }));
-      const bomMaterials = (totalBom || []).map(m => ({
-        name: m.name,
-        specification: m.specification || '',
-        quantity: m.quantity || 0,
-        unitPrice: m.unitPrice || 0,
-        totalPrice: (m.unitPrice || 0) * (m.quantity || 0),
-        note: m.note || ''
-      }));
+      adminPricesRef.current = loadAdminPricesDirect(); // 혹시 직전 수정 직후일 수 있으니 재로드
+      const cartItems = cart.map(item => {
+        const qty = item.quantity || 1;
+        const unitPrice = Math.round((item.price || 0) / (qty || 1));
+        return {
+          name: item.displayName || item.name || '',
+            unit: '개',
+            quantity: qty,
+            unitPrice,
+            totalPrice: unitPrice * qty,
+            note: ''
+        };
+      });
+
+      const bomMaterials = (totalBom || []).map(m => {
+        const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
+        const appliedUnitPrice = (adminPrice && adminPrice > 0)
+          ? adminPrice
+          : (Number(m.unitPrice) || 0);
+        const quantity = Number(m.quantity) || 0;
+        return {
+          name: m.name,
+          rackType: m.rackType,
+          specification: m.specification || '',
+          quantity,
+          unitPrice: appliedUnitPrice,
+          totalPrice: appliedUnitPrice * quantity,
+          note: m.note || ''
+        };
+      });
+
       setFormData(prev => ({
         ...prev,
         items: cartItems.length ? cartItems : prev.items,
@@ -77,20 +101,42 @@ const PurchaseOrderForm = () => {
     }
   }, [cart, totalBom, isEditMode]);
 
+  // 합계 계산 (BOM 우선: BOM 항목 있고 실합계>0 → matSum, 아니면 itemSum)
   useEffect(() => {
+    // 관리자 단가 재반영 (사용자가 폼에서 수량 수정 시 단가 유지)
+    const materialsWithAdmin = formData.materials.map(mat => {
+      const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
+      const quantity = Number(mat.quantity) || 0;
+      const unitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(mat.unitPrice) || 0);
+      return {
+        ...mat,
+        unitPrice,
+        totalPrice: unitPrice * quantity
+      };
+    });
+
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    const matSum = formData.materials.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    // BOM 항목이 있고(matCount>0) matSum>0 이면 BOM 사용, 그렇지 않으면(0원 BOM) itemSum fallback
-    const subtotal = (formData.materials.length > 0 && matSum > 0)
-      ? matSum
-      : itemSum;
+    const matSum = materialsWithAdmin.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
+    const subtotal = (materialsWithAdmin.length > 0 && matSum > 0) ? matSum : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-    setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
+
+    if (JSON.stringify(materialsWithAdmin) !== JSON.stringify(formData.materials)) {
+      setFormData(prev => ({
+        ...prev,
+        materials: materialsWithAdmin,
+        subtotal,
+        tax,
+        totalAmount
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
+    }
   }, [formData.items, formData.materials]);
 
   const updateFormData = (f, v) => setFormData(prev => ({ ...prev, [f]: v }));
 
+  // 품목 편집
   const updateItem = (idx, f, v) => {
     const items = [...formData.items];
     items[idx][f] = v;
@@ -114,6 +160,7 @@ const PurchaseOrderForm = () => {
     }));
   };
 
+  // BOM 자재 편집 (관리자 단가 적용 유지: 사용자가 단가 직접 바꾸면 수동 단가로 덮어씀)
   const updateMaterial = (idx, f, v) => {
     const materials = [...formData.materials];
     materials[idx][f] = v;
@@ -292,6 +339,7 @@ const PurchaseOrderForm = () => {
         </table>
       </div>
 
+      {/* 품목 목록 */}
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>품목 목록</h3>
       <table className="form-table order-table">
         <thead>
@@ -328,6 +376,7 @@ const PurchaseOrderForm = () => {
         <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
       </div>
 
+      {/* BOM */}
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>원자재 명세서</h3>
       <table className="form-table bom-table">
         <thead>
