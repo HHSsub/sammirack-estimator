@@ -1,3 +1,5 @@
+import { extractSubtotal } from './subtotalPolicy';
+
 function extractLast4Digits(contactStr) {
   if (!contactStr) return '';
   const nums = String(contactStr).replace(/\D/g, '');
@@ -40,7 +42,19 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
     };
   });
 
-  const subtotal = Number(cartTotal) || 0;
+  // 정책: 견적서는 현재 materials 구조가 없으므로 Item 합계 사용 (BOM 존재 시 별도 매개 추가 가능)
+  const itemSum = items.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0);
+  let subtotal = extractSubtotal({
+    itemSum,
+    matSum: 0,
+    materialCount: 0,
+    policy: 'BOM_ONLY_WITH_ITEM_FALLBACK'
+  });
+  // cartTotal 이 따로 전달되고 subtotal이 0인 경우(안전 fallback)
+  if (subtotal === 0 && cartTotal) {
+    subtotal = Number(cartTotal) || 0;
+  }
+
   const tax = Math.floor(subtotal * 0.1);
   const totalAmount = subtotal + tax;
 
@@ -110,7 +124,16 @@ export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) =>
     };
   });
 
-  const subtotal = Number(cartTotal) || 0;
+  const itemSum = items.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0);
+  const matSum = materialItems.reduce((s, it) => s + (Number(it.totalPrice) || 0), 0);
+
+  const subtotal = extractSubtotal({
+    itemSum,
+    matSum,
+    materialCount: materialItems.length,
+    policy: 'BOM_ONLY_WITH_ITEM_FALLBACK'
+  });
+
   const tax = Math.floor(subtotal * 0.1);
   const totalAmount = subtotal + tax;
 
