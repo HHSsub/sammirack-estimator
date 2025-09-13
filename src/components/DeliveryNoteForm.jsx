@@ -78,11 +78,11 @@ const DeliveryNoteForm = () => {
     }
   }, [cart, totalBom, isEditMode]);
 
-  // 합계 계산
+  // 합계 계산 (BOM 우선, BOM 없으면 품목 합계)
   useEffect(() => {
     const itemSum = formData.items.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
     const matSum = formData.materials.reduce((s,it)=>s+(parseFloat(it.totalPrice)||0),0);
-    const subtotal = itemSum + matSum;
+    const subtotal = formData.materials.length > 0 ? matSum : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
@@ -245,7 +245,7 @@ const DeliveryNoteForm = () => {
             <tr>
               <td className="label" rowSpan={4}>메모</td>
               <td rowSpan={4}>
-                {/* MOD: 메모 높이 CSS (공용 .estimate-memo.memo-narrow -> PurchaseOrderForm.css에서 min-height:90px 이미 적용) */}
+                {/* MOD: 메모 높이 CSS */}
                 <textarea
                   className="estimate-memo memo-narrow"
                   value={formData.topMemo}
