@@ -540,8 +540,11 @@ button.nav-link:hover {
 .right-section {
   flex: 1.15;
   min-width: 0;
-  max-height: 500px;
+  max-height: 600px;
+  height: 600px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* option-section(옵션셀렉터) 우측여백 축소 & 내부 패딩 축소 */
@@ -560,30 +563,25 @@ button.nav-link:hover {
 
 /* 원자재 단가 관리 컨테이너에 스크롤 기능 추가 */
 .material-price-manager-container {
-  /* 높이 제한 제거! 반드시 스크롤이 뜨게 */
-  max-height: 100%; /* 이전에는 px 제한이 있었음 */
-  min-height: 0;
-  overflow-y: visible;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  background: white;
-  /* flex-item으로서 부모 높이 따라감 */
   flex: 1 1 0%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 20px;
 }
 
-/* 원자재 테이블 스크롤 개선 */
 .material-table-container {
-  /* 부모 높이 따라가고, 실제 테이블에만 스크롤 적용 */
-  max-height: 100%;
-  min-height: 0;
+  max-height: 400px;
+  min-height: 200px;
+  height: 400px;
   overflow-y: auto;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   background: white;
-  /* 반드시 스크롤바 뜨게 height 100% */
-  height: 100%;
   box-sizing: border-box;
 }
 
