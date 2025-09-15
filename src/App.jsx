@@ -1,22 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import './App.css';
 import { useProducts } from './contexts/ProductContext';
 import OptionSelector from './components/OptionSelector';
 import CartDisplay from './components/CartDisplay';
 import BOMDisplay from './components/BOMDisplay';
+import MaterialPriceManager from './components/MaterialPriceManager'; // 새로 추가
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
 import DeliveryNoteForm from './components/DeliveryNoteForm';
 import PrintPage from './components/PrintPage';
-import Login from './components/Login'; // Login 컴포넌트 임포트
-import PasswordChange from './components/PasswordChange'; // 비밀번호 변경 컴포넌트 임포트
+import Login from './components/Login';
+import PasswordChange from './components/PasswordChange';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태 관리
-  const [currentUser, setCurrentUser] = useState(null); // 현재 로그인한 사용자 정보
-  const [showPasswordChange, setShowPasswordChange] = useState(false); // 비밀번호 변경 모달 상태
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
 
   const handleLogin = (status, userInfo = null) => {
     setIsLoggedIn(status);
@@ -72,7 +73,6 @@ function App() {
       </main>
       <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
       
-      {/* 비밀번호 변경 모달 */}
       {showPasswordChange && (
         <PasswordChange 
           currentUser={currentUser}
@@ -83,10 +83,9 @@ function App() {
   );
 }
 
-// ---------- HomePage ----------
+// ---------- 수정된 HomePage ----------
 const HomePage = ({ currentUser }) => {
   const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, selectedType, selectedOptions } = useProducts();
-  // 🔹 기본값 true → 항상 보이는 상태
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
 
@@ -112,29 +111,36 @@ const HomePage = ({ currentUser }) => {
     <div className="app-container">
       <h2>랙 제품 견적</h2>
       
-      {/* 새로운 레이아웃: 옵션 셀렉터와 가격 정보를 좌우로 배치 */}
+      {/* 새로운 레이아웃: 좌우 배치 */}
       <div className="main-layout">
-        <div className="option-section">
-          <OptionSelector />
-        </div>
-        
-        <div className="price-section">
-          <div className="price-display">
-            <h3>현재 항목 예상 가격</h3>
-            <p className="price">{currentPrice.toLocaleString()}원</p>
+        {/* 좌측: 옵션 셀렉터와 가격 정보 */}
+        <div className="left-section" style={{ flex: '1', marginRight: '20px' }}>
+          <div className="option-section">
+            <OptionSelector />
           </div>
+          
+          <div className="price-section">
+            <div className="price-display">
+              <h3>현재 항목 예상 가격</h3>
+              <p className="price">{currentPrice.toLocaleString()}원</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 우측: 새로운 원자재 단가 관리 영역 */}
+        <div className="right-section" style={{ flex: '1' }}>
+          <MaterialPriceManager currentUser={currentUser} cart={cart} />
         </div>
       </div>
 
       <div className="action-buttons" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
       </div>
 
-      {/* 🔹 항상 표시 + 숨기기 가능 */}
+      {/* 기존 CartDisplay */}
       <CartDisplay />
 
       {canProceed && (
         <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          {/* "전체 BOM 숨기기" 버튼을 숨김 처리 */}
           <Link 
             to="/estimate/new"
             state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
@@ -159,7 +165,7 @@ const HomePage = ({ currentUser }) => {
         </div>
       )}
 
-      {/* 🔹 항상 표시 + 숨기기 가능 */}
+      {/* 기존 BOMDisplay */}
       {showTotalBOM && (
         <BOMDisplay 
           bom={totalBomForDisplay} 
