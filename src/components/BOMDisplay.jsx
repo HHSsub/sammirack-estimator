@@ -13,10 +13,26 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
   const { setTotalBomQuantity } = useProducts();
   const [editingPart, setEditingPart] = useState(null);
   const [adminPrices, setAdminPrices] = useState({});
+  const [refreshKey, setRefreshKey] = useState(0); // 강제 리렌더링용
 
   // 관리자 수정 단가 로드
   useEffect(() => {
     loadAdminPrices();
+  }, [refreshKey]); // refreshKey 변경시에도 재로드
+
+  // 다른 컴포넌트에서 단가 변경시 실시간 업데이트
+  useEffect(() => {
+    const handlePriceChange = (event) => {
+      console.log('BOMDisplay: 단가 변경 이벤트 수신', event.detail);
+      loadAdminPrices();
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('adminPriceChanged', handlePriceChange);
+    
+    return () => {
+      window.removeEventListener('adminPriceChanged', handlePriceChange);
+    };
   }, []);
 
   const loadAdminPrices = () => {
@@ -64,8 +80,14 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
   const handlePriceSaved = (partId, newPrice, oldPrice) => {
     // 관리자 단가 데이터 재로드
     loadAdminPrices();
+    setRefreshKey(prev => prev + 1);
     
     console.log(`부품 ${partId}의 단가가 ${oldPrice}원에서 ${newPrice}원으로 변경되었습니다.`);
+    
+    // 전체 시스템에 변경 이벤트 발송
+    window.dispatchEvent(new CustomEvent('adminPriceChanged', { 
+      detail: { partId, newPrice, oldPrice } 
+    }));
   };
 
   if (!bom || !bom.length) {
@@ -211,6 +233,9 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
             </div>
             <div>
               • 원가와 수정된 단가가 다른 경우 두 가격이 모두 표시됩니다.
+            </div>
+            <div>
+              • 상단 원자재 단가 관리에서 일괄 수정이 가능합니다.
             </div>
           </div>
         )}
