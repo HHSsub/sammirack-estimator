@@ -560,7 +560,8 @@ button.nav-link:hover {
 
 /* 원자재 단가 관리 컨테이너에 스크롤 기능 추가 */
 .material-price-manager-container {
-  max-height: 400px; /* 기존 500px → 400px */
+  max-height: 900px; /* 400px → 900px, 더 많은 행 표시 */
+  min-height: 400px;
   overflow-y: auto;
   border: 1px solid #dee2e6;
   border-radius: 8px;
@@ -569,11 +570,33 @@ button.nav-link:hover {
 
 /* 원자재 테이블 스크롤 개선 */
 .material-table-container {
-  max-height: 300px; /* 기존 400px → 300px */
+  max-height: 800px; /* 300px → 800px */
+  min-height: 300px;
   overflow-y: auto;
   border: 1px solid #dee2e6;
   border-radius: 6px;
   background: white;
+}
+
+.material-table-container table {
+  font-size: 13px;
+}
+
+.material-table-container th, .material-table-container td {
+  padding: 7px 6px !important; /* 기존 10~12px → 7px */
+  min-width: 80px !important;  /* 기존 minWidth 100~200px → 80px */
+}
+
+.material-table-container thead th {
+  font-weight: 600;
+}
+
+.material-table-container tbody tr {
+  height: 28px; /* 더 얇게 */
+}
+
+.material-table-container td {
+  vertical-align: middle;
 }
 
 /* 테이블 헤더 고정 */
