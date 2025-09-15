@@ -66,14 +66,15 @@ button.nav-link:hover {
   background-color: #f5f5f5;
 }
 
-/* App Container */
+/* App Container - 너비 확장 */
 .app-container {
-  max-width: 1000px;
+  max-width: 1400px; /* 기존 1000px에서 1400px로 확장 */
   margin: 0 auto;
   padding: 20px;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 95%; /* 좌우 여백 최소화 */
 }
 
 .app-container h2 {
@@ -520,7 +521,7 @@ button.nav-link:hover {
 }
 
 
-/* 새로운 메인 레이아웃 스타일 */
+/* 새로운 메인 레이아웃 스타일 - 수정됨 */
 .main-layout {
   display: flex;
   gap: 30px;
@@ -528,14 +529,79 @@ button.nav-link:hover {
   align-items: flex-start;
 }
 
-.option-section {
-  flex: 2;
+.left-section {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.right-section {
+  flex: 1.2; /* 원자재 관리 영역을 약간 더 크게 */
+  min-width: 0;
+  max-height: 600px; /* 최대 높이 제한 */
+  overflow: hidden;
+}
+
+.option-section {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
 }
 
 .price-section {
-  flex: 1;
-  min-width: 250px;
+  /* 기존 스타일 유지 */
+}
+
+/* 원자재 단가 관리 컨테이너에 스크롤 기능 추가 */
+.material-price-manager-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+}
+
+/* 원자재 테이블 스크롤 개선 */
+.material-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+}
+
+/* 테이블 헤더 고정 */
+.material-table-container table thead {
+  position: sticky;
+  top: 0;
+  background-color: #e9ecef;
+  z-index: 10;
+}
+
+/* 스크롤바 스타일링 */
+.material-table-container::-webkit-scrollbar,
+.material-price-manager-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.material-table-container::-webkit-scrollbar-track,
+.material-price-manager-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.material-table-container::-webkit-scrollbar-thumb,
+.material-price-manager-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.material-table-container::-webkit-scrollbar-thumb:hover,
+.material-price-manager-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* 반응형 디자인 - 모바일에서는 세로 배치 */
@@ -545,10 +611,32 @@ button.nav-link:hover {
     gap: 20px;
   }
   
-  .option-section,
-  .price-section {
+  .left-section,
+  .right-section {
     flex: none;
     width: 100%;
+    max-height: none;
+  }
+  
+  .app-container {
+    width: 98%;
+    max-width: none;
+    padding: 15px;
+  }
+}
+
+/* 대형 화면에서 더 넓은 활용 */
+@media (min-width: 1200px) {
+  .app-container {
+    max-width: 1600px;
+    width: 90%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .app-container {
+    max-width: 1800px;
+    width: 85%;
   }
 }
 
