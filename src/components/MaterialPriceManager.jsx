@@ -330,7 +330,7 @@ export default function MaterialPriceManager({ currentUser }) {
     const newSelections = { ...selections };
     newSelections[step] = value;
     const getStepsForType = (type) => {
-      if (formTypeRacks.includes(type)) {
+      if (["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형"].includes(type)) {
         return ['type', 'size', 'height', 'level', 'formType'];
       } else if (type === '하이랙') {
         return ['type', 'color', 'size', 'height', 'level', 'formType'];
@@ -566,24 +566,30 @@ export default function MaterialPriceManager({ currentUser }) {
   const handleGoBack = () => {
     const steps = getStepsForType(selections.type);
     let currentStepIndex = steps.indexOf(currentStep);
-    let prevStep = null;
+
+    // complete 단계는 마지막 선택 이후 화면이므로 바로 직전 단계로
     if (currentStep === 'complete') {
       currentStepIndex = steps.length;
-      prevStep = steps[steps.length - 1];
-    } else if (currentStepIndex > 0) {
-      prevStep = steps[currentStepIndex - 1];
     }
-    if (prevStep) {
-      const newSelections = { ...selections };
-      for (let i = currentStepIndex; i < steps.length; i++) {
-        newSelections[steps[i]] = '';
-      }
-      setSelections(newSelections);
-      setCurrentStep(prevStep);
-      setMaterialList([]);
-      setGoBackStep(prevStep);
+
+    // type 단계에서는 더 이전 없음
+    if (currentStepIndex <= 0) return;
+
+    // 이전 단계 찾기
+    const prevStep = steps[currentStepIndex - 1];
+
+    // 이전 단계 이후의 selections 모두 초기화
+    const newSelections = { ...selections };
+    for (let i = currentStepIndex; i < steps.length; i++) {
+      newSelections[steps[i]] = '';
     }
+
+    setSelections(newSelections);
+    setCurrentStep(prevStep);
+    setMaterialList([]);
+    setGoBackStep(prevStep);
   };
+
 
   function calculateAvailableOptionsForStep(step, selections) {
     const opts = { type: [], size: [], height: [], level: [], formType: [], color: [] };
