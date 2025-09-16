@@ -10,14 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "exceljs": "^4.3.0",
+    "file-saver": "^2.0.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.23.1",
-    "xlsx": "^0.18.5",
-    "exceljs": "^4.3.0"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@tailwindcss/aspect-ratio": "^0.4.2", 
+    "@tailwindcss/aspect-ratio": "^0.4.2",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
