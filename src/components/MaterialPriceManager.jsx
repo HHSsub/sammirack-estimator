@@ -192,28 +192,34 @@ export default function MaterialPriceManager({ currentUser }) {
 
     // 4단계: 단수 선택
     if (!selections.level) {
-      const allLevels = new Set();
-      
+      let levelsFromBom;
       if (selections.type === "경량랙" && selections.height === "H750") {
-        const levelsFromBom = Object.keys(bd[selections.size]?.["H900"] || {});
-        levelsFromBom.forEach(level => allLevels.add(level));
+        levelsFromBom = Object.keys(bd[selections.size]?.["H900"] || {});
       } else {
-        const levelsFromBom = Object.keys(bd[selections.size]?.[selections.height] || {});
+        levelsFromBom = Object.keys(bd[selections.size]?.[selections.height] || {});
+      }
+
+      // 파렛트랙 계열만 L1~L6만 남기고, 나머지는 전부 기존데이터 다 허용
+      let levels;
+      if (selections.type === "파렛트랙" || selections.type === "파렛트랙 철판형") {
+        levels = levelsFromBom.filter(l => ["L1", "L2", "L3", "L4", "L5", "L6"].includes(l));
+      } else {
+        // 기존처럼 모든 단수 허용
+        const allLevels = new Set();
         levelsFromBom.forEach(level => allLevels.add(level));
-      }
-      
-      Object.values(bd).forEach(sizeData => {
-        Object.values(sizeData).forEach(heightData => {
-          Object.keys(heightData).forEach(level => allLevels.add(level));
+        Object.values(bd).forEach(sizeData => {
+          Object.values(sizeData).forEach(heightData => {
+            Object.keys(heightData).forEach(level => allLevels.add(level));
+          });
         });
-      });
-      
-      // formTypeRacks(경량랙, 중량랙, 파렛트랙, 파렛트랙 철판형)에서는 L2, L3 형태의 단수만 사용
-      for (let i = 2; i <= 9; i++) {
-        allLevels.add(`L${i}`);
+        // 기존처럼 L2~L9 추가 (이 부분도 필요 없다면 삭제 가능)
+        for (let i = 2; i <= 9; i++) {
+          allLevels.add(`L${i}`);
+        }
+        levels = Array.from(allLevels);
       }
-      
-      opts.level = sortLevels(Array.from(allLevels));
+
+      opts.level = sortLevels(levels);
       setCurrentStep('level');
       return;
     }
