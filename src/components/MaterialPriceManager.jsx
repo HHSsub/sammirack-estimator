@@ -653,21 +653,20 @@ export default function MaterialPriceManager({ currentUser }) {
         }
         return ['type'];
       };
-      
+  
       const steps = getStepsForType(selections.type);
       const currentStepIndex = steps.indexOf(currentStep);
-      
+  
       if (currentStepIndex > 0) {
         const prevStep = steps[currentStepIndex - 1];
+        // 이전 단계의 값만 남기고, 그 뒤는 모두 초기화
         const newSelections = { ...selections };
-        
-        // 현재 단계부터 이후 모든 선택 초기화
         for (let i = currentStepIndex; i < steps.length; i++) {
-          newSelections[steps[i]] = '';
+          newSelections[steps[i]] = ''; // 현재단계 포함 이후 모두 초기화
         }
-        
         setSelections(newSelections);
         setCurrentStep(prevStep);
+        setMaterialList([]); // BOM도 초기화
       }
     } catch (error) {
       console.error('이전 단계로 이동 실패:', error);
