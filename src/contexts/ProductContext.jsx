@@ -88,7 +88,6 @@ const calcBrushingRubberCount = (isConn, qty) => {
   return (isConn ? 2 : 4) * qty;
 };
 
-// 기존 하드웨어 계산 함수에서 브레싱볼트는 위 산식, 브레싱고무는 기둥과 동일
 const calcPalletHardwareCounts=(heightMm,isConn,qty)=>{
   const baseHeight=1500;
   const heightStep=500;
@@ -195,7 +194,6 @@ const ensureSpecification=(row,ctx={})=>{
 
 // 브러싱고무 수량을 기둥수량으로 무조건 강제 수정하는 함수 추가
 const fixBrushingRubberQty = (bomList) => {
-  // 기둥 갯수 찾기
   const post = bomList.find(item => /기둥/.test(item.name));
   const postQty = post ? Number(post.quantity) : null;
   return bomList.map(item => {
@@ -414,7 +412,7 @@ export const ProductProvider=({children})=>{
           const labelled=Number(rec.total_price)||0;
           const calculatedFromComponents = sumComponents(componentsWithAdminPrice);
             basePrice=(labelled>0&&!componentsWithAdminPrice.some(c=>c.hasAdminPrice)
-            ? labelled
+            ? labelled 
             : calculatedFromComponents)*(Number(quantity)||0);
         }
       }
@@ -639,168 +637,253 @@ export const ProductProvider=({children})=>{
     return [];
   };
 
-  const calculateBOM=useCallback(()=>{
+  const calculateCurrentBOM=useCallback(()=> {
     if(!selectedType||quantity<=0) return [];
     if(selectedType==="하이랙" && !selectedOptions.formType) return [];
-
-    if(selectedType==="경량랙"&&selectedOptions.height==="H750") return makeLightRackH750BOM();
-
-    const {size,height:heightRaw,level:levelRaw,formType}=selectedOptions;
-    const height=selectedType==="경량랙"&&heightRaw==="H750"?"H900":heightRaw;
-
-    let bomComponents=[];
-    if(formTypeRacks.includes(selectedType)){
-      let rec;
-      if(selectedType==="파렛트랙 철판형"){
-        const hKey=String(height||"").replace(/^H/i,"");
-        const lKey=(String(levelRaw||"").replace(/^L/i,"").replace(/^\s*$/,"0"))+"단";
-        rec=bomData?.[selectedType]?.[formType]?.[size]?.[hKey]?.[lKey];
-      } else {
-        rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
+    if(selectedType==="파렛트랙"||selectedType==="파렛트랙 철판형"){
+      const rec=bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
+      if(rec?.components){
+        const q=Number(quantity)||1;
+        const sz=selectedOptions.size||"";
+        const ht=selectedOptions.height||"";
+        const lvl=parseLevel(selectedOptions.level,selectedType);
+        const {w,d}=parseWD(sz);
+        // 하드웨어 이름(양쪽 표기 변형 포함)
+        const hardwareNames=new Set(["수평브레싱","수평브래싱","경사브레싱","경사브래싱","앙카볼트","브레싱볼트","브러싱고무","브레싱고무","안전핀","베이스볼트"]);
+        const base=rec.components
+          .filter(c=>!hardwareNames.has(normalizePartName(c.name)))
+          .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("철판")))
+          .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("타이빔")))
+          .map(c=>{
+            let nm=normalizePartName(c.name);
+            let spec="";
+            if(nm.includes("기둥")){ nm=`기둥(${ht})`; spec=`높이 ${ht}`; }
+            else if(nm.includes("로드빔")){ nm=`로드빔(${w})`; spec=String(w); }
+            else if(nm.includes("타이빔")){ nm=`타이빔(${d})`; spec=String(d); }
+            else if(nm.includes("선반")){ nm=`선판(${w})`; spec=`사이즈 W${w}xD${d}`; }
+            else if(nm.includes("안전좌")) return null;
+            else if(nm.includes("안전핀")){ nm="안전핀(파렛트랙)"; spec="안전핀"; }
+            else if(nm.includes("받침")){
+              nm=nm.includes("상")?`받침(상)(${d})`:`받침(하)(${d})`; spec=`D${d}`;
+            } else spec=c.specification??"";
+            return {
+              rackType:selectedType,size:sz,name:nm,specification:spec,note:c.note??"",
+              quantity:(Number(c.quantity)||0)*q,
+              unitPrice:Number(c.unit_price)||0,
+              totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*(Number(c.quantity)||0)*q
+            };
+          }).filter(Boolean);
+        if(selectedType==="파렛트랙 철판형"){
+          const frontNumMatch=(sz||"").match(/\d+/);
+          const frontNum=frontNumMatch?frontNumMatch[0]:sz;
+          if(!base.some(p=>p.name.includes("선반("))){
+            const shelfPerLevel=calcPalletIronShelfPerLevel(sz);
+            base.push({
+              rackType:selectedType,size:sz,name:`선반(${frontNum.trim()})`,
+              specification:`사이즈 ${sz}`,quantity:shelfPerLevel*lvl*q,
+              unitPrice:0,totalPrice:0
+            });
+          }
+        }
+        if(!base.some(b=>b.name.startsWith("안전핀"))){
+          base.push({
+            rackType:selectedType,size:sz,name:"안전핀(파렛트랙)",specification:"안전핀",
+            note:"",quantity:2*lvl*2*q,unitPrice:0,totalPrice:0
+          });
+        }
+        appendCommonHardwareIfMissing(base,q);
+        // 브러싱고무 수량을 기둥 갯수로 강제 맞춤!
+        const finalized=fixBrushingRubberQty([...base,...makeExtraOptionBOM()]
+          .filter(r=>!/베이스볼트/.test(r.name))
+          .map(r=>ensureSpecification(r,{size:sz,height:ht,...parseWD(sz)})));
+        // >>> 관리자 단가 적용
+        const finalizedWithAdminPrices = finalized.map(applyAdminEditPrice);
+        return sortBOMByMaterialRule(finalizedWithAdminPrices);
       }
-      if(rec && rec.components){
-        bomComponents=rec.components.map(c=>({...c,rackType:selectedType,size:size}));
-      } else {
-        return getFallbackBOM();
-      }
-    } else if(selectedType==="스텐랙"){
-      const rec=bomData?.[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-      if(rec && rec.components){
-        bomComponents=rec.components.map(c=>({...c,rackType:selectedType,size:selectedOptions.size}));
-      } else {
-        return getFallbackBOM();
-      }
-    } else if(selectedType==="하이랙"){
-      const { size:hrSize, color, height:hrHeight, level:hrLevel, formType:hrFormType } = selectedOptions;
-      const isHeaviest=/550kg$/.test(color)||/700kg$/.test(color);
-      const dataSizeKey=isHeaviest
-        ? HIGHRACK_550_ALIAS_VIEW_FROM_DATA[hrSize]||hrSize
-        : hrSize;
-      const rec=bomData?.[selectedType]?.[color]?.[dataSizeKey]?.[hrHeight]?.[hrLevel]?.[hrFormType];
-      if(rec && rec.components){
-        bomComponents=rec.components.map(c=>({...c,rackType:selectedType,size:hrSize,weight:color}));
-      } else {
-        return getFallbackBOM();
-      }
+      return getFallbackBOM();
     }
+    if(selectedType==="하이랙"||selectedType==="스텐랙"){
+      return getFallbackBOM();
+    }
+    if(["경량랙","중량랙"].includes(selectedType)){
+      if(selectedType==="경량랙"&&selectedOptions.height==="H750") return makeLightRackH750BOM();
+      const rec=bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
+      const q=Number(quantity)||1;
+      const sz=selectedOptions.size||"";
+      const ht=selectedOptions.height||"";
+      const sizeMatch=sz.match(/W?(\d+)[xX]D?(\d+)/i)||[];
+      const W_num=sizeMatch[1]||"";
+      const D_num=sizeMatch[2]||"";
+      const base=(rec?.components||[]).map(c=>{
+        let name=normalizePartName(c.name);
+        let specification=c.specification??"";
+        if(name.includes("기둥")){ name=`기둥(${ht})`; specification=`높이 ${ht}`; }
+        else if(name.includes("받침")){ name=name.includes("상")?`받침(상)(${D_num})`:`받침(하)(${D_num})`; specification=`D${D_num}`; }
+        else if(name.includes("연결대")){ name=`연결대(${W_num})`; specification=`W${W_num}`; }
+        else if(name.includes("선반")){ name=`선반(${W_num})`; specification=`사이즈 W${W_num}xD${D_num}`; }
+        else if(name.includes("안전좌")){ name=`안전좌(${selectedType})`; specification=selectedType; }
+        else if(name.includes("안전핀")){ name=`안전핀(${selectedType})`; specification=selectedType; }
+        else if(!specification && /\d/.test(name)){ specification=`사이즈 ${sz}`; }
+        const row={
+          rackType:selectedType,size:sz,name,specification,note:c.note??"",
+          quantity:(Number(c.quantity)||0)*q,
+          unitPrice:Number(c.unit_price)||0,
+          totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*(Number(c.quantity)||0)*q
+        };
+        return ensureSpecification(row,{size:sz,height:ht,...parseWD(sz)});
+      });
+      // >>> 관리자 단가 적용
+      const baseWithAdminPrices = base.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(
+        [...baseWithAdminPrices,...makeExtraOptionBOM()].filter(r=>!/베이스볼트/.test(r.name))
+      );
+    }
+    const extraBOM = makeExtraOptionBOM()
+      .filter(r=>!/베이스볼트/.test(r.name))
+      .map(r=>ensureSpecification(r,{size:r.size}));
+    // >>> 관리자 단가 적용
+    return extraBOM.map(applyAdminEditPrice);
+  },[selectedType,selectedOptions,quantity,customPrice,bomData,extraOptionsSel,extraProducts,customMaterials]);
 
-    const qty=Number(quantity)||1;
-    let list=bomComponents.map(c=>ensureSpecification({...c,quantity:c.quantity*qty},{size:size,height:heightRaw,weight:selectedOptions.color}));
-    appendCommonHardwareIfMissing(list,qty);
+  const handleOptionChange=(k,v)=>{
+    if(k==="type"){
+      setSelectedType(v);
+      setSelectedOptions({});
+      setExtraOptionsSel([]);
+      setQuantity("");
+      setCustomPrice(0);
+      clearCustomMaterials();
+      return;
+    }
+    setSelectedOptions(prev=>({...prev,[k]:v}));
+    if(["color","size","height","level","formType"].includes(k)) setCustomPrice(0);
+  };
+  const handleExtraOptionChange=(ids)=>{
+    setExtraOptionsSel(Array.from(new Set(ids||[])).map(String));
+  };
 
-    // 브러싱고무 수량을 기둥 갯수로 강제 맞춤!
-    list = fixBrushingRubberQty(list);
-
-    const listWithAdminPrices = list.map(applyAdminEditPrice);
-    return sortBOMByMaterialRule(listWithAdminPrices);
-  },[selectedType,selectedOptions,quantity,bomData,data,extraProducts,extraOptionsSel,customMaterials]);
-
-  useEffect(()=>{
-    setCurrentPrice(calculatePrice());
-    setCurrentBOM(calculateBOM());
-  },[calculatePrice,calculateBOM]);
-
-  const addToCart=useCallback(()=>{
-    if(currentPrice<=0||currentBOM.length===0) return;
-    const newItem={
-      id:Date.now(),
+  const addToCart=()=>{
+    if(!selectedType||quantity<=0) return;
+    if(selectedType==="하이랙" && !selectedOptions.formType) return;
+    setCart(prev=>[...prev,{
+      id:`${Date.now()}`,
       type:selectedType,
       options:{...selectedOptions},
-      quantity:Number(quantity),
-      price:currentPrice,
-      bom:currentBOM,
-      extraOptions:extraOptionsSel,
-      customMaterials:customMaterials,
-    };
-    setCart(prev=>[...prev,newItem]);
-    setSelectedOptions({});
-    setQuantity("");
-    setCustomPrice(0);
-    setExtraOptionsSel([]);
-    clearCustomMaterials();
-  },[currentPrice,currentBOM,selectedType,selectedOptions,quantity,extraOptionsSel,customMaterials]);
+      extraOptions:[...extraOptionsSel],
+      quantity,
+      price:customPrice>0?customPrice:currentPrice,
+      bom:calculateCurrentBOM(),
+      displayName:[
+        selectedType,
+        selectedOptions.formType,
+        selectedOptions.size,
+        selectedOptions.height,
+        selectedOptions.level,
+        selectedOptions.color||""
+      ].filter(Boolean).join(" "),
+    }]);
+  };
+  const removeFromCart=id=>setCart(prev=>prev.filter(i=>i.id!==id));
 
-  const removeFromCart=useCallback((idToRemove)=>{
-    setCart(prev=>prev.filter(item=>item.id!==idToRemove));
-  },[]);
+  const updateCartItemQuantity=(id,nextQtyRaw)=>{
+    setCart(prev=>prev.map(item=>{
+      if(item.id!==id) return item;
+      const oldQty=item.quantity>0?item.quantity:1;
+      const nextQty=Math.max(0,Number(nextQtyRaw)||0);
+      const unitPrice=(item.price||0)/oldQty;
+      const newPrice=Math.round(unitPrice*nextQty);
+      const newBOM=(item.bom||[]).map(c=>{
+        const perUnitQty=(c.quantity||0)/oldQty;
+        const q=perUnitQty*nextQty;
+        const unit=c.unitPrice ?? c.unit_price ?? 0;
+        return {
+          ...c,
+          quantity:q,
+          totalPrice:unit?unit*q:(c.total_price?(c.total_price/oldQty)*nextQty:0)
+        };
+      });
+      return {...item,quantity:nextQty,price:newPrice,bom:newBOM};
+    }));
+  };
 
-  const updateCartItemQuantity=useCallback((idToUpdate,newQuantity)=>{
-    setCart(prev=>prev.map(item=>
-      item.id===idToUpdate?{...item,quantity:Number(newQuantity)}:item
-    ));
-  },[]);
-
-  const updateCartItemPrice=useCallback((idToUpdate,newPrice)=>{
-    setCart(prev=>prev.map(item=>
-      item.id===idToUpdate?{...item,price:Number(newPrice)}:item
-    ));
-  },[]);
-
-  const updateCartItemApplyRate=useCallback((idToUpdate,newRate)=>{
-    setCart(prev=>prev.map(item=>
-      item.id===idToUpdate?{...item,applyRate:Number(newRate)}:item
-    ));
-  },[]);
-
-  const updateCartItemCustomMaterials=useCallback((idToUpdate,newCustomMaterials)=>{
-    setCart(prev=>prev.map(item=>
-      item.id===idToUpdate?{...item,customMaterials:newCustomMaterials}:item
-    ));
-  },[]);
-
-  const updateCartItemExtraOptions=useCallback((idToUpdate,newExtraOptions)=>{
-    setCart(prev=>prev.map(item=>
-      item.id===idToUpdate?{...item,extraOptions:newExtraOptions}:item
-    ));
-  },[]);
+  // >>> 전체 BOM 수량 변경 함수 추가 (관리자 단가 고려)
+  const setTotalBomQuantity = (key, newQuantity) => {
+    const qty = Math.max(0, Number(newQuantity) || 0);
+    
+    setCart(prevCart => prevCart.map(item => {
+      const updatedBOM = (item.bom || []).map(bomItem => {
+        const bomKey = `${bomItem.rackType} ${bomItem.size || ''} ${bomItem.name}`;
+        if (bomKey === key) {
+          const effectiveUnitPrice = bomItem.hasAdminPrice ? bomItem.unitPrice : (Number(bomItem.unitPrice) || 0);
+          return {
+            ...bomItem,
+            quantity: qty,
+            totalPrice: effectiveUnitPrice * qty
+          };
+        }
+        return bomItem;
+      });
+      
+      // 아이템 총가격 재계산 (BOM 기반)
+      const newItemTotal = updatedBOM.reduce((sum, bomItem) => {
+        return sum + (Number(bomItem.totalPrice) || 0);
+      }, 0);
+      
+      return {
+        ...item,
+        bom: updatedBOM,
+        price: newItemTotal
+      };
+    }));
+  };
 
   useEffect(()=>{
-    const aggregatedBOM={};
-    let totalCartPrice=0;
-
+    const map={};
     cart.forEach(item=>{
-      const itemQuantity=Number(item.quantity)||0;
-      totalCartPrice+=Number(item.price)||0;
-
-      const itemBOM=item.bom.map(b=>{
-        const newB={...b};
-        newB.quantity=Number(b.quantity)/item.quantity*itemQuantity;
-        newB.totalPrice=Number(b.unitPrice)*newB.quantity;
-        return newB;
-      });
-
-      itemBOM.forEach(part=>{
-        const partKey=`${part.rackType}-${part.name}-${part.specification}`;
-        if(!aggregatedBOM[partKey]){
-          aggregatedBOM[partKey]={...part,originalQuantity:part.quantity,originalTotalPrice:part.totalPrice};
+      item.bom?.forEach(c=>{
+        if(/베이스볼트/.test(c.name)) return;
+        const key = (c.rackType==="파렛트랙" || c.rackType==="파렛트랙 철판형")
+          ? `${normalizePartName(c.name)}__${c.specification||""}`
+          : `${c.rackType}__${normalizePartName(c.name)}__${c.specification||""}`;
+        if(map[key]){
+          map[key].quantity+=c.quantity;
+          map[key].totalPrice+=c.totalPrice||0;
         } else {
-          aggregatedBOM[partKey].quantity+=part.quantity;
-          aggregatedBOM[partKey].totalPrice+=part.totalPrice;
+          map[key]={...c,name:normalizePartName(c.name)};
         }
       });
     });
-
-    const finalBOM=Object.values(aggregatedBOM).map(part=>ensureSpecification(part,{}));
-    setCartBOM(sortBOMByMaterialRule(finalBOM));
-    setCartTotal(totalCartPrice);
+    const merged=Object.values(map)
+      .map(r=>ensureSpecification(r,{size:r.size}))
+      .filter(r=>!/베이스볼트/.test(r.name));
+    setCartBOM(sortBOMByMaterialRule(merged));
+    setCartTotal(cart.reduce((s,i)=>s+(i.price||0),0));
   },[cart]);
 
-  const contextValue=useMemo(()=>({
-    loading,allOptions,availableOptions,selectedType,setSelectedType,selectedOptions,setSelectedOptions,
-    quantity,setQuantity,customPrice,setCustomPrice,applyRate,setApplyRate,currentPrice,currentBOM,
-    addToCart,removeFromCart,updateCartItemQuantity,updateCartItemPrice,updateCartItemApplyRate,
-    updateCartItemCustomMaterials,updateCartItemExtraOptions,cart,cartBOM,cartTotal,
-    extraProducts,extraOptionsSel,setExtraOptionsSel,customMaterials,addCustomMaterial,removeCustomMaterial,clearCustomMaterials,
-  }),[
-    loading,allOptions,availableOptions,selectedType,setSelectedType,selectedOptions,setSelectedOptions,
-    quantity,setQuantity,customPrice,setCustomPrice,applyRate,setApplyRate,currentPrice,currentBOM,
-    addToCart,removeFromCart,updateCartItemQuantity,updateCartItemPrice,updateCartItemApplyRate,
-    updateCartItemCustomMaterials,updateCartItemExtraOptions,cart,cartBOM,cartTotal,
-    extraProducts,extraOptionsSel,setExtraOptionsSel,customMaterials,addCustomMaterial,removeCustomMaterial,clearCustomMaterials,
-  ]);
+  useEffect(()=>{
+    const raw=customPrice>0?getFallbackBOM():calculateCurrentBOM();
+    const processed=sortBOMByMaterialRule(
+      raw.filter(r=>!/베이스볼트/.test(r.name))
+         .map(r=>ensureSpecification(r,{size:r.size}))
+    );
+    // 브러싱고무 수량을 기둥과 강제 일치
+    setCurrentBOM(fixBrushingRubberQty(processed));
+    setCurrentPrice(calculatePrice());
+  },[calculatePrice,calculateCurrentBOM]);
+
+  const cartBOMView=useMemo(()=>cartBOM,[cartBOM]);
 
   return (
-    <ProductContext.Provider value={contextValue}>
+    <ProductContext.Provider value={{
+      allOptions,availableOptions,colorLabelMap,
+      selectedType,selectedOptions,quantity,setQuantity,
+      applyRate,setApplyRate,customPrice,setCustomPrice,
+      handleOptionChange,addToCart,removeFromCart,updateCartItemQuantity,
+      currentPrice,currentBOM,cart,cartTotal,cartBOM,cartBOMView,loading,
+      extraProducts,extraOptionsSel,handleExtraOptionChange,
+      customMaterials,addCustomMaterial,removeCustomMaterial,clearCustomMaterials,
+      setTotalBomQuantity, // >>> BOM 수량 변경 함수 추가
+    }}>
       {children}
     </ProductContext.Provider>
   );
