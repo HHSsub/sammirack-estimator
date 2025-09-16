@@ -519,7 +519,7 @@ export const ProductProvider=({children})=>{
       pushIfAbsent("경사브레싱",diagonal);
       pushIfAbsent("앙카볼트",anchor);
       pushIfAbsent("브레싱볼트",braceBolt);
-      pushIfAbsent("브러싱고무",rubber);
+      pushIfAbsent("브러싱고무",rubber); // 항상 기둥 수량과 동일하게 들어감
     }
   };
 
