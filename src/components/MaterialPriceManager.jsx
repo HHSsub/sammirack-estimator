@@ -640,34 +640,36 @@ export default function MaterialPriceManager({ currentUser }) {
     }
   };
 
+  const getStepsForType = (type) => {
+    if (formTypeRacks.includes(type)) {
+      return ['type', 'size', 'height', 'level', 'formType'];
+    } else if (type === '하이랙') {
+      return ['type', 'color', 'size', 'height', 'level', 'formType'];
+    } else if (type === '스텐랙') {
+      return ['type', 'size', 'height', 'level'];
+    }
+    return ['type'];
+  };
+
+  // 이전단계 버튼 로직 완전판
   const handleGoBack = () => {
     console.log('이전단계 버튼 클릭:', currentStep, selections);
   
     try {
-      const getStepsForType = (type) => {
-        if (formTypeRacks.includes(type)) {
-          return ['type', 'size', 'height', 'level', 'formType'];
-        } else if (type === '하이랙') {
-          return ['type', 'color', 'size', 'height', 'level', 'formType'];
-        } else if (type === '스텐랙') {
-          return ['type', 'size', 'height', 'level'];
-        }
-        return ['type'];
-      };
-  
       const steps = getStepsForType(selections.type);
       let currentStepIndex = steps.indexOf(currentStep);
       let prevStep = null;
   
       // 견적완료단계('complete')에서는 마지막 옵션단계를 이전단계로!
       if (currentStep === 'complete') {
-        currentStepIndex = steps.length; // 마지막단계 다음
+        currentStepIndex = steps.length;
         prevStep = steps[steps.length - 1];
       } else if (currentStepIndex > 0) {
         prevStep = steps[currentStepIndex - 1];
       }
   
       if (prevStep) {
+        // 이전 단계 이후 값 초기화
         const newSelections = { ...selections };
         for (let i = currentStepIndex; i < steps.length; i++) {
           newSelections[steps[i]] = '';
@@ -675,11 +677,9 @@ export default function MaterialPriceManager({ currentUser }) {
         setSelections(newSelections);
         setCurrentStep(prevStep);
         setMaterialList([]);
-        // **추가: 옵션/화면 재계산**
-        setTimeout(() => {
-          calculateAvailableOptions();
-          calculateBOM();
-        }, 0);
+        // 옵션 UI, BOM까지 강제 갱신
+        calculateAvailableOptionsForStep(prevStep, newSelections);
+        calculateBOM();
         console.log('이전단계로 이동:', prevStep, newSelections);
       } else {
         console.log('이전단계 불가: 이미 첫 단계임', currentStep, selections);
@@ -688,6 +688,135 @@ export default function MaterialPriceManager({ currentUser }) {
       console.error('이전 단계로 이동 실패:', error);
     }
   };
+  
+  // 옵션 버튼 UI를 특정 단계/선택값으로 강제 재계산하는 함수
+  function calculateAvailableOptionsForStep(step, selections) {
+    const opts = { type: [], size: [], height: [], level: [], formType: [], color: [] };
+  
+    // 1단계: 타입 선택
+    opts.type = allTypes;
+  
+    if (step === 'type' || !selections.type) {
+      setAvailableOptions(opts);
+      setCurrentStep('type');
+      return;
+    }
+  
+    // 2단계: 분기
+    if (formTypeRacks.includes(selections.type)) {
+      // 경량랙 등
+      const bd = bomData[selections.type] || {};
+  
+      // 사이즈 선택
+      if (step === 'size' || !selections.size) {
+        const allSizes = Object.keys(bd);
+        opts.size = allSizes;
+        setAvailableOptions(opts);
+        setCurrentStep('size');
+        return;
+      }
+      // 높이 선택
+      if (step === 'height' || !selections.height) {
+        const allHeights = Object.keys(bd[selections.size] || {});
+        opts.height = allHeights;
+        setAvailableOptions(opts);
+        setCurrentStep('height');
+        return;
+      }
+      // 단수 선택
+      if (step === 'level' || !selections.level) {
+        const allLevels = Object.keys(bd[selections.size]?.[selections.height] || {});
+        opts.level = allLevels;
+        setAvailableOptions(opts);
+        setCurrentStep('level');
+        return;
+      }
+      // 형식 선택
+      if (step === 'formType' || !selections.formType) {
+        const allFormTypes = Object.keys(bd[selections.size]?.[selections.height]?.[selections.level] || {});
+        opts.formType = allFormTypes;
+        setAvailableOptions(opts);
+        setCurrentStep('formType');
+        return;
+      }
+      setAvailableOptions(opts);
+      setCurrentStep('complete');
+      return;
+    } else if (selections.type === '하이랙') {
+      // 하이랙
+      const rd = allData["하이랙"] || {};
+  
+      if (step === 'color' || !selections.color) {
+        opts.color = rd["색상"] || [];
+        setAvailableOptions(opts);
+        setCurrentStep('color');
+        return;
+      }
+      if (step === 'size' || !selections.size) {
+        const allSizes = Object.keys(rd["기본가격"]?.[selections.color] || {});
+        opts.size = allSizes;
+        setAvailableOptions(opts);
+        setCurrentStep('size');
+        return;
+      }
+      if (step === 'height' || !selections.height) {
+        const allHeights = Object.keys(rd["기본가격"]?.[selections.color]?.[selections.size] || {});
+        opts.height = allHeights;
+        setAvailableOptions(opts);
+        setCurrentStep('height');
+        return;
+      }
+      if (step === 'level' || !selections.level) {
+        const allLevels = Object.keys(rd["기본가격"]?.[selections.color]?.[selections.size]?.[selections.height] || {});
+        opts.level = allLevels;
+        setAvailableOptions(opts);
+        setCurrentStep('level');
+        return;
+      }
+      if (step === 'formType' || !selections.formType) {
+        const allFormTypes = Object.keys(rd["기본가격"]?.[selections.color]?.[selections.size]?.[selections.height]?.[selections.level] || {});
+        opts.formType = allFormTypes;
+        setAvailableOptions(opts);
+        setCurrentStep('formType');
+        return;
+      }
+      setAvailableOptions(opts);
+      setCurrentStep('complete');
+      return;
+    } else if (selections.type === '스텐랙') {
+      // 스텐랙
+      const rd = allData["스텐랙"] || {};
+  
+      if (step === 'size' || !selections.size) {
+        const allSizes = Object.keys(rd["기본가격"] || {});
+        opts.size = allSizes;
+        setAvailableOptions(opts);
+        setCurrentStep('size');
+        return;
+      }
+      if (step === 'height' || !selections.height) {
+        const allHeights = Object.keys(rd["기본가격"]?.[selections.size] || {});
+        opts.height = allHeights;
+        setAvailableOptions(opts);
+        setCurrentStep('height');
+        return;
+      }
+      if (step === 'level' || !selections.level) {
+        const allLevels = Object.keys(rd["기본가격"]?.[selections.size]?.[selections.height] || {});
+        opts.level = allLevels;
+        setAvailableOptions(opts);
+        setCurrentStep('level');
+        return;
+      }
+      setAvailableOptions(opts);
+      setCurrentStep('complete');
+      return;
+    }
+  
+    // 예외적으로 아무 타입도 아니면 타입 선택으로 되돌림
+    setAvailableOptions(opts);
+    setCurrentStep('type');
+  }
 
   
   const handleReset = () => {
