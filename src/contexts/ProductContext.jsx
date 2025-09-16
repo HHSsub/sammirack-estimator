@@ -53,6 +53,7 @@ const parseLevel=(levelStr,rackType)=>{
   }
 };
 
+// >>> UPDATED: W / D prefix 허용 (이전 버그 원인)
 const parseWD=(size="")=>{
   const m=String(size).replace(/\s+/g,"").match(/W?(\d+)\s*[xX]\s*D?(\d+)/);
   return m?{w:Number(m[1]),d:Number(m[2])}:{w:null,d:null};
@@ -72,30 +73,33 @@ const calcHighRackShelfPerLevel=(size)=>{
   return 1;
 };
 
-// ### 여기가 수정된 핵심 로직입니다 ###
+// --- 브레싱볼트 갯수 계산 규칙 적용 (독립형/연결형, 높이별)
+const calcBracingBoltCount = (heightMm, isConn, qty) => {
+  const baseHeight = 1500;
+  const baseCount = isConn ? 5 : 10;
+  const stepCount = isConn ? 1 : 2;
+  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / 500));
+  const totalPerUnit = baseCount + stepCount * additionalSteps;
+  return totalPerUnit * qty;
+};
+
+// --- 브레싱고무는 항상 파렛트랙 기둥과 동일
+const calcBrushingRubberCount = (isConn, qty) => {
+  return (isConn ? 2 : 4) * qty;
+};
+
+// 기존 하드웨어 계산 함수에서 브레싱볼트는 위 산식, 브레싱고무는 기둥과 동일
 const calcPalletHardwareCounts=(heightMm,isConn,qty)=>{
   const baseHeight=1500;
   const heightStep=500;
-
-  // 1. 수평/경사 브레싱 계산 (기존 로직 유지)
   const baseDiagonal=isConn?2:4;
   const additionalSteps=Math.max(0,Math.floor((heightMm-baseHeight)/heightStep));
   const additionalDiagonal=(isConn?1:2)*additionalSteps;
   const diagonal=(baseDiagonal+additionalDiagonal)*qty;
   const horizontal=(isConn?2:4)*qty;
-
-  // 2. 브레싱볼트 계산 (요청사항 반영하여 수정)
-  // 높이 1500 기준 독립형 10개, 500 증가 시 2개씩 추가
-  const baseBoltInd = 10;
-  const additionalBoltSteps = Math.max(0, Math.floor((heightMm - 1500) / 500));
-  const boltCountInd = baseBoltInd + (additionalBoltSteps * 2);
-  const braceBolt = isConn ? (boltCountInd / 2) * qty : boltCountInd * qty;
-
-  // 3. 앙카볼트 및 브러싱고무 계산 (브러싱고무 로직 수정)
-  const postQty = (isConn ? 2 : 4) * qty;
-  const anchor = postQty;
-  const rubber = postQty; // 브러싱고무는 기둥 수량과 동일
-
+  const braceBolt = calcBracingBoltCount(heightMm, isConn, qty);
+  const anchor=(isConn?2:4)*qty;
+  const rubber = calcBrushingRubberCount(isConn, qty);
   return {horizontal,diagonal,anchor,braceBolt,rubber,baseBolt:0};
 };
 
@@ -124,7 +128,7 @@ const applyAdminEditPrice = (item) => {
     const priceData = JSON.parse(stored);
     const partId = generatePartId(item);
     const adminPrice = priceData[partId];
-    
+
     if (adminPrice && adminPrice.price > 0) {
       return {
         ...item,
@@ -137,7 +141,7 @@ const applyAdminEditPrice = (item) => {
   } catch (error) {
     console.error('관리자 단가 적용 실패:', error);
   }
-  
+
   return item;
 };
 
@@ -189,6 +193,19 @@ const ensureSpecification=(row,ctx={})=>{
   return row;
 };
 
+// 브러싱고무 수량을 기둥수량으로 무조건 강제 수정하는 함수 추가
+const fixBrushingRubberQty = (bomList) => {
+  // 기둥 갯수 찾기
+  const post = bomList.find(item => /기둥/.test(item.name));
+  const postQty = post ? Number(post.quantity) : null;
+  return bomList.map(item => {
+    if (/브러싱고무|브레싱고무/.test(item.name) && postQty !== null) {
+      return { ...item, quantity: postQty, totalPrice: (item.unitPrice || 0) * postQty };
+    }
+    return item;
+  });
+};
+
 export const ProductProvider=({children})=>{
   const [data,setData]=useState({});
   const [bomData,setBomData]=useState({});
@@ -232,8 +249,8 @@ export const ProductProvider=({children})=>{
         const ej={...(ejRaw||{})};
         canonical.forEach(t=>{ if(!ej[t]) ej[t]={}; });
         setExtraProducts(ej);
-      }catch(e){ console.error("데이터 로드 실패",e); setAllOptions({types:[]}); } 
-      finally{ setLoading(false); } 
+      }catch(e){ console.error("데이터 로드 실패",e); setAllOptions({types:[]}); }
+      finally{ setLoading(false); }
     })();
   },[]);
 
@@ -248,7 +265,7 @@ export const ProductProvider=({children})=>{
       next.size=sortSizes([...sizesFromData,...extraSizes]);
 
       if(selectedOptions.size){
-        const heightsFromData=Object.keys(bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level]||{});
+        const heightsFromData=Object.keys(bd[selectedOptions.size]||{});
         next.height=sortHeights([...heightsFromData,...(EXTRA_OPTIONS[selectedType]?.height||[])]);
       } else {
         next.height=sortHeights([...(EXTRA_OPTIONS[selectedType]?.height||[])]);
@@ -392,11 +409,12 @@ export const ProductProvider=({children})=>{
       else {
         const rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
         if(rec){
+          // >>> 관리자 단가 적용하여 계산
           const componentsWithAdminPrice = (rec.components || []).map(applyAdminEditPrice);
           const labelled=Number(rec.total_price)||0;
           const calculatedFromComponents = sumComponents(componentsWithAdminPrice);
             basePrice=(labelled>0&&!componentsWithAdminPrice.some(c=>c.hasAdminPrice)
-            ? labelled 
+            ? labelled
             : calculatedFromComponents)*(Number(quantity)||0);
         }
       }
@@ -477,6 +495,7 @@ export const ProductProvider=({children})=>{
     const connectBarQty=4*qty;
     const shelfQty=lvl*qty;
     const padTopQty=2*qty;
+    // FIX: 받침(하) 수량 기존 (isConn?8:10)*qty -> 요구사항에 따라 상/하 동일 2개로 통일
     const padBottomQty=2*qty;
     const seatQty=(isConn?2:4)*qty;
     const pinQty=8*qty;
@@ -494,6 +513,7 @@ export const ProductProvider=({children})=>{
       {rackType:selectedType,size:sizeStr,name:`안전핀(${selectedType})`,specification:selectedType,quantity:pinQty,unitPrice:0,totalPrice:0},
       ...makeExtraOptionBOM(),
     ].map(r=>ensureSpecification(r,{size:selectedOptions.size}));
+    // >>> 관리자 단가 적용
     const listWithAdminPrices = list.map(applyAdminEditPrice);
     return sortBOMByMaterialRule(listWithAdminPrices.filter(r=>!/베이스볼트/.test(r.name)));
   };
@@ -519,7 +539,7 @@ export const ProductProvider=({children})=>{
       pushIfAbsent("경사브레싱",diagonal);
       pushIfAbsent("앙카볼트",anchor);
       pushIfAbsent("브레싱볼트",braceBolt);
-      pushIfAbsent("브러싱고무",rubber); // 항상 기둥 수량과 동일하게 들어감
+      pushIfAbsent("브러싱고무",rubber);
     }
   };
 
@@ -552,6 +572,7 @@ export const ProductProvider=({children})=>{
       }
       let filteredBase=base.filter(i=>!i.name.includes("베이스볼트"));
       appendCommonHardwareIfMissing(filteredBase,qty);
+      filteredBase = fixBrushingRubberQty(filteredBase);
       const listWithAdminPrices = filteredBase.map(applyAdminEditPrice);
       return sortBOMByMaterialRule(listWithAdminPrices);
     }
@@ -653,7 +674,7 @@ export const ProductProvider=({children})=>{
       const { size:hrSize, color, height:hrHeight, level:hrLevel, formType:hrFormType } = selectedOptions;
       const isHeaviest=/550kg$/.test(color)||/700kg$/.test(color);
       const dataSizeKey=isHeaviest
-        ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[hrSize]||hrSize
+        ? HIGHRACK_550_ALIAS_VIEW_FROM_DATA[hrSize]||hrSize
         : hrSize;
       const rec=bomData?.[selectedType]?.[color]?.[dataSizeKey]?.[hrHeight]?.[hrLevel]?.[hrFormType];
       if(rec && rec.components){
@@ -666,6 +687,10 @@ export const ProductProvider=({children})=>{
     const qty=Number(quantity)||1;
     let list=bomComponents.map(c=>ensureSpecification({...c,quantity:c.quantity*qty},{size:size,height:heightRaw,weight:selectedOptions.color}));
     appendCommonHardwareIfMissing(list,qty);
+
+    // 브러싱고무 수량을 기둥 갯수로 강제 맞춤!
+    list = fixBrushingRubberQty(list);
+
     const listWithAdminPrices = list.map(applyAdminEditPrice);
     return sortBOMByMaterialRule(listWithAdminPrices);
   },[selectedType,selectedOptions,quantity,bomData,data,extraProducts,extraOptionsSel,customMaterials]);
@@ -760,7 +785,7 @@ export const ProductProvider=({children})=>{
     setCartTotal(totalCartPrice);
   },[cart]);
 
-  const contextValue=useMemo(()=>({ 
+  const contextValue=useMemo(()=>({
     loading,allOptions,availableOptions,selectedType,setSelectedType,selectedOptions,setSelectedOptions,
     quantity,setQuantity,customPrice,setCustomPrice,applyRate,setApplyRate,currentPrice,currentBOM,
     addToCart,removeFromCart,updateCartItemQuantity,updateCartItemPrice,updateCartItemApplyRate,
@@ -781,4 +806,4 @@ export const ProductProvider=({children})=>{
   );
 };
 
-export const useProduct=()=>useContext(ProductContext);
+export const useProducts=()=>useContext(ProductContext);
