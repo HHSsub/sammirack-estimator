@@ -240,7 +240,11 @@ export const ProductProvider=({children})=>{
           }
         } else {
           const levelKeys=Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]||{})||[];
-          next.level=levelKeys.length?sortLevels(levelKeys):["L1","L2","L3","L4","L5","L6"];
+          // 파렛트랙/파렛트랙 철판형은 L2~L6까지만 지원
+          const palletRackLevels = (selectedType === "파렛트랙" || selectedType === "파렛트랙 철판형") 
+            ? ["L2","L3","L4","L5","L6"]
+            : ["L1","L2","L3","L4","L5","L6"];
+          next.level=levelKeys.length?sortLevels(levelKeys):palletRackLevels;
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];

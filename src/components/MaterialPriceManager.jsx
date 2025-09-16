@@ -200,9 +200,21 @@ export default function MaterialPriceManager({ currentUser }) {
         });
       });
       
-      // formTypeRacks(경량랙, 중량랙, 파렛트랙, 파렛트랙 철판형)에서는 L2, L3 형태의 단수만 사용
-      for (let i = 2; i <= 9; i++) {
-        allLevels.add(`L${i}`);
+      // formTypeRacks 단수 옵션: 파렛트랙/파렛트랙 철판형은 L2~L6, 기타는 L2~L9
+      if (selections.type === "파렛트랙" || selections.type === "파렛트랙 철판형") {
+        // 파렛트랙/파렛트랙 철판형은 L2~L6만 허용
+        for (let i = 2; i <= 6; i++) {
+          allLevels.add(`L${i}`);
+        }
+        // 기존 데이터에서 L1, L7, L8, L9 제거
+        allLevels.delete('L1');
+        allLevels.delete('L7');
+        allLevels.delete('L8');
+        allLevels.delete('L9');
+      } else {
+        for (let i = 2; i <= 9; i++) {
+          allLevels.add(`L${i}`);
+        }
       }
       
       opts.level = sortLevels(Array.from(allLevels));
@@ -847,64 +859,72 @@ export default function MaterialPriceManager({ currentUser }) {
           marginTop: '20px', 
           borderTop: '1px solid #dee2e6', 
           paddingTop: '20px', 
-          flex: '0 0 auto' 
+          flex: '0 0 auto',
+          minHeight: 0 // 중요: flex 컨테이너에서 자식이 스크롤 되도록 함
         }}>
           <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#495057' }}>
             BOM 원자재 목록
           </h4>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#e9ecef' }}>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>품목</th>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>규격</th>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>수량</th>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>단가</th>
-                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>총액</th>
-                {isAdmin && <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'center' }}>관리</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {materialList.map((item, index) => (
-                <tr key={index} style={{ backgroundColor: item.hasAdminPrice ? '#fff3cd' : 'white' }}>
-                  <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{item.name}</td>
-                  <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{item.specification}</td>
-                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>{item.quantity.toLocaleString()}</td>
-                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
-                    {getEffectiveUnitPrice(item).toLocaleString()}원
-                    {item.hasAdminPrice && <span style={{ fontSize: '11px', color: '#6c757d' }}> (수정됨)</span>}
-                  </td>
-                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
-                    {(getEffectiveUnitPrice(item) * item.quantity).toLocaleString()}원
-                  </td>
-                  {isAdmin && (
-                    <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'center' }}>
-                      <button
-                        onClick={() => handleEditPrice(item)}
-                        style={{
-                          padding: '4px 8px',
-                          border: '1px solid #007bff',
-                          borderRadius: '4px',
-                          backgroundColor: '#007bff',
-                          color: 'white',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        단가 수정
-                      </button>
-                    </td>
-                  )}
+          <div style={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px'
+          }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 1 }}>
+                <tr style={{ backgroundColor: '#e9ecef' }}>
+                  <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>품목</th>
+                  <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>규격</th>
+                  <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>수량</th>
+                  <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>단가</th>
+                  <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>총액</th>
+                  {isAdmin && <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'center' }}>관리</th>}
                 </tr>
-              ))}
-              <tr style={{ backgroundColor: '#e9ecef', fontWeight: '600' }}>
-                <td colSpan={isAdmin ? 4 : 3} style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>총 합계</td>
-                <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
-                  {materialList.reduce((sum, item) => sum + (getEffectiveUnitPrice(item) * item.quantity), 0).toLocaleString()}원
-                </td>
-                {isAdmin && <td style={{ padding: '8px', border: '1px solid #dee2e6' }}></td>}
-              </tr>
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {materialList.map((item, index) => (
+                  <tr key={index} style={{ backgroundColor: item.hasAdminPrice ? '#fff3cd' : 'white' }}>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{item.name}</td>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{item.specification}</td>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>{item.quantity.toLocaleString()}</td>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                      {getEffectiveUnitPrice(item).toLocaleString()}원
+                      {item.hasAdminPrice && <span style={{ fontSize: '11px', color: '#6c757d' }}> (수정됨)</span>}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                      {(getEffectiveUnitPrice(item) * item.quantity).toLocaleString()}원
+                    </td>
+                    {isAdmin && (
+                      <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'center' }}>
+                        <button
+                          onClick={() => handleEditPrice(item)}
+                          style={{
+                            padding: '4px 8px',
+                            border: '1px solid #007bff',
+                            borderRadius: '4px',
+                            backgroundColor: '#007bff',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }}
+                        >
+                          단가 수정
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+                <tr style={{ backgroundColor: '#e9ecef', fontWeight: '600', position: 'sticky', bottom: 0 }}>
+                  <td colSpan={isAdmin ? 4 : 3} style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>총 합계</td>
+                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                    {materialList.reduce((sum, item) => sum + (getEffectiveUnitPrice(item) * item.quantity), 0).toLocaleString()}원
+                  </td>
+                  {isAdmin && <td style={{ padding: '8px', border: '1px solid #dee2e6' }}></td>}
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
