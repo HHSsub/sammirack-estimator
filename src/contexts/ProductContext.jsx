@@ -43,11 +43,7 @@ const sortLevels=(arr=[])=>[...new Set(arr)].sort((a,b)=>parseNum(a)-parseNum(b)
 const HIGHRACK_550_ALIAS_VIEW_FROM_DATA = { "80x146":"80x108", "80x206":"80x150" };
 const HIGHRACK_550_ALIAS_DATA_FROM_VIEW = { "80x108":"80x146", "80x150":"80x206" };
 
-const parseHeightMm = (h)=>{
-  // H4500, H5000 등도 지원
-  const m=String(h||"").replace(/[^\d]/g,"");
-  return m?parseInt(m,10):0;
-};
+const parseHeightMm = (h)=>Number(String(h||"").replace(/[^\d]/g,""))||0;
 const parseLevel=(levelStr,rackType)=>{
   if(!levelStr) return 1;
   if(rackType==="파렛트랙 철판형"){
@@ -76,7 +72,7 @@ const calcHighRackShelfPerLevel=(size)=>{
   return 1;
 };
 
-// 브레싱볼트 정확 규칙 적용
+// 브레싱볼트 규칙
 function calcBracingBoltCount(heightRaw, isConn, qty) {
   let heightMm = parseHeightMm(heightRaw);
   const baseHeight = 1500;
@@ -85,7 +81,7 @@ function calcBracingBoltCount(heightRaw, isConn, qty) {
   return perUnit * qty;
 }
 
-// 브러싱고무는 기둥갯수와 항상 같게
+// 브러싱고무는 기둥 갯수와 동일
 function calcBrushingRubberCount(postQty) {
   return postQty;
 }
@@ -344,6 +340,7 @@ export const ProductProvider=({children})=>{
     if(selectedType==="하이랙" && !selectedOptions.formType) return 0;
     if(customPrice>0) return Math.round(customPrice*quantity*(applyRate/100));
     let basePrice=0;
+
     if(formTypeRacks.includes(selectedType)){
       const {size,height:heightRaw,level:levelRaw,formType}=selectedOptions;
       const height=selectedType==="경량랙"&&heightRaw==="H750"?"H900":heightRaw;
@@ -381,6 +378,7 @@ export const ProductProvider=({children})=>{
         if(p) basePrice=p*quantity;
       }
     }
+
     let extraPrice=0;
     (Object.values(extraProducts?.[selectedType]||{})).forEach(arr=>{
       if(Array.isArray(arr)){
@@ -389,9 +387,11 @@ export const ProductProvider=({children})=>{
         });
       }
     });
+
     const customExtra=selectedType==="경량랙"
       ? customMaterials.reduce((s,m)=>s+(Number(m.price)||0),0)
       : 0;
+
     return Math.round((basePrice+extraPrice+customExtra)*(applyRate/100));
   },[selectedType,selectedOptions,quantity,customPrice,applyRate,data,bomData,extraProducts,extraOptionsSel,customMaterials]);
 
@@ -500,11 +500,183 @@ export const ProductProvider=({children})=>{
   };
 
   const getFallbackBOM=()=>{
-    return [];
+    if(selectedType==="파렛트랙"||selectedType==="파렛트랙 철판형"){
+      const lvl=parseLevel(selectedOptions.level,selectedType);
+      const sz=selectedOptions.size||"";
+      const ht=selectedOptions.height||"";
+      const form=selectedOptions.formType||"독립형";
+      const qty=Number(quantity)||1;
+      const {w,d}=parseWD(sz);
+      const tieSpec=d!=null?String(d):`규격 ${sz}`;
+      const loadSpec=w!=null?String(Math.floor(w/100)*100):`규격 ${sz}`;
+      const base=[
+        {rackType:selectedType,size:sz,name:`기둥(${ht})`,specification:`높이 ${ht}`,quantity:(form==="연결형"?2:4)*qty,unitPrice:0,totalPrice:0},
+        {rackType:selectedType,size:sz,name:`로드빔(${loadSpec})`,specification:loadSpec,quantity:2*lvl*qty,unitPrice:0,totalPrice:0},
+        ...(selectedType==="파렛트랙 철판형"?[]:[
+          {rackType:selectedType,size:sz,name:`타이빔(${tieSpec})`,specification:tieSpec,quantity:2*lvl*qty,unitPrice:0,totalPrice:0},
+        ]),
+        {rackType:selectedType,size:sz,name:"안전핀(파렛트랙)",specification:"안전핀",quantity:2*lvl*2*qty,unitPrice:0,totalPrice:0},
+      ];
+      if(selectedType==="파렛트랙 철판형"){
+        const shelfPerLevel=calcPalletIronShelfPerLevel(sz);
+        const frontNum=(selectedOptions.size||"").match(/\d+/);
+        const frontNumVal=frontNum?frontNum[0]:selectedOptions.size;
+        base.push({
+          rackType:selectedType,size:sz,name:`선반(${frontNumVal.trim()})`,
+          specification:`사이즈 ${sz}`,quantity:shelfPerLevel*lvl*qty,unitPrice:0,totalPrice:0
+        });
+      }
+      let filteredBase=base.filter(i=>!i.name.includes("철판"));
+      appendCommonHardwareIfMissing(filteredBase,qty);
+      const filtered=[...filteredBase,...makeExtraOptionBOM()]
+        .filter(r=>!/베이스볼트/.test(r.name))
+        .map(r=>ensureSpecification(r,{size:sz,height:ht,...parseWD(sz)}));
+      const filteredWithAdminPrices = filtered.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(filteredWithAdminPrices);
+    }
+    if(selectedType==="하이랙"){
+      const qty=Number(quantity)||1;
+      const level=parseInt(selectedOptions.level)||5;
+      const size=selectedOptions.size||"";
+      const color=selectedOptions.color||"";
+      const heightValue=selectedOptions.height||"";
+      const formType=selectedOptions.formType||"독립형";
+      const shelfPerLevel=calcHighRackShelfPerLevel(size);
+      const sizeMatch=String(size).replace(/\s+/g,"").match(/(\d+)[xX](\d+)/);
+      const rodBeamNum = sizeMatch ? sizeMatch[2] : "";
+      const shelfNum = sizeMatch ? sizeMatch[1] : "";
+      const weightOnly=extractWeightOnly(color);
+      const pillarQty = formType==="연결형" ? 2*level*qty : 4*qty;
+      const list=[
+        { rackType:selectedType, name:`기둥(${heightValue})`, specification:`높이 ${heightValue}${weightOnly?` ${weightOnly}`:""}`, quantity:pillarQty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, name:`로드빔(${rodBeamNum})`, specification:`${rodBeamNum}${weightOnly?` ${weightOnly}`:""}`, quantity:2*level*qty, unitPrice:0, totalPrice:0 },
+        { rackType:selectedType, name:`선반(${shelfNum})`, specification:`사이즈 ${size}${weightOnly?` ${weightOnly}`:""}`, quantity:shelfPerLevel*level*qty, unitPrice:0, totalPrice:0 },
+        ...makeExtraOptionBOM(),
+      ].map(r=>ensureSpecification(r,{size,height:heightValue,...parseWD(size),weight:weightOnly}));
+      const listWithAdminPrices = list.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(listWithAdminPrices.filter(r=>!/베이스볼트/.test(r.name)));
+    }
+    if(selectedType==="스텐랙"){
+      const heightValue=selectedOptions.height||"";
+      const q=Number(quantity)||1;
+      const sz=selectedOptions.size||"";
+      const sizeFront=(sz.split("x")[0])||sz;
+      const list=[
+        {rackType:selectedType,name:`기둥(${heightValue})`,specification:`높이 ${heightValue}`,quantity:4*q,unitPrice:0,totalPrice:0},
+        {rackType:selectedType,name:`선반(${sizeFront})`,specification:`사이즈 ${sz}`,quantity:(parseInt((selectedOptions.level||"").replace(/[^\d]/g,""))||0)*q,unitPrice:0,totalPrice:0},
+        ...makeExtraOptionBOM(),
+      ].map(r=>ensureSpecification(r,{size:sz,height:heightValue,...parseWD(sz)}));
+      const listWithAdminPrices = list.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(listWithAdminPrices.filter(r=>!/베이스볼트/.test(r.name)));
+    }
+    const extraBOM = makeExtraOptionBOM()
+      .filter(r=>!/베이스볼트/.test(r.name))
+      .map(r=>ensureSpecification(r,{size:r.size}));
+    return extraBOM.map(applyAdminEditPrice);
   };
 
   const calculateCurrentBOM=useCallback(()=> {
-    return [];
+    if(!selectedType||quantity<=0) return [];
+    if(selectedType==="하이랙" && !selectedOptions.formType) return [];
+    if(selectedType==="파렛트랙"||selectedType==="파렛트랙 철판형"){
+      const rec=bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
+      if(rec?.components){
+        const q=Number(quantity)||1;
+        const sz=selectedOptions.size||"";
+        const ht=selectedOptions.height||"";
+        const lvl=parseLevel(selectedOptions.level,selectedType);
+        const {w,d}=parseWD(sz);
+        // 하드웨어 이름(양쪽 표기 변형 포함)
+        const hardwareNames=new Set(["수평브레싱","수평브래싱","경사브레싱","경사브래싱","앙카볼트","브레싱볼트","브러싱고무","브레싱고무","안전핀","베이스(안전좌)"]);
+        const base=rec.components
+          .filter(c=>!hardwareNames.has(normalizePartName(c.name)))
+          .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("철판")))
+          .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("타이빔")))
+          .map(c=>{
+            let nm=normalizePartName(c.name);
+            let spec="";
+            if(nm.includes("기둥")){ nm=`기둥(${ht})`; spec=`높이 ${ht}`; }
+            else if(nm.includes("로드빔")){ nm=`로드빔(${w})`; spec=String(w); }
+            else if(nm.includes("타이빔")){ nm=`타이빔(${d})`; spec=String(d); }
+            else if(nm.includes("선반")){ nm=`선판(${w})`; spec=`사이즈 W${w}xD${d}`; }
+            else if(nm.includes("안전좌")) return null;
+            else if(nm.includes("안전핀")){ nm="안전핀(파렛트랙)"; spec="안전핀"; }
+            else if(nm.includes("받침")){
+              nm=nm.includes("상")?`받침(상)(${d})`:`받침(하)(${d})`; spec=`D${d}`;
+            } else spec=c.specification??"";
+            return {
+              rackType:selectedType,size:sz,name:nm,specification:spec,note:c.note??"",
+              quantity:(Number(c.quantity)||0)*q,
+              unitPrice:Number(c.unit_price)||0,
+              totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*(Number(c.quantity)||0)*q
+            };
+          }).filter(Boolean);
+        if(selectedType==="파렛트랙 철판형"){
+          const frontNumMatch=(sz||"").match(/\d+/);
+          const frontNum=frontNumMatch?frontNumMatch[0]:sz;
+          if(!base.some(p=>p.name.includes("선반("))){
+            const shelfPerLevel=calcPalletIronShelfPerLevel(sz);
+            base.push({
+              rackType:selectedType,size:sz,name:`선반(${frontNum.trim()})`,
+              specification:`사이즈 ${sz}`,quantity:shelfPerLevel*lvl*q,
+              unitPrice:0,totalPrice:0
+            });
+          }
+        }
+        if(!base.some(b=>b.name.startsWith("안전핀"))){
+          base.push({
+            rackType:selectedType,size:sz,name:"안전핀(파렛트랙)",specification:"안전핀",
+            note:"",quantity:2*lvl*2*q,unitPrice:0,totalPrice:0
+          });
+        }
+        appendCommonHardwareIfMissing(base,q);
+        const finalized=[...base,...makeExtraOptionBOM()]
+          .filter(r=>!/베이스볼트/.test(r.name))
+          .map(r=>ensureSpecification(r,{size:sz,height:ht,...parseWD(sz)}));
+        const finalizedWithAdminPrices = finalized.map(applyAdminEditPrice);
+        return sortBOMByMaterialRule(finalizedWithAdminPrices);
+      }
+      return getFallbackBOM();
+    }
+    if(selectedType==="하이랙"||selectedType==="스텐랙"){
+      return getFallbackBOM();
+    }
+    if(["경량랙","중량랙"].includes(selectedType)){
+      if(selectedType==="경량랙"&&selectedOptions.height==="H750") return makeLightRackH750BOM();
+      const rec=bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
+      const q=Number(quantity)||1;
+      const sz=selectedOptions.size||"";
+      const ht=selectedOptions.height||"";
+      const sizeMatch=sz.match(/W?(\d+)[xX]D?(\d+)/i)||[];
+      const W_num=sizeMatch[1]||"";
+      const D_num=sizeMatch[2]||"";
+      const base=(rec?.components||[]).map(c=>{
+        let name=normalizePartName(c.name);
+        let specification=c.specification??"";
+        if(name.includes("기둥")){ name=`기둥(${ht})`; specification=`높이 ${ht}`; }
+        else if(name.includes("받침")){ name=name.includes("상")?`받침(상)(${D_num})`:`받침(하)(${D_num})`; specification=`D${D_num}`; }
+        else if(name.includes("연결대")){ name=`연결대(${W_num})`; specification=`W${W_num}`; }
+        else if(name.includes("선반")){ name=`선반(${W_num})`; specification=`사이즈 W${W_num}xD${D_num}`; }
+        else if(name.includes("안전좌")){ name=`안전좌(${selectedType})`; specification=selectedType; }
+        else if(name.includes("안전핀")){ name=`안전핀(${selectedType})`; specification=selectedType; }
+        else if(!specification && /\d/.test(name)){ specification=`사이즈 ${sz}`; }
+        const row={
+          rackType:selectedType,size:sz,name,specification,note:c.note??"",
+          quantity:(Number(c.quantity)||0)*q,
+          unitPrice:Number(c.unit_price)||0,
+          totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*(Number(c.quantity)||0)*q
+        };
+        return ensureSpecification(row,{size:sz,height:ht,...parseWD(sz)});
+      });
+      const baseWithAdminPrices = base.map(applyAdminEditPrice);
+      return sortBOMByMaterialRule(
+        [...baseWithAdminPrices,...makeExtraOptionBOM()].filter(r=>!/베이스볼트/.test(r.name))
+      );
+    }
+    const extraBOM = makeExtraOptionBOM()
+      .filter(r=>!/베이스볼트/.test(r.name))
+      .map(r=>ensureSpecification(r,{size:r.size}));
+    return extraBOM.map(applyAdminEditPrice);
   },[selectedType,selectedOptions,quantity,customPrice,bomData,extraOptionsSel,extraProducts,customMaterials]);
 
   const handleOptionChange=(k,v)=>{
