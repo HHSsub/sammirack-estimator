@@ -641,8 +641,10 @@ export default function MaterialPriceManager({ currentUser }) {
   };
 
   const handleGoBack = () => {
+    // 디버깅용 로그 추가
+    console.log('이전단계 버튼 클릭:', currentStep, selections);
+  
     try {
-      // 타입별 단계 순서 정의
       const getStepsForType = (type) => {
         if (formTypeRacks.includes(type)) {
           return ['type', 'size', 'height', 'level', 'formType'];
@@ -662,11 +664,16 @@ export default function MaterialPriceManager({ currentUser }) {
         // 이전 단계의 값만 남기고, 그 뒤는 모두 초기화
         const newSelections = { ...selections };
         for (let i = currentStepIndex; i < steps.length; i++) {
-          newSelections[steps[i]] = ''; // 현재단계 포함 이후 모두 초기화
+          newSelections[steps[i]] = '';
         }
         setSelections(newSelections);
         setCurrentStep(prevStep);
-        setMaterialList([]); // BOM도 초기화
+        setMaterialList([]);
+        // 디버깅 로그
+        console.log('이전단계로 이동:', prevStep, newSelections);
+      } else {
+        // 첫 단계에서는 동작 안 함
+        console.log('이전단계 불가: 이미 첫 단계임', currentStep, selections);
       }
     } catch (error) {
       console.error('이전 단계로 이동 실패:', error);
