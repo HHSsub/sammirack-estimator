@@ -876,7 +876,7 @@ export default function MaterialPriceManager({ currentUser }) {
 
       {editingPart && (
         <AdminPriceEditor
-          part={editingPart}
+          item={editingPart}
           onClose={() => setEditingPart(null)}
           onSave={handlePriceSaved}
           currentAdminPrices={adminPrices}
