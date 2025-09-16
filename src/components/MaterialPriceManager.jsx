@@ -433,31 +433,58 @@ export default function MaterialPriceManager({ currentUser }) {
   const generateBOM = (rackType, options) => {
     let components = [];
     try {
-      // 데이터 접근용 height
-      const dataHeight = rackType === "경량랙" && options.height === "H750" ? "H900" : options.height;
-      const rec = bomData?.[rackType]?.[options.size]?.[dataHeight]?.[options.level]?.[options.formType];
-      if (rec?.components) {
-        components = rec.components.map(c => ({
-          rackType,
-          // name, specification에 options.height 사용
-          name: c.name.includes('기둥') ? `기둥(${options.height.replace(/[A-Za-z]/g, '')})` : c.name,
-          specification: c.specification ? c.specification.replace(dataHeight, options.height) : '',
-          quantity: Number(c.quantity) || 0,
-          unitPrice: Number(c.unit_price) || 0,
-          totalPrice: Number(c.total_price) || (Number(c.unit_price) || 0) * (Number(c.quantity) || 0),
-          note: c.note || ''
-        }));
-      }
-      }
-      
-      if (components.length === 0) {
-        components = generateFallbackBOM(rackType, options);
+      if (formTypeRacks.includes(rackType) && options.size && options.height && options.level && options.formType) {
+        // 내부 데이터 접근용 height (경량랙 H750은 H900으로)
+        const dataHeight = rackType === "경량랙" && options.height === "H750" ? "H900" : options.height;
+        const rec = bomData?.[rackType]?.[options.size]?.[dataHeight]?.[options.level]?.[options.formType];
+  
+        if (rec?.components) {
+          // name/specification에 반드시 사용자 선택값(options.height) 사용!
+          components = rec.components.map(c => ({
+            rackType,
+            name: c.name.includes('기둥') ? `기둥(${options.height.replace(/[A-Za-z]/g, '')})` : c.name,
+            specification: c.specification ? c.specification.replace(dataHeight, options.height) : '',
+            quantity: Number(c.quantity) || 0,
+            unitPrice: Number(c.unit_price) || 0,
+            totalPrice: Number(c.total_price) || (Number(c.unit_price) || 0) * (Number(c.quantity) || 0),
+            note: c.note || ''
+          }));
+        }
+      } else if (rackType === "하이랙" && options.size && options.height && options.level && options.formType && options.color) {
+        // 하이랙도 동일하게 처리
+        const rec = bomData?.[rackType]?.[options.size]?.[options.height]?.[options.level]?.[options.formType]?.[options.color];
+        if (rec?.components) {
+          components = rec.components.map(c => ({
+            rackType,
+            name: c.name,
+            specification: c.specification,
+            quantity: Number(c.quantity) || 0,
+            unitPrice: Number(c.unit_price) || 0,
+            totalPrice: Number(c.total_price) || (Number(c.unit_price) || 0) * (Number(c.quantity) || 0),
+            note: c.note || ''
+          }));
+        }
+      } else if (rackType === "스텐랙" && options.size && options.height && options.level) {
+        const rec = bomData?.[rackType]?.[options.size]?.[options.height]?.[options.level];
+        if (rec?.components) {
+          components = rec.components.map(c => ({
+            rackType,
+            name: c.name,
+            specification: c.specification,
+            quantity: Number(c.quantity) || 0,
+            unitPrice: Number(c.unit_price) || 0,
+            totalPrice: Number(c.total_price) || (Number(c.unit_price) || 0) * (Number(c.quantity) || 0),
+            note: c.note || ''
+          }));
+        }
       }
     } catch (error) {
       console.error('BOM 생성 실패:', error);
+    }
+    // fallback은 반드시 try-catch 바깥에서!
+    if (components.length === 0) {
       components = generateFallbackBOM(rackType, options);
     }
-    
     return components;
   };
 
