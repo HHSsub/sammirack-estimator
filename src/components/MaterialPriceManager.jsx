@@ -641,7 +641,6 @@ export default function MaterialPriceManager({ currentUser }) {
   };
 
   const handleGoBack = () => {
-    // 디버깅용 로그 추가
     console.log('이전단계 버튼 클릭:', currentStep, selections);
   
     try {
@@ -657,10 +656,18 @@ export default function MaterialPriceManager({ currentUser }) {
       };
   
       const steps = getStepsForType(selections.type);
-      const currentStepIndex = steps.indexOf(currentStep);
+      let currentStepIndex = steps.indexOf(currentStep);
+      let prevStep = null;
   
-      if (currentStepIndex > 0) {
-        const prevStep = steps[currentStepIndex - 1];
+      // 견적완료단계('complete')에서는 마지막 옵션단계를 이전단계로!
+      if (currentStep === 'complete') {
+        currentStepIndex = steps.length; // 마지막단계 다음
+        prevStep = steps[steps.length - 1];
+      } else if (currentStepIndex > 0) {
+        prevStep = steps[currentStepIndex - 1];
+      }
+  
+      if (prevStep) {
         // 이전 단계의 값만 남기고, 그 뒤는 모두 초기화
         const newSelections = { ...selections };
         for (let i = currentStepIndex; i < steps.length; i++) {
@@ -669,7 +676,6 @@ export default function MaterialPriceManager({ currentUser }) {
         setSelections(newSelections);
         setCurrentStep(prevStep);
         setMaterialList([]);
-        // 디버깅 로그
         console.log('이전단계로 이동:', prevStep, newSelections);
       } else {
         // 첫 단계에서는 동작 안 함
@@ -679,7 +685,6 @@ export default function MaterialPriceManager({ currentUser }) {
       console.error('이전 단계로 이동 실패:', error);
     }
   };
-
   const handleReset = () => {
     setSelections({
       type: '',
