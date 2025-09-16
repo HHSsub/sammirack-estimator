@@ -180,7 +180,7 @@ export default function MaterialPriceManager({ currentUser }) {
             Object.keys(heightData).forEach(level => allLevels.add(level));
           });
         });
-        for (let i = 1; i <= 9; i++) {
+        for (let i = 2; i <= 9; i++) {
           allLevels.add(`L${i}`);
         }
         levels = Array.from(allLevels);
@@ -625,7 +625,7 @@ export default function MaterialPriceManager({ currentUser }) {
               Object.keys(heightData).forEach(level => allLevels.add(level));
             });
           });
-          for (let i = 1; i <= 9; i++) {
+          for (let i = 2; i <= 9; i++) {
             allLevels.add(`L${i}`);
           }
           levels = Array.from(allLevels);
