@@ -434,24 +434,38 @@ export default function MaterialPriceManager({ currentUser }) {
     let components = [];
     try {
       if (formTypeRacks.includes(rackType) && options.size && options.height && options.level && options.formType) {
-        // 내부 데이터 접근용 height (경량랙 H750은 H900으로)
+        // 데이터 접근용 height
         const dataHeight = rackType === "경량랙" && options.height === "H750" ? "H900" : options.height;
         const rec = bomData?.[rackType]?.[options.size]?.[dataHeight]?.[options.level]?.[options.formType];
-  
         if (rec?.components) {
-          // name/specification에 반드시 사용자 선택값(options.height) 사용!
-          components = rec.components.map(c => ({
-            rackType,
-            name: c.name.includes('기둥') ? `기둥(${options.height.replace(/[A-Za-z]/g, '')})` : c.name,
-            specification: c.specification ? c.specification.replace(dataHeight, options.height) : '',
-            quantity: Number(c.quantity) || 0,
-            unitPrice: Number(c.unit_price) || 0,
-            totalPrice: Number(c.total_price) || (Number(c.unit_price) || 0) * (Number(c.quantity) || 0),
-            note: c.note || ''
-          }));
+          components = rec.components.map(c => {
+            // name/specification 규칙을 옵션값에 맞게 통일
+            let spec = c.specification || '';
+            let name = c.name;
+            if (name.includes('기둥')) {
+              // 기둥: 높이 H750
+              spec = `높이 ${options.height}`;
+              // 혹시 name이 '기둥(H900)'처럼 내부 데이터 높이로 나오면 옵션값으로 고침
+              name = `기둥(${options.height.replace(/[A-Za-z]/g, '')})`;
+            } else if (name.includes('선반')) {
+              // 선반: 사이즈 W1200xD450 등
+              spec = `사이즈 ${options.size}`;
+              name = `선반(${options.size})`;
+            }
+            // 원하는 경우 기타 부품 규칙도 추가
+            return {
+              rackType,
+              name,
+              specification: spec,
+              quantity: Number(c.quantity) || 0,
+              unitPrice: Number(c.unit_price) || 0,
+              totalPrice: Number(c.total_price) || (Number(c.unit_price) || 0) * (Number(c.quantity) || 0),
+              note: c.note || ''
+            };
+          });
         }
       } else if (rackType === "하이랙" && options.size && options.height && options.level && options.formType && options.color) {
-        // 하이랙도 동일하게 처리
+        // 하이랙도 옵션값 기준으로 name/specification 통일 (필요시 규칙 추가)
         const rec = bomData?.[rackType]?.[options.size]?.[options.height]?.[options.level]?.[options.formType]?.[options.color];
         if (rec?.components) {
           components = rec.components.map(c => ({
@@ -491,18 +505,17 @@ export default function MaterialPriceManager({ currentUser }) {
   const generateFallbackBOM = (rackType, options) => {
     const components = [];
     const qty = 1;
-    
+  
     if (rackType === "경량랙") {
       const size = options.size || "50x90";
       const height = options.height || "H900";
       const level = parseInt((options.level || "L3").replace(/[^\d]/g, "")) || 3;
       const formType = options.formType || "독립형";
-      
       const isConn = formType === "연결형";
       const pillarQty = isConn ? 2 * qty : 4 * qty;
-      
+  
       components.push(
-        { rackType, name: `기둥(${height})`, specification: `높이 ${height}`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
+        { rackType, name: `기둥(${height.replace(/[A-Za-z]/g, '')})`, specification: `높이 ${height}`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `연결대`, specification: `연결대`, quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `받침(상)`, specification: `받침`, quantity: 2 * qty, unitPrice: 0, totalPrice: 0 },
@@ -515,12 +528,11 @@ export default function MaterialPriceManager({ currentUser }) {
       const height = options.height || "H1200";
       const level = parseInt((options.level || "L3").replace(/[^\d]/g, "")) || 3;
       const formType = options.formType || "독립형";
-      
       const isConn = formType === "연결형";
       const pillarQty = isConn ? 2 * qty : 4 * qty;
-      
+  
       components.push(
-        { rackType, name: `기둥(${height})`, specification: `높이 ${height}`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
+        { rackType, name: `기둥(${height.replace(/[A-Za-z]/g, '')})`, specification: `높이 ${height}`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `받침(상)`, specification: `받침`, quantity: 2 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `받침(하)`, specification: `받침`, quantity: 2 * qty, unitPrice: 0, totalPrice: 0 }
@@ -530,15 +542,13 @@ export default function MaterialPriceManager({ currentUser }) {
       const height = options.height || "H4500";
       const level = options.level || "L3";
       const formType = options.formType || "독립형";
-      
       const lvl = parseInt(level.replace(/[^\d]/g, "")) || 3;
-      
+  
       components.push(
-        { rackType, name: `기둥(${height})`, specification: `높이 ${height}`, quantity: (formType === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType, name: `기둥(${height.replace(/[A-Za-z]/g, '')})`, specification: `높이 ${height}`, quantity: (formType === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `로드빔`, specification: `로드빔`, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `안전핀`, specification: `안전핀`, quantity: 4 * lvl * qty, unitPrice: 0, totalPrice: 0 }
       );
-      
       if (rackType === "파렛트랙") {
         components.push({ rackType, name: `타이빔`, specification: `타이빔`, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 });
       } else {
@@ -549,7 +559,7 @@ export default function MaterialPriceManager({ currentUser }) {
       const height = options.height || "150";
       const level = parseInt((options.level || "3단").replace(/[^\d]/g, "")) || 3;
       const color = options.color || "550kg 블루";
-      
+  
       components.push(
         { rackType, name: `기둥(${height})`, specification: `높이 ${height} ${color}`, quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size} ${color}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 },
@@ -559,13 +569,12 @@ export default function MaterialPriceManager({ currentUser }) {
       const size = options.size || "50x120";
       const height = options.height || "150";
       const level = parseInt((options.level || "4단").replace(/[^\d]/g, "")) || 4;
-      
+  
       components.push(
         { rackType, name: `기둥(${height})`, specification: `높이 ${height}`, quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 }
       );
     }
-    
     return components;
   };
 
