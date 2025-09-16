@@ -82,14 +82,15 @@ export default function MaterialPriceManager({ currentUser }) {
 
   // 2. goback 전용 useEffect (파일 중간, 기존 useEffect들 아래쪽에 추가)
   useEffect(() => {
-    if (backwardStep) {
-      calculateAvailableOptionsForStep(backwardStep, selections); // goback용 옵션 계산
-      setBackwardStep(null);
-    } else {
-      calculateAvailableOptions(); // 기존 옵션 진행
+    if (goBackStep) {
+      calculateAvailableOptionsForStep(goBackStep, selections);
+      setGoBackStep(null);
+      calculateBOM();
+      return;
     }
+    calculateAvailableOptions();
     calculateBOM();
-  }, [selections, bomData, allData, backwardStep]);
+  }, [selections, bomData, allData, goBackStep]);
 
   const loadAdminPrices = () => {
     try {
@@ -212,8 +213,8 @@ export default function MaterialPriceManager({ currentUser }) {
             Object.keys(heightData).forEach(level => allLevels.add(level));
           });
         });
-        // 기존처럼 L2~L9 추가 (이 부분도 필요 없다면 삭제 가능)
-        for (let i = 2; i <= 9; i++) {
+        // 기존처럼 L1~L9 추가 (이 부분도 필요 없다면 삭제 가능)
+        for (let i = 1; i <= 9; i++) {
           allLevels.add(`L${i}`);
         }
         levels = Array.from(allLevels);
@@ -666,32 +667,35 @@ export default function MaterialPriceManager({ currentUser }) {
   };
 
   // 이전단계 버튼 로직 완전판
+  // 1. 이전단계 버튼 함수 전체
   const handleGoBack = () => {
     const steps = getStepsForType(selections.type);
     let currentStepIndex = steps.indexOf(currentStep);
     let prevStep = null;
+
     if (currentStep === 'complete') {
       currentStepIndex = steps.length;
       prevStep = steps[steps.length - 1];
     } else if (currentStepIndex > 0) {
       prevStep = steps[currentStepIndex - 1];
     }
+
     if (prevStep) {
+      // 이전 단계 이후 값 초기화
       const newSelections = { ...selections };
       for (let i = currentStepIndex; i < steps.length; i++) {
         newSelections[steps[i]] = '';
       }
-      setSelections(newSelections);
-      setCurrentStep(prevStep);
-      setMaterialList([]);
-      setBackwardStep(prevStep); // << goback 핵심: 다음 옵션 진행을 막기 위해 플래그 세팅
+      setSelections(newSelections);        // 선택값 변경
+      setCurrentStep(prevStep);            // 단계 변경
+      setMaterialList([]);                 // BOM 초기화
+      setGoBackStep(prevStep);             // 이전단계 옵션 강제 세팅 플래그
     }
   };
-  
-  // 옵션 버튼 UI를 특정 단계/선택값으로 강제 재계산하는 함수
+
+  // 2. 이전단계/특정 단계 옵션 생성 함수 전체
   function calculateAvailableOptionsForStep(step, selections) {
     const opts = { type: [], size: [], height: [], level: [], formType: [], color: [] };
-    // 1단계: 타입 선택
     opts.type = allTypes;
 
     if (step === 'type' || !selections.type) {
@@ -700,28 +704,55 @@ export default function MaterialPriceManager({ currentUser }) {
       return;
     }
 
-    // 2단계: 분기
     if (["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형"].includes(selections.type)) {
       const bd = bomData[selections.type] || {};
 
+      // 2단계: 사이즈
       if (step === 'size' || !selections.size) {
         opts.size = Object.keys(bd);
         setAvailableOptions(opts);
         setCurrentStep('size');
         return;
       }
+      // 3단계: 높이
       if (step === 'height' || !selections.height) {
         opts.height = Object.keys(bd[selections.size] || {});
         setAvailableOptions(opts);
         setCurrentStep('height');
         return;
       }
+      // 4단계: 단수
       if (step === 'level' || !selections.level) {
-        opts.level = Object.keys(bd[selections.size]?.[selections.height] || {});
+        let levelsFromBom;
+        if (selections.type === "경량랙" && selections.height === "H750") {
+          levelsFromBom = Object.keys(bd[selections.size]?.["H900"] || {});
+        } else {
+          levelsFromBom = Object.keys(bd[selections.size]?.[selections.height] || {});
+        }
+
+        let levels;
+        if (selections.type === "파렛트랙" || selections.type === "파렛트랙 철판형") {
+          levels = levelsFromBom.filter(l => ["L1", "L2", "L3", "L4", "L5", "L6"].includes(l));
+        } else {
+          const allLevels = new Set();
+          levelsFromBom.forEach(level => allLevels.add(level));
+          Object.values(bd).forEach(sizeData => {
+            Object.values(sizeData).forEach(heightData => {
+              Object.keys(heightData).forEach(level => allLevels.add(level));
+            });
+          });
+          for (let i = 1; i <= 9; i++) {
+            allLevels.add(`L${i}`);
+          }
+          levels = Array.from(allLevels);
+        }
+
+        opts.level = sortLevels(levels);
         setAvailableOptions(opts);
         setCurrentStep('level');
         return;
       }
+      // 5단계: 형식
       if (step === 'formType' || !selections.formType) {
         opts.formType = Object.keys(bd[selections.size]?.[selections.height]?.[selections.level] || {});
         setAvailableOptions(opts);
@@ -793,6 +824,9 @@ export default function MaterialPriceManager({ currentUser }) {
     setAvailableOptions(opts);
     setCurrentStep('type');
   }
+
+  // ... (나머지 기존 코드 및 렌더링 함수 등은 그대로)
+}
   
   const handleReset = () => {
     setSelections({
