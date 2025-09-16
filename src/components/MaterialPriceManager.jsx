@@ -668,7 +668,6 @@ export default function MaterialPriceManager({ currentUser }) {
       }
   
       if (prevStep) {
-        // 이전 단계의 값만 남기고, 그 뒤는 모두 초기화
         const newSelections = { ...selections };
         for (let i = currentStepIndex; i < steps.length; i++) {
           newSelections[steps[i]] = '';
@@ -676,15 +675,21 @@ export default function MaterialPriceManager({ currentUser }) {
         setSelections(newSelections);
         setCurrentStep(prevStep);
         setMaterialList([]);
+        // **추가: 옵션/화면 재계산**
+        setTimeout(() => {
+          calculateAvailableOptions();
+          calculateBOM();
+        }, 0);
         console.log('이전단계로 이동:', prevStep, newSelections);
       } else {
-        // 첫 단계에서는 동작 안 함
         console.log('이전단계 불가: 이미 첫 단계임', currentStep, selections);
       }
     } catch (error) {
       console.error('이전 단계로 이동 실패:', error);
     }
   };
+
+  
   const handleReset = () => {
     setSelections({
       type: '',
