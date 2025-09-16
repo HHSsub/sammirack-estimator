@@ -157,17 +157,18 @@ export default function MaterialPriceManager({ currentUser }) {
       return;
     }
 
-    // 3단계: 높이 선택
+    // 3단계: 높이 선택에서 추가 옵션 보완
     if (!selections.height) {
       const allHeights = new Set();
       
+      // BOM 데이터에서 높이 추출
       if (bd[selections.size]) {
         Object.keys(bd[selections.size]).forEach(height => allHeights.add(height));
       }
       
-      Object.values(bd).forEach(sizeData => {
-        Object.keys(sizeData).forEach(height => allHeights.add(height));
-      });
+      // 추가 높이 옵션들 (OptionSelector와 동기화)
+      const extraHeights = getExtraOptions(selections.type, 'height');
+      extraHeights.forEach(height => allHeights.add(height));
       
       opts.height = sortHeights(Array.from(allHeights));
       setCurrentStep('height');
@@ -185,14 +186,17 @@ export default function MaterialPriceManager({ currentUser }) {
         const levelsFromBom = Object.keys(bd[selections.size]?.[selections.height] || {});
         levelsFromBom.forEach(level => allLevels.add(level));
       }
-      
+      // BOM 데이터에서 다른 조합들의 단수도 추가
       Object.values(bd).forEach(sizeData => {
         Object.values(sizeData).forEach(heightData => {
-          Object.keys(heightData).forEach(level => allLevels.add(level));
+          Object.keys(heightData).forEach(level => {
+            // formTypeRacks는 L형식만 허용 (한글 단수 제외)
+            if (level.startsWith('L')) {
+              allLevels.add(level);
+            }
+          });
         });
       });
-      
-      ["2단", "3단", "4단", "5단", "6단"].forEach(level => allLevels.add(level));
       
       opts.level = sortLevels(Array.from(allLevels));
       setCurrentStep('level');
@@ -248,6 +252,11 @@ export default function MaterialPriceManager({ currentUser }) {
           allSizes.add(displaySize);
         }
       });
+      
+      // 550kg 색상의 경우 80x200 옵션 추가 (80x266으로 매핑)
+      if (isHeaviest) {
+        allSizes.add("80x200"); // 이것이 HIGHRACK_550_ALIAS_DATA_FROM_VIEW에서 80x266으로 변환됨
+      }
       
       opts.size = sortSizes(Array.from(allSizes));
       setCurrentStep('size');
@@ -516,11 +525,23 @@ export default function MaterialPriceManager({ currentUser }) {
   };
 
   const generatePartId = (item) => {
+  try {
     const { rackType, name, specification } = item;
-    const cleanName = (name || '').replace(/[^가-힣0-9a-zA-Z]/g, ''); // 한글, 숫자, 영문만 허용
-    const cleanSpec = (specification || '').replace(/[^가-힣0-9a-zA-Z]/g, ''); // 한글, 숫자, 영문만 허용
-    return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-  };
+    const cleanName = (name || '').replace(/[^가-힣0-9a-zA-Z\s]/g, ''); // 공백 허용
+    const cleanSpec = (specification || '').replace(/[^가-힣0-9a-zA-Z\s]/g, ''); // 공백 허용
+    
+    // 안전한 ID 생성
+    const partId = `${rackType || 'unknown'}-${cleanName || 'noname'}-${cleanSpec || 'nospec'}`
+      .toLowerCase()
+      .replace(/\s+/g, '_') // 공백을 언더스코어로 변환
+      .replace(/_{2,}/g, '_'); // 연속된 언더스코어 제거
+    
+    return partId;
+  } catch (error) {
+    console.error('부품 ID 생성 오류:', error);
+    return `fallback-${Date.now()}`; // 폴백 ID
+  }
+};
 
   const applyAdminEditPrice = (item) => {
     try {
@@ -569,19 +590,35 @@ export default function MaterialPriceManager({ currentUser }) {
   };
 
   const handleGoBack = () => {
-    const steps = ['type', 'color', 'size', 'height', 'level', 'formType'];
-    let currentStepIndex = steps.indexOf(currentStep);
+    const formTypeSteps = ['type', 'size', 'height', 'level', 'formType'];
+    const highRackSteps = ['type', 'color', 'size', 'height', 'level', 'formType'];
+    const steelRackSteps = ['type', 'size', 'height', 'level'];
+    
+    let steps = [];
+    if (formTypeRacks.includes(selections.type)) {
+      steps = formTypeSteps;
+    } else if (selections.type === '하이랙') {
+      steps = highRackSteps;
+    } else if (selections.type === '스텐랙') {
+      steps = steelRackSteps;
+    } else {
+      steps = ['type'];
+    }
+    
+    const currentStepIndex = steps.indexOf(currentStep);
     
     if (currentStepIndex > 0) {
       const prevStep = steps[currentStepIndex - 1];
       const newSelections = { ...selections };
       
+      // 현재 단계부터 뒤의 모든 선택사항 초기화
       for (let i = currentStepIndex; i < steps.length; i++) {
         newSelections[steps[i]] = '';
       }
       
       setSelections(newSelections);
       setCurrentStep(prevStep);
+      setMaterialList([]); // BOM 리스트도 초기화
     }
   };
 
