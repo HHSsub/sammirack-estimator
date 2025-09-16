@@ -62,25 +62,16 @@ export default function MaterialPriceManager({ currentUser }) {
   const [availableOptions, setAvailableOptions] = useState({});
   const [allTypes, setAllTypes] = useState([]);
   const [materialList, setMaterialList] = useState([]);
-  const [backwardStep, setBackwardStep] = useState(null); // << 추가 위치 (다른 useState와 나란히)
+  const [goBackStep, setGoBackStep] = useState(null);
 
-  // 관리자 수정 단가 로드
   useEffect(() => {
     loadAdminPrices();
   }, []);
 
-  // 데이터 로드
   useEffect(() => {
     loadData();
   }, []);
 
-  // 선택 변경시 다음 단계 옵션 계산
-  useEffect(() => {
-    calculateAvailableOptions();
-    calculateBOM();
-  }, [selections, bomData, allData]);
-
-  // 2. goback 전용 useEffect (파일 중간, 기존 useEffect들 아래쪽에 추가)
   useEffect(() => {
     if (goBackStep) {
       calculateAvailableOptionsForStep(goBackStep, selections);
@@ -116,7 +107,6 @@ export default function MaterialPriceManager({ currentUser }) {
       setBomData(bomDataResult);
       setAllData(dataResult);
       
-      // 타입 목록 설정 (순서 고정)
       const canonical = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형", "하이랙", "스텐랙"];
       const fromBom = Object.keys(bomDataResult || {});
       const fromData = Object.keys(dataResult || {});
@@ -131,17 +121,12 @@ export default function MaterialPriceManager({ currentUser }) {
 
   const calculateAvailableOptions = () => {
     const opts = { type: [], size: [], height: [], level: [], formType: [], color: [] };
-    
-    // 1단계: 타입 선택
     opts.type = allTypes;
-    
     if (!selections.type) {
       setAvailableOptions(opts);
       setCurrentStep('type');
       return;
     }
-
-    // 2단계부터는 타입별로 분기
     if (formTypeRacks.includes(selections.type)) {
       calculateFormTypeRackOptions(opts);
     } else if (selections.type === '하이랙') {
@@ -149,49 +134,34 @@ export default function MaterialPriceManager({ currentUser }) {
     } else if (selections.type === '스텐랙') {
       calculateSteelRackOptions(opts);
     }
-
     setAvailableOptions(opts);
   };
 
   const calculateFormTypeRackOptions = (opts) => {
     const bd = bomData[selections.type] || {};
-    
-    // 2단계: 사이즈 선택
     if (!selections.size) {
       const allSizes = new Set();
       Object.keys(bd).forEach(size => allSizes.add(size));
-      
-      // 추가 옵션 포함
       const extraSizes = getExtraOptions(selections.type, 'size');
       extraSizes.forEach(size => allSizes.add(size));
-      
       opts.size = sortSizes(Array.from(allSizes));
       setCurrentStep('size');
       return;
     }
-
-    // 3단계: 높이 선택
     if (!selections.height) {
       const allHeights = new Set();
-      
       if (bd[selections.size]) {
         Object.keys(bd[selections.size]).forEach(height => allHeights.add(height));
       }
-      
       Object.values(bd).forEach(sizeData => {
         Object.keys(sizeData).forEach(height => allHeights.add(height));
       });
-      
-      // 추가 옵션 포함
       const extraHeights = getExtraOptions(selections.type, 'height');
       extraHeights.forEach(height => allHeights.add(height));
-      
       opts.height = sortHeights(Array.from(allHeights));
       setCurrentStep('height');
       return;
     }
-
-    // 4단계: 단수 선택
     if (!selections.level) {
       let levelsFromBom;
       if (selections.type === "경량랙" && selections.height === "H750") {
@@ -199,13 +169,10 @@ export default function MaterialPriceManager({ currentUser }) {
       } else {
         levelsFromBom = Object.keys(bd[selections.size]?.[selections.height] || {});
       }
-
-      // 파렛트랙 계열만 L1~L6만 남기고, 나머지는 전부 기존데이터 다 허용
       let levels;
       if (selections.type === "파렛트랙" || selections.type === "파렛트랙 철판형") {
         levels = levelsFromBom.filter(l => ["L1", "L2", "L3", "L4", "L5", "L6"].includes(l));
       } else {
-        // 기존처럼 모든 단수 허용
         const allLevels = new Set();
         levelsFromBom.forEach(level => allLevels.add(level));
         Object.values(bd).forEach(sizeData => {
@@ -213,58 +180,44 @@ export default function MaterialPriceManager({ currentUser }) {
             Object.keys(heightData).forEach(level => allLevels.add(level));
           });
         });
-        // 기존처럼 L1~L9 추가 (이 부분도 필요 없다면 삭제 가능)
         for (let i = 1; i <= 9; i++) {
           allLevels.add(`L${i}`);
         }
         levels = Array.from(allLevels);
       }
-
       opts.level = sortLevels(levels);
       setCurrentStep('level');
       return;
     }
-
-    // 5단계: 형식 선택
     if (!selections.formType) {
       const allFormTypes = new Set(["독립형", "연결형"]);
-      
       const height = selections.type === "경량랙" && selections.height === "H750" ? "H900" : selections.height;
       const formTypes = Object.keys(bd[selections.size]?.[height]?.[selections.level] || {});
       formTypes.forEach(ft => allFormTypes.add(ft));
-      
       opts.formType = Array.from(allFormTypes);
       setCurrentStep('formType');
       return;
     }
-
     setCurrentStep('complete');
   };
 
   const calculateHighRackOptions = (opts) => {
     const rd = allData["하이랙"] || {};
-    
-    // 2단계: 색상 선택
     if (!selections.color) {
       const allColors = new Set();
-      
       if (rd["색상"]) {
         rd["색상"].forEach(color => allColors.add(color));
       }
-      
       opts.color = Array.from(allColors);
       setCurrentStep('color');
       return;
     }
-
-    // 3단계: 사이즈 선택
     if (!selections.size) {
       const allSizes = new Set();
       const color = selections.color;
       const weightOnly = extractWeightOnly(color);
       const hide45 = ["450kg", "550kg", "700kg"].includes(weightOnly);
       const isHeaviest = /(550kg|700kg)$/.test(color);
-      
       const rawSizes = Object.keys(rd["기본가격"]?.[color] || {});
       rawSizes.forEach(s => {
         const displaySize = isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s] 
@@ -274,25 +227,18 @@ export default function MaterialPriceManager({ currentUser }) {
           allSizes.add(displaySize);
         }
       });
-      
-      // 하이랙 550kg, 700kg의 경우 80x200 추가
       if (isHeaviest) {
         allSizes.add("80x200");
       }
-      
       opts.size = sortSizes(Array.from(allSizes));
       setCurrentStep('size');
       return;
     }
-
-    // 4단계: 높이 선택
     if (!selections.height) {
       opts.height = [...HIGH_RACK_HEIGHTS];
       setCurrentStep('height');
       return;
     }
-
-    // 5단계: 단수 선택
     if (!selections.level) {
       const allLevels = new Set();
       const color = selections.color;
@@ -300,82 +246,57 @@ export default function MaterialPriceManager({ currentUser }) {
       const sizeKey = isHeaviest
         ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selections.size] || selections.size
         : selections.size;
-      
       const levelKeys = Object.keys(rd["기본가격"]?.[color]?.[sizeKey]?.[selections.height] || {});
       levelKeys.forEach(level => allLevels.add(level));
-      
-      // 하이랙에서는 한글 단수 사용
       ["1단", "2단", "3단", "4단", "5단", "6단"].forEach(level => allLevels.add(level));
-      
       opts.level = sortLevels(Array.from(allLevels));
       setCurrentStep('level');
       return;
     }
-
-    // 6단계: 형식 선택
     if (!selections.formType) {
       opts.formType = ["독립형", "연결형"];
       setCurrentStep('formType');
       return;
     }
-
     setCurrentStep('complete');
   };
 
   const calculateSteelRackOptions = (opts) => {
     const rd = allData["스텐랙"] || {};
-    
-    // 2단계: 사이즈 선택
     if (!selections.size) {
       const allSizes = new Set();
-      
       Object.keys(rd["기본가격"] || {}).forEach(size => allSizes.add(size));
       ["50x75", "50x90", "50x120", "50x150", "50x180"].forEach(size => allSizes.add(size));
-      
       opts.size = sortSizes(Array.from(allSizes));
       setCurrentStep('size');
       return;
     }
-
-    // 3단계: 높이 선택
     if (!selections.height) {
       const allHeights = new Set();
-      
       const heightsFromData = Object.keys(rd["기본가격"]?.[selections.size] || {});
       heightsFromData.forEach(height => allHeights.add(height));
-      
       Object.values(rd["기본가격"] || {}).forEach(sizeData => {
         Object.keys(sizeData).forEach(height => allHeights.add(height));
       });
-      
       ["75", "90", "120", "150", "180", "210"].forEach(height => allHeights.add(height));
-      
       opts.height = sortHeights(Array.from(allHeights));
       setCurrentStep('height');
       return;
     }
-
-    // 4단계: 단수 선택
     if (!selections.level) {
       const allLevels = new Set();
-      
       const levelsFromData = Object.keys(rd["기본가격"]?.[selections.size]?.[selections.height] || {});
       levelsFromData.forEach(level => allLevels.add(level));
-      
       Object.values(rd["기본가격"] || {}).forEach(sizeData => {
         Object.values(sizeData).forEach(heightData => {
           Object.keys(heightData).forEach(level => allLevels.add(level));
         });
       });
-      
-      // 스텐랙에서는 한글 단수 사용
       ["2단", "3단", "4단", "5단", "6단"].forEach(level => allLevels.add(level));
-      
       opts.level = sortLevels(Array.from(allLevels));
       setCurrentStep('level');
       return;
     }
-
     setCurrentStep('complete');
   };
 
@@ -397,7 +318,6 @@ export default function MaterialPriceManager({ currentUser }) {
         height: ["1500", "2000", "2500", "3000", "3500", "4000", "H4500", "H5000", "H5500", "H6000"]
       }
     };
-
     return extraOptions[rackType]?.[optionType] || [];
   };
 
@@ -409,8 +329,6 @@ export default function MaterialPriceManager({ currentUser }) {
   const handleOptionSelect = (step, value) => {
     const newSelections = { ...selections };
     newSelections[step] = value;
-    
-    // 타입별 단계 순서 정의
     const getStepsForType = (type) => {
       if (formTypeRacks.includes(type)) {
         return ['type', 'size', 'height', 'level', 'formType'];
@@ -421,15 +339,11 @@ export default function MaterialPriceManager({ currentUser }) {
       }
       return ['type'];
     };
-    
     const steps = getStepsForType(newSelections.type);
     const currentStepIndex = steps.indexOf(step);
-    
-    // 현재 단계 이후의 모든 선택 초기화
     for (let i = currentStepIndex + 1; i < steps.length; i++) {
       newSelections[steps[i]] = '';
     }
-    
     setSelections(newSelections);
     setMaterialList([]);
   };
@@ -439,7 +353,6 @@ export default function MaterialPriceManager({ currentUser }) {
       setMaterialList([]);
       return;
     }
-
     const components = generateBOM(selections.type, selections);
     const componentsWithAdminPrice = components.map(applyAdminEditPrice);
     setMaterialList(sortBOMByMaterialRule(componentsWithAdminPrice));
@@ -449,25 +362,19 @@ export default function MaterialPriceManager({ currentUser }) {
     let components = [];
     try {
       if (formTypeRacks.includes(rackType) && options.size && options.height && options.level && options.formType) {
-        // 데이터 접근용 height
         const dataHeight = rackType === "경량랙" && options.height === "H750" ? "H900" : options.height;
         const rec = bomData?.[rackType]?.[options.size]?.[dataHeight]?.[options.level]?.[options.formType];
         if (rec?.components) {
           components = rec.components.map(c => {
-            // name/specification 규칙을 옵션값에 맞게 통일
             let spec = c.specification || '';
             let name = c.name;
             if (name.includes('기둥')) {
-              // 기둥: 높이 H750
               spec = `높이 ${options.height}`;
-              // 혹시 name이 '기둥(H900)'처럼 내부 데이터 높이로 나오면 옵션값으로 고침
               name = `기둥(${options.height.replace(/[A-Za-z]/g, '')})`;
             } else if (name.includes('선반')) {
-              // 선반: 사이즈 W1200xD450 등
               spec = `사이즈 ${options.size}`;
               name = `선반(${options.size})`;
             }
-            // 원하는 경우 기타 부품 규칙도 추가
             return {
               rackType,
               name,
@@ -480,7 +387,6 @@ export default function MaterialPriceManager({ currentUser }) {
           });
         }
       } else if (rackType === "하이랙" && options.size && options.height && options.level && options.formType && options.color) {
-        // 하이랙도 옵션값 기준으로 name/specification 통일 (필요시 규칙 추가)
         const rec = bomData?.[rackType]?.[options.size]?.[options.height]?.[options.level]?.[options.formType]?.[options.color];
         if (rec?.components) {
           components = rec.components.map(c => ({
@@ -510,7 +416,6 @@ export default function MaterialPriceManager({ currentUser }) {
     } catch (error) {
       console.error('BOM 생성 실패:', error);
     }
-    // fallback은 반드시 try-catch 바깥에서!
     if (components.length === 0) {
       components = generateFallbackBOM(rackType, options);
     }
@@ -520,7 +425,6 @@ export default function MaterialPriceManager({ currentUser }) {
   const generateFallbackBOM = (rackType, options) => {
     const components = [];
     const qty = 1;
-  
     if (rackType === "경량랙") {
       const size = options.size || "50x90";
       const height = options.height || "H900";
@@ -528,7 +432,6 @@ export default function MaterialPriceManager({ currentUser }) {
       const formType = options.formType || "독립형";
       const isConn = formType === "연결형";
       const pillarQty = isConn ? 2 * qty : 4 * qty;
-  
       components.push(
         { rackType, name: `기둥(${height.replace(/[A-Za-z]/g, '')})`, specification: `높이 ${height}`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 },
@@ -545,7 +448,6 @@ export default function MaterialPriceManager({ currentUser }) {
       const formType = options.formType || "독립형";
       const isConn = formType === "연결형";
       const pillarQty = isConn ? 2 * qty : 4 * qty;
-  
       components.push(
         { rackType, name: `기둥(${height.replace(/[A-Za-z]/g, '')})`, specification: `높이 ${height}`, quantity: pillarQty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 },
@@ -558,7 +460,6 @@ export default function MaterialPriceManager({ currentUser }) {
       const level = options.level || "L3";
       const formType = options.formType || "독립형";
       const lvl = parseInt(level.replace(/[^\d]/g, "")) || 3;
-  
       components.push(
         { rackType, name: `기둥(${height.replace(/[A-Za-z]/g, '')})`, specification: `높이 ${height}`, quantity: (formType === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `로드빔`, specification: `로드빔`, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
@@ -574,7 +475,6 @@ export default function MaterialPriceManager({ currentUser }) {
       const height = options.height || "150";
       const level = parseInt((options.level || "3단").replace(/[^\d]/g, "")) || 3;
       const color = options.color || "550kg 블루";
-  
       components.push(
         { rackType, name: `기둥(${height})`, specification: `높이 ${height} ${color}`, quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size} ${color}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 },
@@ -584,7 +484,6 @@ export default function MaterialPriceManager({ currentUser }) {
       const size = options.size || "50x120";
       const height = options.height || "150";
       const level = parseInt((options.level || "4단").replace(/[^\d]/g, "")) || 4;
-  
       components.push(
         { rackType, name: `기둥(${height})`, specification: `높이 ${height}`, quantity: 4 * qty, unitPrice: 0, totalPrice: 0 },
         { rackType, name: `선반(${size})`, specification: `사이즈 ${size}`, quantity: level * qty, unitPrice: 0, totalPrice: 0 }
@@ -622,11 +521,9 @@ export default function MaterialPriceManager({ currentUser }) {
   const getEffectiveUnitPrice = (item) => {
     const partId = generatePartId(item);
     const adminPrice = adminPrices[partId];
-    
     if (adminPrice && adminPrice.price > 0) {
       return adminPrice.price;
     }
-    
     return Number(item.unitPrice) || 0;
   };
 
@@ -666,62 +563,50 @@ export default function MaterialPriceManager({ currentUser }) {
     return ['type'];
   };
 
-  // 이전단계 버튼 로직 완전판
-  // 1. 이전단계 버튼 함수 전체
   const handleGoBack = () => {
     const steps = getStepsForType(selections.type);
     let currentStepIndex = steps.indexOf(currentStep);
     let prevStep = null;
-
     if (currentStep === 'complete') {
       currentStepIndex = steps.length;
       prevStep = steps[steps.length - 1];
     } else if (currentStepIndex > 0) {
       prevStep = steps[currentStepIndex - 1];
     }
-
     if (prevStep) {
-      // 이전 단계 이후 값 초기화
       const newSelections = { ...selections };
       for (let i = currentStepIndex; i < steps.length; i++) {
         newSelections[steps[i]] = '';
       }
-      setSelections(newSelections);        // 선택값 변경
-      setCurrentStep(prevStep);            // 단계 변경
-      setMaterialList([]);                 // BOM 초기화
-      setGoBackStep(prevStep);             // 이전단계 옵션 강제 세팅 플래그
+      setSelections(newSelections);
+      setCurrentStep(prevStep);
+      setMaterialList([]);
+      setGoBackStep(prevStep);
     }
   };
 
-  // 2. 이전단계/특정 단계 옵션 생성 함수 전체
   function calculateAvailableOptionsForStep(step, selections) {
     const opts = { type: [], size: [], height: [], level: [], formType: [], color: [] };
     opts.type = allTypes;
-
     if (step === 'type' || !selections.type) {
       setAvailableOptions(opts);
       setCurrentStep('type');
       return;
     }
-
     if (["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형"].includes(selections.type)) {
       const bd = bomData[selections.type] || {};
-
-      // 2단계: 사이즈
       if (step === 'size' || !selections.size) {
         opts.size = Object.keys(bd);
         setAvailableOptions(opts);
         setCurrentStep('size');
         return;
       }
-      // 3단계: 높이
       if (step === 'height' || !selections.height) {
         opts.height = Object.keys(bd[selections.size] || {});
         setAvailableOptions(opts);
         setCurrentStep('height');
         return;
       }
-      // 4단계: 단수
       if (step === 'level' || !selections.level) {
         let levelsFromBom;
         if (selections.type === "경량랙" && selections.height === "H750") {
@@ -729,7 +614,6 @@ export default function MaterialPriceManager({ currentUser }) {
         } else {
           levelsFromBom = Object.keys(bd[selections.size]?.[selections.height] || {});
         }
-
         let levels;
         if (selections.type === "파렛트랙" || selections.type === "파렛트랙 철판형") {
           levels = levelsFromBom.filter(l => ["L1", "L2", "L3", "L4", "L5", "L6"].includes(l));
@@ -746,13 +630,11 @@ export default function MaterialPriceManager({ currentUser }) {
           }
           levels = Array.from(allLevels);
         }
-
         opts.level = sortLevels(levels);
         setAvailableOptions(opts);
         setCurrentStep('level');
         return;
       }
-      // 5단계: 형식
       if (step === 'formType' || !selections.formType) {
         opts.formType = Object.keys(bd[selections.size]?.[selections.height]?.[selections.level] || {});
         setAvailableOptions(opts);
@@ -825,9 +707,6 @@ export default function MaterialPriceManager({ currentUser }) {
     setCurrentStep('type');
   }
 
-  // ... (나머지 기존 코드 및 렌더링 함수 등은 그대로)
-}
-  
   const handleReset = () => {
     setSelections({
       type: '',
