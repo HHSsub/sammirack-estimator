@@ -149,13 +149,8 @@ export default function MaterialPriceManager({ currentUser }) {
     
     // 2단계: 사이즈 선택
     if (!selections.size) {
-      // BOM 데이터에서 모든 사이즈 수집
       const allSizes = new Set();
       Object.keys(bd).forEach(size => allSizes.add(size));
-      
-      // 추가 옵션들 포함
-      const extraSizes = getExtraOptions(selections.type, 'size');
-      extraSizes.forEach(size => allSizes.add(size));
       
       opts.size = sortSizes(Array.from(allSizes));
       setCurrentStep('size');
@@ -166,19 +161,13 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.height) {
       const allHeights = new Set();
       
-      // 선택된 사이즈의 높이들
       if (bd[selections.size]) {
         Object.keys(bd[selections.size]).forEach(height => allHeights.add(height));
       }
       
-      // 다른 사이즈들의 높이들도 포함 (전체 옵션 제공)
       Object.values(bd).forEach(sizeData => {
         Object.keys(sizeData).forEach(height => allHeights.add(height));
       });
-      
-      // 추가 옵션들 포함
-      const extraHeights = getExtraOptions(selections.type, 'height');
-      extraHeights.forEach(height => allHeights.add(height));
       
       opts.height = sortHeights(Array.from(allHeights));
       setCurrentStep('height');
@@ -189,7 +178,6 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.level) {
       const allLevels = new Set();
       
-      // 현재 선택에 맞는 단수들
       if (selections.type === "경량랙" && selections.height === "H750") {
         const levelsFromBom = Object.keys(bd[selections.size]?.["H900"] || {});
         levelsFromBom.forEach(level => allLevels.add(level));
@@ -198,14 +186,12 @@ export default function MaterialPriceManager({ currentUser }) {
         levelsFromBom.forEach(level => allLevels.add(level));
       }
       
-      // 전체 BOM 데이터에서 모든 단수 수집
       Object.values(bd).forEach(sizeData => {
         Object.values(sizeData).forEach(heightData => {
           Object.keys(heightData).forEach(level => allLevels.add(level));
         });
       });
       
-      // 기본 단수들 추가
       ["2단", "3단", "4단", "5단", "6단"].forEach(level => allLevels.add(level));
       
       opts.level = sortLevels(Array.from(allLevels));
@@ -217,7 +203,6 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.formType) {
       const allFormTypes = new Set(["독립형", "연결형"]);
       
-      // BOM 데이터에서 형식들 수집
       const height = selections.type === "경량랙" && selections.height === "H750" ? "H900" : selections.height;
       const formTypes = Object.keys(bd[selections.size]?.[height]?.[selections.level] || {});
       formTypes.forEach(ft => allFormTypes.add(ft));
@@ -237,14 +222,9 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.color) {
       const allColors = new Set();
       
-      // 데이터에서 색상 수집
       if (rd["색상"]) {
         rd["색상"].forEach(color => allColors.add(color));
       }
-      
-      // 기본 색상들 추가
-      ["270kg 매트그레이", "270kg 오렌지", "270kg 블루", "450kg 매트그레이", "450kg 오렌지", "450kg 블루", "550kg 블루+오렌지", "700kg 블루+오렌지"]
-        .forEach(color => allColors.add(color));
       
       opts.color = Array.from(allColors);
       setCurrentStep('color');
@@ -259,7 +239,6 @@ export default function MaterialPriceManager({ currentUser }) {
       const hide45 = ["450kg", "550kg", "700kg"].includes(weightOnly);
       const isHeaviest = /(550kg|700kg)$/.test(color);
       
-      // 선택된 색상의 사이즈들
       const rawSizes = Object.keys(rd["기본가격"]?.[color] || {});
       rawSizes.forEach(s => {
         const displaySize = isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s] 
@@ -269,23 +248,6 @@ export default function MaterialPriceManager({ currentUser }) {
           allSizes.add(displaySize);
         }
       });
-      
-      // 모든 색상의 사이즈들도 포함
-      Object.values(rd["기본가격"] || {}).forEach(colorData => {
-        Object.keys(colorData).forEach(size => {
-          if (!hide45 || size !== "45x150") {
-            allSizes.add(size);
-          }
-        });
-      });
-      
-      // 추가 기본 사이즈들
-      ["45x108", "45x150", "60x108", "60x150", "60x200", "80x108", "80x150", "80x200"]
-        .forEach(size => {
-          if (!hide45 || size !== "45x150") {
-            allSizes.add(size);
-          }
-        });
       
       opts.size = sortSizes(Array.from(allSizes));
       setCurrentStep('size');
@@ -308,11 +270,9 @@ export default function MaterialPriceManager({ currentUser }) {
         ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selections.size] || selections.size
         : selections.size;
       
-      // 현재 선택에 맞는 단수들
       const levelKeys = Object.keys(rd["기본가격"]?.[color]?.[sizeKey]?.[selections.height] || {});
       levelKeys.forEach(level => allLevels.add(level));
       
-      // 기본 단수들 추가
       ["1단", "2단", "3단", "4단", "5단", "6단"].forEach(level => allLevels.add(level));
       
       opts.level = sortLevels(Array.from(allLevels));
@@ -337,10 +297,7 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.size) {
       const allSizes = new Set();
       
-      // 데이터에서 사이즈 수집
       Object.keys(rd["기본가격"] || {}).forEach(size => allSizes.add(size));
-      
-      // 기본 사이즈들 추가
       ["50x75", "50x90", "50x120", "50x150", "50x180"].forEach(size => allSizes.add(size));
       
       opts.size = sortSizes(Array.from(allSizes));
@@ -352,16 +309,13 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.height) {
       const allHeights = new Set();
       
-      // 선택된 사이즈의 높이들
       const heightsFromData = Object.keys(rd["기본가격"]?.[selections.size] || {});
       heightsFromData.forEach(height => allHeights.add(height));
       
-      // 모든 사이즈의 높이들도 포함
       Object.values(rd["기본가격"] || {}).forEach(sizeData => {
         Object.keys(sizeData).forEach(height => allHeights.add(height));
       });
       
-      // 기본 높이들 추가
       ["75", "90", "120", "150", "180", "210"].forEach(height => allHeights.add(height));
       
       opts.height = sortHeights(Array.from(allHeights));
@@ -373,18 +327,15 @@ export default function MaterialPriceManager({ currentUser }) {
     if (!selections.level) {
       const allLevels = new Set();
       
-      // 현재 선택에 맞는 단수들
       const levelsFromData = Object.keys(rd["기본가격"]?.[selections.size]?.[selections.height] || {});
       levelsFromData.forEach(level => allLevels.add(level));
       
-      // 모든 데이터에서 단수 수집
       Object.values(rd["기본가격"] || {}).forEach(sizeData => {
         Object.values(sizeData).forEach(heightData => {
           Object.keys(heightData).forEach(level => allLevels.add(level));
         });
       });
       
-      // 기본 단수들 추가
       ["2단", "3단", "4단", "5단", "6단"].forEach(level => allLevels.add(level));
       
       opts.level = sortLevels(Array.from(allLevels));
@@ -395,15 +346,14 @@ export default function MaterialPriceManager({ currentUser }) {
     setCurrentStep('complete');
   };
 
-  // 추가 옵션 가져오기 (확장성을 위한 함수)
   const getExtraOptions = (rackType, optionType) => {
     const extraOptions = {
       "경량랙": {
-        size: ["30x60", "40x60", "45x60", "50x60", "60x60", "40x75", "45x75", "50x75", "60x75", "40x90", "45x90", "50x90", "60x90", "45x120", "50x120", "60x120"],
+        size: [], // 경량랙의 허구 옵션 제거
         height: ["H750", "H900", "H1200", "H1500", "H1800", "H2100"]
       },
       "중량랙": {
-        size: ["45x95", "45x125", "45x155", "45x185", "60x95", "60x125", "60x155", "60x185", "90x95", "90x125", "90x155", "90x185"],
+        size: [], // 중량랙의 허구 옵션 제거
         height: ["H900", "H1200", "H1500", "H1800", "H2100", "H2400"]
       },
       "파렛트랙": {
@@ -424,20 +374,18 @@ export default function MaterialPriceManager({ currentUser }) {
   };
 
   const handleOptionSelect = (step, value) => {
-    // 선택한 단계 이후의 모든 선택 초기화
     const newSelections = { ...selections };
     newSelections[step] = value;
     
     const steps = ['type', 'color', 'size', 'height', 'level', 'formType'];
     const currentStepIndex = steps.indexOf(step);
     
-    // 현재 단계 이후의 모든 선택 초기화
     for (let i = currentStepIndex + 1; i < steps.length; i++) {
       newSelections[steps[i]] = '';
     }
     
     setSelections(newSelections);
-    setMaterialList([]); // BOM 목록 초기화
+    setMaterialList([]);
   };
 
   const calculateBOM = () => {
@@ -446,7 +394,6 @@ export default function MaterialPriceManager({ currentUser }) {
       return;
     }
 
-    // 완전한 선택이 없어도 기본 BOM 생성
     const components = generateBOM(selections.type, selections);
     const componentsWithAdminPrice = components.map(applyAdminEditPrice);
     setMaterialList(sortBOMByMaterialRule(componentsWithAdminPrice));
@@ -457,7 +404,6 @@ export default function MaterialPriceManager({ currentUser }) {
     
     try {
       if (formTypeRacks.includes(rackType) && options.size && options.height && options.level && options.formType) {
-        // 완전한 BOM 데이터 로드 시도
         const height = rackType === "경량랙" && options.height === "H750" ? "H900" : options.height;
         const rec = bomData?.[rackType]?.[options.size]?.[height]?.[options.level]?.[options.formType];
         
@@ -474,7 +420,6 @@ export default function MaterialPriceManager({ currentUser }) {
         }
       }
       
-      // BOM 데이터가 없거나 부분 선택인 경우 fallback 생성
       if (components.length === 0) {
         components = generateFallbackBOM(rackType, options);
       }
@@ -493,7 +438,7 @@ export default function MaterialPriceManager({ currentUser }) {
     if (rackType === "경량랙") {
       const size = options.size || "50x90";
       const height = options.height || "H900";
-      const level = parseInt((options.level || "3단").replace(/[^\d]/g, "")) || 3;
+      const level = parseInt((options.level || "3단").replace(/[^\d]/g, "")) || 3; // 수정된 부분
       const formType = options.formType || "독립형";
       
       const isConn = formType === "연결형";
@@ -570,11 +515,10 @@ export default function MaterialPriceManager({ currentUser }) {
     return components;
   };
 
-  // 부품 고유 ID 생성
   const generatePartId = (item) => {
     const { rackType, name, specification } = item;
-    const cleanName = (name || '').replace(/[^\w가-힣]/g, '');
-    const cleanSpec = (specification || '').replace(/[^\w가-힣]/g, '');
+    const cleanName = (name || '').replace(/[^가-힣0-9a-zA-Z]/g, ''); // 한글, 숫자, 영문만 허용
+    const cleanSpec = (specification || '').replace(/[^가-힣0-9a-zA-Z]/g, ''); // 한글, 숫자, 영문만 허용
     return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
   };
 
@@ -624,17 +568,14 @@ export default function MaterialPriceManager({ currentUser }) {
     }));
   };
 
-  // 뒤로가기 버튼 핸들러
   const handleGoBack = () => {
     const steps = ['type', 'color', 'size', 'height', 'level', 'formType'];
     let currentStepIndex = steps.indexOf(currentStep);
     
-    // 이전 단계로 이동
     if (currentStepIndex > 0) {
       const prevStep = steps[currentStepIndex - 1];
       const newSelections = { ...selections };
       
-      // 현재 단계 이후의 모든 선택 초기화
       for (let i = currentStepIndex; i < steps.length; i++) {
         newSelections[steps[i]] = '';
       }
@@ -644,7 +585,6 @@ export default function MaterialPriceManager({ currentUser }) {
     }
   };
 
-  // 선택 초기화
   const handleReset = () => {
     setSelections({
       type: '',
@@ -658,10 +598,9 @@ export default function MaterialPriceManager({ currentUser }) {
     setMaterialList([]);
   };
 
-  // 현재 단계의 옵션들을 버튼으로 렌더링
   const renderCurrentStepOptions = () => {
     const options = availableOptions[currentStep] || [];
-    if (options.length === 0) return null;
+    if (options.length === 0 && currentStep !== 'type') return null;
 
     const getStepTitle = (step) => {
       switch (step) {
@@ -754,7 +693,6 @@ export default function MaterialPriceManager({ currentUser }) {
         원자재 단가 관리
       </h3>
       
-      {/* 선택 진행 상황 표시 */}
       {selections.type && (
         <div style={{ 
           marginBottom: '16px', 
@@ -765,7 +703,7 @@ export default function MaterialPriceManager({ currentUser }) {
           color: '#0c5aa6',
           flex: '0 0 auto'
         }}>
-          <strong>선택된 옵션:</strong> {[
+          <strong>선택된 옵션:</strong> {[ 
             selections.type,
             selections.color,
             selections.size,
@@ -786,10 +724,11 @@ export default function MaterialPriceManager({ currentUser }) {
                   backgroundColor: 'white',
                   color: '#6c757d',
                   cursor: 'pointer',
-                  fontSize: '12px'
+                  fontSize: '13px',
+                  fontWeight: '500'
                 }}
               >
-                ← 이전 단계
+                이전 단계
               </button>
             )}
             <button
@@ -801,7 +740,8 @@ export default function MaterialPriceManager({ currentUser }) {
                 backgroundColor: 'white',
                 color: '#dc3545',
                 cursor: 'pointer',
-                fontSize: '12px'
+                fontSize: '13px',
+                fontWeight: '500'
               }}
             >
               선택 초기화
@@ -810,294 +750,82 @@ export default function MaterialPriceManager({ currentUser }) {
         </div>
       )}
 
-      {/* 단계별 옵션 선택 영역 */}
-      <div style={{
-        flex: '0 0 auto',
-        marginBottom: '20px',
-        padding: '16px',
-        backgroundColor: 'white',
-        borderRadius: '6px',
-        border: '1px solid #dee2e6'
-      }}>
+      <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingBottom: '10px' }}>
         {renderCurrentStepOptions()}
       </div>
 
-      {/* 원자재 테이블 */}
-      <div style={{ flex: '1', minHeight: '0', overflow: 'hidden' }}>
-        {materialList.length > 0 ? (
-          <div className="material-table-container" style={{ 
-            height: '100%',
-            overflowY: 'auto',
-            border: '1px solid #dee2e6',
-            borderRadius: '6px',
-            backgroundColor: 'white'
-          }}>
-            <table style={{ 
-              width: '100%', 
-              borderCollapse: 'collapse', 
-              fontSize: '13px', 
-              minWidth: '700px'
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: '#e9ecef' }}>
-                  <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'left', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
-                  }}>
-                    랙타입
-                  </th>
-                  <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'left', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
-                  }}>
-                    부품명
-                  </th>
-                  <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'left', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
-                  }}>
-                    규격
-                  </th>
-                  <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'center', 
-                    minWidth: '60px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
-                  }}>
-                    수량
-                  </th>
-                  <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'right', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
-                  }}>
-                    단가
-                  </th>
+      {currentStep === 'complete' && materialList.length > 0 && (
+        <div style={{ 
+          marginTop: '20px', 
+          borderTop: '1px solid #dee2e6', 
+          paddingTop: '20px', 
+          flex: '0 0 auto' 
+        }}>
+          <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px', color: '#495057' }}>
+            BOM 원자재 목록
+          </h4>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#e9ecef' }}>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>품목</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'left' }}>규격</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>수량</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>단가</th>
+                <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>총액</th>
+                {isAdmin && <th style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'center' }}>관리</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {materialList.map((item, index) => (
+                <tr key={index} style={{ backgroundColor: item.hasAdminPrice ? '#fff3cd' : 'white' }}>
+                  <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{item.name}</td>
+                  <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>{item.specification}</td>
+                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>{item.quantity.toLocaleString()}</td>
+                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                    {getEffectiveUnitPrice(item).toLocaleString()}원
+                    {item.hasAdminPrice && <span style={{ fontSize: '11px', color: '#6c757d' }}> (수정됨)</span>}
+                  </td>
+                  <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                    {(getEffectiveUnitPrice(item) * item.quantity).toLocaleString()}원
+                  </td>
                   {isAdmin && (
-                    <th style={{ 
-                      borderBottom: '2px solid #dee2e6', 
-                      padding: '7px 6px', 
-                      textAlign: 'center', 
-                      minWidth: '80px',
-                      fontWeight: '600',
-                      position: 'sticky',
-                      top: 0,
-                      backgroundColor: '#e9ecef'
-                    }}>
-                      관리
-                    </th>
+                    <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleEditPrice(item)}
+                        style={{
+                          padding: '4px 8px',
+                          border: '1px solid #007bff',
+                          borderRadius: '4px',
+                          backgroundColor: '#007bff',
+                          color: 'white',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        단가 수정
+                      </button>
+                    </td>
                   )}
                 </tr>
-              </thead>
-              <tbody>
-                {materialList.map((material, index) => {
-                  const effectiveUnitPrice = getEffectiveUnitPrice(material);
-                  const partId = generatePartId(material);
-                  const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
-
-                  return (
-                    <tr key={partId || index} style={{ 
-                      borderBottom: '1px solid #dee2e6',
-                      height: '28px'
-                    }}>
-                      <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        fontSize: '13px',
-                        color: '#495057',
-                        verticalAlign: 'middle'
-                      }}>
-                        {material.rackType}
-                      </td>
-                      <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        wordBreak: 'break-word',
-                        verticalAlign: 'middle'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>{kgLabelFix(material.name)}</span>
-                          {hasAdminPrice && (
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: '#007bff',
-                              color: 'white',
-                              fontSize: '10px',
-                              borderRadius: '3px',
-                              flexShrink: 0
-                            }}>
-                              수정됨
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        fontSize: '13px',
-                        verticalAlign: 'middle'
-                      }}>
-                        {kgLabelFix(material.specification || '-')}
-                      </td>
-                      <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        textAlign: 'center',
-                        verticalAlign: 'middle',
-                        fontSize: '13px'
-                      }}>
-                        {material.quantity || 0}개
-                      </td>
-                      <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        textAlign: 'right',
-                        verticalAlign: 'middle'
-                      }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                          <div style={{ 
-                            color: effectiveUnitPrice ? 'inherit' : '#6c757d',
-                            fontWeight: hasAdminPrice ? '600' : 'normal'
-                          }}>
-                            {effectiveUnitPrice ? effectiveUnitPrice.toLocaleString() : '-'}원
-                          </div>
-                          {hasAdminPrice && Number(material.unitPrice) > 0 && Number(material.unitPrice) !== effectiveUnitPrice && (
-                            <div style={{ 
-                              fontSize: '11px', 
-                              color: '#6c757d', 
-                              textDecoration: 'line-through' 
-                            }}>
-                              원가: {Number(material.unitPrice).toLocaleString()}원
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      {isAdmin && (
-                        <td style={{ 
-                          padding: '7px 6px', 
-                          textAlign: 'center',
-                          verticalAlign: 'middle'
-                        }}>
-                          <button
-                            onClick={() => handleEditPrice(material)}
-                            style={{
-                              padding: '6px 12px',
-                              border: '1px solid #007bff',
-                              borderRadius: '4px',
-                              backgroundColor: 'white',
-                              color: '#007bff',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseOver={e => {
-                              e.target.style.backgroundColor = '#007bff';
-                              e.target.style.color = 'white';
-                            }}
-                            onMouseOut={e => {
-                              e.target.style.backgroundColor = 'white';
-                              e.target.style.color = '#007bff';
-                            }}
-                          >
-                            단가수정
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div style={{ 
-            padding: '40px 20px', 
-            textAlign: 'center', 
-            backgroundColor: 'white',
-            border: '1px solid #dee2e6',
-            borderRadius: '6px',
-            color: '#6c757d',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
-          }}>
-            {!selections.type ? (
-              <>
-                <div style={{ fontSize: '16px', marginBottom: '8px' }}>📦</div>
-                <div>제품 유형을 선택하세요.</div>
-                <div style={{ fontSize: '13px', marginTop: '4px' }}>
-                  랙 타입을 선택하면 해당 원자재 목록이 표시됩니다.
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ fontSize: '16px', marginBottom: '8px' }}>📋</div>
-                <div>원자재 목록을 로딩 중입니다...</div>
-                <div style={{ fontSize: '13px', marginTop: '4px' }}>
-                  선택한 {selections.type}의 원자재 정보를 가져오고 있습니다.
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 관리자 안내 정보 */}
-      {isAdmin && materialList.length > 0 && (
-        <div style={{ 
-          marginTop: '16px', 
-          padding: '12px', 
-          backgroundColor: '#e7f3ff', 
-          borderRadius: '6px',
-          fontSize: '13px',
-          color: '#0c5aa6',
-          border: '1px solid #b8daff',
-          flex: '0 0 auto'
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            💡 원자재 단가 관리 안내
-          </div>
-          <div>• 이곳에서 수정한 단가는 전체 시스템에 적용됩니다.</div>
-          <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
-          <div>• 옵션을 변경하여 다른 랙 타입의 원자재 단가도 관리할 수 있습니다.</div>
+              ))}
+              <tr style={{ backgroundColor: '#e9ecef', fontWeight: '600' }}>
+                <td colSpan={isAdmin ? 4 : 3} style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>총 합계</td>
+                <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                  {materialList.reduce((sum, item) => sum + (getEffectiveUnitPrice(item) * item.quantity), 0).toLocaleString()}원
+                </td>
+                {isAdmin && <td style={{ padding: '8px', border: '1px solid #dee2e6' }}></td>}
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* 단가 수정 모달 */}
       {editingPart && (
         <AdminPriceEditor
-          item={editingPart}
+          part={editingPart}
           onClose={() => setEditingPart(null)}
           onSave={handlePriceSaved}
+          currentAdminPrices={adminPrices}
         />
       )}
     </div>
