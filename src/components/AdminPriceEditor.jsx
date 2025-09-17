@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-const PAGE_SIZE = 10; // 한 페이지에 표시할 이력 개수
-
 const AdminPriceEditor = ({ item, onClose, onSave }) => {
   const [editPrice, setEditPrice] = useState(item.unitPrice || 0);
   const [originalPrice] = useState(item.unitPrice || 0);
   const [history, setHistory] = useState([]);
   const [activeTab, setActiveTab] = useState('edit'); // 'edit' or 'history'
   const [loading, setLoading] = useState(false);
-
-  // 페이지네이션 관련 상태
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(history.length / PAGE_SIZE));
 
   // 부품 고유 ID 생성
   const generatePartId = (item) => {
@@ -35,7 +29,6 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
       const historyData = JSON.parse(stored);
       const partHistory = historyData[partId] || [];
       setHistory(partHistory);
-      setCurrentPage(1); // 새 부품 선택시 첫 페이지로
     } catch (error) {
       console.error('히스토리 로드 실패:', error);
       setHistory([]);
@@ -66,15 +59,13 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
 
       historyData[partIdArg].unshift(newEntry); // 최신 순
 
-      // 제한 삭제: 히스토리 개수 무제한
-      // (아래 코드 삭제됨)
-      // if (historyData[partIdArg].length > 50) {
-      //   historyData[partIdArg] = historyData[partIdArg].slice(0, 50);
-      // }
+      // 히스토리 최대 50개 제한
+      if (historyData[partIdArg].length > 50) {
+        historyData[partIdArg] = historyData[partIdArg].slice(0, 50);
+      }
 
       localStorage.setItem('admin_price_history', JSON.stringify(historyData));
       setHistory(historyData[partIdArg]);
-      setCurrentPage(1); // 새 이력 추가시 첫 페이지로
     } catch (error) {
       console.error('히스토리 저장 실패:', error);
     }
@@ -169,12 +160,6 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
       minute: '2-digit'
     });
   };
-
-  // 현재 페이지의 이력만 추출
-  const pagedHistory = history.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
 
   return (
     <div className="admin-price-editor-overlay" style={{
@@ -346,84 +331,48 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
                 변경 이력이 없습니다.
               </div>
             ) : (
-              <div>
-                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#f8f9fa' }}>
-                        <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #dee2e6' }}>날짜/시간</th>
-                        <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #dee2e6' }}>계정</th>
-                        <th style={{ padding: '10px', textAlign: 'right', border: '1px solid #dee2e6' }}>이전 단가</th>
-                        <th style={{ padding: '10px', textAlign: 'right', border: '1px solid #dee2e6' }}>변경 단가</th>
-                        <th style={{ padding: '10px', textAlign: 'right', border: '1px solid #dee2e6' }}>변동액</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pagedHistory.map((entry) => {
-                        const diff = entry.newPrice - entry.oldPrice;
-                        return (
-                          <tr key={entry.id}>
-                            <td style={{ padding: '8px', border: '1px solid #dee2e6', fontSize: '13px' }}>
-                              {formatDate(entry.timestamp)}
-                            </td>
-                            <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
-                              {entry.account}
-                            </td>
-                            <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
-                              {entry.oldPrice.toLocaleString()}원
-                            </td>
-                            <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
-                              {entry.newPrice.toLocaleString()}원
-                            </td>
-                            <td style={{
-                              padding: '8px',
-                              border: '1px solid #dee2e6',
-                              textAlign: 'right',
-                              color: diff > 0 ? '#dc3545' : diff < 0 ? '#28a745' : '#6c757d',
-                              fontWeight: 'bold'
-                            }}>
-                              {diff > 0 ? '+' : ''}{diff.toLocaleString()}원
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                {/* 페이지네이션 */}
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '4px',
-                      border: '1px solid #dee2e6',
-                      backgroundColor: currentPage === 1 ? '#e9ecef' : 'white',
-                      color: '#007bff',
-                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    ◀ 이전
-                  </button>
-                  <span style={{ minWidth: '80px', textAlign: 'center', fontWeight: 'bold', color: '#343a40' }}>
-                    {currentPage} / {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    style={{
-                      padding: '6px 14px',
-                      borderRadius: '4px',
-                      border: '1px solid #dee2e6',
-                      backgroundColor: currentPage === totalPages ? '#e9ecef' : 'white',
-                      color: '#007bff',
-                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    다음 ▶
-                  </button>
-                </div>
+              <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8f9fa' }}>
+                      <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #dee2e6' }}>날짜/시간</th>
+                      <th style={{ padding: '10px', textAlign: 'left', border: '1px solid #dee2e6' }}>계정</th>
+                      <th style={{ padding: '10px', textAlign: 'right', border: '1px solid #dee2e6' }}>이전 단가</th>
+                      <th style={{ padding: '10px', textAlign: 'right', border: '1px solid #dee2e6' }}>변경 단가</th>
+                      <th style={{ padding: '10px', textAlign: 'right', border: '1px solid #dee2e6' }}>변동액</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((entry) => {
+                      const diff = entry.newPrice - entry.oldPrice;
+                      return (
+                        <tr key={entry.id}>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6', fontSize: '13px' }}>
+                            {formatDate(entry.timestamp)}
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6' }}>
+                            {entry.account}
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                            {entry.oldPrice.toLocaleString()}원
+                          </td>
+                          <td style={{ padding: '8px', border: '1px solid #dee2e6', textAlign: 'right' }}>
+                            {entry.newPrice.toLocaleString()}원
+                          </td>
+                          <td style={{
+                            padding: '8px',
+                            border: '1px solid #dee2e6',
+                            textAlign: 'right',
+                            color: diff > 0 ? '#dc3545' : diff < 0 ? '#28a745' : '#6c757d',
+                            fontWeight: 'bold'
+                          }}>
+                            {diff > 0 ? '+' : ''}{diff.toLocaleString()}원
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
