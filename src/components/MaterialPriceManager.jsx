@@ -45,13 +45,17 @@ export default function MaterialPriceManager({ currentUser, cart }) {
 
   const loadAllMaterials = async () => {
     try {
-      // bomData에서 모든 원자재 추출
+      // 1. bomData에서 모든 원자재 추출 (기존 로직)
       const bomResponse = await fetch('./bom_data.json');
       const bomData = await bomResponse.json();
       
+      // 2. data.json에서 가격 정보 추출
+      const dataResponse = await fetch('./data.json');
+      const priceData = await dataResponse.json();
+      
       const materials = new Map();
       
-      // BOM 데이터에서 모든 컴포넌트 추출
+      // BOM 데이터에서 모든 컴포넌트 추출 (기존)
       Object.keys(bomData).forEach(rackType => {
         const rackData = bomData[rackType];
         Object.keys(rackData).forEach(size => {
@@ -73,7 +77,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
                       name: component.name,
                       specification: component.specification || '',
                       unitPrice: Number(component.unit_price) || 0,
-                      // 고유 식별을 위한 추가 정보
                       size,
                       height,
                       level,
@@ -87,11 +90,247 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         });
       });
 
+      // 3. 하이랙 동적 BOM 생성 및 추가
+      if (priceData['하이랙']) {
+        const hiRackData = priceData['하이랙'];
+        const colors = hiRackData['색상'] || [];
+        const heights = ['150', '200', '250'];
+        const levels = ['1단', '2단', '3단', '4단', '5단', '6단'];
+        const formTypes = ['독립형', '연결형'];
+
+        colors.forEach(color => {
+          const weightOnly = extractWeightOnly(color);
+          const basePrice = hiRackData['기본가격']?.[color] || {};
+          const sizes = Object.keys(basePrice);
+
+          sizes.forEach(size => {
+            heights.forEach(height => {
+              levels.forEach(level => {
+                formTypes.forEach(formType => {
+                  const levelNum = parseInt(level) || 1;
+                  const isConn = formType === '연결형';
+                  
+                  // 기둥
+                  const pillarPartId = generatePartId({
+                    rackType: '하이랙',
+                    name: `기둥(${height})`,
+                    specification: `높이 ${height}${weightOnly ? ` ${weightOnly}` : ''}`
+                  });
+                  if (!materials.has(pillarPartId)) {
+                    materials.set(pillarPartId, {
+                      partId: pillarPartId,
+                      rackType: '하이랙',
+                      name: `기둥(${height})`,
+                      specification: `높이 ${height}${weightOnly ? ` ${weightOnly}` : ''}`,
+                      unitPrice: 0,
+                      size, height, level, formType
+                    });
+                  }
+
+                  // 로드빔
+                  const sizeMatch = String(size).replace(/\s+/g, '').match(/(\d+)[xX](\d+)/);
+                  const rodBeamNum = sizeMatch ? sizeMatch[2] : '';
+                  if (rodBeamNum) {
+                    const beamPartId = generatePartId({
+                      rackType: '하이랙',
+                      name: `로드빔(${rodBeamNum})`,
+                      specification: `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ''}`
+                    });
+                    if (!materials.has(beamPartId)) {
+                      materials.set(beamPartId, {
+                        partId: beamPartId,
+                        rackType: '하이랙',
+                        name: `로드빔(${rodBeamNum})`,
+                        specification: `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ''}`,
+                        unitPrice: 0,
+                        size, height, level, formType
+                      });
+                    }
+                  }
+
+                  // 선반
+                  const shelfNum = sizeMatch ? sizeMatch[1] : '';
+                  if (shelfNum) {
+                    const shelfPartId = generatePartId({
+                      rackType: '하이랙',
+                      name: `선반(${shelfNum})`,
+                      specification: `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ''}`
+                    });
+                    if (!materials.has(shelfPartId)) {
+                      materials.set(shelfPartId, {
+                        partId: shelfPartId,
+                        rackType: '하이랙',
+                        name: `선반(${shelfNum})`,
+                        specification: `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ''}`,
+                        unitPrice: 0,
+                        size, height, level, formType
+                      });
+                    }
+                  }
+                });
+              });
+            });
+          });
+        });
+      }
+
+      // 4. 스텐랙 동적 BOM 생성 및 추가
+      if (priceData['스텐랙']) {
+        const stainlessData = priceData['스텐랙'];
+        const basePrice = stainlessData['기본가격'] || {};
+        const sizes = Object.keys(basePrice);
+        const heights = ['75', '90', '120', '150', '180', '210'];
+        const levels = ['2단', '3단', '4단', '5단', '6단'];
+
+        sizes.forEach(size => {
+          heights.forEach(height => {
+            levels.forEach(level => {
+              // 기둥
+              const pillarPartId = generatePartId({
+                rackType: '스텐랙',
+                name: `기둥(${height})`,
+                specification: `높이 ${height}`
+              });
+              if (!materials.has(pillarPartId)) {
+                materials.set(pillarPartId, {
+                  partId: pillarPartId,
+                  rackType: '스텐랙',
+                  name: `기둥(${height})`,
+                  specification: `높이 ${height}`,
+                  unitPrice: 0,
+                  size, height, level
+                });
+              }
+
+              // 선반
+              const sizeFront = (size.split("x")[0]) || size;
+              const shelfPartId = generatePartId({
+                rackType: '스텐랙',
+                name: `선반(${sizeFront})`,
+                specification: `사이즈 ${size}`
+              });
+              if (!materials.has(shelfPartId)) {
+                materials.set(shelfPartId, {
+                  partId: shelfPartId,
+                  rackType: '스텐랙',
+                  name: `선반(${sizeFront})`,
+                  specification: `사이즈 ${size}`,
+                  unitPrice: 0,
+                  size, height, level
+                });
+              }
+            });
+          });
+        });
+      }
+
+      // 5. 파렛트랙/파렛트랙 철판형 추가 옵션 처리
+      ['파렛트랙', '파렛트랙 철판형'].forEach(rackType => {
+        if (bomData[rackType]) {
+          const rackData = bomData[rackType];
+          const extraHeights = ['H4500', 'H5000', 'H5500', 'H6000'];
+          const extraSizes = rackType === '파렛트랙 철판형' ? ['2080x800', '2080x1000'] : [];
+          
+          // 추가 높이에 대한 BOM 생성
+          Object.keys(rackData).forEach(size => {
+            extraHeights.forEach(height => {
+              ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'].forEach(level => {
+                ['독립형', '연결형'].forEach(formType => {
+                  // 기본 컴포넌트들 생성
+                  const components = [
+                    {
+                      name: `기둥(${height})`,
+                      specification: `높이 ${height}`,
+                      unit_price: 0
+                    },
+                    {
+                      name: `로드빔(${size.split('x')[0] || '1000'})`,
+                      specification: size.split('x')[0] || '1000',
+                      unit_price: 0
+                    }
+                  ];
+
+                  if (rackType === '파렛트랙') {
+                    components.push({
+                      name: `타이빔(${size.split('x')[1] || '600'})`,
+                      specification: size.split('x')[1] || '600',
+                      unit_price: 0
+                    });
+                  }
+
+                  components.push({
+                    name: '안전핀(파렛트랙)',
+                    specification: '안전핀',
+                    unit_price: 0
+                  });
+
+                  components.forEach(component => {
+                    const partId = generatePartId({
+                      rackType,
+                      name: component.name,
+                      specification: component.specification || ''
+                    });
+                    
+                    if (!materials.has(partId)) {
+                      materials.set(partId, {
+                        partId,
+                        rackType,
+                        name: component.name,
+                        specification: component.specification || '',
+                        unitPrice: Number(component.unit_price) || 0,
+                        size, height, level, formType
+                      });
+                    }
+                  });
+                });
+              });
+            });
+          });
+
+          // 추가 사이즈에 대한 BOM 생성
+          extraSizes.forEach(size => {
+            Object.keys(rackData).forEach(existingSize => {
+              Object.keys(rackData[existingSize]).forEach(height => {
+                Object.keys(rackData[existingSize][height]).forEach(level => {
+                  Object.keys(rackData[existingSize][height][level]).forEach(formType => {
+                    const components = rackData[existingSize][height][level][formType]?.components || [];
+                    components.forEach(component => {
+                      const partId = generatePartId({
+                        rackType,
+                        name: component.name,
+                        specification: component.specification || ''
+                      });
+                      
+                      if (!materials.has(partId)) {
+                        materials.set(partId, {
+                          partId,
+                          rackType,
+                          name: component.name,
+                          specification: component.specification || '',
+                          unitPrice: Number(component.unit_price) || 0,
+                          size, height, level, formType
+                        });
+                      }
+                    });
+                  });
+                });
+              });
+            });
+          });
+        }
+      });
+
       setAllMaterials(Array.from(materials.values()));
     } catch (error) {
       console.error('전체 원자재 로드 실패:', error);
       setAllMaterials([]);
     }
+  };
+
+  // 무게 추출 함수
+  const extractWeightOnly = (color = '') => {
+    const m = String(color).match(/(\d{2,4}kg)/);
+    return m ? m[1] : "";
   };
 
   const updateCurrentCartMaterials = () => {
@@ -495,21 +734,19 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         }}>
           <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
             💡 원자재 단가 관리 안내
-          </div>
           <div>• 이곳에서 수정한 단가는 전체 시스템에 적용됩니다.</div>
-          <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
-          <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다.</div>
-        </div>
-      )}
-
-      {/* 단가 수정 모달 */}
-      {editingPart && (
-        <AdminPriceEditor
-          item={editingPart}
-          onClose={() => setEditingPart(null)}
-          onSave={handlePriceSaved}
-        />
-      )}
+        <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
+        <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다.</div>
     </div>
-  );
+  )}
+  {/* 단가 수정 모달 */}
+  {editingPart && (
+    <AdminPriceEditor
+      item={editingPart}
+      onClose={() => setEditingPart(null)}
+      onSave={handlePriceSaved}
+    />
+  )}
+</div>
+);
 }
