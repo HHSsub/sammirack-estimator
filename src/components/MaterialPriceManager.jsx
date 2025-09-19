@@ -734,19 +734,21 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         }}>
           <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
             💡 원자재 단가 관리 안내
+          </div>
           <div>• 이곳에서 수정한 단가는 전체 시스템에 적용됩니다.</div>
-        <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
-        <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다.</div>
+          <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
+          <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다</div>
+        </div>
+      )}
+
+      {/* 단가 수정 모달 */}
+      {editingPart && (
+        <AdminPriceEditor
+          item={editingPart}
+          onClose={() => setEditingPart(null)}
+          onSave={handlePriceSaved}
+        />
+      )}
     </div>
-  )}
-  {/* 단가 수정 모달 */}
-  {editingPart && (
-    <AdminPriceEditor
-      item={editingPart}
-      onClose={() => setEditingPart(null)}
-      onSave={handlePriceSaved}
-    />
-  )}
-</div>
-);
+  );
 }
