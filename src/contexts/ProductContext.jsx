@@ -335,15 +335,23 @@ export const ProductProvider=({children})=>{
     return s+(tp>0?tp:up*q);
   },0);
 
+  // ========== 수정된 calculatePrice 함수 - 우선순위 변경 ==========
   const calculatePrice=useCallback(()=>{
     if(!selectedType||quantity<=0) return 0;
     if(selectedType==="하이랙" && !selectedOptions.formType) return 0;
+    
+    // 1순위: 사용자가 직접 입력한 커스텀 가격
     if(customPrice>0) return Math.round(customPrice*quantity*(applyRate/100));
+    
     let basePrice=0;
+    let bomPrice=0; // BOM 부품 단가 합산 가격
+    let basicPrice=0; // 기본 가격 (pData)
 
     if(formTypeRacks.includes(selectedType)){
       const {size,height:heightRaw,level:levelRaw,formType}=selectedOptions;
       const height=selectedType==="경량랙"&&heightRaw==="H750"?"H900":heightRaw;
+      
+      // 기본가격(pData) 조회
       let pData;
       if(selectedType==="파렛트랙 철판형"){
         const hKey=String(height||"").replace(/^H/i,"");
@@ -352,18 +360,24 @@ export const ProductProvider=({children})=>{
       } else {
         pData=data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[levelRaw]?.[formType];
       }
-      if(pData) basePrice=Number(pData)*(Number(quantity)||0);
-      else {
-        const rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
-        if(rec){
-          const componentsWithAdminPrice = (rec.components || []).map(applyAdminEditPrice);
-          const labelled=Number(rec.total_price)||0;
-          const calculatedFromComponents = sumComponents(componentsWithAdminPrice);
-            basePrice=(labelled>0&&!componentsWithAdminPrice.some(c=>c.hasAdminPrice)
-            ? labelled 
-            : calculatedFromComponents)*(Number(quantity)||0);
-        }
+      
+      if(pData) basicPrice = Number(pData);
+      
+      // BOM 부품 단가 합산 가격 계산
+      const rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
+      if(rec){
+        const componentsWithAdminPrice = (rec.components || []).map(applyAdminEditPrice);
+        bomPrice = sumComponents(componentsWithAdminPrice);
       }
+      
+      // 2순위: BOM 부품단가 합산이 0보다 크면 BOM 가격 사용
+      // 3순위: 기본가격(pData) 사용
+      if(bomPrice > 0) {
+        basePrice = bomPrice * (Number(quantity)||0);
+      } else if(basicPrice > 0) {
+        basePrice = basicPrice * (Number(quantity)||0);
+      }
+      
     } else if(selectedType==="스텐랙"){
       const p=data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
       if(p) basePrice=p*quantity;
@@ -394,6 +408,7 @@ export const ProductProvider=({children})=>{
 
     return Math.round((basePrice+extraPrice+customExtra)*(applyRate/100));
   },[selectedType,selectedOptions,quantity,customPrice,applyRate,data,bomData,extraProducts,extraOptionsSel,customMaterials]);
+  // ================================================================
 
   const makeExtraOptionBOM=()=>{
     const result=[];
@@ -531,7 +546,6 @@ const getFallbackBOM = () => {
     const filtered = [...filteredBase, ...makeExtraOptionBOM()]
       .filter(r => !/베이스볼트/.test(r.name))
       .map(r => ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) }));
-    // >>> 관리자 단가 적용
     const filteredWithAdminPrices = filtered.map(applyAdminEditPrice);
     return sortBOMByMaterialRule(filteredWithAdminPrices);
   }
@@ -549,10 +563,7 @@ const getFallbackBOM = () => {
     const shelfNum = sizeMatch ? sizeMatch[1] : "";
     const weightOnly = extractWeightOnly(color);
 
-    // --- 수정 포인트: 하이랙 기둥 수량 로직 ---
-    // 연결형: 2 * qty, 독립형: 4 * qty
     const pillarQty = formType === "연결형" ? 2 * qty : 4 * qty;
-    // -------------------------------------------
 
     const list = [
       {
@@ -581,7 +592,6 @@ const getFallbackBOM = () => {
       },
       ...makeExtraOptionBOM(),
     ].map(r => ensureSpecification(r, { size, height: heightValue, ...parseWD(size), weight: weightOnly }));
-    // >>> 관리자 단가 적용
     const listWithAdminPrices = list.map(applyAdminEditPrice);
     return sortBOMByMaterialRule(listWithAdminPrices.filter(r => !/베이스볼트/.test(r.name)));
   }
@@ -596,7 +606,6 @@ const getFallbackBOM = () => {
       { rackType: selectedType, name: `선반(${sizeFront})`, specification: `사이즈 ${sz}`, quantity: (parseInt((selectedOptions.level || "").replace(/[^\d]/g, "")) || 0) * q, unitPrice: 0, totalPrice: 0 },
       ...makeExtraOptionBOM(),
     ].map(r => ensureSpecification(r, { size: sz, height: heightValue, ...parseWD(sz) }));
-    // >>> 관리자 단가 적용
     const listWithAdminPrices = list.map(applyAdminEditPrice);
     return sortBOMByMaterialRule(listWithAdminPrices.filter(r => !/베이스볼트/.test(r.name)));
   }
@@ -604,7 +613,6 @@ const getFallbackBOM = () => {
   const extraBOM = makeExtraOptionBOM()
     .filter(r => !/베이스볼트/.test(r.name))
     .map(r => ensureSpecification(r, { size: r.size }));
-  // >>> 관리자 단가 적용
   return extraBOM.map(applyAdminEditPrice);
 };
   
@@ -619,7 +627,6 @@ const getFallbackBOM = () => {
         const ht=selectedOptions.height||"";
         const lvl=parseLevel(selectedOptions.level,selectedType);
         const {w,d}=parseWD(sz);
-        // 하드웨어 이름(양쪽 표기 변형 포함)
         const hardwareNames=new Set(["수평브레싱","수평브래싱","경사브레싱","경사브래싱","앙카볼트","브레싱볼트","브러싱고무","브레싱고무","안전핀","베이스(안전좌)"]);
         const base=rec.components
           .filter(c=>!hardwareNames.has(normalizePartName(c.name)))
@@ -799,55 +806,120 @@ const getFallbackBOM = () => {
     }));
   };
 
-  useEffect(()=>{
-    const map={};
-    cart.forEach(item=>{
-      item.bom?.forEach(c=>{
-        if(/베이스볼트/.test(c.name)) return;
-        const key = (c.rackType==="파렛트랙" || c.rackType==="파렛트랙 철판형")
-          ? `${normalizePartName(c.name)}__${c.specification||""}`
-          : `${c.rackType}__${normalizePartName(c.name)}__${c.specification||""}`;
-        if(map[key]){
-          map[key].quantity+=c.quantity;
-          map[key].totalPrice+=c.totalPrice||0;
-        } else {
-          map[key]={...c,name:normalizePartName(c.name)};
-        }
-      });
+  const cartBOMView = useMemo(() => {
+    const bomMap = new Map();
+    cart.forEach(item => {
+      if (item.bom && Array.isArray(item.bom)) {
+        item.bom.forEach(bomItem => {
+          const key = `${bomItem.rackType} ${bomItem.size || ''} ${bomItem.name}`;
+          if (bomMap.has(key)) {
+            const existing = bomMap.get(key);
+            bomMap.set(key, {
+              ...existing,
+              quantity: existing.quantity + (bomItem.quantity || 0),
+              totalPrice: existing.totalPrice + (bomItem.totalPrice || 0)
+            });
+          } else {
+            bomMap.set(key, {
+              ...bomItem,
+              quantity: bomItem.quantity || 0,
+              totalPrice: bomItem.totalPrice || 0,
+              unitPrice: bomItem.unitPrice || bomItem.unit_price || 0
+            });
+          }
+        });
+      }
     });
-    const merged=Object.values(map)
-      .map(r=>ensureSpecification(r,{size:r.size}))
-      .filter(r=>!/베이스볼트/.test(r.name));
-    setCartBOM(sortBOMByMaterialRule(merged));
-    setCartTotal(cart.reduce((s,i)=>s+(i.price||0),0));
-  },[cart]);
 
-  useEffect(()=>{
-    const raw=customPrice>0?getFallbackBOM():calculateCurrentBOM();
-    const processed=sortBOMByMaterialRule(
-      raw.filter(r=>!/베이스볼트/.test(r.name))
-         .map(r=>ensureSpecification(r,{size:r.size}))
-    );
-    setCurrentBOM(processed);
-    setCurrentPrice(calculatePrice());
-  },[calculatePrice,calculateCurrentBOM]);
+    const result = Array.from(bomMap.values());
+    return sortBOMByMaterialRule(result);
+  }, [cart]);
 
-  const cartBOMView=useMemo(()=>cartBOM,[cartBOM]);
+  // ========== 수정된 currentPrice 계산 - BOM 기반 가격 우선 사용 ==========
+  useEffect(() => {
+    const price = calculatePrice();
+    setCurrentPrice(price);
+  }, [calculatePrice]);
+
+  // ========== 수정된 currentBOM 계산 - 관리자 단가 적용 ==========
+  useEffect(() => {
+    const bom = calculateCurrentBOM();
+    setCurrentBOM(bom);
+  }, [calculateCurrentBOM]);
+
+  // ========== cartTotal 계산 - BOM 기반 가격 반영 ==========
+  useEffect(() => {
+    const total = cart.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+    setCartTotal(total);
+  }, [cart]);
+
+  // ========== canAddItem 조건 수정 - BOM 가격이 있으면 추가 가능 ==========
+  const canAddItem = useMemo(() => {
+    if (!selectedType || !quantity || Number(quantity) <= 0) return false;
+    if (selectedType === "하이랙" && !selectedOptions.formType) return false;
+    
+    // customPrice가 있으면 무조건 가능
+    if (customPrice > 0) return true;
+    
+    // BOM 부품 단가 합산이 0보다 크면 가능 (기본가격이 없어도 됨)
+    const bom = calculateCurrentBOM();
+    const bomTotal = bom.reduce((sum, item) => {
+      const effectivePrice = item.hasAdminPrice ? item.unitPrice : (Number(item.unitPrice) || 0);
+      return sum + (effectivePrice * (Number(item.quantity) || 0));
+    }, 0);
+    
+    if (bomTotal > 0) return true;
+    
+    // 기본가격이 있으면 가능
+    return currentPrice > 0;
+  }, [selectedType, selectedOptions, quantity, customPrice, currentPrice, calculateCurrentBOM]);
+
+  const contextValue = {
+    loading,
+    data,
+    bomData,
+    extraProducts,
+    allOptions,
+    availableOptions,
+    selectedType,
+    selectedOptions,
+    quantity,
+    customPrice,
+    applyRate,
+    currentPrice,
+    currentBOM,
+    cart,
+    cartBOM: cartBOMView,
+    cartBOMView,
+    cartTotal,
+    extraOptionsSel,
+    customMaterials,
+    canAddItem,
+    handleOptionChange,
+    setQuantity,
+    setCustomPrice,
+    setApplyRate,
+    addToCart,
+    removeFromCart,
+    updateCartItemQuantity,
+    setTotalBomQuantity,
+    handleExtraOptionChange,
+    addCustomMaterial,
+    removeCustomMaterial,
+    clearCustomMaterials,
+  };
 
   return (
-    <ProductContext.Provider value={{
-      allOptions,availableOptions,colorLabelMap,
-      selectedType,selectedOptions,quantity,setQuantity,
-      applyRate,setApplyRate,customPrice,setCustomPrice,
-      handleOptionChange,addToCart,removeFromCart,updateCartItemQuantity,
-      currentPrice,currentBOM,cart,cartTotal,cartBOM,cartBOMView,loading,
-      extraProducts,extraOptionsSel,handleExtraOptionChange,
-      customMaterials,addCustomMaterial,removeCustomMaterial,clearCustomMaterials,
-      setTotalBomQuantity,
-    }}>
+    <ProductContext.Provider value={contextValue}>
       {children}
     </ProductContext.Provider>
   );
 };
 
-export const useProducts=()=>useContext(ProductContext);
+export const useProducts = () => {
+  const context = useContext(ProductContext);
+  if (!context) {
+    throw new Error('useProducts must be used within ProductProvider');
+  }
+  return context;
+};
