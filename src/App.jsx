@@ -5,7 +5,8 @@ import { useProducts } from './contexts/ProductContext';
 import OptionSelector from './components/OptionSelector';
 import CartDisplay from './components/CartDisplay';
 import BOMDisplay from './components/BOMDisplay';
-import MaterialPriceManager from './components/MaterialPriceManager'; // 새로 추가
+import MaterialPriceManager from './components/MaterialPriceManager';
+import InventoryManager from './components/InventoryManager';
 import PurchaseOrderForm from './components/PurchaseOrderForm';
 import EstimateForm from './components/EstimateForm';
 import HistoryPage from './components/HistoryPage';
@@ -47,6 +48,9 @@ function App() {
         <div className="nav-logo"><h1>(주)삼미앵글</h1></div>
         <div className="nav-links">
           <Link to="/" className="nav-link">홈</Link>
+          {currentUser?.role === 'admin' && (
+            <Link to="/inventory" className="nav-link">재고관리</Link>
+          )}
           <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
           <Link to="/purchase-order/new" className="nav-link">청구서 작성</Link>
           {currentUser?.role === 'admin' && (
@@ -62,6 +66,9 @@ function App() {
       <main className="main-content">
         <Routes>
           <Route path="/" element={<HomePage currentUser={currentUser} />} />
+          {currentUser?.role === 'admin' && (
+            <Route path="/inventory" element={<InventoryPage currentUser={currentUser} />} />
+          )}
           <Route path="/estimate/new" element={<EstimateForm />} />
           <Route path="/purchase-order/new" element={<PurchaseOrderForm />} />
           <Route path="/delivery-note/new" element={<DeliveryNoteForm />} />
@@ -174,6 +181,16 @@ const HomePage = ({ currentUser }) => {
           selectedRackOption={getCurrentRackOptionName()}
         />
       )}
+    </div>
+  );
+};
+
+// ---------- 새로 추가된 InventoryPage ----------
+const InventoryPage = ({ currentUser }) => {
+  return (
+    <div className="app-container">
+      <h2>재고 관리</h2>
+      <InventoryManager currentUser={currentUser} />
     </div>
   );
 };
