@@ -24,7 +24,7 @@ export default function OptionSelector() {
 
     quantity, setQuantity, applyRate, setApplyRate,
     customPrice, setCustomPrice, currentPrice,
-    addToCart, loading,
+    addToCart, loading, canAddItem
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
@@ -76,35 +76,6 @@ export default function OptionSelector() {
   };
 
   if (loading) return <div>데이터 로드 중...</div>;
-
-  // 필수 선택 검증 (하이랙 formType 포함)
-  const hasRequiredSelections = (() => {
-    if (!selectedType) return false;
-    if (formTypeRacks.includes(selectedType)) {
-      return !!(selectedOptions.size &&
-        selectedOptions.height &&
-        selectedOptions.level &&
-        selectedOptions.formType &&
-        quantity > 0);
-    }
-    if (selectedType === '하이랙') {
-      return !!(selectedOptions.color &&
-        selectedOptions.size &&
-        selectedOptions.height &&
-        selectedOptions.level &&
-        selectedOptions.formType &&
-        quantity > 0);
-    }
-    if (selectedType === '스텐랙') {
-      return !!(selectedOptions.size &&
-        selectedOptions.height &&
-        selectedOptions.level &&
-        quantity > 0);
-    }
-    return quantity > 0;
-  })();
-
-  const canAddItem = (customPrice > 0 || currentPrice > 0) && hasRequiredSelections;
 
   // 현재 타입의 extra 옵션 카테고리
   const extraCatList =
