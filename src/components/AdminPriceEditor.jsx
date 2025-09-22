@@ -518,4 +518,4 @@ const AdminPriceEditor = ({ item, onClose, onSave }) => {
   );
 };
 
-export default AdminPriceEditor; '
+export default AdminPriceEditor;
