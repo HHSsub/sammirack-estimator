@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import { sortBOMByMaterialRule } from '../utils/materialSort';
+import { 
+  loadAllMaterials, 
+  loadAdminPrices, 
+  getEffectivePrice, 
+  generatePartId,
+  getRackOptionsUsingPart 
+} from '../utils/unifiedPriceManager';
 import AdminPriceEditor from './AdminPriceEditor';
 
 // 무게명칭 변환
@@ -14,15 +21,16 @@ export default function MaterialPriceManager({ currentUser, cart }) {
   const [editingPart, setEditingPart] = useState(null);
   const [adminPrices, setAdminPrices] = useState({});
   const [allMaterials, setAllMaterials] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // 관리자 수정 단가 로드
   useEffect(() => {
-    loadAdminPrices();
-  }, []);
+    loadAdminPricesData();
+  }, [refreshKey]);
 
   // 전체 시스템 원자재 로드
   useEffect(() => {
-    loadAllMaterials();
+    loadAllMaterialsData();
   }, []);
 
   // cart가 변경될 때마다 현재 카트의 원자재도 업데이트
@@ -32,10 +40,33 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     }
   }, [cart]);
 
-  const loadAdminPrices = () => {
+  // 다른 컴포넌트에서 단가 변경시 실시간 업데이트
+  useEffect(() => {
+    const handlePriceChange = (event) => {
+      console.log('MaterialPriceManager: 단가 변경 이벤트 수신', event.detail);
+      loadAdminPricesData();
+      setRefreshKey(prev => prev + 1);
+    };
+
+    const handleSystemRestore = (event) => {
+      console.log('MaterialPriceManager: 시스템 데이터 복원 이벤트 수신');
+      loadAdminPricesData();
+      loadAllMaterialsData();
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('adminPriceChanged', handlePriceChange);
+    window.addEventListener('systemDataRestored', handleSystemRestore);
+    
+    return () => {
+      window.removeEventListener('adminPriceChanged', handlePriceChange);
+      window.removeEventListener('systemDataRestored', handleSystemRestore);
+    };
+  }, []);
+
+  const loadAdminPricesData = () => {
     try {
-      const stored = localStorage.getItem('admin_edit_prices') || '{}';
-      const priceData = JSON.parse(stored);
+      const priceData = loadAdminPrices();
       setAdminPrices(priceData);
     } catch (error) {
       console.error('관리자 단가 로드 실패:', error);
@@ -43,299 +74,21 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     }
   };
 
-  const loadAllMaterials = async () => {
+  const loadAllMaterialsData = async () => {
     try {
-      // 1. bomData에서 모든 원자재 추출 (기존 로직)
-      const bomResponse = await fetch('./bom_data.json');
-      const bomData = await bomResponse.json();
-      
-      // 2. data.json에서 가격 정보 추출
-      const dataResponse = await fetch('./data.json');
-      const priceData = await dataResponse.json();
-      
-      const materials = new Map();
-      
-      // BOM 데이터에서 모든 컴포넌트 추출 (기존)
-      Object.keys(bomData).forEach(rackType => {
-        const rackData = bomData[rackType];
-        Object.keys(rackData).forEach(size => {
-          Object.keys(rackData[size]).forEach(height => {
-            Object.keys(rackData[size][height]).forEach(level => {
-              Object.keys(rackData[size][height][level]).forEach(formType => {
-                const components = rackData[size][height][level][formType]?.components || [];
-                components.forEach(component => {
-                  const partId = generatePartId({
-                    rackType,
-                    name: component.name,
-                    specification: component.specification || ''
-                  });
-                  
-                  if (!materials.has(partId)) {
-                    materials.set(partId, {
-                      partId,
-                      rackType,
-                      name: component.name,
-                      specification: component.specification || '',
-                      unitPrice: Number(component.unit_price) || 0,
-                      size,
-                      height,
-                      level,
-                      formType
-                    });
-                  }
-                });
-              });
-            });
-          });
-        });
-      });
-
-      // 3. 하이랙 동적 BOM 생성 및 추가
-      if (priceData['하이랙']) {
-        const hiRackData = priceData['하이랙'];
-        const colors = hiRackData['색상'] || [];
-        const heights = ['150', '200', '250'];
-        const levels = ['1단', '2단', '3단', '4단', '5단', '6단'];
-        const formTypes = ['독립형', '연결형'];
-
-        colors.forEach(color => {
-          const weightOnly = extractWeightOnly(color);
-          const basePrice = hiRackData['기본가격']?.[color] || {};
-          const sizes = Object.keys(basePrice);
-
-          sizes.forEach(size => {
-            heights.forEach(height => {
-              levels.forEach(level => {
-                formTypes.forEach(formType => {
-                  const levelNum = parseInt(level) || 1;
-                  const isConn = formType === '연결형';
-                  
-                  // 기둥
-                  const pillarPartId = generatePartId({
-                    rackType: '하이랙',
-                    name: `기둥(${height})`,
-                    specification: `높이 ${height}${weightOnly ? ` ${weightOnly}` : ''}`
-                  });
-                  if (!materials.has(pillarPartId)) {
-                    materials.set(pillarPartId, {
-                      partId: pillarPartId,
-                      rackType: '하이랙',
-                      name: `기둥(${height})`,
-                      specification: `높이 ${height}${weightOnly ? ` ${weightOnly}` : ''}`,
-                      unitPrice: 0,
-                      size, height, level, formType
-                    });
-                  }
-
-                  // 로드빔
-                  const sizeMatch = String(size).replace(/\s+/g, '').match(/(\d+)[xX](\d+)/);
-                  const rodBeamNum = sizeMatch ? sizeMatch[2] : '';
-                  if (rodBeamNum) {
-                    const beamPartId = generatePartId({
-                      rackType: '하이랙',
-                      name: `로드빔(${rodBeamNum})`,
-                      specification: `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ''}`
-                    });
-                    if (!materials.has(beamPartId)) {
-                      materials.set(beamPartId, {
-                        partId: beamPartId,
-                        rackType: '하이랙',
-                        name: `로드빔(${rodBeamNum})`,
-                        specification: `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ''}`,
-                        unitPrice: 0,
-                        size, height, level, formType
-                      });
-                    }
-                  }
-
-                  // 선반
-                  const shelfNum = sizeMatch ? sizeMatch[1] : '';
-                  if (shelfNum) {
-                    const shelfPartId = generatePartId({
-                      rackType: '하이랙',
-                      name: `선반(${shelfNum})`,
-                      specification: `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ''}`
-                    });
-                    if (!materials.has(shelfPartId)) {
-                      materials.set(shelfPartId, {
-                        partId: shelfPartId,
-                        rackType: '하이랙',
-                        name: `선반(${shelfNum})`,
-                        specification: `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ''}`,
-                        unitPrice: 0,
-                        size, height, level, formType
-                      });
-                    }
-                  }
-                });
-              });
-            });
-          });
-        });
-      }
-
-      // 4. 스텐랙 동적 BOM 생성 및 추가
-      if (priceData['스텐랙']) {
-        const stainlessData = priceData['스텐랙'];
-        const basePrice = stainlessData['기본가격'] || {};
-        const sizes = Object.keys(basePrice);
-        const heights = ['75', '90', '120', '150', '180', '210'];
-        const levels = ['2단', '3단', '4단', '5단', '6단'];
-
-        sizes.forEach(size => {
-          heights.forEach(height => {
-            levels.forEach(level => {
-              // 기둥
-              const pillarPartId = generatePartId({
-                rackType: '스텐랙',
-                name: `기둥(${height})`,
-                specification: `높이 ${height}`
-              });
-              if (!materials.has(pillarPartId)) {
-                materials.set(pillarPartId, {
-                  partId: pillarPartId,
-                  rackType: '스텐랙',
-                  name: `기둥(${height})`,
-                  specification: `높이 ${height}`,
-                  unitPrice: 0,
-                  size, height, level
-                });
-              }
-
-              // 선반
-              const sizeFront = (size.split("x")[0]) || size;
-              const shelfPartId = generatePartId({
-                rackType: '스텐랙',
-                name: `선반(${sizeFront})`,
-                specification: `사이즈 ${size}`
-              });
-              if (!materials.has(shelfPartId)) {
-                materials.set(shelfPartId, {
-                  partId: shelfPartId,
-                  rackType: '스텐랙',
-                  name: `선반(${sizeFront})`,
-                  specification: `사이즈 ${size}`,
-                  unitPrice: 0,
-                  size, height, level
-                });
-              }
-            });
-          });
-        });
-      }
-
-      // 5. 파렛트랙/파렛트랙 철판형 추가 옵션 처리
-      ['파렛트랙', '파렛트랙 철판형'].forEach(rackType => {
-        if (bomData[rackType]) {
-          const rackData = bomData[rackType];
-          const extraHeights = ['H4500', 'H5000', 'H5500', 'H6000'];
-          const extraSizes = rackType === '파렛트랙 철판형' ? ['2080x800', '2080x1000'] : [];
-          
-          // 추가 높이에 대한 BOM 생성
-          Object.keys(rackData).forEach(size => {
-            extraHeights.forEach(height => {
-              ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'].forEach(level => {
-                ['독립형', '연결형'].forEach(formType => {
-                  // 기본 컴포넌트들 생성
-                  const components = [
-                    {
-                      name: `기둥(${height})`,
-                      specification: `높이 ${height}`,
-                      unit_price: 0
-                    },
-                    {
-                      name: `로드빔(${size.split('x')[0] || '1000'})`,
-                      specification: size.split('x')[0] || '1000',
-                      unit_price: 0
-                    }
-                  ];
-
-                  if (rackType === '파렛트랙') {
-                    components.push({
-                      name: `타이빔(${size.split('x')[1] || '600'})`,
-                      specification: size.split('x')[1] || '600',
-                      unit_price: 0
-                    });
-                  }
-
-                  components.push({
-                    name: '안전핀(파렛트랙)',
-                    specification: '안전핀',
-                    unit_price: 0
-                  });
-
-                  components.forEach(component => {
-                    const partId = generatePartId({
-                      rackType,
-                      name: component.name,
-                      specification: component.specification || ''
-                    });
-                    
-                    if (!materials.has(partId)) {
-                      materials.set(partId, {
-                        partId,
-                        rackType,
-                        name: component.name,
-                        specification: component.specification || '',
-                        unitPrice: Number(component.unit_price) || 0,
-                        size, height, level, formType
-                      });
-                    }
-                  });
-                });
-              });
-            });
-          });
-
-          // 추가 사이즈에 대한 BOM 생성
-          extraSizes.forEach(size => {
-            Object.keys(rackData).forEach(existingSize => {
-              Object.keys(rackData[existingSize]).forEach(height => {
-                Object.keys(rackData[existingSize][height]).forEach(level => {
-                  Object.keys(rackData[existingSize][height][level]).forEach(formType => {
-                    const components = rackData[existingSize][height][level][formType]?.components || [];
-                    components.forEach(component => {
-                      const partId = generatePartId({
-                        rackType,
-                        name: component.name,
-                        specification: component.specification || ''
-                      });
-                      
-                      if (!materials.has(partId)) {
-                        materials.set(partId, {
-                          partId,
-                          rackType,
-                          name: component.name,
-                          specification: component.specification || '',
-                          unitPrice: Number(component.unit_price) || 0,
-                          size, height, level, formType
-                        });
-                      }
-                    });
-                  });
-                });
-              });
-            });
-          });
-        }
-      });
-
-      setAllMaterials(Array.from(materials.values()));
+      const materials = await loadAllMaterials();
+      setAllMaterials(materials);
     } catch (error) {
       console.error('전체 원자재 로드 실패:', error);
       setAllMaterials([]);
     }
   };
 
-  // 무게 추출 함수
-  const extractWeightOnly = (color = '') => {
-    const m = String(color).match(/(\d{2,4}kg)/);
-    return m ? m[1] : "";
-  };
-
+  // 카트 BOM 원자재 목록 (누락 없이)
+  const [currentCartMaterials, setCurrentCartMaterials] = useState([]);
+  
   const updateCurrentCartMaterials = () => {
-    // 원래: 카트 BOM을 allMaterials에서 partId로 추림 → 누락 발생
-    // 개선: 카트 BOM의 원자재를 그대로 쭉 펼침 (중복 제거, 정렬)
+    // 카트 BOM의 원자재를 그대로 쭉 펼침 (중복 제거, 정렬)
     if (!cart || cart.length === 0) return;
 
     const bomMaterialMap = new Map();
@@ -345,12 +98,17 @@ export default function MaterialPriceManager({ currentUser, cart }) {
           const partId = generatePartId(bomItem);
           // 같은 이름/규격이면 개수만 합침 (중복 부품 누락 방지)
           if (!bomMaterialMap.has(partId)) {
-            bomMaterialMap.set(partId, { ...bomItem, partId, count: bomItem.count || 1 });
+            bomMaterialMap.set(partId, { 
+              ...bomItem, 
+              partId, 
+              count: bomItem.count || bomItem.quantity || 1,
+              unitPrice: bomItem.unitPrice || 0
+            });
           } else {
             const prev = bomMaterialMap.get(partId);
             bomMaterialMap.set(partId, {
               ...prev,
-              count: (prev.count || 1) + (bomItem.count || 1)
+              count: (prev.count || 1) + (bomItem.count || bomItem.quantity || 1)
             });
           }
         });
@@ -360,37 +118,10 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     setCurrentCartMaterials(sortBOMByMaterialRule(Array.from(bomMaterialMap.values())));
   };
 
-  // 부품 고유 ID 생성 (AdminPriceEditor와 동일한 로직)
-  const generatePartId = (item) => {
-    const { rackType, name, specification } = item;
-    const cleanName = (name || '').replace(/[^\w가-힣]/g, '');
-    const cleanSpec = (specification || '').replace(/[^\w가-힣]/g, '');
-    return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-  };
-
-  // 실제 사용할 단가 계산 (우선순위: 관리자 수정 > 기존 단가)
+  // 실제 사용할 단가 계산 (통합 유틸리티 사용)
   const getEffectiveUnitPrice = (item) => {
-    const partId = generatePartId(item);
-    const adminPrice = adminPrices[partId];
-    
-    if (adminPrice && adminPrice.price > 0) {
-      return adminPrice.price;
-    }
-    // BOM item에 unitPrice가 없으면 allMaterials에서 찾아옴
-    if (typeof item.unitPrice === 'number' && item.unitPrice > 0) {
-      return item.unitPrice;
-    }
-    const found = allMaterials.find(mat => mat.partId === partId);
-    if (found && typeof found.unitPrice === 'number') return found.unitPrice;
-    return 0;
+    return getEffectivePrice(item);
   };
-
-  // 카트 BOM 원자재 목록 (누락 없이)
-  const [currentCartMaterials, setCurrentCartMaterials] = useState([]);
-  useEffect(() => {
-    if (cart && cart.length > 0) updateCurrentCartMaterials();
-    else setCurrentCartMaterials([]);
-  }, [cart, allMaterials]);
 
   // 검색된 원자재 필터링
   const filteredMaterials = useMemo(() => {
@@ -405,22 +136,29 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     }
     // 검색없고, 카트 있으면 카트 BOM을 그대로 보여줌
     if (cart && cart.length > 0) return currentCartMaterials;
-    // 검색없고, 카트 없으면 빈 배열 (혹은 allMaterials 전체 보여주고 싶으면 return allMaterials)
+    // 검색없고, 카트 없으면 빈 배열
     return [];
   }, [searchTerm, allMaterials, cart, currentCartMaterials]);
 
   // 단가 수정 버튼 클릭 핸들러
   const handleEditPrice = (item) => {
+    const usingOptions = getRackOptionsUsingPart(item.partId);
     const itemWithRackInfo = {
       ...item,
-      displayName: `${item.rackType} - ${item.name} ${item.specification || ''}`.trim()
+      displayName: `${item.rackType} - ${item.name} ${item.specification || ''}`.trim(),
+      usingOptions
     };
     setEditingPart(itemWithRackInfo);
   };
 
   // 단가 수정 완료 핸들러
   const handlePriceSaved = (partId, newPrice, oldPrice) => {
-    loadAdminPrices();
+    loadAdminPricesData();
+    setRefreshKey(prev => prev + 1);
+    
+    console.log(`MaterialPriceManager: 부품 ${partId}의 단가가 ${oldPrice}원에서 ${newPrice}원으로 변경되었습니다.`);
+    
+    // 전체 시스템에 변경 이벤트 발송 (BOMDisplay 등에서 수신)
     window.dispatchEvent(new CustomEvent('adminPriceChanged', { 
       detail: { partId, newPrice, oldPrice } 
     }));
@@ -496,7 +234,9 @@ export default function MaterialPriceManager({ currentUser, cart }) {
       <div style={{ flex: '1', minHeight: '0', overflow: 'hidden' }}>
         {filteredMaterials.length > 0 ? (
           <div className="material-table-container" style={{ 
-            height: '100%',
+            maxHeight: '400px',
+            minHeight: '200px',
+            height: '400px',
             overflowY: 'auto',
             border: '1px solid #dee2e6',
             borderRadius: '6px',
@@ -505,69 +245,77 @@ export default function MaterialPriceManager({ currentUser, cart }) {
             <table style={{ 
               width: '100%', 
               borderCollapse: 'collapse', 
-              fontSize: '13px', 
-              minWidth: '700px'
+              fontSize: '13px',
+              minWidth: '800px'
             }}>
-              <thead>
-                <tr style={{ backgroundColor: '#e9ecef' }}>
+              <thead style={{ 
+                backgroundColor: '#e9ecef',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10
+              }}>
+                <tr>
                   <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'left', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
+                    padding: '8px 6px', 
+                    textAlign: 'left',
+                    borderBottom: '1px solid #dee2e6',
+                    minWidth: '120px',
+                    fontWeight: '600'
                   }}>
                     랙타입
                   </th>
                   <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'left', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
+                    padding: '8px 6px', 
+                    textAlign: 'left',
+                    borderBottom: '1px solid #dee2e6',
+                    minWidth: '180px',
+                    fontWeight: '600'
                   }}>
                     부품명
                   </th>
                   <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'left', 
-                    minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
+                    padding: '8px 6px', 
+                    textAlign: 'left',
+                    borderBottom: '1px solid #dee2e6',
+                    minWidth: '120px',
+                    fontWeight: '600'
                   }}>
                     규격
                   </th>
                   <th style={{ 
-                    borderBottom: '2px solid #dee2e6', 
-                    padding: '7px 6px', 
-                    textAlign: 'right', 
+                    padding: '8px 6px', 
+                    textAlign: 'center',
+                    borderBottom: '1px solid #dee2e6',
                     minWidth: '80px',
-                    fontWeight: '600',
-                    position: 'sticky',
-                    top: 0,
-                    backgroundColor: '#e9ecef'
+                    fontWeight: '600'
+                  }}>
+                    수량
+                  </th>
+                  <th style={{ 
+                    padding: '8px 6px', 
+                    textAlign: 'center',
+                    borderBottom: '1px solid #dee2e6',
+                    minWidth: '100px',
+                    fontWeight: '600'
                   }}>
                     단가
                   </th>
+                  <th style={{ 
+                    padding: '8px 6px', 
+                    textAlign: 'center',
+                    borderBottom: '1px solid #dee2e6',
+                    minWidth: '100px',
+                    fontWeight: '600'
+                  }}>
+                    금액
+                  </th>
                   {isAdmin && (
                     <th style={{ 
-                      borderBottom: '2px solid #dee2e6', 
-                      padding: '7px 6px', 
-                      textAlign: 'center', 
+                      padding: '8px 6px', 
+                      textAlign: 'center',
+                      borderBottom: '1px solid #dee2e6',
                       minWidth: '80px',
-                      fontWeight: '600',
-                      position: 'sticky',
-                      top: 0,
-                      backgroundColor: '#e9ecef'
+                      fontWeight: '600'
                     }}>
                       관리
                     </th>
@@ -576,40 +324,37 @@ export default function MaterialPriceManager({ currentUser, cart }) {
               </thead>
               <tbody>
                 {filteredMaterials.map((material, index) => {
+                  const partId = material.partId || generatePartId(material);
                   const effectiveUnitPrice = getEffectiveUnitPrice(material);
-                  const partId = generatePartId(material);
                   const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
-
+                  const qty = Number(material.count || material.quantity || 1);
+                  const totalPrice = Math.round(effectiveUnitPrice * qty);
+                  
                   return (
-                    <tr key={partId || index} style={{ 
-                      borderBottom: '1px solid #dee2e6',
-                      height: '28px'
+                    <tr key={`${partId}-${index}`} style={{ 
+                      borderBottom: '1px solid #eee',
+                      height: '35px'
                     }}>
                       <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        fontSize: '13px',
-                        color: '#495057',
+                        padding: '7px 6px',
                         verticalAlign: 'middle'
                       }}>
                         {material.rackType}
                       </td>
                       <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        wordBreak: 'break-word',
+                        padding: '7px 6px',
                         verticalAlign: 'middle'
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>{kgLabelFix(material.name)}</span>
                           {hasAdminPrice && (
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: '#007bff',
-                              color: 'white',
+                            <span style={{ 
                               fontSize: '10px',
+                              color: '#dc3545',
+                              backgroundColor: '#f8d7da',
+                              padding: '2px 4px',
                               borderRadius: '3px',
-                              flexShrink: 0
+                              fontWeight: 'bold'
                             }}>
                               수정됨
                             </span>
@@ -617,22 +362,27 @@ export default function MaterialPriceManager({ currentUser, cart }) {
                         </div>
                       </td>
                       <td style={{ 
-                        padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        fontSize: '13px',
+                        padding: '7px 6px',
                         verticalAlign: 'middle'
                       }}>
-                        {kgLabelFix(material.specification || '-')}
+                        {kgLabelFix(material.specification) || '-'}
                       </td>
                       <td style={{ 
                         padding: '7px 6px', 
-                        borderRight: '1px solid #dee2e6',
-                        textAlign: 'right',
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        fontWeight: 'bold'
+                      }}>
+                        {qty}개
+                      </td>
+                      <td style={{ 
+                        padding: '7px 6px', 
+                        textAlign: 'center',
                         verticalAlign: 'middle'
                       }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <div>
                           <div style={{ 
-                            color: effectiveUnitPrice ? 'inherit' : '#6c757d',
+                            color: hasAdminPrice ? 'inherit' : '#6c757d',
                             fontWeight: hasAdminPrice ? '600' : 'normal'
                           }}>
                             {effectiveUnitPrice ? effectiveUnitPrice.toLocaleString() : '-'}원
@@ -647,6 +397,15 @@ export default function MaterialPriceManager({ currentUser, cart }) {
                             </div>
                           )}
                         </div>
+                      </td>
+                      <td style={{ 
+                        padding: '7px 6px', 
+                        textAlign: 'center',
+                        verticalAlign: 'middle',
+                        fontWeight: 'bold',
+                        color: totalPrice > 0 ? '#000' : '#6c757d'
+                      }}>
+                        {totalPrice > 0 ? totalPrice.toLocaleString() : '-'}원
                       </td>
                       {isAdmin && (
                         <td style={{ 
@@ -737,7 +496,8 @@ export default function MaterialPriceManager({ currentUser, cart }) {
           </div>
           <div>• 이곳에서 수정한 단가는 전체 시스템에 적용됩니다.</div>
           <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
-          <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다</div>
+          <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다.</div>
+          <div>• 하단 BOM 표시와 실시간으로 연동됩니다.</div>
         </div>
       )}
 
