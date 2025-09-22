@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import { sortBOMByMaterialRule } from '../utils/materialSort';
+import { 
+  loadAdminPrices, 
+  getEffectivePrice, 
+  generatePartId,
+  getRackOptionsUsingPart 
+} from '../utils/unifiedPriceManager';
 import AdminPriceEditor from './AdminPriceEditor';
 
 // 무게명칭 변환
@@ -17,28 +23,35 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
 
   // 관리자 수정 단가 로드
   useEffect(() => {
-    loadAdminPrices();
-  }, [refreshKey]); // refreshKey 변경시에도 재로드
+    loadAdminPricesData();
+  }, [refreshKey]);
 
   // 다른 컴포넌트에서 단가 변경시 실시간 업데이트
   useEffect(() => {
     const handlePriceChange = (event) => {
       console.log('BOMDisplay: 단가 변경 이벤트 수신', event.detail);
-      loadAdminPrices();
+      loadAdminPricesData();
+      setRefreshKey(prev => prev + 1);
+    };
+
+    const handleSystemRestore = (event) => {
+      console.log('BOMDisplay: 시스템 데이터 복원 이벤트 수신');
+      loadAdminPricesData();
       setRefreshKey(prev => prev + 1);
     };
 
     window.addEventListener('adminPriceChanged', handlePriceChange);
+    window.addEventListener('systemDataRestored', handleSystemRestore);
     
     return () => {
       window.removeEventListener('adminPriceChanged', handlePriceChange);
+      window.removeEventListener('systemDataRestored', handleSystemRestore);
     };
   }, []);
 
-  const loadAdminPrices = () => {
+  const loadAdminPricesData = () => {
     try {
-      const stored = localStorage.getItem('admin_edit_prices') || '{}';
-      const priceData = JSON.parse(stored);
+      const priceData = loadAdminPrices();
       setAdminPrices(priceData);
     } catch (error) {
       console.error('관리자 단가 로드 실패:', error);
@@ -46,32 +59,22 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
     }
   };
 
-  // 부품 고유 ID 생성 (AdminPriceEditor와 동일한 로직)
-  const generatePartId = (item) => {
-    const { rackType, name, specification } = item;
-    const cleanName = name.replace(/[^\w가-힣]/g, '');
-    const cleanSpec = (specification || '').replace(/[^\w가-힣]/g, '');
-    return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-  };
-
-  // 실제 사용할 단가 계산 (우선순위: 관리자 수정 > 기존 단가)
+  // 실제 사용할 단가 계산 (통합 유틸리티 사용)
   const getEffectiveUnitPrice = (item) => {
-    const partId = generatePartId(item);
-    const adminPrice = adminPrices[partId];
-    
-    if (adminPrice && adminPrice.price > 0) {
-      return adminPrice.price;
-    }
-    
-    return Number(item.unitPrice ?? 0);
+    return getEffectivePrice(item);
   };
 
   // 단가 수정 버튼 클릭 핸들러
   const handleEditPrice = (item) => {
+    const partId = generatePartId(item);
+    const usingOptions = getRackOptionsUsingPart(partId);
+    
     // 선택된 랙옵션 정보 추가
     const itemWithRackInfo = {
       ...item,
-      displayName: selectedRackOption || `${item.rackType} ${item.specification || ''}`.trim()
+      partId,
+      displayName: selectedRackOption || `${item.rackType} ${item.specification || ''}`.trim(),
+      usingOptions
     };
     setEditingPart(itemWithRackInfo);
   };
@@ -79,10 +82,10 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
   // 단가 수정 완료 핸들러
   const handlePriceSaved = (partId, newPrice, oldPrice) => {
     // 관리자 단가 데이터 재로드
-    loadAdminPrices();
+    loadAdminPricesData();
     setRefreshKey(prev => prev + 1);
     
-    console.log(`부품 ${partId}의 단가가 ${oldPrice}원에서 ${newPrice}원으로 변경되었습니다.`);
+    console.log(`BOMDisplay: 부품 ${partId}의 단가가 ${oldPrice}원에서 ${newPrice}원으로 변경되었습니다.`);
     
     // 전체 시스템에 변경 이벤트 발송
     window.dispatchEvent(new CustomEvent('adminPriceChanged', { 
@@ -124,49 +127,49 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
             <tbody>
               {sortedBom.map((item, index) => {
                 const key = `${item.rackType} ${item.size || ''} ${item.name}-${index}`;
+                const partId = generatePartId(item);
                 const effectiveUnitPrice = getEffectiveUnitPrice(item);
+                const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
                 const qty = Number(item.quantity ?? 0);
                 const total = effectiveUnitPrice ? Math.round(effectiveUnitPrice * qty) : Number(item.totalPrice ?? 0);
-                
-                // 관리자가 수정한 단가인지 확인
-                const partId = generatePartId(item);
-                const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
 
                 return (
-                  <tr key={key}>
-                    <td style={{ padding: '6px 8px', borderBottom: '1px solid #d8d8d8', wordBreak: 'break-word' }}>
-                      {kgLabelFix(item.name)}
-                      {hasAdminPrice && (
-                        <span style={{
-                          marginLeft: '8px',
-                          padding: '2px 6px',
-                          backgroundColor: '#007bff',
-                          color: 'white',
-                          fontSize: '10px',
-                          borderRadius: '3px'
+                  <tr key={key} style={{ borderBottom: '1px solid #ddd' }}>
+                    <td style={{ padding: '4px 6px', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div>
+                          <strong>{kgLabelFix(item.name)}</strong>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {item.rackType}
+                          </div>
+                        </div>
+                        {hasAdminPrice && (
+                          <span style={{ 
+                            fontSize: '10px',
+                            color: '#dc3545',
+                            backgroundColor: '#f8d7da',
+                            padding: '2px 4px',
+                            borderRadius: '3px',
+                            fontWeight: 'bold'
+                          }}>
+                            수정됨
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                      {kgLabelFix(item.specification) || '-'}
+                    </td>
+                    <td style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 'bold' }}>
+                      {qty}개
+                    </td>
+                    <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                      <div>
+                        <div style={{ 
+                          color: hasAdminPrice ? 'inherit' : '#6c757d',
+                          fontWeight: hasAdminPrice ? '600' : 'normal'
                         }}>
-                          수정됨
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: 'center', borderBottom: '1px solid #d8d8d8', padding: '6px 4px' }}>
-                      {kgLabelFix(item.specification || '')}
-                    </td>
-                    <td style={{ textAlign: 'center', borderBottom: '1px solid #d8d8d8', padding: '6px 4px' }}>
-                      <input
-                        type="number"
-                        min={0}
-                        value={qty ?? ''}
-                        onChange={e => setTotalBomQuantity(key, e.target.value)}
-                        onBlur={e => { if (e.target.value === '') setTotalBomQuantity(key, 0); }}
-                        style={{ width: 56, textAlign: 'right' }}
-                      />{' '}
-                      개
-                    </td>
-                    <td style={{ textAlign: 'right', borderBottom: '1px solid #d8d8d8', padding: '6px 8px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                        <div style={{ color: effectiveUnitPrice ? 'inherit' : '#6c757d' }}>
-                          {effectiveUnitPrice ? effectiveUnitPrice.toLocaleString() : '-'}
+                          {effectiveUnitPrice ? effectiveUnitPrice.toLocaleString() : '-'}원
                         </div>
                         {hasAdminPrice && Number(item.unitPrice) > 0 && Number(item.unitPrice) !== effectiveUnitPrice && (
                           <div style={{ 
@@ -174,26 +177,28 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
                             color: '#6c757d', 
                             textDecoration: 'line-through' 
                           }}>
-                            원가: {Number(item.unitPrice).toLocaleString()}
+                            원가: {Number(item.unitPrice).toLocaleString()}원
                           </div>
                         )}
                       </div>
                     </td>
-                    <td style={{ textAlign: 'right', borderBottom: '1px solid #d8d8d8', padding: '6px 8px' }}>
-                      {total ? total.toLocaleString() : '-'}
+                    <td style={{ padding: '4px 6px', textAlign: 'center', fontWeight: 'bold' }}>
+                      {total ? total.toLocaleString() : '-'}원
                     </td>
                     {isAdmin && (
-                      <td style={{ textAlign: 'center', borderBottom: '1px solid #d8d8d8', padding: '6px 4px' }}>
+                      <td style={{ padding: '4px 6px', textAlign: 'center' }}>
                         <button
                           onClick={() => handleEditPrice(item)}
                           style={{
-                            padding: '4px 8px',
+                            padding: '6px 12px',
                             border: '1px solid #007bff',
-                            borderRadius: '3px',
+                            borderRadius: '4px',
                             backgroundColor: 'white',
                             color: '#007bff',
                             cursor: 'pointer',
-                            fontSize: '11px'
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            transition: 'all 0.2s'
                           }}
                           onMouseOver={e => {
                             e.target.style.backgroundColor = '#007bff';
@@ -215,28 +220,22 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
           </table>
         </div>
 
-        {/* 관리자 단가 수정 정보 표시 */}
-        {isAdmin && Object.keys(adminPrices).length > 0 && (
+        {/* 통합 관리 안내 정보 */}
+        {isAdmin && (
           <div style={{ 
-            marginTop: '16px', 
-            padding: '12px', 
-            backgroundColor: '#f8f9fa', 
+            marginTop: '12px', 
+            padding: '10px', 
+            backgroundColor: '#e7f3ff', 
             borderRadius: '6px',
-            fontSize: '13px',
-            color: '#6c757d'
+            fontSize: '12px',
+            color: '#0c5aa6',
+            border: '1px solid #b8daff'
           }}>
             <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-              💡 관리자 단가 수정 정보
+              💡 BOM 단가 관리 안내
             </div>
-            <div>
-              • "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.
-            </div>
-            <div>
-              • 원가와 수정된 단가가 다른 경우 두 가격이 모두 표시됩니다.
-            </div>
-            <div>
-              • 상단 원자재 단가 관리에서 일괄 수정이 가능합니다.
-            </div>
+            <div>• 이곳에서 수정한 단가는 우측 원자재 관리와 실시간 연동됩니다.</div>
+            <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
           </div>
         )}
       </div>
