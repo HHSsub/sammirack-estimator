@@ -335,79 +335,90 @@ export const ProductProvider=({children})=>{
     return s+(tp>0?tp:up*q);
   },0);
 
-  // ========== 수정된 calculatePrice 함수 - 우선순위 변경 ==========
-  const calculatePrice=useCallback(()=>{
-    if(!selectedType||quantity<=0) return 0;
-    if(selectedType==="하이랙" && !selectedOptions.formType) return 0;
+  // ========== 수정된 calculatePrice 함수 - BOM 가격 우선 계산 ==========
+  const calculatePrice = useCallback(() => {
+    if (!selectedType || quantity <= 0) return 0;
+    if (selectedType === "하이랙" && !selectedOptions.formType) return 0;
     
     // 1순위: 사용자가 직접 입력한 커스텀 가격
-    if(customPrice>0) return Math.round(customPrice*quantity*(applyRate/100));
+    if (customPrice > 0) return Math.round(customPrice * quantity * (applyRate / 100));
     
-    let basePrice=0;
-    let bomPrice=0; // BOM 부품 단가 합산 가격
-    let basicPrice=0; // 기본 가격 (pData)
-
-    if(formTypeRacks.includes(selectedType)){
-      const {size,height:heightRaw,level:levelRaw,formType}=selectedOptions;
-      const height=selectedType==="경량랙"&&heightRaw==="H750"?"H900":heightRaw;
+    let basePrice = 0;
+    let bomPrice = 0; // BOM 부품 단가 합산 가격
+    let basicPrice = 0; // 기본 가격 (pData)
+  
+    if (formTypeRacks.includes(selectedType)) {
+      const { size, height: heightRaw, level: levelRaw, formType } = selectedOptions;
+      const height = selectedType === "경량랙" && heightRaw === "H750" ? "H900" : heightRaw;
       
-      // 기본가격(pData) 조회
+      // ✅ BOM 부품 단가 합산 가격 계산 (우선 계산)
+      const bom = calculateCurrentBOM();
+      if (bom && bom.length > 0) {
+        bomPrice = bom.reduce((sum, item) => {
+          const effectivePrice = getEffectivePrice ? getEffectivePrice(item) : (Number(item.unitPrice) || 0);
+          const quantity = Number(item.quantity) || 0;
+          return sum + (effectivePrice * quantity);
+        }, 0);
+        console.log(`💰 BOM 총 가격 계산: ${bomPrice}원 (${bom.length}개 부품)`);
+      }
+      
+      // 기본가격(pData) 조회 (백업용)
       let pData;
-      if(selectedType==="파렛트랙 철판형"){
-        const hKey=String(height||"").replace(/^H/i,"");
-        const lKey=(String(levelRaw||"").replace(/^L/i,"").replace(/^\s*$/,"0"))+"단";
-        pData=data?.[selectedType]?.["기본가격"]?.[formType]?.[size]?.[hKey]?.[lKey];
+      if (selectedType === "파렛트랙 철판형") {
+        const hKey = String(height || "").replace(/^H/i, "");
+        const lKey = (String(levelRaw || "").replace(/^L/i, "").replace(/^\s*$/, "0")) + "단";
+        pData = data?.[selectedType]?.["기본가격"]?.[formType]?.[size]?.[hKey]?.[lKey];
       } else {
-        pData=data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[levelRaw]?.[formType];
+        pData = data?.[selectedType]?.["기본가격"]?.[size]?.[height]?.[levelRaw]?.[formType];
       }
       
-      if(pData) basicPrice = Number(pData);
+      if (pData) basicPrice = Number(pData);
       
-      // BOM 부품 단가 합산 가격 계산
-      const rec=bomData?.[selectedType]?.[size]?.[height]?.[levelRaw]?.[formType];
-      if(rec){
-        const componentsWithAdminPrice = (rec.components || []).map(applyAdminEditPrice);
-        bomPrice = sumComponents(componentsWithAdminPrice);
+      // ✅ 우선순위: BOM 가격 > 기본가격
+      if (bomPrice > 0) {
+        basePrice = bomPrice * (Number(quantity) || 0);
+        console.log(`✅ BOM 가격 사용: ${basePrice}원 (BOM: ${bomPrice}원 × 수량: ${quantity})`);
+      } else if (basicPrice > 0) {
+        basePrice = basicPrice * (Number(quantity) || 0);
+        console.log(`📋 기본가격 사용: ${basePrice}원 (기본: ${basicPrice}원 × 수량: ${quantity})`);
       }
       
-      // 2순위: BOM 부품단가 합산이 0보다 크면 BOM 가격 사용
-      // 3순위: 기본가격(pData) 사용
-      if(bomPrice > 0) {
-        basePrice = bomPrice * (Number(quantity)||0);
-      } else if(basicPrice > 0) {
-        basePrice = basicPrice * (Number(quantity)||0);
-      }
-      
-    } else if(selectedType==="스텐랙"){
-      const p=data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-      if(p) basePrice=p*quantity;
-    } else if(selectedType==="하이랙"){
+    } else if (selectedType === "스텐랙") {
+      const p = data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+      if (p) basePrice = p * quantity;
+    } else if (selectedType === "하이랙") {
       const { size, color, height, level, formType } = selectedOptions;
-      if(size && color && height && level && formType){
-        const isHeaviest=/550kg$/.test(color)||/700kg$/.test(color);
-        const dataSizeKey=isHeaviest
-          ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[size]||size
+      if (size && color && height && level && formType) {
+        const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
+        const dataSizeKey = isHeaviest
+          ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[size] || size
           : size;
-        const p=data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[height]?.[level];
-        if(p) basePrice=p*quantity;
+        const p = data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[height]?.[level];
+        if (p) basePrice = p * quantity;
       }
     }
-
-    let extraPrice=0;
-    (Object.values(extraProducts?.[selectedType]||{})).forEach(arr=>{
-      if(Array.isArray(arr)){
-        arr.forEach(opt=>{
-          if(extraOptionsSel.includes(opt.id)) extraPrice+=Number(opt.price)||0;
+  
+    // 추가 옵션 가격
+    let extraPrice = 0;
+    (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
+      if (Array.isArray(arr)) {
+        arr.forEach(opt => {
+          if (extraOptionsSel.includes(opt.id)) extraPrice += Number(opt.price) || 0;
         });
       }
     });
-
-    const customExtra=selectedType==="경량랙"
-      ? customMaterials.reduce((s,m)=>s+(Number(m.price)||0),0)
+  
+    // 커스텀 자재 가격 (경량랙만)
+    const customExtra = selectedType === "경량랙"
+      ? customMaterials.reduce((s, m) => s + (Number(m.price) || 0), 0)
       : 0;
-
-    return Math.round((basePrice+extraPrice+customExtra)*(applyRate/100));
-  },[selectedType,selectedOptions,quantity,customPrice,applyRate,data,bomData,extraProducts,extraOptionsSel,customMaterials]);
+  
+    const finalPrice = Math.round((basePrice + extraPrice + customExtra) * (applyRate / 100));
+    
+    console.log(`💵 최종 가격: ${finalPrice}원 (기본: ${basePrice}, 추가: ${extraPrice}, 커스텀: ${customExtra}, 적용률: ${applyRate}%)`);
+    
+    return finalPrice;
+  }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, calculateCurrentBOM]);
   // ================================================================
 
   const makeExtraOptionBOM=()=>{
@@ -853,7 +864,8 @@ const getFallbackBOM = () => {
     setCartTotal(total);
   }, [cart]);
 
-  // ========== canAddItem 조건 수정 - BOM 가격이 있으면 추가 가능 ==========
+
+  // ✅ canAddItem 조건 수정 - BOM 가격이 있으면 추가 가능
   const canAddItem = useMemo(() => {
     if (!selectedType || !quantity || Number(quantity) <= 0) return false;
     if (selectedType === "하이랙" && !selectedOptions.formType) return false;
@@ -864,57 +876,41 @@ const getFallbackBOM = () => {
     // BOM 부품 단가 합산이 0보다 크면 가능 (기본가격이 없어도 됨)
     const bom = calculateCurrentBOM();
     const bomTotal = bom.reduce((sum, item) => {
-      const effectivePrice = item.hasAdminPrice ? item.unitPrice : (Number(item.unitPrice) || 0);
+      const effectivePrice = getEffectivePrice ? getEffectivePrice(item) : (Number(item.unitPrice) || 0);
       return sum + (effectivePrice * (Number(item.quantity) || 0));
     }, 0);
     
-    if (bomTotal > 0) return true;
+    if (bomTotal > 0) {
+      console.log(`✅ BOM 총액으로 추가 가능: ${bomTotal}원`);
+      return true;
+    }
     
-    // 기본가격이 있으면 가능
-    return currentPrice > 0;
-  }, [selectedType, selectedOptions, quantity, customPrice, currentPrice, calculateCurrentBOM]);
-
-  const contextValue = {
-    loading,
-    data,
-    bomData,
-    extraProducts,
-    allOptions,
-    availableOptions,
-    selectedType,
-    selectedOptions,
-    quantity,
-    customPrice,
-    applyRate,
-    currentPrice,
-    currentBOM,
-    cart,
-    cartBOM: cartBOMView,
-    cartBOMView,
-    cartTotal,
-    extraOptionsSel,
-    customMaterials,
-    canAddItem,
-    handleOptionChange,
-    setQuantity,
-    setCustomPrice,
-    setApplyRate,
-    addToCart,
-    removeFromCart,
-    updateCartItemQuantity,
-    setTotalBomQuantity,
-    handleExtraOptionChange,
-    addCustomMaterial,
-    removeCustomMaterial,
-    clearCustomMaterials,
-  };
-
-  return (
-    <ProductContext.Provider value={contextValue}>
-      {children}
-    </ProductContext.Provider>
-  );
-};
+    // 기본가격이 있어도 가능
+    const currentPrice = calculatePrice();
+    if (currentPrice > 0) {
+      console.log(`✅ 기본가격으로 추가 가능: ${currentPrice}원`);
+      return true;
+    }
+    
+    console.log(`❌ 추가 불가: BOM(${bomTotal}원), 기본가격(${currentPrice}원)`);
+    return false;
+  }, [selectedType, selectedOptions, quantity, customPrice, calculateCurrentBOM, calculatePrice]);
+  
+  // ✅ getEffectivePrice 함수 추가 (ProductContext 내에서 사용)
+  const getEffectivePrice = useCallback((item) => {
+    if (typeof window !== 'undefined' && window.getEffectivePrice) {
+      return window.getEffectivePrice(item);
+    }
+    
+    // fallback: 통합 유틸리티 임포트
+    try {
+      const { getEffectivePrice: utilGetEffectivePrice } = require('../utils/unifiedPriceManager');
+      return utilGetEffectivePrice(item);
+    } catch (error) {
+      console.warn('unifiedPriceManager import 실패, 기본 단가 사용');
+      return Number(item.unitPrice) || 0;
+    }
+  }, []);
 
 export const useProducts = () => {
   const context = useContext(ProductContext);
