@@ -273,10 +273,10 @@ export default function OptionSelector() {
                       );
                     })}
                   </div>
-                );
-              })}
+                </div>
+              ))} {/* <-- 이 괄호와 세미콜론이 반드시 있어야 합니다!! */}
             </div>
-          )
+          )}
 
           {/* 커스텀 자재 (경량랙용) */}
           {selectedType === "경량랙" && (
