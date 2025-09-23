@@ -1,6 +1,7 @@
 // src/utils/excelExport.js
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { deductInventoryOnPrint } from './inventoryManager';
 
 /** ---------------------------
  *  공통 유틸
@@ -97,6 +98,9 @@ function setRowHeights(ws, map) {
     ws.getRow(Number(rowNo)).height = height;
   });
 }
+
+
+
 
 /** 공통 상단 정보(문서제목/회사/고객) */
 function buildTop(ws, type, { date, companyName, contact } = {}) {
@@ -417,6 +421,163 @@ export async function exportToExcel(rawData, type = 'estimate') {
   );
   saveAs(blob, fileName);
 }
+
+/**
+ * ✅ 견적서 출력 시 재고 감소 연동
+ */
+export const exportEstimateWithInventory = async (formData, cartData, fileName) => {
+  try {
+    // 1. 기존 Excel 출력
+    await exportToExcel(formData, fileName || generateFileName('estimate'));
+    console.log('✅ 견적서 Excel 출력 완료');
+    
+    // 2. 재고 감소 (견적서는 선택적)
+    if (cartData?.cart && window.confirm('견적서 출력과 함께 재고를 감소시키시겠습니까?')) {
+      const result = deductInventoryOnPrint(
+        cartData.cart, 
+        'estimate', 
+        formData.documentNumber || fileName || '견적서'
+      );
+      
+      showInventoryResult(result, '견적서');
+      return result;
+    }
+    
+    return { success: true, message: '견적서 출력 완료 (재고 변경 없음)' };
+    
+  } catch (error) {
+    console.error('견적서 출력 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * ✅ 청구서 출력 시 재고 감소 연동
+ */
+export const exportInvoiceWithInventory = async (formData, cartData, fileName) => {
+  try {
+    // 1. 기존 Excel 출력
+    await exportToExcel(formData, fileName || generateFileName('invoice'));
+    console.log('✅ 청구서 Excel 출력 완료');
+    
+    // 2. 재고 자동 감소 (청구서는 자동)
+    if (cartData?.cart) {
+      const result = deductInventoryOnPrint(
+        cartData.cart, 
+        'invoice', 
+        formData.documentNumber || fileName || '청구서'
+      );
+      
+      showInventoryResult(result, '청구서');
+      return result;
+    }
+    
+    return { success: true, message: '청구서 출력 완료 (재고 감소 대상 없음)' };
+    
+  } catch (error) {
+    console.error('청구서 출력 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * ✅ 발주서 출력 시 재고 감소 연동
+ */
+export const exportPurchaseOrderWithInventory = async (formData, cartData, fileName) => {
+  try {
+    // 1. 기존 Excel 출력
+    await exportToExcel(formData, fileName || generateFileName('purchase_order'));
+    console.log('✅ 발주서 Excel 출력 완료');
+    
+    // 2. 재고 자동 감소 (발주서는 자동)
+    if (cartData?.cart) {
+      const result = deductInventoryOnPrint(
+        cartData.cart, 
+        'purchase_order', 
+        formData.documentNumber || fileName || '발주서'
+      );
+      
+      showInventoryResult(result, '발주서');
+      return result;
+    }
+    
+    return { success: true, message: '발주서 출력 완료 (재고 감소 대상 없음)' };
+    
+  } catch (error) {
+    console.error('발주서 출력 실패:', error);
+    throw error;
+  }
+};
+
+/**
+ * 재고 감소 결과 사용자에게 표시
+ */
+const showInventoryResult = (result, documentType) => {
+  if (!result) return;
+  
+  let message = `📄 ${documentType} 출력 완료\n`;
+  
+  if (result.success) {
+    message += `📦 재고 감소: ${result.deductedParts.length}개 부품 처리`;
+    
+    if (result.warnings.length > 0) {
+      message += `\n⚠️ 재고 부족 경고: ${result.warnings.length}개 부품`;
+      
+      // 재고 부족 부품 상세 (최대 3개)
+      const warningDetails = result.warnings.slice(0, 3).map(w => 
+        `• ${w.name}: 필요 ${w.required}개, 가용 ${w.available}개`
+      ).join('\n');
+      
+      message += '\n' + warningDetails;
+      
+      if (result.warnings.length > 3) {
+        message += `\n• 외 ${result.warnings.length - 3}개 부품...`;
+      }
+      
+      // 재고 부족 시 추가 안내
+      message += '\n\n재고 관리 탭에서 부족한 부품을 확인하고 보충하세요.';
+    }
+    
+    // 결과 표시
+    if (result.warnings.length > 0) {
+      // 경고가 있으면 confirm으로 재고 탭 이동 제안
+      if (window.confirm(message + '\n\n재고 관리 탭으로 이동하시겠습니까?')) {
+        window.dispatchEvent(new CustomEvent('showInventoryTab'));
+      }
+    } else {
+      // 정상 완료는 간단히 alert
+      alert(message);
+    }
+    
+  } else {
+    message += `❌ 재고 감소 실패: ${result.message}`;
+    alert(message);
+  }
+};
+
+/**
+ * ✅ 기존 컴포넌트들에서 사용할 통합 프린트 함수
+ * 문서 타입에 따라 자동으로 적절한 함수 호출
+ */
+export const printDocumentWithInventory = async (documentType, formData, cartData, fileName) => {
+  switch (documentType) {
+    case 'estimate':
+      return await exportEstimateWithInventory(formData, cartData, fileName);
+    
+    case 'invoice':
+      return await exportInvoiceWithInventory(formData, cartData, fileName);
+    
+    case 'purchase_order':
+      return await exportPurchaseOrderWithInventory(formData, cartData, fileName);
+    
+    default:
+      // 기본은 기존 방식 (재고 감소 없음)
+      await exportToExcel(formData, fileName);
+      console.log("재고 감소 없이 프린트 되었음")
+      return { success: true, message: '문서 출력 완료' };
+  }
+};
+
 
 // 호환용 default export 묶음 (원하면 import default로도 쓸 수 있게)
 export default { exportToExcel, generateFileName };
