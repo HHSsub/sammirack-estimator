@@ -276,7 +276,7 @@ export default function OptionSelector() {
                 );
               })}
             </div>
-          )}
+          )
 
           {/* 커스텀 자재 (경량랙용) */}
           {selectedType === "경량랙" && (
