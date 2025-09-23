@@ -108,7 +108,6 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
   }
 };
 
-
 // 재고 감소 결과 사용자에게 표시
 export const showInventoryResult = (result, documentType) => {
   if (!result) return;
@@ -162,6 +161,7 @@ export default function InventoryManager({ currentUser }) {
   const [editQuantity, setEditQuantity] = useState('');
   const [rackOptions, setRackOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [undoStack, setUndoStack] = useState([]); // 실행 취소용 스택
 
   // 관리자가 아닌 경우 접근 차단
   if (currentUser?.role !== 'admin') {
@@ -261,9 +261,16 @@ export default function InventoryManager({ currentUser }) {
     }
   };
 
-  // 재고 데이터 저장
-  const saveInventory = (newInventory) => {
+  // 재고 데이터 저장 (실행 취소 스택에 추가)
+  const saveInventory = (newInventory, description) => {
     try {
+      // 현재 상태를 실행 취소 스택에 저장
+      setUndoStack(prev => [...prev.slice(-9), { // 최근 10개만 유지
+        inventory: { ...inventory },
+        description,
+        timestamp: new Date().toISOString()
+      }]);
+
       localStorage.setItem('inventory_data', JSON.stringify(newInventory));
       setInventory(newInventory);
     } catch (error) {
@@ -271,8 +278,8 @@ export default function InventoryManager({ currentUser }) {
     }
   };
 
-  // 재고 수량 수정
-  const updateInventory = (partId, newQuantity) => {
+  // 재고 수량 직접 수정
+  const updateInventoryDirect = (partId, newQuantity, description = '재고 직접 수정') => {
     const quantity = Math.max(0, Number(newQuantity) || 0);
     const newInventory = { ...inventory };
     
@@ -282,14 +289,14 @@ export default function InventoryManager({ currentUser }) {
       delete newInventory[partId];
     }
     
-    saveInventory(newInventory);
+    saveInventory(newInventory, description);
   };
 
   // 재고 증감 버튼
   const adjustInventory = (partId, delta) => {
     const currentQty = inventory[partId] || 0;
     const newQty = Math.max(0, currentQty + delta);
-    updateInventory(partId, newQty);
+    updateInventoryDirect(partId, newQty, `재고 ${delta > 0 ? '증가' : '감소'}: ${Math.abs(delta)}개`);
   };
 
   // 수정 모드 시작
@@ -301,7 +308,7 @@ export default function InventoryManager({ currentUser }) {
   // 수정 완료
   const finishEdit = () => {
     if (editingPart) {
-      updateInventory(editingPart, editQuantity);
+      updateInventoryDirect(editingPart, editQuantity, '재고 직접 입력');
     }
     setEditingPart(null);
     setEditQuantity('');
@@ -311,6 +318,33 @@ export default function InventoryManager({ currentUser }) {
   const cancelEdit = () => {
     setEditingPart(null);
     setEditQuantity('');
+  };
+
+  // 실행 취소
+  const undoLastAction = () => {
+    if (undoStack.length === 0) {
+      alert('실행 취소할 작업이 없습니다.');
+      return;
+    }
+
+    const lastState = undoStack[undoStack.length - 1];
+    const newUndoStack = undoStack.slice(0, -1);
+    
+    localStorage.setItem('inventory_data', JSON.stringify(lastState.inventory));
+    setInventory(lastState.inventory);
+    setUndoStack(newUndoStack);
+    
+    alert(`실행 취소: ${lastState.description} (${new Date(lastState.timestamp).toLocaleString()})`);
+  };
+
+  // 모든 재고 삭제
+  const clearAllInventory = () => {
+    if (!window.confirm('정말로 모든 재고 데이터를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+      return;
+    }
+
+    saveInventory({}, '모든 재고 삭제');
+    alert('모든 재고 데이터가 삭제되었습니다.');
   };
 
   // 랙타입 목록 추출
@@ -376,22 +410,55 @@ export default function InventoryManager({ currentUser }) {
           )}
         </h2>
         
-        {/* 새로고침 버튼 */}
-        <button
-          onClick={loadAllMaterialsData}
-          disabled={isLoading}
-          style={{
-            padding: '8px 16px',
-            fontSize: '14px',
-            border: '1px solid #007bff',
-            backgroundColor: isLoading ? '#f8f9fa' : '#007bff',
-            color: isLoading ? '#6c757d' : 'white',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {isLoading ? '🔄 로딩중...' : '🔄 새로고침'}
-        </button>
+        {/* 우상단 버튼들 */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={loadAllMaterialsData}
+            disabled={isLoading}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              border: '1px solid #007bff',
+              backgroundColor: isLoading ? '#f8f9fa' : '#007bff',
+              color: isLoading ? '#6c757d' : 'white',
+              borderRadius: '4px',
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isLoading ? '🔄 로딩중...' : '🔄 새로고침'}
+          </button>
+          
+          <button
+            onClick={undoLastAction}
+            disabled={undoStack.length === 0}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              border: '1px solid #28a745',
+              backgroundColor: undoStack.length === 0 ? '#f8f9fa' : '#28a745',
+              color: undoStack.length === 0 ? '#6c757d' : 'white',
+              borderRadius: '4px',
+              cursor: undoStack.length === 0 ? 'not-allowed' : 'pointer'
+            }}
+          >
+            ↶ 실행취소
+          </button>
+          
+          <button
+            onClick={clearAllInventory}
+            style={{
+              padding: '8px 16px',
+              fontSize: '14px',
+              border: '1px solid #dc3545',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            🗑️ 모두삭제
+          </button>
+        </div>
       </div>
 
       {/* 재고 통계 */}
@@ -527,11 +594,11 @@ export default function InventoryManager({ currentUser }) {
               <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 10 }}>
                 <tr style={{ borderBottom: '2px solid #dee2e6' }}>
                   <th style={{ padding: '12px 8px', textAlign: 'left', borderRight: '1px solid #dee2e6', width: '100px' }}>랙타입</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'left', borderRight: '1px solid #dee2e6', minWidth: '180px' }}>부품명</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'left', borderRight: '1px solid #dee2e6', width: '200px' }}>부품명</th>
                   <th style={{ padding: '12px 8px', textAlign: 'left', borderRight: '1px solid #dee2e6', width: '120px' }}>규격</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #dee2e6', width: '100px' }}>현재재고</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #dee2e6', width: '120px' }}>빠른조정</th>
-                  <th style={{ padding: '12px 8px', textAlign: 'center', width: '120px' }}>관리</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #dee2e6', width: '120px' }}>현재재고</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', borderRight: '1px solid #dee2e6', width: '200px' }}>빠른조정</th>
+                  <th style={{ padding: '12px 8px', textAlign: 'center', width: '100px' }}>관리</th>
                 </tr>
               </thead>
               <tbody>
@@ -566,28 +633,67 @@ export default function InventoryManager({ currentUser }) {
                         {kgLabelFix(material.specification || '-')}
                       </td>
                       <td style={{ padding: '10px 8px', borderRight: '1px solid #f1f3f4', textAlign: 'center' }}>
-                        <div style={{ 
-                          fontSize: '16px', 
-                          fontWeight: 'bold',
-                          color: currentStock === 0 ? '#dc3545' : currentStock < 10 ? '#ffc107' : '#28a745'
-                        }}>
-                          {currentStock.toLocaleString()}
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#6c757d' }}>개</div>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            value={editQuantity}
+                            onChange={(e) => setEditQuantity(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') finishEdit();
+                              if (e.key === 'Escape') cancelEdit();
+                            }}
+                            onBlur={finishEdit}
+                            style={{
+                              width: '80px',
+                              padding: '4px',
+                              border: '2px solid #007bff',
+                              borderRadius: '4px',
+                              fontSize: '14px',
+                              textAlign: 'center',
+                              fontWeight: 'bold'
+                            }}
+                            autoFocus
+                          />
+                        ) : (
+                          <div 
+                            onClick={() => startEdit(material)}
+                            style={{ 
+                              fontSize: '16px', 
+                              fontWeight: 'bold',
+                              color: currentStock === 0 ? '#dc3545' : currentStock < 10 ? '#ffc107' : '#28a745',
+                              cursor: 'pointer',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              border: '2px solid transparent',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => {
+                              e.target.style.borderColor = '#007bff';
+                              e.target.style.backgroundColor = '#f8f9fa';
+                            }}
+                            onMouseOut={(e) => {
+                              e.target.style.borderColor = 'transparent';
+                              e.target.style.backgroundColor = 'transparent';
+                            }}
+                            title="클릭하여 직접 수정"
+                          >
+                            {currentStock.toLocaleString()}개
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: '10px 8px', borderRight: '1px solid #f1f3f4', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '3px', flexWrap: 'wrap' }}>
                           <button
                             onClick={() => adjustInventory(material.partId, -100)}
                             style={{
-                              padding: '4px 6px',
-                              fontSize: '11px',
+                              padding: '6px 8px',
+                              fontSize: '12px',
                               border: '1px solid #dc3545',
                               backgroundColor: '#dc3545',
                               color: 'white',
-                              borderRadius: '3px',
+                              borderRadius: '4px',
                               cursor: 'pointer',
-                              minWidth: '35px'
+                              minWidth: '45px'
                             }}
                           >
                             -100
@@ -595,59 +701,29 @@ export default function InventoryManager({ currentUser }) {
                           <button
                             onClick={() => adjustInventory(material.partId, -50)}
                             style={{
-                              padding: '4px 6px',
-                              fontSize: '11px',
+                              padding: '6px 8px',
+                              fontSize: '12px',
                               border: '1px solid #dc3545',
                               backgroundColor: '#dc3545',
                               color: 'white',
-                              borderRadius: '3px',
+                              borderRadius: '4px',
                               cursor: 'pointer',
-                              minWidth: '32px'
+                              minWidth: '40px'
                             }}
                           >
                             -50
                           </button>
                           <button
-                            onClick={() => adjustInventory(material.partId, -30)}
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: '11px',
-                              border: '1px solid #dc3545',
-                              backgroundColor: '#dc3545',
-                              color: 'white',
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              minWidth: '32px'
-                            }}
-                          >
-                            -30
-                          </button>
-                          <button
-                            onClick={() => adjustInventory(material.partId, 30)}
-                            style={{
-                              padding: '4px 6px',
-                              fontSize: '11px',
-                              border: '1px solid #28a745',
-                              backgroundColor: '#28a745',
-                              color: 'white',
-                              borderRadius: '3px',
-                              cursor: 'pointer',
-                              minWidth: '32px'
-                            }}
-                          >
-                            +30
-                          </button>
-                          <button
                             onClick={() => adjustInventory(material.partId, 50)}
                             style={{
-                              padding: '4px 6px',
-                              fontSize: '11px',
+                              padding: '6px 8px',
+                              fontSize: '12px',
                               border: '1px solid #28a745',
                               backgroundColor: '#28a745',
                               color: 'white',
-                              borderRadius: '3px',
+                              borderRadius: '4px',
                               cursor: 'pointer',
-                              minWidth: '32px'
+                              minWidth: '40px'
                             }}
                           >
                             +50
@@ -655,14 +731,14 @@ export default function InventoryManager({ currentUser }) {
                           <button
                             onClick={() => adjustInventory(material.partId, 100)}
                             style={{
-                              padding: '4px 6px',
-                              fontSize: '11px',
+                              padding: '6px 8px',
+                              fontSize: '12px',
                               border: '1px solid #28a745',
                               backgroundColor: '#28a745',
                               color: 'white',
-                              borderRadius: '3px',
+                              borderRadius: '4px',
                               cursor: 'pointer',
-                              minWidth: '35px'
+                              minWidth: '45px'
                             }}
                           >
                             +100
@@ -672,33 +748,15 @@ export default function InventoryManager({ currentUser }) {
                       <td style={{ padding: '10px 8px', textAlign: 'center' }}>
                         {isEditing ? (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                            <input
-                              type="number"
-                              value={editQuantity}
-                              onChange={(e) => setEditQuantity(e.target.value)}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') finishEdit();
-                                if (e.key === 'Escape') cancelEdit();
-                              }}
-                              style={{
-                                width: '60px',
-                                padding: '4px',
-                                border: '1px solid #ced4da',
-                                borderRadius: '3px',
-                                fontSize: '12px',
-                                textAlign: 'center'
-                              }}
-                              autoFocus
-                            />
                             <button
                               onClick={finishEdit}
                               style={{
-                                padding: '4px 6px',
-                                fontSize: '11px',
+                                padding: '6px 8px',
+                                fontSize: '12px',
                                 border: '1px solid #28a745',
                                 backgroundColor: '#28a745',
                                 color: 'white',
-                                borderRadius: '3px',
+                                borderRadius: '4px',
                                 cursor: 'pointer'
                               }}
                             >
@@ -707,12 +765,12 @@ export default function InventoryManager({ currentUser }) {
                             <button
                               onClick={cancelEdit}
                               style={{
-                                padding: '4px 6px',
-                                fontSize: '11px',
+                                padding: '6px 8px',
+                                fontSize: '12px',
                                 border: '1px solid #6c757d',
                                 backgroundColor: '#6c757d',
                                 color: 'white',
-                                borderRadius: '3px',
+                                borderRadius: '4px',
                                 cursor: 'pointer'
                               }}
                             >
@@ -723,8 +781,8 @@ export default function InventoryManager({ currentUser }) {
                           <button
                             onClick={() => startEdit(material)}
                             style={{
-                              padding: '6px 10px',
-                              fontSize: '12px',
+                              padding: '8px 12px',
+                              fontSize: '13px',
                               border: '1px solid #007bff',
                               backgroundColor: '#007bff',
                               color: 'white',
@@ -773,8 +831,9 @@ export default function InventoryManager({ currentUser }) {
           <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
             💡 재고 관리 안내
           </div>
-          <div>• 빠른조정 버튼으로 재고를 쉽게 증감할 수 있습니다 (+30, +50, +100, -30, -50, -100)</div>
-          <div>• 정확한 수량 입력이 필요한 경우 "수정" 버튼을 사용하세요</div>
+          <div>• <strong>현재재고 클릭</strong>하여 직접 수량을 입력할 수 있습니다</div>
+          <div>• 빠른조정 버튼으로 재고를 쉽게 증감할 수 있습니다 (+50, +100, -50, -100)</div>
+          <div>• <strong>실행취소</strong> 버튼으로 최근 작업을 되돌릴 수 있습니다 (최근 10개)</div>
           <div>• 랙타입 필터를 통해 특정 제품군의 원자재만 볼 수 있습니다</div>
           <div>• 🆕 모든 랙옵션의 원자재가 포함됩니다 (2780높이, 앙카볼트 등)</div>
           <div>• 재고 현황: <span style={{color: '#28a745'}}>충분(10개 이상)</span>, <span style={{color: '#ffc107'}}>부족(1-9개)</span>, <span style={{color: '#dc3545'}}>없음(0개)</span></div>
