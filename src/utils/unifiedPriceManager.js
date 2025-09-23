@@ -1,6 +1,13 @@
+// src/utils/unifiedPriceManager.js
 /**
  * 통합 단가 관리 시스템
  * 모든 컴포넌트에서 일관된 단가 관리를 위한 중앙화된 유틸리티
+ * 
+ * ✅ 수정사항:
+ * 1. bom_data.json + data.json + extra_options.json 모든 원자재 포함
+ * 2. getFallbackBOM에서 생성되는 하드웨어 부품들도 포함
+ * 3. 2780 높이 등 추가 옵션들 누락 방지
+ * 4. 앙카볼트 등 모든 원자재 단가 관리 가능
  */
 
 // 로컬스토리지 키
@@ -69,95 +76,23 @@ export const saveAdminPrice = (partId, price, partInfo = {}) => {
 export const getEffectivePrice = (item) => {
   const partId = generatePartId(item);
   const adminPrices = loadAdminPrices();
-  const adminPrice = adminPrices[partId];
   
-  // 관리자 수정 단가가 있으면 우선 사용
-  if (adminPrice && adminPrice.price > 0) {
-    return adminPrice.price;
+  // 관리자가 수정한 단가가 있으면 우선 사용
+  if (adminPrices[partId]?.price > 0) {
+    return adminPrices[partId].price;
   }
   
-  // 기존 단가 사용
+  // 아니면 기존 단가 사용
   return Number(item.unitPrice) || 0;
 };
 
-// 가격 변경 히스토리 로드
-export const loadPriceHistory = (partId) => {
+// 랙옵션 레지스트리 저장
+export const saveRackOptionsRegistry = (registry) => {
   try {
-    const stored = localStorage.getItem(PRICE_HISTORY_KEY) || '{}';
-    const historyData = JSON.parse(stored);
-    return historyData[partId] || [];
+    localStorage.setItem(RACK_OPTIONS_KEY, JSON.stringify(registry));
   } catch (error) {
-    console.error('가격 히스토리 로드 실패:', error);
-    return [];
+    console.error('랙옵션 레지스트리 저장 실패:', error);
   }
-};
-
-// 가격 변경 히스토리 저장
-export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') => {
-  try {
-    const stored = localStorage.getItem(PRICE_HISTORY_KEY) || '{}';
-    const historyData = JSON.parse(stored);
-    
-    if (!historyData[partId]) {
-      historyData[partId] = [];
-    }
-
-    const newEntry = {
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      account: 'admin',
-      oldPrice: Number(oldPrice),
-      newPrice: Number(newPrice),
-      rackOption
-    };
-
-    historyData[partId].unshift(newEntry); // 최신 순으로 정렬
-    
-    // 히스토리 최대 100개로 제한
-    if (historyData[partId].length > 100) {
-      historyData[partId] = historyData[partId].slice(0, 100);
-    }
-
-    localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(historyData));
-    return true;
-  } catch (error) {
-    console.error('가격 히스토리 저장 실패:', error);
-    return false;
-  }
-};
-
-// 재고 데이터 로드
-export const loadInventory = () => {
-  try {
-    const stored = localStorage.getItem(INVENTORY_KEY) || '{}';
-    return JSON.parse(stored);
-  } catch (error) {
-    console.error('재고 데이터 로드 실패:', error);
-    return {};
-  }
-};
-
-// 재고 데이터 저장
-export const saveInventory = (inventoryData) => {
-  try {
-    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
-    
-    // 재고 변경 이벤트 발송
-    window.dispatchEvent(new CustomEvent('inventoryChanged', { 
-      detail: inventoryData 
-    }));
-    
-    return true;
-  } catch (error) {
-    console.error('재고 데이터 저장 실패:', error);
-    return false;
-  }
-};
-
-// 특정 부품의 재고 조회
-export const getPartInventory = (partId) => {
-  const inventory = loadInventory();
-  return Number(inventory[partId]) || 0;
 };
 
 // 랙옵션 레지스트리 로드
@@ -171,60 +106,10 @@ export const loadRackOptionsRegistry = () => {
   }
 };
 
-// 랙옵션 레지스트리 저장
-export const saveRackOptionsRegistry = (registry) => {
-  try {
-    localStorage.setItem(RACK_OPTIONS_KEY, JSON.stringify(registry));
-    return true;
-  } catch (error) {
-    console.error('랙옵션 레지스트리 저장 실패:', error);
-    return false;
-  }
-};
-
-// 랙옵션 등록
-export const registerRackOption = (rackType, size, height, level, formType, color = '', components = []) => {
-  try {
-    const registry = loadRackOptionsRegistry();
-    const optionId = generateRackOptionId(rackType, size, height, level, formType, color);
-    
-    const displayName = [rackType, formType, size, height, level, color]
-      .filter(Boolean)
-      .join(' ');
-    
-    registry[optionId] = {
-      id: optionId,
-      rackType,
-      size,
-      height,
-      level,
-      formType,
-      color,
-      displayName,
-      components: components.map(comp => ({
-        ...comp,
-        partId: generatePartId({
-          rackType,
-          name: comp.name,
-          specification: comp.specification || ''
-        })
-      })),
-      lastUpdated: new Date().toISOString()
-    };
-    
-    saveRackOptionsRegistry(registry);
-    return optionId;
-  } catch (error) {
-    console.error('랙옵션 등록 실패:', error);
-    return null;
-  }
-};
-
-// 랙옵션에서 사용하는 부품 목록 조회
-export const getPartsForRackOption = (optionId) => {
+// 특정 랙옵션의 컴포넌트 조회
+export const getRackOptionComponents = (optionId) => {
   const registry = loadRackOptionsRegistry();
-  const option = registry[optionId];
-  return option ? option.components || [] : [];
+  return registry[optionId]?.components || [];
 };
 
 // 특정 부품을 사용하는 랙옵션들 조회
@@ -241,16 +126,129 @@ export const getRackOptionsUsingPart = (partId) => {
   return usingOptions;
 };
 
-// 전체 원자재 목록 로드 (BOM 데이터 기반)
+// 높이에서 숫자 추출
+const parseHeightMm = (height) => {
+  if (!height) return 0;
+  const match = String(height).replace(/[^\d]/g, '');
+  return Number(match) || 0;
+};
+
+// 수평/경사 브레싱 계산 로직
+const calcBracingComponents = (rackType, size, height, formType, quantity = 1) => {
+  if (rackType !== "파렛트랙" && rackType !== "파렛트랙 철판형") {
+    return [];
+  }
+
+  const isConn = formType === "연결형";
+  const heightMm = parseHeightMm(height);
+  const qtyNum = Number(quantity) || 1;
+  
+  // 기본 계산
+  const baseHeight = 1500;
+  const heightStep = 500;
+  const baseDiagonal = isConn ? 2 : 4;
+  const additionalSteps = Math.max(0, Math.floor((heightMm - baseHeight) / heightStep));
+  const additionalDiagonal = (isConn ? 1 : 2) * additionalSteps;
+  const diagonal = (baseDiagonal + additionalDiagonal) * qtyNum;
+  const horizontal = (isConn ? 2 : 4) * qtyNum;
+  const anchor = (isConn ? 2 : 4) * qtyNum;
+  
+  // 브레싱볼트와 브러싱고무 계산
+  const postQty = isConn ? 2 * qtyNum : 4 * qtyNum;
+  const braceBolt = diagonal + horizontal;
+  const rubber = postQty;
+
+  const { d } = parseWD(size);
+  const bracingSpec = d ? String(d) : "";
+
+  return [
+    {
+      rackType,
+      name: "수평브레싱",
+      specification: bracingSpec,
+      quantity: horizontal,
+      unitPrice: 0,
+      totalPrice: 0
+    },
+    {
+      rackType,
+      name: "경사브레싱", 
+      specification: bracingSpec,
+      quantity: diagonal,
+      unitPrice: 0,
+      totalPrice: 0
+    },
+    {
+      rackType,
+      name: "앙카볼트",
+      specification: "",
+      quantity: anchor,
+      unitPrice: 0,
+      totalPrice: 0
+    },
+    {
+      rackType,
+      name: "브레싱볼트",
+      specification: "",
+      quantity: braceBolt,
+      unitPrice: 0,
+      totalPrice: 0
+    },
+    {
+      rackType,
+      name: "브러싱고무",
+      specification: "",
+      quantity: rubber,
+      unitPrice: 0,
+      totalPrice: 0
+    }
+  ];
+};
+
+// 사이즈에서 W, D 파싱
+const parseWD = (size = "") => {
+  const match = String(size).replace(/\s+/g, "").match(/W?(\d+)\s*[xX]\s*D?(\d+)/);
+  return match ? { w: Number(match[1]), d: Number(match[2]) } : { w: null, d: null };
+};
+
+// 안전핀 계산
+const calcSafetyPins = (rackType, level, quantity = 1) => {
+  if (rackType === "파렛트랙" || rackType === "파렛트랙 철판형") {
+    return [{
+      rackType,
+      name: "안전핀(파렛트랙)",
+      specification: "안전핀",
+      quantity: 2 * level * 2 * quantity, // 레벨당 2개씩, 양쪽, 수량배수
+      unitPrice: 0,
+      totalPrice: 0
+    }];
+  }
+  return [];
+};
+
+// ✅ 개선된 전체 원자재 목록 로드 (모든 소스 통합)
 export const loadAllMaterials = async () => {
   try {
-    const bomResponse = await fetch('./bom_data.json');
+    console.log('🔄 전체 원자재 로드 시작...');
+    
+    // 1. 기본 데이터 로드
+    const [bomResponse, dataResponse, extraResponse] = await Promise.all([
+      fetch('./bom_data.json'),
+      fetch('./data.json'), 
+      fetch('./extra_options.json')
+    ]);
+    
     const bomData = await bomResponse.json();
+    const dataJson = await dataResponse.json();
+    const extraOptions = await extraResponse.json();
     
     const materials = new Map();
     const optionsRegistry = {};
+
+    console.log('📁 데이터 파일 로드 완료');
     
-    // BOM 데이터에서 모든 컴포넌트 추출
+    // 2. BOM 데이터에서 컴포넌트 추출 (기존 로직)
+    console.log('🔍 BOM 데이터에서 원자재 추출 중...');
     Object.keys(bomData).forEach(rackType => {
       const rackData = bomData[rackType];
       Object.keys(rackData).forEach(size => {
@@ -318,101 +316,197 @@ export const loadAllMaterials = async () => {
       });
     });
 
+    // 3. ✅ data.json에서 추가 랙옵션들 탐색 (2780 높이 등)
+    console.log('🔍 data.json에서 추가 랙옵션 탐색 중...');
+    Object.keys(dataJson).forEach(rackType => {
+      const rackData = dataJson[rackType];
+      if (rackData && rackData["기본가격"]) {
+        Object.keys(rackData["기본가격"]).forEach(formTypeOrColor => {
+          Object.keys(rackData["기본가격"][formTypeOrColor]).forEach(size => {
+            Object.keys(rackData["기본가격"][formTypeOrColor][size]).forEach(height => {
+              Object.keys(rackData["기본가격"][formTypeOrColor][size][height]).forEach(level => {
+                // data.json에만 있고 bom_data.json에 없는 옵션들 감지
+                const bomExists = bomData[rackType]?.[size]?.[height]?.[level]?.[formTypeOrColor];
+                
+                if (!bomExists) {
+                  console.log(`📋 data.json 전용 옵션 발견: ${rackType} ${size} ${height} ${level} ${formTypeOrColor}`);
+                  
+                  // getFallbackBOM 방식으로 부품 생성
+                  const fallbackComponents = generateFallbackComponents(rackType, size, height, level, formTypeOrColor);
+                  
+                  const optionId = generateRackOptionId(rackType, size, height, level, formTypeOrColor);
+                  const displayName = `${rackType} ${formTypeOrColor} ${size} ${height} ${level}`;
+                  
+                  optionsRegistry[optionId] = {
+                    id: optionId,
+                    rackType,
+                    size,
+                    height,
+                    level,
+                    formType: formTypeOrColor,
+                    displayName,
+                    components: fallbackComponents.map(comp => ({
+                      ...comp,
+                      partId: generatePartId(comp)
+                    })),
+                    source: 'data.json_fallback',
+                    lastUpdated: new Date().toISOString()
+                  };
+                  
+                  // 부품들 등록
+                  fallbackComponents.forEach(component => {
+                    const partId = generatePartId(component);
+                    
+                    if (!materials.has(partId)) {
+                      materials.set(partId, {
+                        partId,
+                        rackType: component.rackType,
+                        name: component.name,
+                        specification: component.specification || '',
+                        unitPrice: Number(component.unitPrice) || 0,
+                        size, height, level, formType: formTypeOrColor,
+                        usedInOptions: [],
+                        source: 'fallback'
+                      });
+                    }
+                    
+                    // 사용 옵션 정보 추가
+                    const material = materials.get(partId);
+                    if (!material.usedInOptions.find(opt => opt.id === optionId)) {
+                      material.usedInOptions.push({
+                        id: optionId,
+                        displayName
+                      });
+                    }
+                  });
+                }
+              });
+            });
+          });
+        });
+      }
+    });
+
+    // 4. ✅ extra_options.json에서 추가 원자재들 탐색
+    console.log('🔍 extra_options.json에서 추가 원자재 추출 중...');
+    Object.keys(extraOptions).forEach(rackType => {
+      const extraData = extraOptions[rackType];
+      Object.keys(extraData).forEach(categoryName => {
+        const items = extraData[categoryName];
+        if (Array.isArray(items)) {
+          items.forEach(item => {
+            if (item.bom && Array.isArray(item.bom)) {
+              item.bom.forEach(bomItem => {
+                const partId = generatePartId({
+                  rackType,
+                  name: bomItem.name,
+                  specification: bomItem.specification || ''
+                });
+                
+                if (!materials.has(partId)) {
+                  materials.set(partId, {
+                    partId,
+                    rackType,
+                    name: bomItem.name,
+                    specification: bomItem.specification || '',
+                    unitPrice: 0, // extra_options는 기본적으로 단가 없음
+                    usedInOptions: [],
+                    source: 'extra_options'
+                  });
+                  
+                  console.log(`➕ extra_options 원자재 추가: ${bomItem.name}`);
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+
+    console.log(`✅ 원자재 로드 완료: 총 ${materials.size}개 원자재`);
+    
     // 랙옵션 레지스트리 저장
     saveRackOptionsRegistry(optionsRegistry);
     
     return Array.from(materials.values());
   } catch (error) {
-    console.error('전체 원자재 로드 실패:', error);
+    console.error('❌ 전체 원자재 로드 실패:', error);
     return [];
   }
 };
 
-// 단가 정보가 누락된 부품들 찾기
-export const findMissingPriceParts = async () => {
-  const allMaterials = await loadAllMaterials();
-  const adminPrices = loadAdminPrices();
+// ✅ Fallback 컴포넌트 생성 함수 (getFallbackBOM 로직 기반)
+const generateFallbackComponents = (rackType, size, height, level, formType) => {
+  const components = [];
+  const qty = 1; // 기본 수량
+  const { w, d } = parseWD(size);
   
-  const missingParts = allMaterials.filter(material => {
-    const effectivePrice = getEffectivePrice(material);
-    return effectivePrice === 0;
-  });
-  
-  return missingParts;
-};
-
-// 시스템 전체 데이터 내보내기 (백업용)
-export const exportSystemData = () => {
-  try {
-    const systemData = {
-      adminPrices: loadAdminPrices(),
-      priceHistory: JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '{}'),
-      inventory: loadInventory(),
-      rackOptions: loadRackOptionsRegistry(),
-      exportDate: new Date().toISOString(),
-      version: '1.0'
-    };
+  if (rackType === "파렛트랙" || rackType === "파렛트랙 철판형") {
+    const lvl = parseLevel(level);
+    const tieSpec = d != null ? String(d) : `규격 ${size}`;
+    const loadSpec = w != null ? String(Math.floor(w / 100) * 100) : `규격 ${size}`;
     
-    const blob = new Blob([JSON.stringify(systemData, null, 2)], { 
-      type: 'application/json' 
-    });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `sammirack_system_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    return true;
-  } catch (error) {
-    console.error('시스템 데이터 내보내기 실패:', error);
-    return false;
-  }
-};
-
-// 시스템 데이터 가져오기 (복원용)
-export const importSystemData = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const systemData = JSON.parse(e.target.result);
-        
-        // 데이터 유효성 검사
-        if (!systemData.version || !systemData.exportDate) {
-          throw new Error('유효하지 않은 백업 파일입니다.');
-        }
-        
-        // 데이터 복원
-        if (systemData.adminPrices) {
-          localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(systemData.adminPrices));
-        }
-        if (systemData.priceHistory) {
-          localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(systemData.priceHistory));
-        }
-        if (systemData.inventory) {
-          localStorage.setItem(INVENTORY_KEY, JSON.stringify(systemData.inventory));
-        }
-        if (systemData.rackOptions) {
-          localStorage.setItem(RACK_OPTIONS_KEY, JSON.stringify(systemData.rackOptions));
-        }
-        
-        // 전체 시스템에 변경 이벤트 발송
-        window.dispatchEvent(new CustomEvent('systemDataRestored', { 
-          detail: systemData 
-        }));
-        
-        resolve(systemData);
-      } catch (error) {
-        reject(error);
+    // 기본 컴포넌트들
+    components.push(
+      {
+        rackType,
+        name: `기둥(${height})`,
+        specification: `높이 ${height}`,
+        quantity: (formType === "연결형" ? 2 : 4) * qty,
+        unitPrice: 0,
+        totalPrice: 0
+      },
+      {
+        rackType,
+        name: `로드빔(${loadSpec})`,
+        specification: loadSpec,
+        quantity: 2 * lvl * qty,
+        unitPrice: 0,
+        totalPrice: 0
       }
-    };
+    );
     
-    reader.onerror = () => reject(new Error('파일 읽기 실패'));
-    reader.readAsText(file);
-  });
+    // 파렛트랙 철판형인 경우 타이빔 대신 철판
+    if (rackType === "파렛트랙 철판형") {
+      const frontNumMatch = (size || "").match(/\d+/);
+      const frontNum = frontNumMatch ? frontNumMatch[0] : size;
+      
+      // 선반 추가
+      components.push({
+        rackType,
+        name: `선반(${frontNum.trim()})`,
+        specification: `사이즈 ${size}`,
+        quantity: lvl * qty, // 철판형은 레벨당 선반 1개
+        unitPrice: 0,
+        totalPrice: 0
+      });
+    } else {
+      // 일반 파렛트랙인 경우 타이빔
+      components.push({
+        rackType,
+        name: `타이빔(${tieSpec})`,
+        specification: tieSpec,
+        quantity: 4 * lvl * qty,
+        unitPrice: 0,
+        totalPrice: 0
+      });
+    }
+    
+    // 하드웨어 부품들 추가
+    const hardwareComponents = calcBracingComponents(rackType, size, height, formType, qty);
+    components.push(...hardwareComponents);
+    
+    // 안전핀 추가
+    const safetyPins = calcSafetyPins(rackType, lvl, qty);
+    components.push(...safetyPins);
+  }
+  
+  return components;
+};
+
+// 레벨 파싱
+const parseLevel = (levelStr) => {
+  if (!levelStr) return 1;
+  const match = String(levelStr).match(/(\d+)/);
+  return match ? parseInt(match[1]) : 1;
 };
