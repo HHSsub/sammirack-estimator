@@ -919,7 +919,7 @@ const getFallbackBOM = () => {
     canAddItem,
     colorLabelMap,
     setSelectedType,
-    setSelectedOption,
+    setSelectedOptions,
     handleOptionChange,
     setQuantity,
     setCustomPrice,
