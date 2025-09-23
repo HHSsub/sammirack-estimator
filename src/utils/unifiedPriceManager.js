@@ -510,3 +510,50 @@ const parseLevel = (levelStr) => {
   const match = String(levelStr).match(/(\d+)/);
   return match ? parseInt(match[1]) : 1;
 };
+
+// ✅ 누락된 함수들 추가
+// 가격 변경 히스토리 로드
+export const loadPriceHistory = (partId) => {
+  try {
+    const stored = localStorage.getItem(PRICE_HISTORY_KEY) || '{}';
+    const historyData = JSON.parse(stored);
+    return historyData[partId] || [];
+  } catch (error) {
+    console.error('가격 히스토리 로드 실패:', error);
+    return [];
+  }
+};
+
+// 가격 변경 히스토리 저장
+export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') => {
+  try {
+    const stored = localStorage.getItem(PRICE_HISTORY_KEY) || '{}';
+    const historyData = JSON.parse(stored);
+    
+    if (!historyData[partId]) {
+      historyData[partId] = [];
+    }
+
+    const newEntry = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      account: 'admin',
+      oldPrice: Number(oldPrice),
+      newPrice: Number(newPrice),
+      rackOption
+    };
+
+    historyData[partId].unshift(newEntry); // 최신 순으로 정렬
+    
+    // 히스토리 최대 100개로 제한
+    if (historyData[partId].length > 100) {
+      historyData[partId] = historyData[partId].slice(0, 100);
+    }
+
+    localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(historyData));
+    return true;
+  } catch (error) {
+    console.error('가격 히스토리 저장 실패:', error);
+    return false;
+  }
+};
