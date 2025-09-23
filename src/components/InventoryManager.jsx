@@ -9,6 +9,150 @@ function kgLabelFix(str) {
   return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
 }
 
+// 재고 감소 함수 (export 필요)
+export const deductInventoryOnPrint = (cartItems, documentType = 'document', documentNumber = '') => {
+  if (!cartItems || !Array.isArray(cartItems)) {
+    console.warn('재고 감소: 유효하지 않은 카트 데이터');
+    return { success: false, message: '유효하지 않은 데이터' };
+  }
+  
+  console.log(`📋 프린트 재고 감소 시작: ${documentType} ${documentNumber}`);
+  
+  try {
+    // 현재 재고 데이터 로드
+    const stored = localStorage.getItem('inventory_data') || '{}';
+    const inventory = JSON.parse(stored);
+    
+    const deductedParts = [];
+    const warnings = [];
+    
+    // 모든 카트 아이템의 BOM 부품들을 추출하여 재고 감소
+    cartItems.forEach((item, itemIndex) => {
+      if (item.bom && Array.isArray(item.bom)) {
+        item.bom.forEach((bomItem) => {
+          const partId = generatePartId(bomItem);
+          const requiredQty = Number(bomItem.quantity) || 0;
+          const currentStock = inventory[partId] || 0;
+          
+          if (requiredQty > 0) {
+            if (currentStock >= requiredQty) {
+              // 충분한 재고가 있는 경우 감소
+              inventory[partId] = currentStock - requiredQty;
+              deductedParts.push({
+                partId,
+                name: bomItem.name,
+                specification: bomItem.specification || '',
+                deducted: requiredQty,
+                remainingStock: inventory[partId]
+              });
+            } else {
+              // 재고 부족 경고
+              warnings.push({
+                partId,
+                name: bomItem.name,
+                specification: bomItem.specification || '',
+                required: requiredQty,
+                available: currentStock,
+                shortage: requiredQty - currentStock
+              });
+              
+              // 가능한 만큼만 감소
+              if (currentStock > 0) {
+                inventory[partId] = 0;
+                deductedParts.push({
+                  partId,
+                  name: bomItem.name,
+                  specification: bomItem.specification || '',
+                  deducted: currentStock,
+                  remainingStock: 0,
+                  warning: `재고 부족 (필요: ${requiredQty}, 가용: ${currentStock})`
+                });
+              }
+            }
+          }
+        });
+      }
+    });
+    
+    // 재고 데이터 저장
+    localStorage.setItem('inventory_data', JSON.stringify(inventory));
+    
+    // 재고 변경 이벤트 발송
+    window.dispatchEvent(new CustomEvent('inventoryBulkChanged', {
+      detail: { 
+        documentType, 
+        documentNumber, 
+        deductedParts, 
+        warnings,
+        timestamp: new Date().toISOString()
+      }
+    }));
+    
+    console.log(`✅ 재고 감소 완료: ${deductedParts.length}개 부품 처리`);
+    if (warnings.length > 0) {
+      console.warn(`⚠️ 재고 부족 경고: ${warnings.length}개 부품`);
+    }
+    
+    return {
+      success: true,
+      deductedParts,
+      warnings,
+      message: `${deductedParts.length}개 부품 재고 감소 완료${warnings.length > 0 ? `, ${warnings.length}개 부품 재고 부족` : ''}`
+    };
+  } catch (error) {
+    console.error('❌ 재고 감소 실패:', error);
+    return {
+      success: false,
+      message: '재고 감소 실패: ' + error.message
+    };
+  }
+};
+
+
+// 재고 감소 결과 사용자에게 표시
+export const showInventoryResult = (result, documentType) => {
+  if (!result) return;
+  
+  let message = `📄 ${documentType} 출력 완료\n`;
+  
+  if (result.success) {
+    message += `📦 재고 감소: ${result.deductedParts.length}개 부품 처리`;
+    
+    if (result.warnings.length > 0) {
+      message += `\n⚠️ 재고 부족 경고: ${result.warnings.length}개 부품`;
+      
+      // 재고 부족 부품 상세 (최대 3개)
+      const warningDetails = result.warnings.slice(0, 3).map(w => 
+        `• ${w.name}: 필요 ${w.required}개, 가용 ${w.available}개`
+      ).join('\n');
+      
+      message += '\n' + warningDetails;
+      
+      if (result.warnings.length > 3) {
+        message += `\n• 외 ${result.warnings.length - 3}개 부품...`;
+      }
+      
+      // 재고 부족 시 추가 안내
+      message += '\n\n재고 관리 탭에서 부족한 부품을 확인하고 보충하세요.';
+    }
+    
+    // 결과 표시
+    if (result.warnings.length > 0) {
+      // 경고가 있으면 confirm으로 재고 탭 이동 제안
+      if (window.confirm(message + '\n\n재고 관리 탭으로 이동하시겠습니까?')) {
+        window.dispatchEvent(new CustomEvent('showInventoryTab'));
+      }
+    } else {
+      // 정상 완료는 간단히 alert
+      alert(message);
+    }
+    
+  } else {
+    message += `❌ 재고 감소 실패: ${result.message}`;
+    alert(message);
+  }
+};
+
 export default function InventoryManager({ currentUser }) {
   const [allMaterials, setAllMaterials] = useState([]);
   const [inventory, setInventory] = useState({});
