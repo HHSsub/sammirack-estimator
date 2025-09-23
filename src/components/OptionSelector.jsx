@@ -1,360 +1,275 @@
-// src/components/OptionSelector.jsx
-import React, { useState, useEffect } from 'react';
+// src/components/OptionSelector.jsx 수정 사항
+
+import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
-
-const formTypeRacks = ['경량랙', '중량랙', '파렛트랙', '파렛트랙 철판형'];
-
-// 무게명칭 변환
-function kgLabelFix(str) {
-  if (!str) return '';
-  return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
-}
 
 export default function OptionSelector() {
   const {
-    allOptions, availableOptions, colorLabelMap,
-    selectedType, selectedOptions,
-    handleOptionChange,
-
-    // ▶ 추가옵션(체크박스용)
-    extraProducts, extraOptionsSel, handleExtraOptionChange,
-
-    // ▶ 경량랙 전용 사용자 정의 자재(여러 개)
-    customMaterials, addCustomMaterial, removeCustomMaterial,
-
-    quantity, setQuantity, applyRate, setApplyRate,
-    customPrice, setCustomPrice, currentPrice,
-    addToCart, loading, canAddItem
+    loading,
+    allOptions,
+    availableOptions,
+    selectedType,
+    selectedOptions,
+    quantity,
+    customPrice,
+    currentPrice,
+    currentBOM,
+    canAddItem,
+    extraProducts,
+    extraOptionsSel,
+    customMaterials,
+    setSelectedType,
+    setSelectedOption,
+    setQuantity,
+    setCustomPrice,
+    addToCart,
+    setExtraOptionsSel,
+    addCustomMaterial,
+    removeCustomMaterial,
+    clearCustomMaterials
   } = useProducts();
 
-  const [applyRateInput, setApplyRateInput] = useState(applyRate);
-  const [extraOpen, setExtraOpen] = useState(false);
+  if (loading) return <div>데이터를 불러오는 중...</div>;
 
-  // 사용자 정의 입력값(경량랙)
-  const [cmName, setCmName] = useState('');
-  const [cmPrice, setCmPrice] = useState('');
-
-  useEffect(() => setApplyRateInput(applyRate), [applyRate]);
-  const onApplyRateChange = e => {
-    const v = e.target.value;
-    if (v === '' || /^[0-9]{1,3}$/.test(v)) {
-      setApplyRateInput(v);
-      const num = Number(v);
-      if (!isNaN(num) && num >= 0 && num <= 200) setApplyRate(num);
+  // ✅ BOM 총 가격 계산
+  const bomTotal = currentBOM.reduce((sum, item) => {
+    // 통합 단가 관리 시스템에서 효과적인 단가 가져오기
+    let effectivePrice = 0;
+    if (typeof window !== 'undefined' && window.getEffectivePrice) {
+      effectivePrice = window.getEffectivePrice(item);
+    } else {
+      effectivePrice = Number(item.unitPrice) || 0;
     }
-  };
+    return sum + (effectivePrice * (Number(item.quantity) || 0));
+  }, 0);
 
-  const renderOptionSelect = (name, label, enabled = true, map = null) => {
-    const opts = availableOptions[name] || [];
-    if (!opts.length) return null;
-    return (
-      <div>
-        <label>{label}</label>
+  // ✅ 표시할 가격 결정 (우선순위: 커스텀 > BOM 총액 > 기본가격)
+  const displayPrice = customPrice > 0 ? customPrice : (bomTotal > 0 ? bomTotal : currentPrice);
+  const priceSource = customPrice > 0 ? 'custom' : (bomTotal > 0 ? 'bom' : 'basic');
+
+  console.log(`💰 OptionSelector 가격 표시: ${displayPrice}원 (출처: ${priceSource}, BOM총액: ${bomTotal}원, 기본가격: ${currentPrice}원)`);
+
+  return (
+    <div style={{ padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px', marginBottom: '16px' }}>
+      <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#495057' }}>🔧 제품 구성</h3>
+      
+      {/* 제품 타입 선택 */}
+      <div style={{ marginBottom: '12px' }}>
+        <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>제품 타입:</label>
         <select
-          disabled={!enabled || loading}
-          value={selectedOptions[name] || ''}
-          onChange={e => handleOptionChange(name, e.target.value)}
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ced4da',
+            borderRadius: '4px',
+            fontSize: '14px',
+            backgroundColor: 'white'
+          }}
         >
-          <option value="">{label} 선택</option>
-          {opts.map(o => (
-            <option key={o} value={o}>
-              {map && map[o] ? map[o] : kgLabelFix(o)}
-            </option>
+          <option value="">선택하세요</option>
+          {allOptions.types.map(type => (
+            <option key={type} value={type}>{type}</option>
           ))}
         </select>
       </div>
-    );
-  };
 
-  const toggleExtra = id => {
-    if (!id) return;
-    if (extraOptionsSel.includes(id)) {
-      handleExtraOptionChange(extraOptionsSel.filter(e => e !== id));
-    } else {
-      handleExtraOptionChange([...extraOptionsSel, id]);
-    }
-  };
-
-  if (loading) return <div>데이터 로드 중...</div>;
-
-  // 현재 타입의 extra 옵션 카테고리
-  const extraCatList =
-    extraProducts && selectedType && extraProducts[selectedType]
-      ? Object.entries(extraProducts[selectedType])
-      : [];
-
-  return (
-    <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div>
-          <label>제품 유형</label>
-            <select
-              value={selectedType}
-              onChange={e => {
-                setExtraOpen(false);
-                handleOptionChange('type', e.target.value);
-              }}
-            >
-            <option value="">제품 유형 선택</option>
-            {allOptions.types.map(t => (
-              <option key={t} value={t}>
-                {kgLabelFix(t)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {formTypeRacks.includes(selectedType) && (
-          <>
-            {renderOptionSelect('size', '규격')}
-            {renderOptionSelect('height', '높이', !!selectedOptions.size)}
-            {renderOptionSelect(
-              'level',
-              '단수',
-              !!selectedOptions.size && !!selectedOptions.height
-            )}
-            {renderOptionSelect(
-              'formType',
-              '형식',
-              !!selectedOptions.size &&
-              !!selectedOptions.height &&
-              !!selectedOptions.level
-            )}
-          </>
-        )}
-
-        {selectedType === '하이랙' && (
-          <>
-            {renderOptionSelect('color', '색상', true, colorLabelMap)}
-            {renderOptionSelect('size', '규격', !!selectedOptions.color)}
-            {renderOptionSelect(
-              'height',
-              '높이',
-              !!selectedOptions.color && !!selectedOptions.size
-            )}
-            {renderOptionSelect(
-              'level',
-              '단수',
-              !!selectedOptions.color &&
-              !!selectedOptions.size &&
-              !!selectedOptions.height
-            )}
-            {/* 하이랙 형식: availableOptions에 없어도 Fallback 렌더 */}
-            {availableOptions.formType?.length
-              ? renderOptionSelect(
-                'formType',
-                '형식',
-                !!selectedOptions.color &&
-                !!selectedOptions.size &&
-                !!selectedOptions.height &&
-                !!selectedOptions.level
-              )
-              : (
-                <div>
-                  <label>형식</label>
-                  <select
-                    disabled={
-                      !(
-                        selectedOptions.color &&
-                        selectedOptions.size &&
-                        selectedOptions.height &&
-                        selectedOptions.level
-                      ) || loading
-                    }
-                    value={selectedOptions.formType || ''}
-                    onChange={e => handleOptionChange('formType', e.target.value)}
-                  >
-                    <option value="">형식 선택</option>
-                    <option value="독립형">독립형</option>
-                    <option value="연결형">연결형</option>
-                  </select>
-                </div>
-              )}
-          </>
-        )}
-
-        {selectedType === '스텐랙' && (
-          <>
-            {renderOptionSelect('size', '규격')}
-            {renderOptionSelect('height', '높이', !!selectedOptions.size)}
-            {renderOptionSelect(
-              'level',
-              '단수',
-              !!selectedOptions.size && !!selectedOptions.height
-            )}
-          </>
-        )}
-
-        <div>
-          <label>수량</label>
-          <input
-            type="number"
-            min={0}
-            value={quantity}
-            onChange={e => setQuantity(Math.max(0, Number(e.target.value)))}
-          />
-        </div>
-        <div>
-          <label>적용률(%)</label>
-          <input value={applyRateInput} onChange={onApplyRateChange} maxLength={3} />
-        </div>
-        <div>
-          <label>가격 직접입력</label>
-          <input
-            type="number"
-            value={customPrice}
-            onChange={e => setCustomPrice(Number(e.target.value) || 0)}
-          />
-        </div>
-      </div>
-
-      <button
-        onClick={() => setExtraOpen(o => !o)}
-        style={{ margin: '10px 0' }}
-        disabled={!selectedType}
-      >
-        {extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}
-      </button>
-
-      {extraOpen && selectedType && (
+      {/* 세부 옵션들 */}
+      {selectedType && (
         <>
-          {selectedType === '경량랙' ? (
-            <div
-              style={{
-                padding: '12px',
-                border: '1px solid #e4eef8',
-                borderRadius: 6,
-                background: '#fff',
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>
-                사용자 정의 추가자재 (여러개)
-              </div>
-
-              <div
+          {/* 크기 */}
+          {availableOptions.size && availableOptions.size.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>크기:</label>
+              <select
+                value={selectedOptions.size || ''}
+                onChange={(e) => setSelectedOption('size', e.target.value)}
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 140px 80px',
-                  gap: 8,
-                  alignItems: 'center',
-                  marginBottom: 8,
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
                 }}
               >
-                <input
-                  placeholder="항목명 (예: 연결대)"
-                  value={cmName}
-                  onChange={e => setCmName(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="단가"
-                  value={cmPrice}
-                  onChange={e => setCmPrice(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!cmName || !Number(cmPrice)) return;
-                    addCustomMaterial(cmName, Number(cmPrice));
-                    setCmName('');
-                    setCmPrice('');
-                  }}
-                >
-                  추가
-                </button>
-              </div>
-
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f3f7fd' }}>
-                    <th style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                      항목명
-                    </th>
-                    <th
-                      style={{
-                        border: '1px solid #e1e8f5',
-                        padding: '6px',
-                        width: 140,
-                      }}
-                    >
-                      단가
-                    </th>
-                    <th
-                      style={{
-                        border: '1px solid #e1e8f5',
-                        padding: '6px',
-                        width: 80,
-                      }}
-                    >
-                      관리
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customMaterials.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        style={{
-                          border: '1px solid #e1e8f5',
-                          padding: '8px',
-                          textAlign: 'center',
-                          color: '#8aa1c4',
-                        }}
-                      >
-                        추가된 자재가 없습니다.
-                      </td>
-                    </tr>
-                  ) : (
-                    customMaterials.map(m => (
-                      <tr key={m.id}>
-                        <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          {m.name}
-                        </td>
-                        <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          {Number(m.price).toLocaleString()}원
-                        </td>
-                        <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          <button
-                            type="button"
-                            onClick={() => removeCustomMaterial(m.id)}
-                          >
-                            삭제
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                <option value="">선택하세요</option>
+                {availableOptions.size.map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
             </div>
-          ) : (
-            <div
+          )}
+
+          {/* 높이 */}
+          {availableOptions.height && availableOptions.height.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>높이:</label>
+              <select
+                value={selectedOptions.height || ''}
+                onChange={(e) => setSelectedOption('height', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">선택하세요</option>
+                {availableOptions.height.map(height => (
+                  <option key={height} value={height}>{height}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 단수 */}
+          {availableOptions.level && availableOptions.level.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>단수:</label>
+              <select
+                value={selectedOptions.level || ''}
+                onChange={(e) => setSelectedOption('level', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">선택하세요</option>
+                {availableOptions.level.map(level => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 형식 */}
+          {availableOptions.formType && availableOptions.formType.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>형식:</label>
+              <select
+                value={selectedOptions.formType || ''}
+                onChange={(e) => setSelectedOption('formType', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">선택하세요</option>
+                {availableOptions.formType.map(formType => (
+                  <option key={formType} value={formType}>{formType}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 색상 (하이랙용) */}
+          {availableOptions.color && availableOptions.color.length > 0 && (
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>색상:</label>
+              <select
+                value={selectedOptions.color || ''}
+                onChange={(e) => setSelectedOption('color', e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white'
+                }}
+              >
+                <option value="">선택하세요</option>
+                {availableOptions.color.map(color => (
+                  <option key={color} value={color}>{color}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* 수량 */}
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>수량:</label>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              min="1"
               style={{
-                padding: '12px',
-                border: '1px solid #e4eef8',
-                borderRadius: 6,
-                background: '#fff',
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
               }}
-            >
-              {extraCatList.length === 0 ? (
-                <div style={{ color: '#8aa1c4' }}>추가 옵션이 없습니다.</div>
-              ) : (
-                extraCatList.map(([cat, arr]) => (
-                  <div key={cat} style={{ marginBottom: 10 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{cat}</div>
-                    {arr.map(opt => {
-                      const checked = extraOptionsSel.includes(opt.id);
+            />
+          </div>
+
+          {/* 커스텀 가격 (선택사항) */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '500' }}>
+              커스텀 가격 (선택사항):
+            </label>
+            <input
+              type="number"
+              value={customPrice || ''}
+              onChange={(e) => setCustomPrice(Number(e.target.value) || 0)}
+              placeholder="직접 입력 (원)"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          {/* 추가 옵션들 */}
+          {extraProducts[selectedType] && Object.keys(extraProducts[selectedType]).length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>추가 옵션:</label>
+              {Object.entries(extraProducts[selectedType]).map(([categoryName, options]) => (
+                <div key={categoryName} style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: '500', color: '#6c757d', marginBottom: '6px' }}>
+                    {categoryName}
+                  </div>
+                  <div style={{ paddingLeft: '12px' }}>
+                    {Array.isArray(options) && options.map(opt => {
+                      const isSelected = extraOptionsSel.includes(opt.id);
                       return (
-                        <label key={opt.id} style={{ display: 'block', margin: '4px 0' }}>
+                        <label key={opt.id} style={{ 
+                          display: 'block', 
+                          marginBottom: '4px',
+                          cursor: 'pointer',
+                          fontSize: '13px'
+                        }}>
                           <input
                             type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleExtra(opt.id)}
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setExtraOptionsSel(prev => [...prev, opt.id]);
+                              } else {
+                                setExtraOptionsSel(prev => prev.filter(id => id !== opt.id));
+                              }
+                            }}
+                            style={{ marginRight: '6px' }}
                           />
-                          <span style={{ marginLeft: 6 }}>
-                            {kgLabelFix(opt.name)}{' '}
-                            {opt.price ? `+${Number(opt.price).toLocaleString()}원` : ''}
+                          <span style={{ color: isSelected ? '#007bff' : '#495057' }}>
+                            {opt.name}
+                            {opt.price > 0 && ` +${Number(opt.price).toLocaleString()}원`}
                           </span>
                         </label>
                       );
@@ -364,16 +279,234 @@ export default function OptionSelector() {
               )}
             </div>
           )}
+
+          {/* 커스텀 자재 (경량랙용) */}
+          {selectedType === "경량랙" && (
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>커스텀 자재:</label>
+              {customMaterials.map(material => (
+                <div key={material.id} style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  padding: '6px 8px',
+                  backgroundColor: 'white',
+                  borderRadius: '4px',
+                  marginBottom: '4px',
+                  fontSize: '13px'
+                }}>
+                  <span>{material.name}</span>
+                  <span style={{ color: '#28a745', fontWeight: '500' }}>
+                    +{material.price.toLocaleString()}원
+                  </span>
+                  <button
+                    onClick={() => removeCustomMaterial(material.id)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#dc3545',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      padding: '0 4px'
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="자재명"
+                  id="custom-material-name"
+                  style={{
+                    flex: 1,
+                    padding: '6px 8px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '3px',
+                    fontSize: '12px'
+                  }}
+                />
+                <input
+                  type="number"
+                  placeholder="가격"
+                  id="custom-material-price"
+                  style={{
+                    width: '80px',
+                    padding: '6px 8px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '3px',
+                    fontSize: '12px'
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    const nameInput = document.getElementById('custom-material-name');
+                    const priceInput = document.getElementById('custom-material-price');
+                    const name = nameInput.value.trim();
+                    const price = Number(priceInput.value) || 0;
+                    if (name && price > 0) {
+                      addCustomMaterial(name, price);
+                      nameInput.value = '';
+                      priceInput.value = '';
+                    }
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    border: '1px solid #28a745',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  추가
+                </button>
+              </div>
+              {customMaterials.length > 0 && (
+                <button
+                  onClick={clearCustomMaterials}
+                  style={{
+                    marginTop: '8px',
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    border: '1px solid #6c757d',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  전체 삭제
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
 
-      <div style={{ marginTop: 12 }}>
-        <span>
+      {/* ✅ 개선된 가격 표시 및 추가 버튼 */}
+      <div style={{ 
+        marginTop: '20px', 
+        padding: '12px', 
+        backgroundColor: 'white', 
+        borderRadius: '6px',
+        border: '1px solid #dee2e6'
+      }}>
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ 
+            fontSize: '16px', 
+            fontWeight: 'bold', 
+            color: '#495057',
+            marginBottom: '4px'
+          }}>
+            현재 항목 예상 가격
+          </div>
+          <div style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            color: displayPrice > 0 ? '#28a745' : '#6c757d'
+          }}>
+            {displayPrice > 0 ? `${displayPrice.toLocaleString()}원` : '가격 미설정'}
+          </div>
+          
+          {/* 가격 출처 표시 */}
+          <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            {priceSource === 'custom' && '커스텀 가격 적용'}
+            {priceSource === 'bom' && `BOM 부품 단가 합계 (${currentBOM.length}개 부품)`}
+            {priceSource === 'basic' && 'data.json 기본가격 적용'}
+            {displayPrice === 0 && '단가가 설정된 부품이 없습니다'}
+          </div>
+
+          {/* BOM 세부 정보 */}
+          {bomTotal > 0 && currentBOM.length > 0 && (
+            <div style={{ 
+              fontSize: '11px', 
+              color: '#6c757d', 
+              marginTop: '6px',
+              padding: '6px 8px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '4px'
+            }}>
+              <div style={{ fontWeight: '500', marginBottom: '2px' }}>BOM 구성:</div>
+              {currentBOM.slice(0, 3).map((item, index) => {
+                const effectivePrice = typeof window !== 'undefined' && window.getEffectivePrice
+                  ? window.getEffectivePrice(item)
+                  : (Number(item.unitPrice) || 0);
+                return (
+                  <div key={index}>
+                    • {item.name}: {item.quantity}개 × {effectivePrice.toLocaleString()}원 = {(effectivePrice * item.quantity).toLocaleString()}원
+                  </div>
+                );
+              })}
+              {currentBOM.length > 3 && (
+                <div>• 외 {currentBOM.length - 3}개 부품...</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ 
+          fontSize: '18px', 
+          fontWeight: 'bold', 
+          marginBottom: '12px',
+          color: '#495057'
+        }}>
           계산 가격: {(customPrice > 0 ? customPrice : currentPrice).toLocaleString()}원
-        </span>
-        <button onClick={addToCart} disabled={!canAddItem} style={{ marginLeft: 10 }}>
-          목록 추가
+        </div>
+
+        <button 
+          onClick={addToCart} 
+          disabled={!canAddItem}
+          style={{
+            width: '100%',
+            padding: '12px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            border: 'none',
+            borderRadius: '6px',
+            backgroundColor: canAddItem ? '#007bff' : '#6c757d',
+            color: 'white',
+            cursor: canAddItem ? 'pointer' : 'not-allowed',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseOver={e => {
+            if (canAddItem) {
+              e.target.style.backgroundColor = '#0056b3';
+            }
+          }}
+          onMouseOut={e => {
+            if (canAddItem) {
+              e.target.style.backgroundColor = '#007bff';
+            }
+          }}
+        >
+          {canAddItem ? '🛒 목록에 추가' : '❌ 추가 불가 (가격 없음)'}
         </button>
+
+        {/* 추가 안내 메시지 */}
+        {!canAddItem && (
+          <div style={{ 
+            fontSize: '12px', 
+            color: '#dc3545', 
+            marginTop: '8px',
+            textAlign: 'center'
+          }}>
+            부품 단가가 설정되지 않았거나 필수 옵션이 선택되지 않았습니다.
+          </div>
+        )}
+
+        {canAddItem && bomTotal > 0 && (
+          <div style={{ 
+            fontSize: '12px', 
+            color: '#28a745', 
+            marginTop: '8px',
+            textAlign: 'center'
+          }}>
+            ✅ BOM 부품 단가가 설정되어 추가할 수 있습니다.
+          </div>
+        )}
       </div>
     </div>
   );
