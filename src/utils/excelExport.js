@@ -1,7 +1,7 @@
 // src/utils/excelExport.js
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { deductInventoryOnPrint, showInventoryResult } from '../components/InventoryManager.jsx';
+import { deductInventoryOnPrint } from '../components/InventoryManager.jsx'; // showinven 임포트하려다가 밑에서 const로 걍 하고있음
 
 /** ---------------------------
  *  공통 유틸
