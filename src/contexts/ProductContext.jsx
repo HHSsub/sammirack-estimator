@@ -912,6 +912,51 @@ const getFallbackBOM = () => {
     }
   }, []);
 
+  const contextValue = {
+    loading,
+    data,
+    bomData,
+    extraProducts,
+    allOptions,
+    availableOptions,
+    selectedType,
+    selectedOptions,
+    quantity,
+    customPrice,
+    applyRate,
+    currentPrice,
+    currentBOM,
+    cart,
+    cartBOM,
+    cartBOMView,
+    cartTotal,
+    extraOptionsSel,
+    customMaterials,
+    canAddItem,
+    colorLabelMap,
+    setSelectedType,
+    setSelectedOption,
+    handleOptionChange,
+    setQuantity,
+    setCustomPrice,
+    setApplyRate,
+    addToCart,
+    removeFromCart,
+    updateCartItemQuantity,
+    setTotalBomQuantity,
+    handleExtraOptionChange,
+    addCustomMaterial,
+    removeCustomMaterial,
+    clearCustomMaterials
+  };
+
+  return (
+    <ProductContext.Provider value={contextValue}>
+      {children}
+    </ProductContext.Provider>
+  );
+};  
+  
 export const useProducts = () => {
   const context = useContext(ProductContext);
   if (!context) {
