@@ -275,8 +275,8 @@ export default function OptionSelector() {
                       );
                     })}
                   </div>
-                ))
-              )}
+                );
+              })}
             </div>
           )}
 
