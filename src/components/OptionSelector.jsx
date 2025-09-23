@@ -1,5 +1,3 @@
-// src/components/OptionSelector.jsx 수정 사항
-
 import React from 'react';
 import { useProducts } from '../contexts/ProductContext';
 
