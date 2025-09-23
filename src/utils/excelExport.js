@@ -1,7 +1,7 @@
 // src/utils/excelExport.js
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { deductInventoryOnPrint } from './inventoryManager';
+import { deductInventoryOnPrint } from '../components/InventoryManager.jsx';
 
 /** ---------------------------
  *  공통 유틸
