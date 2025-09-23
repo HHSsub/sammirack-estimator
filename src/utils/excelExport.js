@@ -1,7 +1,7 @@
 // src/utils/excelExport.js
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { deductInventoryOnPrint } from '../components/InventoryManager.jsx';
+import { deductInventoryOnPrint, showInventoryResult } from '../components/InventoryManager.jsx';
 
 /** ---------------------------
  *  공통 유틸
@@ -98,8 +98,6 @@ function setRowHeights(ws, map) {
     ws.getRow(Number(rowNo)).height = height;
   });
 }
-
-
 
 
 /** 공통 상단 정보(문서제목/회사/고객) */
