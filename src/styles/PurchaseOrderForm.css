@@ -310,6 +310,22 @@ textarea:focus {
     line-height:1.25 !important;
   }
 
+    /* 도장 이미지 - 테이블 셀 밖으로 빠져나오게 */
+  .rep-cell {
+    position: relative !important;
+    overflow: visible !important;
+  }
+  
+  .stamp-inline {
+    position: absolute !important;
+    top: -10px !important;
+    right: -20px !important;
+    width: 60px !important;
+    height: 60px !important;
+    z-index: 10 !important;
+    opacity: 0.8 !important;
+  }
+
   .form-header h1 { font-size:20px !important; margin-bottom:6px !important; }
 
   .form-table {
