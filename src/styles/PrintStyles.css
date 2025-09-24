@@ -249,13 +249,20 @@
     color: #000 !important;
   }
 
-  /* 발주서 도장 - 인라인 배치 */
+  /* 발주서 도장 */
+  /* 발주서 도장 처리 - balju-print 섹션에 추가 */
+  .balju-print .rep-cell {
+    position: relative !important;
+    overflow: visible !important;
+  }
+  
   .balju-print .stamp {
-    display: inline-block !important;
-    position: static !important;
-    width: 20px !important;
-    height: 20px !important;
-    margin-left: 6px !important;
+    position: absolute !important;
+    top: -10px !important;
+    right: -20px !important;
+    width: 45px !important;
+    height: 45px !important;
+    z-index: 999 !important;
     opacity: 0.8 !important;
   }
   
