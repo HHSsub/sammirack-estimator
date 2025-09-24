@@ -1,7 +1,7 @@
 /* 프린트 전용 스타일 */
 @page {
   size: A4 portrait;
-  margin: 8mm 5mm; /* 좌우 마진을 더 줄임 */
+  margin: 10mm 8mm; /* 상하 10mm, 좌우 8mm */
 }
 
 @media print {
@@ -21,11 +21,38 @@
     font-size: 12px !important;
     line-height: 1.2 !important;
     background: white !important;
-    /* 핵심: 전체 폭 제한 해제 */
-    width: auto !important;
-    min-width: auto !important;
-    max-width: none !important;
-    overflow: visible !important;
+  }
+
+  /* 모든 요소 숨기고 프린트 영역만 표시 */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-container,
+  .print-container * {
+    visibility: visible !important;
+  }
+
+  /* 프린트 컨테이너 기본 설정 */
+  .print-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 277mm !important; /* A4 높이 297mm - 여백 20mm */
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    font-family: "Malgun Gothic", "Arial", sans-serif !important;
+  }
+
+  /* 미리보기 메시지 숨기기 */
+  .print-preview-notice {
+    display: none !important;
   }
 
   /* 화면 전용 요소 숨기기 */
@@ -35,64 +62,20 @@
     display: none !important;
   }
 
-  /* 프린트 컨테이너 기본 설정 - 핵심 수정 */
-  .print-container {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: auto !important;
-    height: auto !important;
-    max-height: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    background: white !important;
-    overflow: visible !important;
-    page-break-inside: avoid !important;
-    page-break-after: avoid !important;
-    font-family: "Malgun Gothic", "Arial", sans-serif !important;
-    transform: scale(0.95) !important; /* 전체를 약간 축소하여 여백 확보 */
-    transform-origin: top left !important;
-  }
-
-  /* 모든 폼 컨테이너 폭 제한 해제 */
-  .estimate-form-container,
-  .purchase-order-form-container {
-    max-width: none !important;
-    width: 100% !important;
-    padding: 5mm 3mm !important;
-    margin: 0 !important;
-    background: #fff !important;
-    min-height: auto !important;
-    box-sizing: border-box !important;
-    font-size: 10px !important;
-    line-height: 1.2 !important;
-    min-width: auto !important;
-    overflow: visible !important;
-  }
-
-  /* 미리보기 메시지 숨기기 */
-  .print-preview-notice {
-    display: none !important;
-  }
-
   /* ===== 견적서 스타일 ===== */
   .gyeonjuk-print {
     font-size: 10px !important;
     line-height: 1.1 !important;
     position: relative !important;
-    width: 100% !important;
-    overflow: visible !important;
   }
 
   .gyeonjuk-print h1 {
     text-align: center !important;
-    font-size: 22px !important;
+    font-size: 24px !important;
     font-weight: bold !important;
-    margin: 0 0 12px 0 !important;
+    margin: 0 0 15px 0 !important;
     padding: 0 !important;
-    letter-spacing: 6px !important;
+    letter-spacing: 8px !important;
     color: #000 !important;
   }
 
@@ -100,8 +83,8 @@
   .gyeonjuk-print .stamp {
     display: inline-block !important;
     position: static !important;
-    width: 20px !important;
-    height: 20px !important;
+    width: 22px !important;
+    height: 22px !important;
     margin-left: 6px !important;
     opacity: 0.8 !important;
   }
@@ -110,7 +93,7 @@
   .gyeonjuk-print .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 6px !important;
     font-size: 8px !important;
     table-layout: fixed !important;
     border: 1px solid #000 !important;
@@ -119,7 +102,7 @@
   .gyeonjuk-print .print-table td,
   .gyeonjuk-print .print-table th {
     border: 1px solid #000 !important;
-    padding: 1px 2px !important;
+    padding: 2px 3px !important;
     text-align: center !important;
     vertical-align: middle !important;
     word-wrap: break-word !important;
@@ -128,25 +111,154 @@
     background: white !important;
   }
 
+  /* 견적서 상단 정보 테이블 */
+  .gyeonjuk-print .info-table {
+    margin-bottom: 12px !important;
+  }
+
+  .gyeonjuk-print .info-table td {
+    height: 16px !important;
+    font-size: 8px !important;
+  }
+
+  .gyeonjuk-print .info-table .label {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    width: 20% !important;
+  }
+
+  /* 견적서 명세 테이블 */
+  .gyeonjuk-print .quote-table th {
+    background-color: #e0e0e0 !important;
+    font-weight: bold !important;
+    height: 18px !important;
+    font-size: 8px !important;
+  }
+
+  .gyeonjuk-print .quote-table td {
+    height: 14px !important;
+    font-size: 7px !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(1), /* NO */
+  .gyeonjuk-print .quote-table td:nth-child(1) {
+    width: 6% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(2), /* 품명 */
+  .gyeonjuk-print .quote-table td:nth-child(2) {
+    width: 25% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(3), /* 규격 */
+  .gyeonjuk-print .quote-table td:nth-child(3) {
+    width: 15% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(4), /* 단위 */
+  .gyeonjuk-print .quote-table td:nth-child(4) {
+    width: 8% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(5), /* 수량 */
+  .gyeonjuk-print .quote-table td:nth-child(5) {
+    width: 8% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(6), /* 단가 */
+  .gyeonjuk-print .quote-table td:nth-child(6) {
+    width: 15% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(7), /* 공급가 */
+  .gyeonjuk-print .quote-table td:nth-child(7) {
+    width: 15% !important;
+  }
+
+  .gyeonjuk-print .quote-table th:nth-child(8), /* 비고 */
+  .gyeonjuk-print .quote-table td:nth-child(8) {
+    width: 8% !important;
+  }
+
+  /* 견적서 합계 테이블 */
+  .gyeonjuk-print .print-table:last-of-type {
+    width: 40% !important;
+    margin-left: auto !important;
+    margin-bottom: 6px !important;
+  }
+
+  .gyeonjuk-print .print-table:last-of-type .label {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    width: 30% !important;
+  }
+
+  /* 견적서 비고 */
+  .gyeonjuk-print .print-notes {
+    border: 1px solid #000 !important;
+    padding: 8px !important;
+    margin: 10px 0 !important;
+    min-height: 30px !important;
+    font-size: 9px !important;
+    background: white !important;
+    color: #000 !important;
+  }
+
+  /* 견적서 하단 회사명 */
+  .gyeonjuk-print .print-company {
+    text-align: right !important;
+    font-weight: bold !important;
+    font-size: 10px !important;
+    margin-top: 15px !important;
+    margin-bottom: 0 !important;
+    color: #000 !important;
+  }
+
   /* ===== 발주서 스타일 ===== */
   .balju-print {
     font-size: 7px !important;
     line-height: 1.0 !important;
     position: relative !important;
-    width: 100% !important;
-    overflow: visible !important;
   }
 
   .balju-print h1 {
     text-align: center !important;
     font-size: 16px !important;
     font-weight: bold !important;
-    margin: 0 0 6px 0 !important;
+    margin: 0 0 8px 0 !important;
     padding: 0 !important;
     letter-spacing: 4px !important;
     color: #000 !important;
   }
 
+  .balju-print h2 {
+    font-size: 11px !important;
+    font-weight: bold !important;
+    margin: 8px 0 4px 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    color: #000 !important;
+  }
+
+  .balju-print h3 {
+    font-size: 11px !important;
+    font-weight: bold !important;
+    margin: 8px 0 4px 0 !important;
+    padding: 0 !important;
+    text-align: left !important;
+    color: #000 !important;
+  }
+
+  /* 발주서 도장 - 인라인 배치 */
+  .balju-print .stamp {
+    display: inline-block !important;
+    position: static !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin-left: 6px !important;
+    opacity: 0.8 !important;
+  }
+  
   /* 발주서 테이블 공통 스타일 */
   .balju-print .print-table {
     width: 100% !important;
@@ -160,153 +272,107 @@
   .balju-print .print-table td,
   .balju-print .print-table th {
     border: 1px solid #000 !important;
-    padding: 1px 1px !important;
+    padding: 1px 1.5px !important;
     text-align: center !important;
     vertical-align: middle !important;
     word-wrap: break-word !important;
     overflow: hidden !important;
-    height: 8px !important;
+    height: 10px !important;
     color: #000 !important;
     background: white !important;
   }
 
-  /* 일반 폼 테이블 스타일 */
-  .form-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-bottom: 8px !important;
-    font-size: 10px !important;
-    table-layout: fixed !important;
-    border: 1px solid #000 !important;
+  /* 발주서 상단 정보 테이블 */
+  .balju-print .info-table td {
+    font-size: 7px !important;
+    height: 14px !important;
   }
 
-  .form-table th,
-  .form-table td {
-    border: 1px solid #000 !important;
-    padding: 2px 2px !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-    word-wrap: break-word !important;
-    overflow: hidden !important;
-    color: #000 !important;
-    background: white !important;
-  }
-
-  .form-table .label {
+  .balju-print .info-table .label {
     background-color: #f0f0f0 !important;
     font-weight: bold !important;
+    width: 20% !important;
   }
 
-  /* 핵심: 테이블 컬럼 비율 - 화면 크기에 맞게 최적화 */
-  .quote-table { 
-    table-layout: fixed !important; 
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .quote-table th:nth-child(1), .quote-table td:nth-child(1) { width: 6% !important; }
-  .quote-table th:nth-child(2), .quote-table td:nth-child(2) { width: 30% !important; }
-  .quote-table th:nth-child(3), .quote-table td:nth-child(3) { width: 10% !important; }
-  .quote-table th:nth-child(4), .quote-table td:nth-child(4) { width: 10% !important; }
-  .quote-table th:nth-child(5), .quote-table td:nth-child(5) { width: 16% !important; }
-  .quote-table th:nth-child(6), .quote-table td:nth-child(6) { width: 16% !important; }
-  .quote-table th:nth-child(7), .quote-table td:nth-child(7) { width: 12% !important; }
-  .quote-table th:nth-child(8), .quote-table td:nth-child(8) { display: none !important; }
-
-  .order-table { 
-    table-layout: fixed !important; 
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 6% !important; }
-  .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 26% !important; }
-  .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 10% !important; }
-  .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 10% !important; }
-  .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 16% !important; }
-  .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 16% !important; }
-  .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 16% !important; }
-  .order-table th:nth-child(8), .order-table td:nth-child(8) { display: none !important; }
-
-  .bom-table { 
-    table-layout: fixed !important; 
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 6% !important; }
-  .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 22% !important; }
-  .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 20% !important; }
-  .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; }
-  .bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 14% !important; }
-  .bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 14% !important; }
-  .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 14% !important; }
-  .bom-table th:nth-child(8), .bom-table td:nth-child(8) { display: none !important; }
-
-  /* 숫자 컬럼 정렬 */
-  .quote-table th:nth-child(4),
-  .quote-table th:nth-child(5),
-  .quote-table th:nth-child(6),
-  .quote-table td:nth-child(4),
-  .quote-table td:nth-child(5),
-  .quote-table td:nth-child(6),
-  .order-table th:nth-child(4),
-  .order-table th:nth-child(5),
-  .order-table th:nth-child(6),
-  .order-table td:nth-child(4),
-  .order-table td:nth-child(5),
-  .order-table td:nth-child(6),
-  .bom-table th:nth-child(4),
-  .bom-table th:nth-child(5),
-  .bom-table th:nth-child(6),
-  .bom-table td:nth-child(4),
-  .bom-table td:nth-child(5),
-  .bom-table td:nth-child(6) {
-    text-align: right !important;
-    padding: 2px 3px !important;
-  }
-
-  /* 합계 테이블 */
-  .total-table {
-    width: 200px !important;
-    margin-left: auto !important;
-    margin-bottom: 6px !important;
-  }
-
-  .total-table .label {
-    background-color: #f0f0f0 !important;
+  /* 발주서 명세 테이블 */
+  .balju-print .order-table th {
+    background-color: #e0e0e0 !important;
     font-weight: bold !important;
-    width: 30% !important;
+    font-size: 7px !important;
+    padding: 3px !important;
+    min-height: 14px !important;
   }
 
-  /* input 요소 스타일링 */
-  input, textarea {
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    outline: none !important;
-    font-size: 10px !important;
-    padding: 1px 1px !important;
-    font-family: inherit !important;
+  .balju-print .order-table td {
+    font-size: 7px !important;
+    padding: 3px !important;
+    min-height: 14px !important;
   }
 
-  /* 비고 섹션 */
-  .notes-section {
-    border: 1px solid #000 !important;
-    padding: 6px !important;
-    margin: 8px 0 !important;
-    min-height: 20px !important;
+  /* 발주서 원자재 테이블 */
+  .balju-print .material-table th {
+    background-color: #e0e0e0 !important;
+    font-weight: bold !important;
+    line-height: 1.0 !important;
+    font-size: 6.5px !important;
+    min-height: 9px !important;
+  }
+
+  .balju-print .material-table td {
+    font-size: 6.5px !important;
+    line-height: 1.0 !important;
+    min-height: 9px !important;
+    padding: 0px 1px !important;
+  }
+
+  /* 섹션 구분 바 */
+  .section-divider {
+    display: block !important;
+    width: 100% !important;
+    background: #222 !important;
+    color: #fff !important;
+    text-align: left !important;
+    padding: 4px 6px !important;
     font-size: 9px !important;
+    font-weight: bold !important;
+    margin: 6px 0 4px 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 인쇄 시 placeholder 감추기 (메모는 예외) */
+  input::placeholder, textarea::placeholder { color: transparent !important; }
+  .estimate-memo::placeholder { color: rgba(0,0,0,0.55) !important; }
+
+  /* 발주서 합계 테이블 */
+  .balju-print .total-table {
+    width: 35% !important;
+    margin-left: auto !important;
+  }
+
+  .balju-print .total-table .label {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    width: 40% !important;
+  }
+
+  /* 발주서 비고 */
+  .balju-print .print-notes {
+    border: 1px solid #000 !important;
+    padding: 4px !important;
+    margin: 5px 0 !important;
+    min-height: 15px !important;
+    font-size: 7px !important;
     background: white !important;
     color: #000 !important;
   }
 
-  /* 회사명 */
-  .form-company {
-    text-align: center !important;
+  /* 발주서 하단 회사명 */
+  .balju-print .print-company {
+    text-align: right !important;
     font-weight: bold !important;
-    font-size: 11px !important;
-    margin-top: 15px !important;
+    font-size: 8px !important;
+    margin-top: 8px !important;
     margin-bottom: 0 !important;
     color: #000 !important;
   }
@@ -315,29 +381,17 @@
   .left { text-align: left !important; }
   .right { text-align: right !important; }
 
-  /* 모든 요소 가시성 복구 */
+  /* 전역 가시성 복구 (다른 폼도 인쇄 가능) */
   body * {
     visibility: visible !important;
   }
-
-  /* 페이지 깨짐 방지 */
-  .form-header,
-  .info-table-stamp-wrapper,
-  .quote-table,
-  .order-table,
-  .bom-table,
-  .total-table { 
-    page-break-inside: avoid !important; 
-  }
-
-  /* 화면에서만 보이는 요소들 완전히 숨김 */
   .no-print {
     display: none !important;
     visibility: hidden !important;
   }
 }
 
-/* 화면 표시용 스타일 */
+ /* 화면 표시용 스타일 */
 @media screen {
   .print-container {
     max-width: 210mm;
@@ -381,4 +435,21 @@
 
   .left { text-align: left; }
   .right { text-align: right; }
+
+  .stamp {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    opacity: 0.7;
+  }
+
+  .gyeonjuk-print .stamp {
+    top: 80px;
+    right: 140px;
+  }
+
+  .balju-print .stamp {
+    top: 70px;
+    right: 140px;
+  }
 }
