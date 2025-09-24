@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { loadAdminPricesDirect, resolveAdminPrice, generatePartId } from '../utils/adminPriceHelper';
+import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
 
 const PROVIDER = {
@@ -229,6 +230,13 @@ const PurchaseOrderForm = () => {
       documentNumberInputRef.current?.focus();
       return;
     }
+
+    // 재고 감소 처리
+    if (cart && cart.length > 0) {
+      const result = deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
+      showInventoryResult(result, '청구서');
+    }
+
     window.print();
   };
 
