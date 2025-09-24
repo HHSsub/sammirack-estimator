@@ -145,6 +145,21 @@
     font-size:11px !important;
     line-height:1.25 !important;
   }
+  .rep-cell {
+    position: relative !important;
+    overflow: visible !important;
+  }
+  
+  .stamp-inline {
+    position: absolute !important;
+    top: -10px !important;
+    right: -20px !important;
+    width: 60px !important;
+    height: 60px !important;
+    z-index: 10 !important;
+    opacity: 0.8 !important;
+  }
+  
   .form-header h1 { font-size:20px !important; margin-bottom:6px !important; }
 
   .form-table {
