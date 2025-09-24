@@ -310,7 +310,7 @@ textarea:focus {
     line-height:1.25 !important;
   }
 
-    /* 도장 이미지 - 테이블 셀 밖으로 빠져나오게 */
+  /* 도장 이미지 프린트 시 제대로 표시 */
   .rep-cell {
     position: relative !important;
     overflow: visible !important;
@@ -318,12 +318,20 @@ textarea:focus {
   
   .stamp-inline {
     position: absolute !important;
-    top: -10px !important;
-    right: -20px !important;
-    width: 60px !important;
-    height: 60px !important;
-    z-index: 10 !important;
+    top: -15px !important;
+    right: -30px !important;
+    width: 80px !important;
+    height: 80px !important;
+    z-index: 999 !important;
     opacity: 0.8 !important;
+    /* 이미지가 안 보일 때 대체 처리 */
+    content: url('./images/도장.png') !important;
+  }
+  
+  /* 도장 이미지 로드 실패 시 대체 방법 */
+  .stamp-inline[src*="도장.png"] {
+    background: url('./images/도장.png') no-repeat center !important;
+    background-size: contain !important;
   }
 
   .form-header h1 { font-size:20px !important; margin-bottom:6px !important; }
