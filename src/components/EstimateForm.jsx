@@ -1,7 +1,7 @@
-// 견적서는 현재 BOM 테이블이 없지만 구조 통일을 위해 관리자 단가 헬퍼 import (미사용 상태)
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
+import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
 
 const PROVIDER = {
@@ -148,6 +148,13 @@ const EstimateForm = () => {
       documentNumberInputRef.current?.focus();
       return;
     }
+
+    // 재고 감소 처리
+    if (cart && cart.length > 0) {
+      const result = deductInventoryOnPrint(cart, '견적서', formData.documentNumber);
+      showInventoryResult(result, '견적서');
+    }
+
     window.print();
   };
 
