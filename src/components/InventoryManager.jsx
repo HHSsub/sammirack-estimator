@@ -660,7 +660,7 @@ export default function InventoryManager({ currentUser }) {
                             style={{ 
                               fontSize: '16px', 
                               fontWeight: 'bold',
-                              color: currentStock === 0 ? '#dc3545' : currentStock < 10 ? '#ffc107' : '#28a745',
+                              color: currentStock === 0 ? '#dc3545' : currentStock < 100 ? '#ffc107' : '#28a745',
                               cursor: 'pointer',
                               padding: '4px 8px',
                               borderRadius: '4px',
@@ -836,7 +836,7 @@ export default function InventoryManager({ currentUser }) {
           <div>• <strong>실행취소</strong> 버튼으로 최근 작업을 되돌릴 수 있습니다 (최근 10개)</div>
           <div>• 랙타입 필터를 통해 특정 제품군의 원자재만 볼 수 있습니다</div>
           <div>• 🆕 모든 랙옵션의 원자재가 포함됩니다 (2780높이, 앙카볼트 등)</div>
-          <div>• 재고 현황: <span style={{color: '#28a745'}}>충분(10개 이상)</span>, <span style={{color: '#ffc107'}}>부족(1-9개)</span>, <span style={{color: '#dc3545'}}>없음(0개)</span></div>
+          <div>• 재고 현황: <span style={{color: '#28a745'}}>충분(100개 이상)</span>, <span style={{color: '#ffc107'}}>부족(1-99개)</span>, <span style={{color: '#dc3545'}}>없음(0개)</span></div>
         </div>
       )}
     </div>
