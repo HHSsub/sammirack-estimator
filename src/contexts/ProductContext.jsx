@@ -2,6 +2,11 @@ import React, {
   createContext, useContext, useState, useEffect, useCallback, useMemo
 } from "react";
 import { sortBOMByMaterialRule } from "../utils/materialSort";
+import { 
+  loadAdminPrices, 
+  getEffectivePrice as utilGetEffectivePrice, 
+  generatePartId 
+} from '../utils/unifiedPriceManager';
 
 const ProductContext = createContext();
 
@@ -95,13 +100,6 @@ const normalizePartName=(name="")=>{
   return name.replace(/브레싱고무/g,"브러싱고무");
 };
 
-const generatePartId = (item) => {
-  const { rackType, name, specification } = item;
-  const cleanName = name.replace(/[^\w가-힣]/g, '');
-  const cleanSpec = (specification || '').replace(/[^\w가-힣]/g, '');
-  return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-};
-
 const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
@@ -187,22 +185,40 @@ export const ProductProvider=({children})=>{
   const [cartTotal,setCartTotal]=useState(0);
   const [extraOptionsSel,setExtraOptionsSel]=useState([]);
   const [customMaterials,setCustomMaterials]=useState([]);
+  
+  // ✅ 관리자 단가 변경 감지를 위한 상태 추가
+  const [adminPricesVersion, setAdminPricesVersion] = useState(0);
 
-  // ✅ getEffectivePrice 함수를 먼저 정의 (calculatePrice보다 앞에 위치)
-  const getEffectivePrice = useCallback((item) => {
-    if (typeof window !== 'undefined' && window.getEffectivePrice) {
-      return window.getEffectivePrice(item);
-    }
+  // ✅ 관리자 단가 변경 이벤트 리스너 추가
+  useEffect(() => {
+    const handleAdminPriceChange = () => {
+      console.log('ProductContext: 관리자 단가 변경 감지, 가격 재계산 트리거');
+      setAdminPricesVersion(prev => prev + 1);
+    };
+
+    const handleSystemRestore = () => {
+      console.log('ProductContext: 시스템 데이터 복원 감지, 가격 재계산 트리거');
+      setAdminPricesVersion(prev => prev + 1);
+    };
+
+    window.addEventListener('adminPriceChanged', handleAdminPriceChange);
+    window.addEventListener('systemDataRestored', handleSystemRestore);
     
-    // fallback: 통합 유틸리티 임포트
+    return () => {
+      window.removeEventListener('adminPriceChanged', handleAdminPriceChange);
+      window.removeEventListener('systemDataRestored', handleSystemRestore);
+    };
+  }, []);
+
+  // ✅ getEffectivePrice 함수를 먼저 정의하고 adminPricesVersion을 의존성에 추가
+  const getEffectivePrice = useCallback((item) => {
     try {
-      const { getEffectivePrice: utilGetEffectivePrice } = require('../utils/unifiedPriceManager');
       return utilGetEffectivePrice(item);
     } catch (error) {
-      console.warn('unifiedPriceManager import 실패, 기본 단가 사용');
+      console.warn('unifiedPriceManager getEffectivePrice 호출 실패, 기본 단가 사용:', error);
       return Number(item.unitPrice) || 0;
     }
-  }, []);
+  }, [adminPricesVersion]); // ✅ adminPricesVersion 의존성 추가
 
   const addCustomMaterial=(name,price)=>{
     if(!String(name).trim()||!(Number(price)>0)) return;
@@ -351,7 +367,7 @@ export const ProductProvider=({children})=>{
     return s+(tp>0?tp:up*q);
   },0);
 
-  // ========== 수정된 calculatePrice 함수 - BOM 가격 우선 계산 ==========
+  // ========== ✅ 수정된 calculatePrice 함수 - adminPricesVersion 의존성 추가 ==========
   const calculatePrice = useCallback(() => {
     if (!selectedType || quantity <= 0) return 0;
     if (selectedType === "하이랙" && !selectedOptions.formType) return 0;
@@ -371,7 +387,7 @@ export const ProductProvider=({children})=>{
       const bom = calculateCurrentBOM();
       if (bom && bom.length > 0) {
         bomPrice = bom.reduce((sum, item) => {
-          const effectivePrice = getEffectivePrice ? getEffectivePrice(item) : (Number(item.unitPrice) || 0);
+          const effectivePrice = getEffectivePrice(item);
           const quantity = Number(item.quantity) || 0;
           return sum + (effectivePrice * quantity);
         }, 0);
@@ -434,7 +450,7 @@ export const ProductProvider=({children})=>{
     console.log(`💵 최종 가격: ${finalPrice}원 (기본: ${basePrice}, 추가: ${extraPrice}, 커스텀: ${customExtra}, 적용률: ${applyRate}%)`);
     
     return finalPrice;
-  }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, getEffectivePrice]);
+  }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, getEffectivePrice, adminPricesVersion]); // ✅ adminPricesVersion 의존성 추가
 
   const makeLightRackH750BOM = () => {
     const q = Number(quantity) || 1;
@@ -627,6 +643,7 @@ const getFallbackBOM = () => {
   return extraBOM.map(applyAdminEditPrice);
 };
   
+  // ✅ calculateCurrentBOM 함수에 adminPricesVersion 의존성 추가
   const calculateCurrentBOM=useCallback(()=> {
     if(!selectedType||quantity<=0) return [];
     if(selectedType==="하이랙" && !selectedOptions.formType) return [];
@@ -649,7 +666,7 @@ const getFallbackBOM = () => {
             if(nm.includes("기둥")){ nm=`기둥(${ht})`; spec=`높이 ${ht}`; }
             else if(nm.includes("로드빔")){ nm=`로드빔(${w})`; spec=String(w); }
             else if(nm.includes("타이빔")){ nm=`타이빔(${d})`; spec=String(d); }
-            else if(nm.includes("선반")){ nm=`선판(${w})`; spec=`사이즈 W${w}xD${d}`; }
+            else if(nm.includes("선반")){ nm=`선반(${w})`; spec=`사이즈 W${w}xD${d}`; }
             else if(nm.includes("안전좌")) return null;
             else if(nm.includes("안전핀")){ nm="안전핀(파렛트랙)"; spec="안전핀"; }
             else if(nm.includes("받침")){
@@ -728,7 +745,7 @@ const getFallbackBOM = () => {
       .filter(r=>!/베이스볼트/.test(r.name))
       .map(r=>ensureSpecification(r,{size:r.size}));
     return extraBOM.map(applyAdminEditPrice);
-  },[selectedType,selectedOptions,quantity,customPrice,bomData,extraOptionsSel,extraProducts,customMaterials]);
+  },[selectedType,selectedOptions,quantity,customPrice,bomData,extraOptionsSel,extraProducts,customMaterials,adminPricesVersion]); // ✅ adminPricesVersion 의존성 추가
 
   const handleOptionChange=(k,v)=>{
     if(k==="type"){
@@ -773,56 +790,24 @@ const getFallbackBOM = () => {
   const updateCartItemQuantity=(id,nextQtyRaw)=>{
     setCart(prev=>prev.map(item=>{
       if(item.id!==id) return item;
-      const oldQty=item.quantity>0?item.quantity:1;
-      const nextQty=Math.max(0,Number(nextQtyRaw)||0);
-      const unitPrice=(item.price||0)/oldQty;
-      const newPrice=Math.round(unitPrice*nextQty);
-      const newBOM=(item.bom||[]).map(c=>{
-        const perUnitQty=(c.quantity||0)/oldQty;
-        const q=perUnitQty*nextQty;
-        const unit=c.unitPrice ?? c.unit_price ?? 0;
-        return {
-          ...c,
-          quantity:q,
-          totalPrice:unit?unit*q:(c.total_price?(c.total_price/oldQty)*nextQty:0)
-        };
-      });
-      return {...item,quantity:nextQty,price:newPrice,bom:newBOM};
+      const nextQty=Math.max(1,parseInt(nextQtyRaw)||1);
+      return {...item,quantity:nextQty};
     }));
   };
 
-  const setTotalBomQuantity = (key, newQuantity) => {
-    const qty = Math.max(0, Number(newQuantity) || 0);
-    setCart(prevCart => prevCart.map(item => {
-      const updatedBOM = (item.bom || []).map(bomItem => {
-        const bomKey = `${bomItem.rackType} ${bomItem.size || ''} ${bomItem.name}`;
-        if (bomKey === key) {
-          const effectiveUnitPrice = bomItem.hasAdminPrice ? bomItem.unitPrice : (Number(bomItem.unitPrice) || 0);
-          return {
-            ...bomItem,
-            quantity: qty,
-            totalPrice: effectiveUnitPrice * qty
-          };
-        }
-        return bomItem;
-      });
-      const newItemTotal = updatedBOM.reduce((sum, bomItem) => {
-        return sum + (Number(bomItem.totalPrice) || 0);
-      }, 0);
-      return {
-        ...item,
-        bom: updatedBOM,
-        price: newItemTotal
-      };
-    }));
+  const updateCartItemPriceDirect=(id,newPrice)=>{
+    setCart(prev=>prev.map(item=>item.id===id?{...item,price:Number(newPrice)||0}:item));
   };
 
+  // ✅ 수정된 cartBOMView - specification을 포함한 키로 그룹핑
   const cartBOMView = useMemo(() => {
     const bomMap = new Map();
     cart.forEach(item => {
       if (item.bom && Array.isArray(item.bom)) {
         item.bom.forEach(bomItem => {
-          const key = `${bomItem.rackType} ${bomItem.size || ''} ${bomItem.name}`;
+          // ✅ specification을 포함한 고유 키 생성
+          const key = `${bomItem.rackType}|${bomItem.size || ''}|${bomItem.name}|${bomItem.specification || ''}`;
+          
           if (bomMap.has(key)) {
             const existing = bomMap.get(key);
             bomMap.set(key, {
@@ -841,66 +826,49 @@ const getFallbackBOM = () => {
         });
       }
     });
-
     const result = Array.from(bomMap.values());
     return sortBOMByMaterialRule(result);
   }, [cart]);
 
-  // ========== 수정된 currentPrice 계산 - BOM 기반 가격 우선 사용 ==========
-  useEffect(() => {
-    const price = calculatePrice();
-    setCurrentPrice(price);
-  }, [calculatePrice]);
+  const cartTotalCalc=useMemo(()=>{
+    return cart.reduce((sum,item)=>{
+      const itemTotal=Number(item.price||0)*Number(item.quantity||0);
+      return sum+itemTotal;
+    },0);
+  },[cart]);
 
-  // ========== 수정된 currentBOM 계산 - 관리자 단가 적용 ==========
-  useEffect(() => {
-    const bom = calculateCurrentBOM();
+  const cartBOMTotalCalc=useMemo(()=>{
+    return cartBOMView.reduce((sum,bomItem)=>{
+      // ✅ 효과적인 단가를 사용하여 BOM 총액 계산
+      const effectivePrice = getEffectivePrice(bomItem);
+      return sum + (effectivePrice * (Number(bomItem.quantity) || 0));
+    },0);
+  },[cartBOMView, getEffectivePrice]);
+
+  const [totalBomQuantity,setTotalBomQuantity]=useState(0);
+
+  useEffect(()=>{
+    const bom=calculateCurrentBOM();
     setCurrentBOM(bom);
-  }, [calculateCurrentBOM]);
+    setTotalBomQuantity(bom.reduce((sum,item)=>sum+(Number(item.quantity)||0),0));
+  },[calculateCurrentBOM]);
 
-  // ========== cartTotal 계산 - BOM 기반 가격 반영 ==========
-  useEffect(() => {
-    const total = cart.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
-    setCartTotal(total);
-  }, [cart]);
+  useEffect(()=>{
+    setCurrentPrice(calculatePrice());
+  },[calculatePrice]);
 
+  useEffect(()=>{
+    setCartBOM(cartBOMView);
+    setCartTotal(cartTotalCalc);
+  },[cartBOMView,cartTotalCalc]);
 
-  // ✅ canAddItem 조건 수정 - BOM 가격이 있으면 추가 가능
-  const canAddItem = useMemo(() => {
-    if (!selectedType || !quantity || Number(quantity) <= 0) return false;
-    if (selectedType === "하이랙" && !selectedOptions.formType) return false;
-    
-    // customPrice가 있으면 무조건 가능
-    if (customPrice > 0) return true;
-    
-    // BOM 부품 단가 합산이 0보다 크면 가능 (기본가격이 없어도 됨)
-    const bom = calculateCurrentBOM();
-    const bomTotal = bom.reduce((sum, item) => {
-      const effectivePrice = getEffectivePrice ? getEffectivePrice(item) : (Number(item.unitPrice) || 0);
-      return sum + (effectivePrice * (Number(item.quantity) || 0));
-    }, 0);
-    
-    if (bomTotal > 0) {
-      console.log(`✅ BOM 총액으로 추가 가능: ${bomTotal}원`);
-      return true;
-    }
-    
-    // 기본가격이 있어도 가능
-    const currentPrice = calculatePrice();
-    if (currentPrice > 0) {
-      console.log(`✅ 기본가격으로 추가 가능: ${currentPrice}원`);
-      return true;
-    }
-    
-    console.log(`❌ 추가 불가: BOM(${bomTotal}원), 기본가격(${currentPrice}원)`);
-    return false;
-  }, [selectedType, selectedOptions, quantity, customPrice, calculateCurrentBOM, calculatePrice, getEffectivePrice]);
-
-  const contextValue = {
+const contextValue = {
+    // 데이터
     loading,
     data,
     bomData,
     extraProducts,
+    // 옵션 관련
     allOptions,
     availableOptions,
     selectedType,
@@ -908,44 +876,54 @@ const getFallbackBOM = () => {
     quantity,
     customPrice,
     applyRate,
+    // 계산된 값들
     currentPrice,
     currentBOM,
+    totalBomQuantity,
+    // 장바구니
     cart,
     cartBOM,
     cartBOMView,
     cartTotal,
+    cartBOMTotalCalc,
+    // 추가 옵션 & 커스텀 자재
     extraOptionsSel,
     customMaterials,
-    canAddItem,
+    // 기존에 있던 항목들 (누락된 것들)
+    canAddItem: selectedType && quantity > 0,
     colorLabelMap,
+    // 핸들러들
     setSelectedType,
     setSelectedOptions,
     handleOptionChange,
+    handleExtraOptionChange,
     setQuantity,
     setCustomPrice,
     setApplyRate,
     addToCart,
     removeFromCart,
     updateCartItemQuantity,
-    setTotalBomQuantity,
-    handleExtraOptionChange,
+    updateCartItemPriceDirect,
     addCustomMaterial,
     removeCustomMaterial,
-    clearCustomMaterials
-  };
+    clearCustomMaterials,
+    setTotalBomQuantity,
+    // ✅ getEffectivePrice 함수 노출
+    getEffectivePrice
+};
+
 
   return (
     <ProductContext.Provider value={contextValue}>
       {children}
     </ProductContext.Provider>
   );
-};  
-  
+};
+
 export const useProducts = () => {
   const context = useContext(ProductContext);
   if (!context) {
-    throw new Error('useProducts must be used within ProductProvider');
+    throw new Error('useProducts must be used within a ProductProvider');
   }
   return context;
 };
-
