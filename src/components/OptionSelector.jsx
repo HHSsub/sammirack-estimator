@@ -52,8 +52,7 @@ export default function OptionSelector() {
     };
   }, []);
 
-  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수
-  // ✅ 수정된 가격 계산 로직 - 기존 currentPrice를 fallback으로 사용
+  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수 - 기존 currentPrice fallback 추가
   const getFinalPrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
       return currentPrice; // ✅ BOM이 없으면 기존 currentPrice 사용
@@ -64,27 +63,18 @@ export default function OptionSelector() {
     
     currentBOM.forEach(item => {
       const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
-      if (adminPrice !== null) {
+      if (adminPrice !== null && !isNaN(parseInt(adminPrice))) {
         hasAdminPrice = true;
         totalPrice += parseInt(adminPrice) * item.quantity;
       } else {
-        totalPrice += item.price * item.quantity;
+        totalPrice += (item.price || 0) * (item.quantity || 0);
       }
     });
     
-    // ✅ 관리자 단가가 하나도 없으면 기존 currentPrice 사용
-    return hasAdminPrice && totalPrice > 0 ? totalPrice : currentPrice;
+    // ✅ 관리자 단가가 하나도 없거나 계산 결과가 0이면 기존 currentPrice 사용
+    return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
   };
   
-  // ✅ 최종 표시 가격
-  const finalPrice = getFinalPrice();
-  const displayPrice = customPrice > 0 ? customPrice : finalPrice;
-  
-  // ✅ 가격 표시 부분
-  <span>
-    계산 가격: {(displayPrice > 0) ? displayPrice.toLocaleString() : currentPrice.toLocaleString()}원
-  </span>
-
   const onApplyRateChange = e => {
     const v = e.target.value;
     if (v === '' || /^[0-9]{1,3}$/.test(v)) {
@@ -147,7 +137,7 @@ export default function OptionSelector() {
      selectedOptions.level)
   );
 
-  // ✅ 최종 가격 (관리자 단가 우선 적용, NaN 방지)
+  // ✅ 최종 가격 (관리자 단가 우선 적용, 없으면 기존 currentPrice 사용)
   const finalPrice = getFinalPrice();
   const displayPrice = customPrice > 0 ? customPrice : finalPrice;
 
@@ -437,12 +427,9 @@ export default function OptionSelector() {
 
       {showPrice && (
         <div style={{ marginTop: 12 }}>
-          {/* ✅ 관리자 단가가 반영된 최종 가격 표시, NaN 방지 */}
+          {/* ✅ 관리자 단가가 반영된 최종 가격 표시, 없으면 기존 currentPrice 사용 */}
           <span>
-            계산 가격: {(displayPrice && !isNaN(displayPrice) && displayPrice > 0) 
-              ? displayPrice.toLocaleString() 
-              : '0'
-            }원
+            계산 가격: {(displayPrice > 0) ? displayPrice.toLocaleString() : '0'}원
           </span>
           {finalPrice !== currentPrice && finalPrice > 0 && (
             <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
