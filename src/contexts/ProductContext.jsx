@@ -104,9 +104,13 @@ const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    const partId = generatePartId(item);
+    const partId = generatePartId(item); // ✅ import한 함수 사용
     const adminPrice = priceData[partId];
+    
+    console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
+    
     if (adminPrice && adminPrice.price > 0) {
+      console.log(`✅ 관리자 단가 적용: ${item.name} ${adminPrice.price}원`);
       return {
         ...item,
         unitPrice: adminPrice.price,
@@ -369,6 +373,7 @@ export const ProductProvider=({children})=>{
 
   // ========== ✅ 수정된 calculatePrice 함수 - adminPricesVersion 의존성 추가 ==========
   const calculatePrice = useCallback(() => {
+    console.log('🔄 calculatePrice 함수 호출됨');
     if (!selectedType || quantity <= 0) return 0;
     if (selectedType === "하이랙" && !selectedOptions.formType) return 0;
     
@@ -847,22 +852,51 @@ const getFallbackBOM = () => {
 
   const [totalBomQuantity,setTotalBomQuantity]=useState(0);
 
+  // ✅ calculateCurrentBOM이 변경될 때마다 BOM 업데이트
   useEffect(()=>{
     const bom=calculateCurrentBOM();
     setCurrentBOM(bom);
     setTotalBomQuantity(bom.reduce((sum,item)=>sum+(Number(item.quantity)||0),0));
   },[calculateCurrentBOM]);
 
+  // ✅ calculatePrice가 변경될 때마다 가격 업데이트 + 강제 재계산
   useEffect(()=>{
-    setCurrentPrice(calculatePrice());
+    const newPrice = calculatePrice();
+    console.log(`🔄 가격 재계산: ${newPrice}원`);
+    setCurrentPrice(newPrice);
   },[calculatePrice]);
+
+  // ✅ 추가: 관리자 단가 변경 시 강제로 currentPrice 재계산
+  useEffect(() => {
+    const handlePriceChange = () => {
+      console.log('🔥 관리자 단가 변경 감지 - 강제 가격 재계산');
+      const newPrice = calculatePrice();
+      console.log(`💰 새로 계산된 가격: ${newPrice}원`);
+      setCurrentPrice(newPrice);
+    };
+
+    const handleSystemRestore = () => {
+      console.log('🔥 시스템 데이터 복원 감지 - 강제 가격 재계산');
+      const newPrice = calculatePrice();
+      console.log(`💰 새로 계산된 가격: ${newPrice}원`);
+      setCurrentPrice(newPrice);
+    };
+
+    window.addEventListener('adminPriceChanged', handlePriceChange);
+    window.addEventListener('systemDataRestored', handleSystemRestore);
+    
+    return () => {
+      window.removeEventListener('adminPriceChanged', handlePriceChange);
+      window.removeEventListener('systemDataRestored', handleSystemRestore);
+    };
+  }, [calculatePrice]); // calculatePrice를 의존성에 추가
 
   useEffect(()=>{
     setCartBOM(cartBOMView);
     setCartTotal(cartTotalCalc);
   },[cartBOMView,cartTotalCalc]);
 
-const contextValue = {
+  const contextValue = {
     // 데이터
     loading,
     data,
@@ -910,8 +944,7 @@ const contextValue = {
     setTotalBomQuantity,
     // ✅ getEffectivePrice 함수 노출
     getEffectivePrice
-};
-
+  };
 
   return (
     <ProductContext.Provider value={contextValue}>
