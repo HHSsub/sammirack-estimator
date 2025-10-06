@@ -90,13 +90,49 @@ function App() {
   );
 }
 
-// ---------- ✅ 수정된 HomePage ----------
+// ---------- ✅ 수정된 HomePage - 관리자 단가 직접 반영 ----------
 const HomePage = ({ currentUser }) => {
   const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, selectedType, selectedOptions } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
+  const [adminPricesVersion, setAdminPricesVersion] = useState(0);
 
-  const canAddItem = currentPrice > 0;
+  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수
+  const getFinalPrice = () => {
+    if (!currentBOM || currentBOM.length === 0) return 0;
+    
+    let totalPrice = 0;
+    currentBOM.forEach(item => {
+      // 1순위: 관리자 수정 단가 (localStorage에서 직접 읽기)
+      const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
+      const finalPrice = adminPrice !== null ? parseInt(adminPrice) : item.price;
+      totalPrice += finalPrice * item.quantity;
+    });
+    
+    return totalPrice;
+  };
+
+  // ✅ localStorage 변경 감지 (관리자 단가 수정 시 실시간 반영)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAdminPricesVersion(prev => prev + 1);
+    };
+
+    // storage 이벤트 리스너 추가
+    window.addEventListener('storage', handleStorageChange);
+    
+    // adminPriceUpdate 커스텀 이벤트 리스너 추가
+    window.addEventListener('adminPriceUpdate', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('adminPriceUpdate', handleStorageChange);
+    };
+  }, []);
+
+  // ✅ 최종 가격 (관리자 단가 우선 적용)
+  const finalPrice = getFinalPrice();
+  const canAddItem = finalPrice > 0;
   const canProceed = cart.length > 0;
 
   const totalBomForDisplay = cartBOMView || [];
@@ -129,7 +165,13 @@ const HomePage = ({ currentUser }) => {
           <div className="price-section">
             <div className="price-display">
               <h3>현재 항목 예상 가격</h3>
-              <p className="price">{currentPrice.toLocaleString()}원</p>
+              {/* ✅ 관리자 단가가 반영된 최종 가격 표시 */}
+              <p className="price">{finalPrice.toLocaleString()}원</p>
+              {finalPrice !== currentPrice && (
+                <p className="price-note" style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                  (관리자 수정 단가 반영됨)
+                </p>
+              )}
             </div>
           </div>
         </div>
