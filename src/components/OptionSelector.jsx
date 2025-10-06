@@ -23,18 +23,54 @@ export default function OptionSelector() {
     customMaterials, addCustomMaterial, removeCustomMaterial,
 
     quantity, setQuantity, applyRate, setApplyRate,
-    customPrice, setCustomPrice, currentPrice,
+    customPrice, setCustomPrice, currentPrice, currentBOM,
     addToCart, loading, canAddItem
   } = useProducts();
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
   const [extraOpen, setExtraOpen] = useState(false);
+  const [adminPricesVersion, setAdminPricesVersion] = useState(0);
 
   // 사용자 정의 입력값(경량랙)
   const [cmName, setCmName] = useState('');
   const [cmPrice, setCmPrice] = useState('');
 
   useEffect(() => setApplyRateInput(applyRate), [applyRate]);
+  
+  // ✅ localStorage 변경 감지 (관리자 단가 수정 시 실시간 반영)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAdminPricesVersion(prev => prev + 1);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('adminPriceUpdate', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('adminPriceUpdate', handleStorageChange);
+    };
+  }, []);
+
+  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수
+  const getFinalPrice = () => {
+    if (!currentBOM || currentBOM.length === 0) return 0;
+    
+    let totalPrice = 0;
+    currentBOM.forEach(item => {
+      // 1순위: 관리자 수정 단가 (localStorage에서 직접 읽기)
+      const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
+      const finalPrice = adminPrice !== null ? parseInt(adminPrice) : item.price;
+      
+      // NaN 체크
+      if (!isNaN(finalPrice) && finalPrice > 0) {
+        totalPrice += finalPrice * item.quantity;
+      }
+    });
+    
+    return totalPrice;
+  };
+  
   const onApplyRateChange = e => {
     const v = e.target.value;
     if (v === '' || /^[0-9]{1,3}$/.test(v)) {
@@ -96,6 +132,10 @@ export default function OptionSelector() {
      selectedOptions.size && selectedOptions.height && 
      selectedOptions.level)
   );
+
+  // ✅ 최종 가격 (관리자 단가 우선 적용, NaN 방지)
+  const finalPrice = getFinalPrice();
+  const displayPrice = customPrice > 0 ? customPrice : finalPrice;
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
@@ -383,9 +423,18 @@ export default function OptionSelector() {
 
       {showPrice && (
         <div style={{ marginTop: 12 }}>
+          {/* ✅ 관리자 단가가 반영된 최종 가격 표시, NaN 방지 */}
           <span>
-            계산 가격: {(customPrice > 0 ? customPrice : currentPrice).toLocaleString()}원
+            계산 가격: {(displayPrice && !isNaN(displayPrice) && displayPrice > 0) 
+              ? displayPrice.toLocaleString() 
+              : '0'
+            }원
           </span>
+          {finalPrice !== currentPrice && finalPrice > 0 && (
+            <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+              (관리자 수정 단가 반영됨)
+            </span>
+          )}
           <button onClick={addToCart} disabled={!canAddItem} style={{ marginLeft: 10 }}>
             목록 추가
           </button>
