@@ -52,10 +52,10 @@ export default function OptionSelector() {
     };
   }, []);
 
-  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수 - 기존 currentPrice fallback 추가
-  const getFinalPrice = () => {
+  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수
+  const getAdminAdjustedPrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
-      return currentPrice; // ✅ BOM이 없으면 기존 currentPrice 사용
+      return currentPrice; // BOM이 없으면 기존 currentPrice 사용
     }
     
     let hasAdminPrice = false;
@@ -71,7 +71,7 @@ export default function OptionSelector() {
       }
     });
     
-    // ✅ 관리자 단가가 하나도 없거나 계산 결과가 0이면 기존 currentPrice 사용
+    // 관리자 단가가 있고 유효하면 사용, 아니면 기존 currentPrice 사용
     return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
   };
   
@@ -137,9 +137,9 @@ export default function OptionSelector() {
      selectedOptions.level)
   );
 
-  // ✅ 최종 가격 (관리자 단가 우선 적용, 없으면 기존 currentPrice 사용)
-  const finalPrice = getFinalPrice();
-  const displayPrice = customPrice > 0 ? customPrice : finalPrice;
+  // ✅ 관리자 단가가 반영된 최종 가격 (중복 선언 제거)
+  const adminAdjustedPrice = getAdminAdjustedPrice();
+  const finalPrice = customPrice > 0 ? customPrice : adminAdjustedPrice;
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
@@ -427,11 +427,11 @@ export default function OptionSelector() {
 
       {showPrice && (
         <div style={{ marginTop: 12 }}>
-          {/* ✅ 관리자 단가가 반영된 최종 가격 표시, 없으면 기존 currentPrice 사용 */}
+          {/* ✅ 관리자 단가가 반영된 최종 가격 표시 */}
           <span>
-            계산 가격: {(displayPrice > 0) ? displayPrice.toLocaleString() : '0'}원
+            계산 가격: {finalPrice > 0 ? finalPrice.toLocaleString() : '0'}원
           </span>
-          {finalPrice !== currentPrice && finalPrice > 0 && (
+          {adminAdjustedPrice !== currentPrice && adminAdjustedPrice > 0 && (
             <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
               (관리자 수정 단가 반영됨)
             </span>
