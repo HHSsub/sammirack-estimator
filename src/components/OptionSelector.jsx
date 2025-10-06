@@ -53,24 +53,38 @@ export default function OptionSelector() {
   }, []);
 
   // ✅ 관리자 단가가 반영된 최종 가격 계산 함수
+  // ✅ 수정된 가격 계산 로직 - 기존 currentPrice를 fallback으로 사용
   const getFinalPrice = () => {
-    if (!currentBOM || currentBOM.length === 0) return 0;
+    if (!currentBOM || currentBOM.length === 0) {
+      return currentPrice; // ✅ BOM이 없으면 기존 currentPrice 사용
+    }
     
+    let hasAdminPrice = false;
     let totalPrice = 0;
+    
     currentBOM.forEach(item => {
-      // 1순위: 관리자 수정 단가 (localStorage에서 직접 읽기)
       const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
-      const finalPrice = adminPrice !== null ? parseInt(adminPrice) : item.price;
-      
-      // NaN 체크
-      if (!isNaN(finalPrice) && finalPrice > 0) {
-        totalPrice += finalPrice * item.quantity;
+      if (adminPrice !== null) {
+        hasAdminPrice = true;
+        totalPrice += parseInt(adminPrice) * item.quantity;
+      } else {
+        totalPrice += item.price * item.quantity;
       }
     });
     
-    return totalPrice;
+    // ✅ 관리자 단가가 하나도 없으면 기존 currentPrice 사용
+    return hasAdminPrice && totalPrice > 0 ? totalPrice : currentPrice;
   };
   
+  // ✅ 최종 표시 가격
+  const finalPrice = getFinalPrice();
+  const displayPrice = customPrice > 0 ? customPrice : finalPrice;
+  
+  // ✅ 가격 표시 부분
+  <span>
+    계산 가격: {(displayPrice > 0) ? displayPrice.toLocaleString() : currentPrice.toLocaleString()}원
+  </span>
+
   const onApplyRateChange = e => {
     const v = e.target.value;
     if (v === '' || /^[0-9]{1,3}$/.test(v)) {
