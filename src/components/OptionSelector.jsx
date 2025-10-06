@@ -29,7 +29,7 @@ export default function OptionSelector() {
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
   const [extraOpen, setExtraOpen] = useState(false);
-  const [adminPricesVersion, setAdminPricesVersion] = useState(0);
+  const [realTimePrice, setRealTimePrice] = useState(currentPrice);
 
   // 사용자 정의 입력값(경량랙)
   const [cmName, setCmName] = useState('');
@@ -37,10 +37,60 @@ export default function OptionSelector() {
 
   useEffect(() => setApplyRateInput(applyRate), [applyRate]);
   
-  // ✅ localStorage 변경 감지 (관리자 단가 수정 시 실시간 반영)
+  // ✅ 관리자 단가가 반영된 실시간 가격 계산 (fallback 포함)
+  const calculateRealTimePrice = () => {
+    if (!currentBOM || currentBOM.length === 0) {
+      return currentPrice; // ✅ BOM이 없으면 기본 가격 사용
+    }
+    
+    let totalPrice = 0;
+    let hasAdminPrice = false;
+    
+    currentBOM.forEach(item => {
+      const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
+      if (adminPrice !== null && !isNaN(parseInt(adminPrice)) && parseInt(adminPrice) > 0) {
+        hasAdminPrice = true;
+        totalPrice += parseInt(adminPrice) * (item.quantity || 0);
+      } else {
+        // 관리자 단가가 없으면 기본 item.price 사용
+        totalPrice += (item.price || 0) * (item.quantity || 0);
+      }
+    });
+    
+    // ✅ 관리자 단가가 있고 유효하면 사용, 아니면 기본 currentPrice 사용 (fallback)
+    return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
+  };
+
+  // ✅ 최종 표시 가격 계산 - 정확한 우선순위 적용
+  const getFinalDisplayPrice = () => {
+    // 1순위: customPrice (가격 직접입력)
+    if (customPrice > 0) {
+      return customPrice;
+    }
+    
+    // 2순위: 관리자 단가 (실시간 계산된 가격)
+    const adminAdjustedPrice = calculateRealTimePrice();
+    if (adminAdjustedPrice > 0 && !isNaN(adminAdjustedPrice)) {
+      return adminAdjustedPrice;
+    }
+    
+    // 3순위: 기본 가격 (currentPrice) - 최종 fallback
+    return currentPrice > 0 ? currentPrice : 0;
+  };
+
+  // ✅ 실시간 가격 업데이트
   useEffect(() => {
+    const updatePrice = () => {
+      const newPrice = calculateRealTimePrice();
+      setRealTimePrice(newPrice);
+    };
+    
+    // 초기 계산
+    updatePrice();
+    
+    // localStorage 변경 감지
     const handleStorageChange = () => {
-      setAdminPricesVersion(prev => prev + 1);
+      updatePrice();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -50,30 +100,13 @@ export default function OptionSelector() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('adminPriceUpdate', handleStorageChange);
     };
-  }, []);
+  }, [currentBOM, currentPrice]);
 
-  // ✅ 관리자 단가가 반영된 최종 가격 계산 함수
-  const getAdminAdjustedPrice = () => {
-    if (!currentBOM || currentBOM.length === 0) {
-      return currentPrice; // BOM이 없으면 기존 currentPrice 사용
-    }
-    
-    let hasAdminPrice = false;
-    let totalPrice = 0;
-    
-    currentBOM.forEach(item => {
-      const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
-      if (adminPrice !== null && !isNaN(parseInt(adminPrice))) {
-        hasAdminPrice = true;
-        totalPrice += parseInt(adminPrice) * item.quantity;
-      } else {
-        totalPrice += (item.price || 0) * (item.quantity || 0);
-      }
-    });
-    
-    // 관리자 단가가 있고 유효하면 사용, 아니면 기존 currentPrice 사용
-    return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
-  };
+  // ✅ currentBOM 변경 시에도 가격 재계산
+  useEffect(() => {
+    const newPrice = calculateRealTimePrice();
+    setRealTimePrice(newPrice);
+  }, [currentBOM]);
   
   const onApplyRateChange = e => {
     const v = e.target.value;
@@ -136,10 +169,6 @@ export default function OptionSelector() {
      selectedOptions.size && selectedOptions.height && 
      selectedOptions.level)
   );
-
-  // ✅ 관리자 단가가 반영된 최종 가격 (중복 선언 제거)
-  const adminAdjustedPrice = getAdminAdjustedPrice();
-  const finalPrice = customPrice > 0 ? customPrice : adminAdjustedPrice;
 
   return (
     <div style={{ padding: 20, background: '#f8fcff', borderRadius: 8 }}>
@@ -427,11 +456,16 @@ export default function OptionSelector() {
 
       {showPrice && (
         <div style={{ marginTop: 12 }}>
-          {/* ✅ 관리자 단가가 반영된 최종 가격 표시 */}
           <span>
-            계산 가격: {finalPrice > 0 ? finalPrice.toLocaleString() : '0'}원
+            {/* ✅ 정확한 우선순위: customPrice > 관리자단가 > 기본가격, NaN 완전 방지 */}
+            계산 가격: {getFinalDisplayPrice().toLocaleString()}원
           </span>
-          {adminAdjustedPrice !== currentPrice && adminAdjustedPrice > 0 && (
+          {customPrice > 0 && (
+            <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+              (직접입력 가격 적용됨)
+            </span>
+          )}
+          {customPrice === 0 && realTimePrice !== currentPrice && realTimePrice > 0 && (
             <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
               (관리자 수정 단가 반영됨)
             </span>
