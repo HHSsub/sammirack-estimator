@@ -95,34 +95,11 @@ const HomePage = ({ currentUser }) => {
   const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, selectedType, selectedOptions } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
-  // ✅ 실시간 가격 업데이트를 위한 상태 추가
-  const [displayPrice, setDisplayPrice] = useState(0);
 
   const canAddItem = currentPrice > 0;
   const canProceed = cart.length > 0;
 
   const totalBomForDisplay = cartBOMView || [];
-
-  // ✅ currentPrice 변경 시 displayPrice 업데이트
-  useEffect(() => {
-    setDisplayPrice(currentPrice);
-  }, [currentPrice]);
-
-  // ✅ 관리자 단가 변경 이벤트 리스너 추가
-  useEffect(() => {
-    const handlePriceChange = () => {
-      console.log('HomePage: 관리자 단가 변경 감지, 화면 가격 업데이트');
-      // currentPrice가 업데이트되면 자동으로 displayPrice도 업데이트됨
-    };
-
-    window.addEventListener('adminPriceChanged', handlePriceChange);
-    window.addEventListener('systemDataRestored', handlePriceChange);
-    
-    return () => {
-      window.removeEventListener('adminPriceChanged', handlePriceChange);
-      window.removeEventListener('systemDataRestored', handlePriceChange);
-    };
-  }, []);
 
   // 현재 선택된 랙옵션 이름 생성
   const getCurrentRackOptionName = () => {
@@ -152,13 +129,7 @@ const HomePage = ({ currentUser }) => {
           <div className="price-section">
             <div className="price-display">
               <h3>현재 항목 예상 가격</h3>
-              {/* ✅ displayPrice 사용하고 실시간 업데이트 표시 */}
-              <p className="price">{displayPrice.toLocaleString()}원</p>
-              {currentUser?.role === 'admin' && (
-                <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                  💡 관리자 단가 수정 시 실시간 반영됩니다
-                </div>
-              )}
+              <p className="price">{currentPrice.toLocaleString()}원</p>
             </div>
           </div>
         </div>
