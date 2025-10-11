@@ -329,7 +329,7 @@ const extractWeightOnly = (colorStr) => {
   return match ? match[1] : '';
 };
 
-// ✅ 개선된 전체 원자재 목록 로드 (하이랙/스텐랙 기본 부품 추가)
+// ✅ 개선된 전체 원자재 목록 로드 (엑셀 기반 정확한 조합)
 export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
@@ -349,7 +349,7 @@ export const loadAllMaterials = async () => {
 
     console.log('📁 데이터 파일 로드 완료');
     
-    // 2. BOM 데이터에서 컴포넌트 추출 (기존 로직 유지)
+    // 2. BOM 데이터에서 컴포넌트 추출
     console.log('🔍 BOM 데이터에서 원자재 추출 중...');
     Object.keys(bomData).forEach(rackType => {
       const rackData = bomData[rackType];
@@ -415,7 +415,7 @@ export const loadAllMaterials = async () => {
       });
     });
 
-    // 3. data.json에서 추가 랙옵션들 탐색 (기존 로직 유지)
+    // 3. data.json에서 추가 랙옵션들 탐색
     console.log('🔍 data.json에서 추가 랙옵션 탐색 중...');
     Object.keys(dataJson).forEach(rackType => {
       const rackData = dataJson[rackType];
@@ -482,134 +482,137 @@ export const loadAllMaterials = async () => {
       }
     });
 
-    // ✅ 4. 하이랙 기본 부품 생성 (모든 규격+무게 조합, 색상 제외)
-    console.log('🔧 하이랙 기본 부품 생성');
-    const highrackData = dataJson['하이랙'];
-    if (highrackData && highrackData['색상']) {
-      const colors = highrackData['색상'];
-      const heights = ['150', '200', '250'];
-      
-      colors.forEach(color => {
-        const weightOnly = extractWeightOnly(color);
-        const colorData = highrackData['기본가격']?.[color];
-        
-        if (!colorData) return;
-        
-        Object.keys(colorData).forEach(size => {
-          heights.forEach(height => {
-            const pillarPartId = generatePartId({
-              rackType: '하이랙',
-              name: `기둥(${height})`,
-              specification: `높이 ${height} ${weightOnly}`
-            });
-            
-            if (!materials.has(pillarPartId)) {
-              materials.set(pillarPartId, {
-                partId: pillarPartId,
-                rackType: '하이랙',
-                name: `기둥(${height})`,
-                specification: `높이 ${height} ${weightOnly}`,
-                unitPrice: 0,
-                source: 'highrack_generated',
-                usedInOptions: []
-              });
-            }
-          });
-          
-          const sizeMatch = String(size).replace(/\s+/g, '').match(/(\d+)[xX](\d+)/);
-          if (sizeMatch) {
-            const rodBeamNum = sizeMatch[2];
-            const rodBeamPartId = generatePartId({
-              rackType: '하이랙',
-              name: `로드빔(${rodBeamNum})`,
-              specification: `${rodBeamNum} ${weightOnly}`
-            });
-            
-            if (!materials.has(rodBeamPartId)) {
-              materials.set(rodBeamPartId, {
-                partId: rodBeamPartId,
-                rackType: '하이랙',
-                name: `로드빔(${rodBeamNum})`,
-                specification: `${rodBeamNum} ${weightOnly}`,
-                unitPrice: 0,
-                source: 'highrack_generated',
-                usedInOptions: []
-              });
-            }
-            
-            const shelfNum = sizeMatch[1];
-            const shelfPartId = generatePartId({
-              rackType: '하이랙',
-              name: `선반(${shelfNum})`,
-              specification: `사이즈 ${size} ${weightOnly}`
-            });
-            
-            if (!materials.has(shelfPartId)) {
-              materials.set(shelfPartId, {
-                partId: shelfPartId,
-                rackType: '하이랙',
-                name: `선반(${shelfNum})`,
-                specification: `사이즈 ${size} ${weightOnly}`,
-                unitPrice: 0,
-                source: 'highrack_generated',
-                usedInOptions: []
-              });
-            }
-          }
-        });
-      });
-    }
+    // ✅ 4. 하이랙 기본 부품 생성 (엑셀 기반 정확한 무게급별 규격)
+    console.log('🔧 하이랙 기본 부품 생성 (무게급별 정확한 규격)');
     
-    // ✅ 5. 스텐랙 기본 부품 생성
-    console.log('🔧 스텐랙 기본 부품 생성');
-    const stainlessData = dataJson['스텐랙'];
-    if (stainlessData && stainlessData['기본가격']) {
-      const stainlessPrices = stainlessData['기본가격'];
+    const highrackWeightSizes = {
+      '270kg': ['45x108', '45x150', '45x200', '60x108', '60x150', '60x200'],
+      '450kg': ['60x108', '60x150', '60x200'],
+      '550kg': ['80x108', '80x150', '80x200']
+    };
+    
+    const heights = ['150', '200', '250'];
+    
+    Object.keys(highrackWeightSizes).forEach(weight => {
+      const sizes = highrackWeightSizes[weight];
       
-      Object.keys(stainlessPrices).forEach(size => {
-        Object.keys(stainlessPrices[size]).forEach(height => {
+      sizes.forEach(size => {
+        const sizeMatch = String(size).match(/(\d+)[xX](\d+)/);
+        if (!sizeMatch) return;
+        
+        const shelfNum = sizeMatch[1];
+        const rodBeamNum = sizeMatch[2];
+        
+        heights.forEach(height => {
           const pillarPartId = generatePartId({
-            rackType: '스텐랙',
+            rackType: '하이랙',
             name: `기둥(${height})`,
-            specification: `높이 ${height}`
+            specification: `높이 ${height} ${weight}`
           });
           
           if (!materials.has(pillarPartId)) {
             materials.set(pillarPartId, {
               partId: pillarPartId,
-              rackType: '스텐랙',
+              rackType: '하이랙',
               name: `기둥(${height})`,
-              specification: `높이 ${height}`,
+              specification: `높이 ${height} ${weight}`,
               unitPrice: 0,
-              source: 'stainless_generated',
-              usedInOptions: []
-            });
-          }
-          
-          const sizeFront = (size.split('x')[0]) || size;
-          const shelfPartId = generatePartId({
-            rackType: '스텐랙',
-            name: `선반(${sizeFront})`,
-            specification: `사이즈 ${size}`
-          });
-          
-          if (!materials.has(shelfPartId)) {
-            materials.set(shelfPartId, {
-              partId: shelfPartId,
-              rackType: '스텐랙',
-              name: `선반(${sizeFront})`,
-              specification: `사이즈 ${size}`,
-              unitPrice: 0,
-              source: 'stainless_generated',
+              source: 'highrack_generated',
               usedInOptions: []
             });
           }
         });
+        
+        const rodBeamPartId = generatePartId({
+          rackType: '하이랙',
+          name: `로드빔(${rodBeamNum})`,
+          specification: `${rodBeamNum} ${weight}`
+        });
+        
+        if (!materials.has(rodBeamPartId)) {
+          materials.set(rodBeamPartId, {
+            partId: rodBeamPartId,
+            rackType: '하이랙',
+            name: `로드빔(${rodBeamNum})`,
+            specification: `${rodBeamNum} ${weight}`,
+            unitPrice: 0,
+            source: 'highrack_generated',
+            usedInOptions: []
+          });
+        }
+        
+        const shelfPartId = generatePartId({
+          rackType: '하이랙',
+          name: `선반(${shelfNum})`,
+          specification: `사이즈 ${size} ${weight}`
+        });
+        
+        if (!materials.has(shelfPartId)) {
+          materials.set(shelfPartId, {
+            partId: shelfPartId,
+            rackType: '하이랙',
+            name: `선반(${shelfNum})`,
+            specification: `사이즈 ${size} ${weight}`,
+            unitPrice: 0,
+            source: 'highrack_generated',
+            usedInOptions: []
+          });
+        }
       });
-    }
+    });
+    
+    // ✅ 5. 스텐랙 기본 부품 생성 (엑셀 기반)
+    console.log('🔧 스텐랙 기본 부품 생성');
+    
+    const stainlessSizes = ['50x75', '50x90', '50x120', '50x150', '50x180'];
+    const stainlessHeights = ['75', '90', '120', '150', '180', '210'];
+    
+    stainlessHeights.forEach(height => {
+      const pillarPartId = generatePartId({
+        rackType: '스텐랙',
+        name: `기둥(${height})`,
+        specification: `높이 ${height}`
+      });
+      
+      if (!materials.has(pillarPartId)) {
+        materials.set(pillarPartId, {
+          partId: pillarPartId,
+          rackType: '스텐랙',
+          name: `기둥(${height})`,
+          specification: `높이 ${height}`,
+          unitPrice: 0,
+          source: 'stainless_generated',
+          usedInOptions: []
+        });
+      }
+    });
+    
+    stainlessSizes.forEach(size => {
+      const sizeFront = (size.split('x')[0]) || size;
+      const shelfPartId = generatePartId({
+        rackType: '스텐랙',
+        name: `선반(${sizeFront})`,
+        specification: `사이즈 ${size}`
+      });
+      
+      if (!materials.has(shelfPartId)) {
+        materials.set(shelfPartId, {
+          partId: shelfPartId,
+          rackType: '스텐랙',
+          name: `선반(${sizeFront})`,
+          specification: `사이즈 ${size}`,
+          unitPrice: 0,
+          source: 'stainless_generated',
+          usedInOptions: []
+        });
+      }
+    });
 
-    // 6. extra_options.json에서 추가 원자재들 탐색 (기존 로직 유지)
-    console.log('🔍 extra_options.json에서 추가 원자재 추출 중...');
+    // ✅ 6. extra_options에서 색상별 부품은 제외 (공통 부품만 추가)
+    console.log('🔍 extra_options.json에서 원자재 추출 중 (색상별 부품 제외)');
+    
+    const colorKeywords = ['블루', '메트그레이', '오렌지', '그레이', '화이트'];
+    
     Object.keys(extraOptions).forEach(rackType => {
       const extraData = extraOptions[rackType];
       Object.keys(extraData).forEach(categoryName => {
@@ -618,6 +621,14 @@ export const loadAllMaterials = async () => {
           items.forEach(item => {
             if (item.bom && Array.isArray(item.bom)) {
               item.bom.forEach(bomItem => {
+                const bomItemName = bomItem.name || '';
+                const hasColor = colorKeywords.some(keyword => bomItemName.includes(keyword));
+                
+                if (hasColor) {
+                  console.log(`⏭️ 색상별 부품 스킵: ${bomItemName}`);
+                  return;
+                }
+                
                 const partId = generatePartId({
                   rackType,
                   name: bomItem.name,
@@ -634,8 +645,6 @@ export const loadAllMaterials = async () => {
                     usedInOptions: [],
                     source: 'extra_options'
                   });
-                  
-                  console.log(`➕ extra_options 원자재 추가: ${bomItem.name}`);
                 }
               });
             }
@@ -645,11 +654,6 @@ export const loadAllMaterials = async () => {
     });
 
     console.log(`✅ 원자재 로드 완료: 총 ${materials.size}개 원자재`);
-    console.log(`   - bom_data: ${Array.from(materials.values()).filter(m => m.source !== 'highrack_generated' && m.source !== 'stainless_generated' && m.source !== 'extra_options' && m.source !== 'fallback').length}개`);
-    console.log(`   - 하이랙 기본: ${Array.from(materials.values()).filter(m => m.source === 'highrack_generated').length}개`);
-    console.log(`   - 스텐랙 기본: ${Array.from(materials.values()).filter(m => m.source === 'stainless_generated').length}개`);
-    console.log(`   - extra_options: ${Array.from(materials.values()).filter(m => m.source === 'extra_options').length}개`);
-    console.log(`   - fallback: ${Array.from(materials.values()).filter(m => m.source === 'fallback').length}개`);
     
     saveRackOptionsRegistry(optionsRegistry);
     
