@@ -5,7 +5,8 @@ import { sortBOMByMaterialRule } from "../utils/materialSort";
 import { 
   loadAdminPrices, 
   getEffectivePrice as utilGetEffectivePrice, 
-  generatePartId 
+  generatePartId,
+  loadExtraOptionsPrices  // ✅ 추가
 } from '../utils/unifiedPriceManager';
 
 const ProductContext = createContext();
@@ -377,12 +378,11 @@ export const ProductProvider=({children})=>{
     if (!selectedType || quantity <= 0) return 0;
     if (selectedType === "하이랙" && !selectedOptions.formType) return 0;
     
-    // 1순위: 사용자가 직접 입력한 커스텀 가격
     if (customPrice > 0) return Math.round(customPrice * quantity * (applyRate / 100));
     
     let basePrice = 0;
-    let bomPrice = 0; // BOM 부품 단가 합산 가격
-    let basicPrice = 0; // 기본 가격 (pData)
+    let bomPrice = 0;
+    let basicPrice = 0;
   
     if (formTypeRacks.includes(selectedType)) {
       const { size, height: heightRaw, level: levelRaw, formType } = selectedOptions;
@@ -435,12 +435,17 @@ export const ProductProvider=({children})=>{
       }
     }
   
-    // 추가 옵션 가격
+    // ✅ 추가 옵션 가격 (extra_options 수정된 가격 반영)
     let extraPrice = 0;
+    const extraOptionsPrices = loadExtraOptionsPrices();
+    
     (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
       if (Array.isArray(arr)) {
         arr.forEach(opt => {
-          if (extraOptionsSel.includes(opt.id)) extraPrice += Number(opt.price) || 0;
+          if (extraOptionsSel.includes(opt.id)) {
+            const price = extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0;
+            extraPrice += price;
+          }
         });
       }
     });
@@ -455,7 +460,7 @@ export const ProductProvider=({children})=>{
     console.log(`💵 최종 가격: ${finalPrice}원 (기본: ${basePrice}, 추가: ${extraPrice}, 커스텀: ${customExtra}, 적용률: ${applyRate}%)`);
     
     return finalPrice;
-  }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, getEffectivePrice, adminPricesVersion]); // ✅ adminPricesVersion 의존성 추가
+  }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, getEffectivePrice, adminPricesVersion]);
 
   const makeLightRackH750BOM = () => {
     const q = Number(quantity) || 1;
