@@ -373,15 +373,11 @@ export const loadAllMaterials = async () => {
                 level,
                 formType,
                 displayName,
-                components: components.map(comp => ({
-                  ...comp,
-                  partId: generatePartId({
-                    rackType,
-                    name: comp.name,
-                    specification: comp.specification || ''
-                  })
-                })),
-                lastUpdated: new Date().toISOString()
+                componentIds: components.map(comp => generatePartId({
+                  rackType,
+                  name: comp.name,
+                  specification: comp.specification || ''
+                }))
               };
               
               components.forEach(component => {
@@ -398,7 +394,6 @@ export const loadAllMaterials = async () => {
                     name: component.name,
                     specification: component.specification || '',
                     unitPrice: Number(component.unit_price) || 0,
-                    size, height, level, formType,
                     usedInOptions: [],
                     source: 'bom_data'
                   });
@@ -430,8 +425,6 @@ export const loadAllMaterials = async () => {
                 const bomExists = bomData[rackType]?.[size]?.[height]?.[level]?.[formTypeOrColor];
                 
                 if (!bomExists) {
-                  console.log(`📋 data.json 전용 옵션 발견: ${rackType} ${size} ${height} ${level} ${formTypeOrColor}`);
-                  
                   const fallbackComponents = generateFallbackComponents(rackType, size, height, level, formTypeOrColor);
                   
                   const optionId = generateRackOptionId(rackType, size, height, level, formTypeOrColor);
@@ -445,12 +438,7 @@ export const loadAllMaterials = async () => {
                     level,
                     formType: formTypeOrColor,
                     displayName,
-                    components: fallbackComponents.map(comp => ({
-                      ...comp,
-                      partId: generatePartId(comp)
-                    })),
-                    source: 'data.json_fallback',
-                    lastUpdated: new Date().toISOString()
+                    componentIds: fallbackComponents.map(comp => generatePartId(comp))
                   };
                   
                   fallbackComponents.forEach(component => {
@@ -463,9 +451,8 @@ export const loadAllMaterials = async () => {
                         name: component.name,
                         specification: component.specification || '',
                         unitPrice: Number(component.unitPrice) || 0,
-                        size, height, level, formType: formTypeOrColor,
                         usedInOptions: [],
-                        source: 'fallback'
+                        source: 'data_fallback'
                       });
                     }
                     
@@ -485,7 +472,7 @@ export const loadAllMaterials = async () => {
       }
     });
 
-    // 3. 엑셀 기반 추가 fallback (bom/data 둘 다 없는 경우)
+    // 3. 엑셀 기반 추가 fallback
     console.log('📊 엑셀에서 추가 랙옵션 확인 중...');
     const XLSX = await import('xlsx');
     const workbook = XLSX.read(excelBuffer);
@@ -519,13 +506,11 @@ export const loadAllMaterials = async () => {
           formType = row[5] || row[4];
         }
         
-        const bomExists = bomData[rackType]?.[size]?.[height]?.[level]?.[formType || color];
-        const dataExists = dataJson[rackType]?.["기본가격"]?.[formType || color]?.[size]?.[height]?.[level];
+        const optionId = generateRackOptionId(rackType, size, height, level, formType || color);
         
-        if (!bomExists && !dataExists) {
+        if (!optionsRegistry[optionId]) {
           const fallbackComponents = generateFallbackComponents(rackType, size, height, level, formType || color);
           
-          const optionId = generateRackOptionId(rackType, size, height, level, formType || color);
           const displayName = `${rackType} ${formType || color} ${size} ${height} ${level}`;
           
           optionsRegistry[optionId] = {
@@ -536,12 +521,7 @@ export const loadAllMaterials = async () => {
             level,
             formType: formType || color,
             displayName,
-            components: fallbackComponents.map(comp => ({
-              ...comp,
-              partId: generatePartId(comp)
-            })),
-            source: 'excel_fallback',
-            lastUpdated: new Date().toISOString()
+            componentIds: fallbackComponents.map(comp => generatePartId(comp))
           };
           
           fallbackComponents.forEach(component => {
@@ -571,59 +551,185 @@ export const loadAllMaterials = async () => {
       });
     });
 
-    // 4. extra_options 추가 (색상별 부품 제외 + 카테고리명 포함)
-    console.log('🔍 extra_options.json에서 원자재 추출 중 (색상별 부품 제외)');
+    // 4. 하이랙 기본 부품 생성
+    console.log('🔧 하이랙 기본 부품 생성');
+    const highrackWeightSizes = {
+      '270kg': ['45x108', '45x150', '45x200', '60x108', '60x150', '60x200'],
+      '450kg': ['60x108', '60x150', '60x200'],
+      '550kg': ['80x108', '80x150', '80x200']
+    };
+    const heights = ['150', '200', '250'];
     
-    const colorKeywords = ['블루', '메트그레이', '오렌지', '그레이', '화이트'];
-    
-    Object.keys(extraOptions).forEach(rackType => {
-      const extraData = extraOptions[rackType];
-      Object.keys(extraData).forEach(categoryName => {
-        const items = extraData[categoryName];
-        if (Array.isArray(items)) {
-          items.forEach(item => {
-            if (item.bom && Array.isArray(item.bom)) {
-              item.bom.forEach(bomItem => {
-                const bomItemName = bomItem.name || '';
-                const hasColor = colorKeywords.some(keyword => bomItemName.includes(keyword));
-                
-                if (hasColor) {
-                  console.log(`⏭️ 색상별 부품 스킵: ${bomItemName}`);
-                  return;
-                }
-                
-                // extra_options 부품은 카테고리명 포함
-                const displayName = `${bomItem.name}_${categoryName}`;
-                
-                // 일반 partId와 구분되도록 별도 ID 생성
-                const extraPartId = `extra-${rackType}-${bomItem.name}-${categoryName}`
-                  .toLowerCase()
-                  .replace(/[^\w가-힣-]/g, '');
-                
-                if (!materials.has(extraPartId)) {
-                  materials.set(extraPartId, {
-                    partId: extraPartId,
-                    rackType,
-                    name: displayName,
-                    specification: bomItem.specification || categoryName,
-                    unitPrice: Number(item.price) || 0,
-                    usedInOptions: [],
-                    source: 'extra_options',
-                    extraOptionId: item.id,
-                    categoryName: categoryName
-                  });
-                  console.log(`  ➕ ${displayName}`);
-                }
-              });
-            }
+    Object.keys(highrackWeightSizes).forEach(weight => {
+      highrackWeightSizes[weight].forEach(size => {
+        const sizeMatch = String(size).match(/(\d+)[xX](\d+)/);
+        if (!sizeMatch) return;
+        
+        const shelfNum = sizeMatch[1];
+        const rodBeamNum = sizeMatch[2];
+        
+        heights.forEach(height => {
+          const pillarPartId = generatePartId({
+            rackType: '하이랙',
+            name: `기둥(${height})`,
+            specification: `높이 ${height} ${weight}`
+          });
+          
+          if (!materials.has(pillarPartId)) {
+            materials.set(pillarPartId, {
+              partId: pillarPartId,
+              rackType: '하이랙',
+              name: `기둥(${height})`,
+              specification: `높이 ${height} ${weight}`,
+              unitPrice: 0,
+              source: 'highrack_generated',
+              usedInOptions: []
+            });
+          }
+        });
+        
+        const rodBeamPartId = generatePartId({
+          rackType: '하이랙',
+          name: `로드빔(${rodBeamNum})`,
+          specification: `${rodBeamNum} ${weight}`
+        });
+        
+        if (!materials.has(rodBeamPartId)) {
+          materials.set(rodBeamPartId, {
+            partId: rodBeamPartId,
+            rackType: '하이랙',
+            name: `로드빔(${rodBeamNum})`,
+            specification: `${rodBeamNum} ${weight}`,
+            unitPrice: 0,
+            source: 'highrack_generated',
+            usedInOptions: []
+          });
+        }
+        
+        const shelfPartId = generatePartId({
+          rackType: '하이랙',
+          name: `선반(${shelfNum})`,
+          specification: `사이즈 ${size} ${weight}`
+        });
+        
+        if (!materials.has(shelfPartId)) {
+          materials.set(shelfPartId, {
+            partId: shelfPartId,
+            rackType: '하이랙',
+            name: `선반(${shelfNum})`,
+            specification: `사이즈 ${size} ${weight}`,
+            unitPrice: 0,
+            source: 'highrack_generated',
+            usedInOptions: []
           });
         }
       });
     });
-
-    console.log(`✅ 원자재 로드 완료: 총 ${materials.size}개 원자재`);
     
-    saveRackOptionsRegistry(optionsRegistry);
+    // 5. 스텐랙 기본 부품 생성
+    console.log('🔧 스텐랙 기본 부품 생성');
+    const stainlessSizes = ['50x75', '50x90', '50x120', '50x150', '50x180'];
+    const stainlessHeights = ['75', '90', '120', '150', '180', '210'];
+    
+    stainlessHeights.forEach(height => {
+      const pillarPartId = generatePartId({
+        rackType: '스텐랙',
+        name: `기둥(${height})`,
+        specification: `높이 ${height}`
+      });
+      
+      if (!materials.has(pillarPartId)) {
+        materials.set(pillarPartId, {
+          partId: pillarPartId,
+          rackType: '스텐랙',
+          name: `기둥(${height})`,
+          specification: `높이 ${height}`,
+          unitPrice: 0,
+          source: 'stainless_generated',
+          usedInOptions: []
+        });
+      }
+    });
+    
+    stainlessSizes.forEach(size => {
+      const sizeFront = (size.split('x')[0]) || size;
+      const shelfPartId = generatePartId({
+        rackType: '스텐랙',
+        name: `선반(${sizeFront})`,
+        specification: `사이즈 ${size}`
+      });
+      
+      if (!materials.has(shelfPartId)) {
+        materials.set(shelfPartId, {
+          partId: shelfPartId,
+          rackType: '스텐랙',
+          name: `선반(${sizeFront})`,
+          specification: `사이즈 ${size}`,
+          unitPrice: 0,
+          source: 'stainless_generated',
+          usedInOptions: []
+        });
+      }
+    });
+
+    // 6. extra_options 추가 (색상별 부품 제외, 카테고리명 포함)
+    console.log('🔍 extra_options 처리 중 (색상별 부품 제외)');
+    const colorKeywords = ['블루', '메트그레이', '오렌지', '그레이', '화이트'];
+    
+    Object.keys(extraOptions).forEach(rackType => {
+      Object.keys(extraOptions[rackType]).forEach(categoryName => {
+        const items = extraOptions[rackType][categoryName];
+        if (!Array.isArray(items)) return;
+        
+        items.forEach(item => {
+          if (!item.bom || !Array.isArray(item.bom)) return;
+          
+          item.bom.forEach(bomItem => {
+            const bomItemName = bomItem.name || '';
+            const hasColor = colorKeywords.some(keyword => bomItemName.includes(keyword));
+            
+            if (hasColor) {
+              console.log(`  ⏭️ 색상별 부품 스킵: ${bomItemName}`);
+              return;
+            }
+            
+            const displayName = `${bomItem.name}_${categoryName}`;
+            const extraPartId = `extra-${rackType}-${bomItem.name}-${categoryName}`
+              .toLowerCase()
+              .replace(/[^\w가-힣-]/g, '');
+            
+            if (!materials.has(extraPartId)) {
+              materials.set(extraPartId, {
+                partId: extraPartId,
+                rackType,
+                name: displayName,
+                specification: bomItem.specification || categoryName,
+                unitPrice: Number(item.price) || 0,
+                usedInOptions: [],
+                source: 'extra_options',
+                extraOptionId: item.id,
+                categoryName: categoryName
+              });
+              console.log(`  ➕ ${displayName}`);
+            }
+          });
+        });
+      });
+    });
+
+    console.log(`✅ 원자재 로드 완료: 총 ${materials.size}개`);
+    console.log(`   bom_data: ${Array.from(materials.values()).filter(m => m.source === 'bom_data').length}개`);
+    console.log(`   highrack_generated: ${Array.from(materials.values()).filter(m => m.source === 'highrack_generated').length}개`);
+    console.log(`   stainless_generated: ${Array.from(materials.values()).filter(m => m.source === 'stainless_generated').length}개`);
+    console.log(`   extra_options: ${Array.from(materials.values()).filter(m => m.source === 'extra_options').length}개`);
+    
+    // optionsRegistry 가볍게 저장 (componentIds만, components 전체 제외)
+    try {
+      saveRackOptionsRegistry(optionsRegistry);
+      console.log(`✅ 랙옵션 레지스트리 저장 완료: ${Object.keys(optionsRegistry).length}개`);
+    } catch (error) {
+      console.warn('⚠️ 랙옵션 레지스트리 저장 실패 (용량 초과):', error.message);
+    }
     
     return Array.from(materials.values());
   } catch (error) {
