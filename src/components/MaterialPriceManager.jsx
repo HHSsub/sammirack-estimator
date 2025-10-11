@@ -11,7 +11,6 @@ import {
 } from '../utils/unifiedPriceManager';
 import AdminPriceEditor from './AdminPriceEditor';
 
-// 무게명칭 변환
 function kgLabelFix(str) {
   if (!str) return '';
   return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
@@ -25,24 +24,20 @@ export default function MaterialPriceManager({ currentUser, cart }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 관리자 수정 단가 로드
   useEffect(() => {
     loadAdminPricesData();
   }, [refreshKey]);
 
-  // ✅ 전체 시스템 원자재 로드 (개선된 함수 사용)
   useEffect(() => {
     loadAllMaterialsData();
   }, []);
 
-  // cart가 변경될 때마다 현재 카트의 원자재도 업데이트
   useEffect(() => {
     if (cart && cart.length > 0) {
       updateCurrentCartMaterials();
     }
   }, [cart]);
 
-  // 다른 컴포넌트에서 단가 변경시 실시간 업데이트
   useEffect(() => {
     const handlePriceChange = (event) => {
       console.log('MaterialPriceManager: 단가 변경 이벤트 수신', event.detail);
@@ -76,7 +71,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     }
   };
 
-  // ✅ 개선된 원자재 로드 함수 사용
   const loadAllMaterialsData = async () => {
     setIsLoading(true);
     try {
@@ -85,7 +79,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
       setAllMaterials(materials);
       console.log(`✅ MaterialPriceManager: ${materials.length}개 원자재 로드 완료`);
       
-      // 앙카볼트 등 주요 부품들이 포함되었는지 확인
       const anchorBolts = materials.filter(m => m.name.includes('앙카볼트'));
       const bracings = materials.filter(m => m.name.includes('브레싱'));
       console.log(`🔧 앙카볼트: ${anchorBolts.length}개, 브레싱 관련: ${bracings.length}개`);
@@ -98,11 +91,9 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     }
   };
 
-  // 카트 BOM 원자재 목록 (누락 없이)
   const [currentCartMaterials, setCurrentCartMaterials] = useState([]);
   
   const updateCurrentCartMaterials = () => {
-    // 카트 BOM의 원자재를 그대로 쭉 펼침 (중복 제거, 정렬)
     if (!cart || cart.length === 0) return;
 
     const bomMaterialMap = new Map();
@@ -110,69 +101,71 @@ export default function MaterialPriceManager({ currentUser, cart }) {
       if (item.bom && Array.isArray(item.bom)) {
         item.bom.forEach(bomItem => {
           const partId = generatePartId(bomItem);
-          // 같은 이름/규격이면 개수만 합침 (중복 부품 누락 방지)
           if (!bomMaterialMap.has(partId)) {
-            bomMaterialMap.set(partId, { 
-              ...bomItem, 
-              partId, 
-              count: bomItem.count || bomItem.quantity || 1,
-              unitPrice: bomItem.unitPrice || 0
-            });
-          } else {
-            const prev = bomMaterialMap.get(partId);
             bomMaterialMap.set(partId, {
-              ...prev,
-              count: (prev.count || 1) + (bomItem.count || bomItem.quantity || 1)
+              partId,
+              rackType: bomItem.rackType || '',
+              name: bomItem.name || '',
+              specification: bomItem.specification || '',
+              unitPrice: Number(bomItem.unitPrice) || 0,
+              usedInOptions: []
             });
+          }
+          
+          const material = bomMaterialMap.get(partId);
+          const optionName = `${item.selectedType} ${item.selectedOptions?.formType || ''} ${item.selectedOptions?.size || ''} ${item.selectedOptions?.height || ''} ${item.selectedOptions?.level || ''}`.trim();
+          if (!material.usedInOptions.includes(optionName)) {
+            material.usedInOptions.push(optionName);
           }
         });
       }
     });
-    // 정렬 규칙 적용
-    setCurrentCartMaterials(sortBOMByMaterialRule(Array.from(bomMaterialMap.values())));
+    
+    setCurrentCartMaterials(Array.from(bomMaterialMap.values()));
   };
 
-  // 실제 사용할 단가 계산 (통합 유틸리티 사용)
-  const getEffectiveUnitPrice = (item) => {
-    return getEffectivePrice(item);
-  };
-
-  // 검색된 원자재 필터링
   const filteredMaterials = useMemo(() => {
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      return allMaterials.filter(material => {
-        const name = kgLabelFix(material.name || '').toLowerCase();
-        const spec = kgLabelFix(material.specification || '').toLowerCase();
-        const rackType = (material.rackType || '').toLowerCase();
-        return name.includes(term) || spec.includes(term) || rackType.includes(term);
-      });
+    if (!searchTerm.trim()) {
+      return allMaterials;
     }
-    // 검색없고, 카트 있으면 카트 BOM을 그대로 보여줌
-    if (cart && cart.length > 0) return currentCartMaterials;
-    // 검색없고, 카트 없으면 빈 배열
-    return [];
-  }, [searchTerm, allMaterials, cart, currentCartMaterials]);
 
-  // 단가 수정 버튼 클릭 핸들러
-  const handleEditPrice = (item) => {
-    const usingOptions = getRackOptionsUsingPart(item.partId);
+    const searchLower = searchTerm.toLowerCase();
+    return allMaterials.filter(material => {
+      const nameMatch = (material.name || '').toLowerCase().includes(searchLower);
+      const specMatch = (material.specification || '').toLowerCase().includes(searchLower);
+      const rackTypeMatch = (material.rackType || '').toLowerCase().includes(searchLower);
+      return nameMatch || specMatch || rackTypeMatch;
+    });
+  }, [allMaterials, searchTerm]);
+
+  const getEffectiveUnitPrice = (material) => {
+    const partId = material.partId || generatePartId(material);
+    const adminPrice = adminPrices[partId];
+    
+    if (adminPrice && adminPrice.price > 0) {
+      return adminPrice.price;
+    }
+    
+    return Number(material.unitPrice) || 0;
+  };
+
+  const handleEditPrice = (material) => {
+    const usingOptions = getRackOptionsUsingPart(material.partId);
     const itemWithRackInfo = {
-      ...item,
-      displayName: `${item.rackType} - ${item.name} ${item.specification || ''}`.trim(),
+      ...material,
+      currentPrice: getEffectiveUnitPrice(material),
+      displayName: `${material.rackType} - ${material.name} ${material.specification || ''}`.trim(),
       usingOptions
     };
     setEditingPart(itemWithRackInfo);
   };
 
-  // 단가 수정 완료 핸들러
   const handlePriceSaved = (partId, newPrice, oldPrice) => {
     loadAdminPricesData();
     setRefreshKey(prev => prev + 1);
     
     console.log(`MaterialPriceManager: 부품 ${partId}의 단가가 ${oldPrice}원에서 ${newPrice}원으로 변경되었습니다.`);
     
-    // 전체 시스템에 변경 이벤트 발송 (BOMDisplay 등에서 수신)
     window.dispatchEvent(new CustomEvent('adminPriceChanged', { 
       detail: { partId, newPrice, oldPrice } 
     }));
@@ -207,7 +200,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
           )}
         </h3>
         
-        {/* 새로고침 버튼 */}
         <button
           onClick={loadAllMaterialsData}
           disabled={isLoading}
@@ -225,7 +217,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         </button>
       </div>
 
-      {/* 검색 입력창 */}
       <div style={{ marginBottom: '16px', flexShrink: 0 }}>
         <input
           type="text"
@@ -247,7 +238,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         )}
       </div>
 
-      {/* 원자재 테이블 */}
       <div style={{ 
         flex: 1,
         overflowY: 'auto',
@@ -296,33 +286,27 @@ export default function MaterialPriceManager({ currentUser, cart }) {
                 return (
                   <tr key={material.partId || index} style={{ 
                     borderBottom: '1px solid #f1f3f4',
-                    backgroundColor: index % 2 === 0 ? '#ffffff' : '#f8f9fa'
+                    backgroundColor: index % 2 === 0 ? 'white' : '#fafbfc'
                   }}>
-                    <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', fontSize: '12px' }}>
-                      {material.rackType}
-                      {material.source && (
-                        <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '2px' }}>
-                          {material.source}
-                        </div>
-                      )}
+                    <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4' }}>
+                      {kgLabelFix(material.rackType)}
                     </td>
                     <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4' }}>
-                      <div style={{ fontWeight: '500' }}>
-                        {kgLabelFix(material.name)}
-                      </div>
-                      {material.count && (
-                        <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '2px' }}>
-                          수량: {material.count}개
-                        </div>
-                      )}
+                      {material.name}
                     </td>
-                    <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', fontSize: '12px', color: '#6c757d' }}>
-                      {kgLabelFix(material.specification || '-')}
+                    <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', fontSize: '12px', color: '#666' }}>
+                      {material.specification || '-'}
                     </td>
                     <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', textAlign: 'right' }}>
-                      {basePrice > 0 ? `${basePrice.toLocaleString()}원` : '-'}
+                      {basePrice > 0 ? (
+                        <span style={{ color: '#6c757d' }}>
+                          {basePrice.toLocaleString()}원
+                        </span>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '11px' }}>미설정</span>
+                      )}
                     </td>
-                    <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', textAlign: 'right', fontWeight: '600' }}>
+                    <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', textAlign: 'right', fontWeight: '500' }}>
                       {effectivePrice > 0 ? (
                         <span style={{ color: isModified ? '#dc3545' : '#28a745' }}>
                           {effectivePrice.toLocaleString()}원
@@ -401,7 +385,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         )}
       </div>
 
-      {/* 관리자 안내 정보 */}
       {isAdmin && filteredMaterials.length > 0 && (
         <div style={{ 
           marginTop: '16px', 
@@ -424,7 +407,6 @@ export default function MaterialPriceManager({ currentUser, cart }) {
         </div>
       )}
 
-      {/* 단가 수정 모달 */}
       {editingPart && (
         <AdminPriceEditor
           item={editingPart}
