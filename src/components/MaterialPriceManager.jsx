@@ -134,7 +134,10 @@ export default function MaterialPriceManager({ currentUser, cart }) {
       const nameMatch = (material.name || '').toLowerCase().includes(searchLower);
       const specMatch = (material.specification || '').toLowerCase().includes(searchLower);
       const rackTypeMatch = (material.rackType || '').toLowerCase().includes(searchLower);
-      return nameMatch || specMatch || rackTypeMatch;
+
+      // ✅ 추가옵션 카테고리명도 검색 대상에 포함
+      const categoryMatch = material.categoryName && material.categoryName.toLowerCase().includes(searchLower);
+      return nameMatch || specMatch || rackTypeMatch || categoryMatch;
     });
   }, [allMaterials, searchTerm]);
 
@@ -148,7 +151,15 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     
     return Number(material.unitPrice) || 0;
   };
-
+  
+  // ✅ 부품명 표시 로직 - 추가옵션은 카테고리명 포함
+  const getDisplayName = (material) => {
+    if (material.source === 'extra_options' && material.categoryName) {
+      return `[추가옵션: ${material.categoryName}] ${material.name}`;
+    }
+    return material.name;
+  };
+  
   const handleEditPrice = (material) => {
     const usingOptions = getRackOptionsUsingPart(material.partId);
     const itemWithRackInfo = {
@@ -220,7 +231,7 @@ export default function MaterialPriceManager({ currentUser, cart }) {
       <div style={{ marginBottom: '16px', flexShrink: 0 }}>
         <input
           type="text"
-          placeholder="원자재명, 규격, 랙타입으로 검색..."
+          placeholder="원자재명, 규격, 랙타입, 카테고리로 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
@@ -292,7 +303,7 @@ export default function MaterialPriceManager({ currentUser, cart }) {
                       {kgLabelFix(material.rackType)}
                     </td>
                     <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4' }}>
-                      {material.name}
+                      {getDisplayName(material)}
                     </td>
                     <td style={{ padding: '8px', borderRight: '1px solid #f1f3f4', fontSize: '12px', color: '#666' }}>
                       {material.specification || '-'}
@@ -401,9 +412,9 @@ export default function MaterialPriceManager({ currentUser, cart }) {
           </div>
           <div>• 이곳에서 수정한 단가는 전체 시스템에 적용됩니다.</div>
           <div>• "수정됨" 표시가 있는 부품은 관리자가 단가를 수정한 부품입니다.</div>
-          <div>• 검색 기능을 통해 특정 원자재를 빠르게 찾을 수 있습니다.</div>
-          <div>• 하단 BOM 표시와 실시간으로 연동됩니다.</div>
-          <div>• 🆕 이제 모든 랙옵션의 원자재가 포함됩니다 (2780높이, 앙카볼트 등)</div>
+          <div>• <strong>[추가옵션: 카테고리명]</strong> 형태로 표시된 항목은 추가옵션 부품입니다.</div>
+          <div>• 추가옵션 부품의 단가를 수정하면 선택 화면 가격에 즉시 반영됩니다.</div>
+          <div>• 검색창에서 카테고리명으로도 검색 가능합니다.</div>
         </div>
       )}
 
