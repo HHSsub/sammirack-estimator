@@ -1,6 +1,7 @@
 // src/components/OptionSelector.jsx
 import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
+import { loadExtraOptionsPrices } from '../utils/unifiedPriceManager'; 
 
 const formTypeRacks = ['경량랙', '중량랙', '파렛트랙', '파렛트랙 철판형'];
 
@@ -29,6 +30,7 @@ export default function OptionSelector() {
 
   const [applyRateInput, setApplyRateInput] = useState(applyRate);
   const [extraOpen, setExtraOpen] = useState(false);
+  const [extraOptionsPrices, setExtraOptionsPrices] = useState({});
   const [realTimePrice, setRealTimePrice] = useState(currentPrice);
 
   // 사용자 정의 입력값(경량랙)
@@ -36,7 +38,49 @@ export default function OptionSelector() {
   const [cmPrice, setCmPrice] = useState('');
 
   useEffect(() => setApplyRateInput(applyRate), [applyRate]);
+
+  // ✅ 추가옵션 가격 로드
+  useEffect(() => {
+    loadExtraOptionsData();
+  }, []);
   
+  // ✅ 추가옵션 가격 변경 이벤트 리스너 추가
+  useEffect(() => {
+    const handleExtraOptionsChange = () => {
+      console.log('OptionSelector: 추가옵션 가격 변경 감지');
+      loadExtraOptionsData();
+    };
+  
+    window.addEventListener('extraOptionsPriceChanged', handleExtraOptionsChange);
+    window.addEventListener('adminPriceChanged', handleExtraOptionsChange);
+    
+    return () => {
+      window.removeEventListener('extraOptionsPriceChanged', handleExtraOptionsChange);
+      window.removeEventListener('adminPriceChanged', handleExtraOptionsChange);
+    };
+  }, []);
+  
+  // ✅ 추가옵션 가격 로드 함수
+  const loadExtraOptionsData = () => {
+    try {
+      const prices = loadExtraOptionsPrices();
+      setExtraOptionsPrices(prices);
+      console.log('OptionSelector: 추가옵션 가격 로드 완료', Object.keys(prices).length);
+    } catch (error) {
+      console.error('추가옵션 가격 로드 실패:', error);
+      setExtraOptionsPrices({});
+    }
+  };
+  
+  // ✅ 추가옵션의 실제 가격 계산 (관리자 수정 단가 반영)
+  const getExtraOptionPrice = (opt) => {
+    const adminPrice = extraOptionsPrices[opt.id]?.price;
+    if (adminPrice && adminPrice > 0) {
+      return adminPrice;
+    }
+    return Number(opt.price) || 0;
+  };
+    
   // ✅ 관리자 단가가 반영된 실시간 가격 계산 (fallback 포함)
   const calculateRealTimePrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
@@ -432,6 +476,9 @@ export default function OptionSelector() {
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>{cat}</div>
                     {arr.map(opt => {
                       const checked = extraOptionsSel.includes(opt.id);
+                      // ✅ 관리자 수정 단가 반영
+                      const effectivePrice = getExtraOptionPrice(opt);
+                      const isModified = extraOptionsPrices[opt.id]?.price > 0;            
                       return (
                         <label key={opt.id} style={{ display: 'block', margin: '4px 0' }}>
                           <input
@@ -441,7 +488,15 @@ export default function OptionSelector() {
                           />
                           <span style={{ marginLeft: 6 }}>
                             {kgLabelFix(opt.name)}{' '}
-                            {opt.price ? `+${Number(opt.price).toLocaleString()}원` : ''}
+                            {effectivePrice > 0 && (
+                              <span style={{ 
+                                color: isModified ? '#dc3545' : '#666',
+                                fontWeight: isModified ? '600' : 'normal'
+                              }}>
+                                +{effectivePrice.toLocaleString()}원
+                                {isModified && ' (수정됨)'}
+                              </span>
+                            )}
                           </span>
                         </label>
                       );
