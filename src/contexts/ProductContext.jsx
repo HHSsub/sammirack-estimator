@@ -398,13 +398,21 @@ export const ProductProvider=({children})=>{
       
       // ✅ BOM 부품 단가 합산 가격 계산 (우선 계산)
       const bom = calculateCurrentBOM();
+      console.log('🔍 calculatePrice: BOM 데이터 확인', bom);
+      
       if (bom && bom.length > 0) {
         bomPrice = bom.reduce((sum, item) => {
           const effectivePrice = getEffectivePrice(item);
           const quantity = Number(item.quantity) || 0;
-          return sum + (effectivePrice * quantity);
+          const itemTotal = effectivePrice * quantity;
+          
+          console.log(`  📦 ${item.name}: ${effectivePrice}원 × ${quantity}개 = ${itemTotal}원`);
+          
+          return sum + itemTotal;
         }, 0);
         console.log(`💰 BOM 총 가격 계산: ${bomPrice}원 (${bom.length}개 부품)`);
+      } else {
+        console.log('❌ calculatePrice: BOM이 비어있음');
       }
       
       // 기본가격(pData) 조회 (백업용)
