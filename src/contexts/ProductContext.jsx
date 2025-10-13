@@ -206,12 +206,20 @@ export const ProductProvider=({children})=>{
       setAdminPricesVersion(prev => prev + 1);
     };
 
+    // ✅ 추가: 추가옵션 가격 변경 이벤트 리스너
+    const handleExtraOptionsPriceChange = () => {
+      console.log('ProductContext: 추가옵션 가격 변경 감지, 가격 재계산 트리거');
+      setAdminPricesVersion(prev => prev + 1);
+    };
+
     window.addEventListener('adminPriceChanged', handleAdminPriceChange);
     window.addEventListener('systemDataRestored', handleSystemRestore);
+    window.addEventListener('extraOptionsPriceChanged', handleExtraOptionsPriceChange); // ✅ 추가
     
     return () => {
       window.removeEventListener('adminPriceChanged', handleAdminPriceChange);
       window.removeEventListener('systemDataRestored', handleSystemRestore);
+      window.removeEventListener('extraOptionsPriceChanged', handleExtraOptionsPriceChange); // ✅ 추가
     };
   }, []);
 
@@ -880,6 +888,14 @@ const getFallbackBOM = () => {
       setCurrentPrice(newPrice);
     };
 
+    // ✅ 추가: 추가옵션 가격 변경 이벤트 리스너
+    const handleExtraOptionsChange = () => {
+      console.log('🔥 추가옵션 가격 변경 감지 - 강제 가격 재계산');
+      const newPrice = calculatePrice();
+      console.log(`💰 새로 계산된 가격: ${newPrice}원`);
+      setCurrentPrice(newPrice);
+    };
+      
     const handleSystemRestore = () => {
       console.log('🔥 시스템 데이터 복원 감지 - 강제 가격 재계산');
       const newPrice = calculatePrice();
@@ -889,10 +905,12 @@ const getFallbackBOM = () => {
 
     window.addEventListener('adminPriceChanged', handlePriceChange);
     window.addEventListener('systemDataRestored', handleSystemRestore);
+    window.addEventListener('extraOptionsPriceChanged', handleExtraOptionsChange); // ✅ 추가
     
     return () => {
       window.removeEventListener('adminPriceChanged', handlePriceChange);
       window.removeEventListener('systemDataRestored', handleSystemRestore);
+      window.removeEventListener('extraOptionsPriceChanged', handleExtraOptionsChange); // ✅ 추가
     };
   }, [calculatePrice]); // calculatePrice를 의존성에 추가
 
