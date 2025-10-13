@@ -502,11 +502,11 @@ export const loadAllMaterials = async () => {
             const rodSpec = `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ''}`;
             const shelfSpec = `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ''}`;
             
+            // ✅ 안전핀 제거 - 하이랙은 안전핀을 사용하지 않음
             const parts = [
               { name: `기둥(${height})`, specification: pillarSpec },
               { name: `로드빔(${rodBeamNum})`, specification: rodSpec },
-              { name: `선반(${shelfNum})`, specification: shelfSpec },
-              { name: '안전핀(하이랙)', specification: '안전핀' }
+              { name: `선반(${shelfNum})`, specification: shelfSpec }
             ];
             
             parts.forEach(part => {
