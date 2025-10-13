@@ -125,17 +125,25 @@ export default function MaterialPriceManager({ currentUser, cart }) {
   };
 
   const filteredMaterials = useMemo(() => {
+    let result = allMaterials;
+    
+    // ✅ 하이랙 안전핀 제외 (하이랙은 안전핀을 사용하지 않음)
+    result = result.filter(material => {
+      if (material.rackType === '하이랙' && material.name && material.name.includes('안전핀')) {
+        return false;
+      }
+      return true;
+    });
+    
     if (!searchTerm.trim()) {
-      return allMaterials;
+      return result;
     }
-
+  
     const searchLower = searchTerm.toLowerCase();
-    return allMaterials.filter(material => {
+    return result.filter(material => {
       const nameMatch = (material.name || '').toLowerCase().includes(searchLower);
       const specMatch = (material.specification || '').toLowerCase().includes(searchLower);
       const rackTypeMatch = (material.rackType || '').toLowerCase().includes(searchLower);
-
-      // ✅ 추가옵션 카테고리명도 검색 대상에 포함
       const categoryMatch = material.categoryName && material.categoryName.toLowerCase().includes(searchLower);
       return nameMatch || specMatch || rackTypeMatch || categoryMatch;
     });
