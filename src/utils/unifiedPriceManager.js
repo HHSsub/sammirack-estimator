@@ -588,8 +588,8 @@ export const loadAllMaterials = async () => {
     Object.keys(extraOptions).forEach(rackType => {
       const typeOptions = extraOptions[rackType];
       
-      Object.keys(typeOptions).forEach(category => {
-        const items = typeOptions[category];
+      Object.keys(typeOptions).forEach(categoryName => {
+        const items = typeOptions[categoryName];
         
         if (Array.isArray(items)) {
           items.forEach(option => {
@@ -602,7 +602,7 @@ export const loadAllMaterials = async () => {
                 });
                 
                 if (!materials.has(partId)) {
-                  const displayName = `${rackType} ${bomItem.name} ${bomItem.specification || ''}`.trim();
+                  const displayName = `${rackType} ${bomItem.name} ${categoryName}`;
                   materials.set(partId, {
                     partId,
                     rackType,
@@ -611,6 +611,8 @@ export const loadAllMaterials = async () => {
                     unitPrice: bomItem.unitPrice || 0,
                     displayName,
                     source: 'extra_options',
+                    categoryName: categoryName,  // ✅ 추가
+                    extraOptionId: option.id,    // ✅ 추가
                     note: bomItem.note || ''
                   });
                   console.log(`  ➕ ${displayName}`);
