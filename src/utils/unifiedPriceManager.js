@@ -105,6 +105,7 @@ const updateRelatedExtraOptions = async (partInfo, newPrice) => {
     const extraOptions = await response.json();
     
     const { rackType, name, specification } = partInfo;
+    const adminPrices = loadAdminPrices();
     
     Object.keys(extraOptions).forEach(type => {
       if (type !== rackType) return;
@@ -115,6 +116,7 @@ const updateRelatedExtraOptions = async (partInfo, newPrice) => {
         categoryItems.forEach(option => {
           if (!option.bom || !Array.isArray(option.bom)) return;
           
+          // ✅ 해당 추가옵션이 수정된 부품을 포함하는지 확인
           const hasMatchingPart = option.bom.some(bomItem => {
             const bomPartId = generatePartId({
               rackType,
@@ -130,8 +132,38 @@ const updateRelatedExtraOptions = async (partInfo, newPrice) => {
           });
           
           if (hasMatchingPart) {
-            saveExtraOptionsPrice(option.id, newPrice);
-            console.log(`✅ extra_option "${option.id}" 가격이 ${newPrice}원으로 자동 업데이트되었습니다.`);
+            // ✅ 추가옵션의 모든 bom 부품 단가를 합산하여 전체 가격 계산
+            let totalPrice = 0;
+            let hasAllPrices = true;
+            
+            option.bom.forEach(bomItem => {
+              const bomPartId = generatePartId({
+                rackType,
+                name: bomItem.name,
+                specification: bomItem.specification || ''
+              });
+              
+              const qty = Number(bomItem.qty) || 1;
+              
+              // 관리자가 수정한 단가 확인
+              let partPrice = 0;
+              if (adminPrices[bomPartId]?.price > 0) {
+                partPrice = adminPrices[bomPartId].price;
+              } else if (option.bom.length === 1) {
+                // bom이 1개인 경우, 기본 option.price 사용
+                partPrice = Number(option.price) / qty;
+              } else {
+                hasAllPrices = false;
+              }
+              
+              totalPrice += partPrice * qty;
+            });
+            
+            // ✅ 모든 부품의 단가가 설정되어 있으면 추가옵션 가격 업데이트
+            if (hasAllPrices && totalPrice > 0) {
+              saveExtraOptionsPrice(option.id, totalPrice);
+              console.log(`✅ 추가옵션 "${option.id}" 가격이 ${totalPrice}원으로 재계산되어 업데이트되었습니다.`);
+            }
           }
         });
       });
@@ -602,20 +634,28 @@ export const loadAllMaterials = async () => {
                 });
                 
                 if (!materials.has(partId)) {
+                  // ✅ 추가옵션 부품의 단가 계산
+                  // bom이 1개 부품으로만 구성된 경우, option.price를 부품 단가로 사용
+                  let calculatedUnitPrice = 0;
+                  if (option.bom.length === 1) {
+                    const qty = Number(bomItem.qty) || 1;
+                    calculatedUnitPrice = Math.floor(Number(option.price) / qty);
+                  }
+                  
                   const displayName = `${rackType} ${bomItem.name} ${categoryName}`;
                   materials.set(partId, {
                     partId,
                     rackType,
                     name: bomItem.name,
                     specification: bomItem.specification || '',
-                    unitPrice: bomItem.unitPrice || 0,
+                    unitPrice: calculatedUnitPrice,  // ✅ 계산된 단가 사용
                     displayName,
                     source: 'extra_options',
-                    categoryName: categoryName,  // ✅ 추가
-                    extraOptionId: option.id,    // ✅ 추가
+                    categoryName: categoryName,
+                    extraOptionId: option.id,
                     note: bomItem.note || ''
                   });
-                  console.log(`  ➕ ${displayName}`);
+                  console.log(`  ➕ ${displayName} (단가: ${calculatedUnitPrice}원)`);
                 }
               });
             }
