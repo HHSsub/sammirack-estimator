@@ -436,20 +436,54 @@ export const ProductProvider=({children})=>{
         console.log(`📋 기본가격 사용: ${basePrice}원 (기본: ${basicPrice}원 × 수량: ${quantity})`);
       }
       
-    } else if (selectedType === "스텐랙") {
-      const p = data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-      if (p) basePrice = p * quantity;
-    } else if (selectedType === "하이랙") {
-      const { size, color, height, level, formType } = selectedOptions;
-      if (size && color && height && level && formType) {
-        const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
-        const dataSizeKey = isHeaviest
-          ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[size] || size
-          : size;
-        const p = data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[height]?.[level];
-        if (p) basePrice = p * quantity;
+      } else if (selectedType === "스텐랙") {
+        // ✅ BOM 기반 계산 추가
+        const bom = calculateCurrentBOM();
+        console.log('🔍 스텐랙 BOM 확인', bom);
+        
+        if (bom && bom.length > 0) {
+          bomPrice = bom.reduce((sum, item) => {
+            const effectivePrice = getEffectivePrice(item);
+            const quantity = Number(item.quantity) || 0;
+            return sum + (effectivePrice * quantity);
+          }, 0);
+          console.log(`💰 스텐랙 BOM 가격: ${bomPrice}원`);
+        }
+        
+        if (bomPrice > 0) {
+          basePrice = bomPrice * quantity;
+        } else {
+          const p = data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
+          if (p) basePrice = p * quantity;
+        }
+      } else if (selectedType === "하이랙") {
+        // ✅ BOM 기반 계산 추가
+        const bom = calculateCurrentBOM();
+        console.log('🔍 하이랙 BOM 확인', bom);
+        
+        if (bom && bom.length > 0) {
+          bomPrice = bom.reduce((sum, item) => {
+            const effectivePrice = getEffectivePrice(item);
+            const quantity = Number(item.quantity) || 0;
+            return sum + (effectivePrice * quantity);
+          }, 0);
+          console.log(`💰 하이랙 BOM 가격: ${bomPrice}원`);
+        }
+        
+        if (bomPrice > 0) {
+          basePrice = bomPrice * quantity;
+        } else {
+          const { size, color, height, level, formType } = selectedOptions;
+          if (size && color && height && level && formType) {
+            const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
+            const dataSizeKey = isHeaviest
+              ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[size] || size
+              : size;
+            const p = data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[height]?.[level];
+            if (p) basePrice = p * quantity;
+          }
+        }
       }
-    }
   
     // ✅ 추가 옵션 가격 (extra_options 수정된 가격 반영)
     let extraPrice = 0;
