@@ -128,10 +128,20 @@ export default function MaterialPriceManager({ currentUser, cart }) {
     let result = allMaterials;
     
     // ✅ 하이랙 안전핀 제외 (하이랙은 안전핀을 사용하지 않음)
+    // ✅ 모든 랙타입의 베이스(안전좌) 제외 (더 이상 사용하지 않음)
     result = result.filter(material => {
-      if (material.rackType === '하이랙' && material.name && material.name.includes('안전핀')) {
+      const materialName = material.name || '';
+      
+      // 하이랙 안전핀 제외
+      if (material.rackType === '하이랙' && materialName.includes('안전핀')) {
         return false;
       }
+      
+      // 모든 베이스(안전좌) 제외
+      if (materialName.includes('베이스(안전좌)')) {
+        return false;
+      }
+      
       return true;
     });
     
