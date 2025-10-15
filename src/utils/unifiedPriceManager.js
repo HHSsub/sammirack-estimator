@@ -483,6 +483,13 @@ export const loadAllMaterials = async () => {
               };
               
               components.forEach(comp => {
+                // ✅ 안전좌/베이스 제외 필터
+                const compName = comp.name || '';
+                if (compName.includes('베이스(안전좌)')) {
+                  console.log(`  ⏭️ 베이스(안전좌) 스킵: ${compName}`);
+                  return; // 파렛트랙에서 베이스(안전좌)는 추가하지 않음
+                }
+                
                 const partId = generatePartId({
                   rackType,
                   name: comp.name,
