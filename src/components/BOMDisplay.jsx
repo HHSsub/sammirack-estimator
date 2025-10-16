@@ -19,7 +19,7 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
   const { setTotalBomQuantity } = useProducts();
   const [editingPart, setEditingPart] = useState(null);
   const [adminPrices, setAdminPrices] = useState({});
-  const [refreshKey, setRefreshKey] = useState(0); // 강제 리렌더링용
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // 관리자 수정 단가 로드
   useEffect(() => {
@@ -125,7 +125,6 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
               </tr>
             </thead>
             <tbody>
-              // ✅ 수정된 BOMDisplay.jsx의 금액 계산 부분
               {sortedBom.map((item, index) => {
                 const key = `${item.rackType} ${item.size || ''} ${item.name}-${index}`;
                 const partId = generatePartId(item);
@@ -133,12 +132,9 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
                 const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
                 const qty = Number(item.quantity ?? 0);
                 
-                // ✅ 수정: BOM 항목의 totalPrice가 이미 올바르게 계산되어 있으므로 그대로 사용
-                // 관리자 단가가 있는 경우에만 다시 계산
-                const total = hasAdminPrice && effectiveUnitPrice 
-                  ? Math.round(effectiveUnitPrice * qty) 
-                  : Number(item.totalPrice ?? 0);
-              
+                // BOM에서 이미 계산된 totalPrice 사용
+                const total = Number(item.totalPrice ?? 0);
+
                 return (
                   <tr key={key} style={{ borderBottom: '1px solid #ddd' }}>
                     <td style={{ padding: '4px 6px', textAlign: 'left' }}>
