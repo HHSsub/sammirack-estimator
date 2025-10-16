@@ -380,6 +380,7 @@ export const ProductProvider=({children})=>{
     return s+(tp>0?tp:up*q);
   },0);
 
+  // ✅ 수정된 calculatePrice 함수
   const calculatePrice = useCallback(() => {
     console.log('🔄 calculatePrice 함수 호출됨');
     if (!selectedType || quantity <= 0) return 0;
@@ -424,11 +425,13 @@ export const ProductProvider=({children})=>{
       
       if (pData) basicPrice = Number(pData);
       
-      // ✅ 우선순위: BOM 가격 > 기본가격
+      // ✅ 수정: BOM 가격은 이미 수량이 적용되어 있으므로 그대로 사용
       if (bomPrice > 0) {
-        basePrice = bomPrice; // BOM에서 이미 수량 적용됨
+        basePrice = bomPrice; // ← 수량 곱하지 않음!
+        console.log(`✅ BOM 가격 사용 (추가옵션 포함): ${basePrice}원`);
       } else if (basicPrice > 0) {
         basePrice = basicPrice * (Number(quantity) || 0); // 기본가격만 수량 곱하기
+        console.log(`📋 기본가격 사용: ${basePrice}원`);
       }
       
     } else if (selectedType === "스텐랙") {
@@ -442,11 +445,12 @@ export const ProductProvider=({children})=>{
         }, 0);
       }
       
+      // ✅ 수정: BOM 가격은 이미 수량이 적용되어 있으므로 그대로 사용
       if (bomPrice > 0) {
-        basePrice = bomPrice;
+        basePrice = bomPrice; // ← 수량 곱하지 않음!
       } else {
         const p = data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
-        if (p) basePrice = p * quantity;
+        if (p) basePrice = p * quantity; // 기본가격만 수량 곱하기
       }
     } else if (selectedType === "하이랙") {
       const bom = calculateCurrentBOM();
@@ -459,8 +463,9 @@ export const ProductProvider=({children})=>{
         }, 0);
       }
       
+      // ✅ 수정: BOM 가격은 이미 수량이 적용되어 있으므로 그대로 사용
       if (bomPrice > 0) {
-        basePrice = bomPrice;
+        basePrice = bomPrice; // ← 수량 곱하지 않음!
       } else {
         const { size, color, height, level, formType } = selectedOptions;
         if (size && color && height && level && formType) {
@@ -469,13 +474,11 @@ export const ProductProvider=({children})=>{
             ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[size] || size
             : size;
           const p = data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[height]?.[level];
-          if (p) basePrice = p * quantity;
+          if (p) basePrice = p * quantity; // 기본가격만 수량 곱하기
         }
       }
     }
   
-    // ❌ extraPrice 계산 완전 제거 - 추가옵션은 이미 BOM에 포함되어 있음!
-    
     // 커스텀 자재 가격 (경량랙만 - 이것은 BOM에 포함되지 않으므로 별도 계산)
     const customExtra = selectedType === "경량랙"
       ? customMaterials.reduce((s, m) => s + (Number(m.price) || 0), 0)
@@ -488,7 +491,7 @@ export const ProductProvider=({children})=>{
     
     return finalPrice;
   }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, getEffectivePrice, adminPricesVersion]);
-  
+    
   const makeLightRackH750BOM = () => {
     const q = Number(quantity) || 1;
     const sz = selectedOptions.size || "";
