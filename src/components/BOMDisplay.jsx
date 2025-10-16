@@ -125,14 +125,20 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
               </tr>
             </thead>
             <tbody>
+              // ✅ 수정된 BOMDisplay.jsx의 금액 계산 부분
               {sortedBom.map((item, index) => {
                 const key = `${item.rackType} ${item.size || ''} ${item.name}-${index}`;
                 const partId = generatePartId(item);
                 const effectiveUnitPrice = getEffectiveUnitPrice(item);
                 const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
                 const qty = Number(item.quantity ?? 0);
-                const total = effectiveUnitPrice ? Math.round(effectiveUnitPrice * qty) : Number(item.totalPrice ?? 0);
-
+                
+                // ✅ 수정: BOM 항목의 totalPrice가 이미 올바르게 계산되어 있으므로 그대로 사용
+                // 관리자 단가가 있는 경우에만 다시 계산
+                const total = hasAdminPrice && effectiveUnitPrice 
+                  ? Math.round(effectiveUnitPrice * qty) 
+                  : Number(item.totalPrice ?? 0);
+              
                 return (
                   <tr key={key} style={{ borderBottom: '1px solid #ddd' }}>
                     <td style={{ padding: '4px 6px', textAlign: 'left' }}>
@@ -190,23 +196,13 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
                         <button
                           onClick={() => handleEditPrice(item)}
                           style={{
-                            padding: '6px 12px',
-                            border: '1px solid #007bff',
-                            borderRadius: '4px',
-                            backgroundColor: 'white',
-                            color: '#007bff',
-                            cursor: 'pointer',
+                            padding: '4px 8px',
                             fontSize: '12px',
-                            fontWeight: '500',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseOver={e => {
-                            e.target.style.backgroundColor = '#007bff';
-                            e.target.style.color = 'white';
-                          }}
-                          onMouseOut={e => {
-                            e.target.style.backgroundColor = 'white';
-                            e.target.style.color = '#007bff';
+                            backgroundColor: '#007bff',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
                           }}
                         >
                           단가수정
