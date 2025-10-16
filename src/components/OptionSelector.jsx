@@ -39,12 +39,12 @@ export default function OptionSelector() {
 
   useEffect(() => setApplyRateInput(applyRate), [applyRate]);
 
-  // ✅ 추가옵션 가격 로드
+  // 추가옵션 가격 로드
   useEffect(() => {
     loadExtraOptionsData();
   }, []);
   
-  // ✅ 추가옵션 가격 변경 이벤트 리스너 추가
+  // 추가옵션 가격 변경 이벤트 리스너 추가
   useEffect(() => {
     const handleExtraOptionsChange = () => {
       console.log('OptionSelector: 추가옵션 가격 변경 감지');
@@ -60,7 +60,7 @@ export default function OptionSelector() {
     };
   }, []);
   
-  // ✅ 추가옵션 가격 로드 함수
+  // 추가옵션 가격 로드 함수
   const loadExtraOptionsData = () => {
     try {
       const prices = loadExtraOptionsPrices();
@@ -72,7 +72,7 @@ export default function OptionSelector() {
     }
   };
   
-  // ✅ 추가옵션의 실제 가격 계산 (관리자 수정 단가 반영)
+  // 추가옵션의 실제 가격 계산 (관리자 수정 단가 반영)
   const getExtraOptionPrice = (opt) => {
     const adminPrice = extraOptionsPrices[opt.id]?.price;
     if (adminPrice && adminPrice > 0) {
@@ -81,10 +81,10 @@ export default function OptionSelector() {
     return Number(opt.price) || 0;
   };
     
-  // ✅ 관리자 단가가 반영된 실시간 가격 계산 (fallback 포함)
+  // 관리자 단가가 반영된 실시간 가격 계산 (fallback 포함)
   const calculateRealTimePrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
-      return currentPrice; // ✅ BOM이 없으면 기본 가격 사용
+      return currentPrice; // BOM이 없으면 기본 가격 사용
     }
     
     let totalPrice = 0;
@@ -101,11 +101,11 @@ export default function OptionSelector() {
       }
     });
     
-    // ✅ 관리자 단가가 있고 유효하면 사용, 아니면 기본 currentPrice 사용 (fallback)
+    // 관리자 단가가 있고 유효하면 사용, 아니면 기본 currentPrice 사용 (fallback)
     return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
   };
 
-  // ✅ 최종 표시 가격 계산 - 정확한 우선순위 적용
+  // 최종 표시 가격 계산 - 정확한 우선순위 적용
   const getFinalDisplayPrice = () => {
     // 1순위: customPrice (가격 직접입력)
     if (customPrice > 0) {
@@ -122,7 +122,7 @@ export default function OptionSelector() {
     return currentPrice > 0 ? currentPrice : 0;
   };
 
-  // ✅ 실시간 가격 업데이트
+  // 실시간 가격 업데이트
   useEffect(() => {
     const updatePrice = () => {
       const newPrice = calculateRealTimePrice();
@@ -146,7 +146,7 @@ export default function OptionSelector() {
     };
   }, [currentBOM, currentPrice]);
 
-  // ✅ currentBOM 변경 시에도 가격 재계산
+  // currentBOM 변경 시에도 가격 재계산
   useEffect(() => {
     const newPrice = calculateRealTimePrice();
     setRealTimePrice(newPrice);
@@ -158,6 +158,36 @@ export default function OptionSelector() {
       setApplyRateInput(v);
       const num = Number(v);
       if (!isNaN(num) && num >= 0 && num <= 200) setApplyRate(num);
+    }
+  };
+
+  // 수량 입력 핸들러 수정
+  const handleQuantityChange = (e) => {
+    const value = e.target.value;
+    
+    // 빈 값이면 그대로 허용
+    if (value === '') {
+      setQuantity('');
+      return;
+    }
+    
+    const numValue = Number(value);
+    
+    // 숫자가 아니거나 음수면 무시
+    if (isNaN(numValue) || numValue < 0) {
+      return;
+    }
+    
+    setQuantity(value);
+  };
+
+  // 수량 입력 완료 시 (focus out)
+  const handleQuantityBlur = (e) => {
+    const value = e.target.value;
+    
+    // 빈 값이거나 0이면 1로 설정
+    if (value === '' || Number(value) <= 0) {
+      setQuantity('1');
     }
   };
 
@@ -322,7 +352,8 @@ export default function OptionSelector() {
             type="number"
             min={1}
             value={quantity}
-            onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
+            onChange={handleQuantityChange}
+            onBlur={handleQuantityBlur}
           />
         </div>
         <div>
@@ -344,152 +375,39 @@ export default function OptionSelector() {
         style={{ margin: '10px 0' }}
         disabled={!selectedType}
       >
-        {extraOpen ? '기타 추가 옵션 닫기' : '기타 추가 옵션 열기'}
+        {extraOpen ? '추가옵션 숨기기' : '추가옵션 보기'}
       </button>
 
       {extraOpen && selectedType && (
-        <>
-          {selectedType === '경량랙' ? (
-            <div
-              style={{
-                padding: '12px',
-                border: '1px solid #e4eef8',
-                borderRadius: 6,
-                background: '#fff',
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>
-                사용자 정의 추가자재 (여러개)
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 140px 80px',
-                  gap: 8,
-                  alignItems: 'center',
-                  marginBottom: 8,
-                }}
-              >
-                <input
-                  placeholder="항목명 (예: 연결대)"
-                  value={cmName}
-                  onChange={e => setCmName(e.target.value)}
-                />
-                <input
-                  type="number"
-                  placeholder="단가"
-                  value={cmPrice}
-                  onChange={e => setCmPrice(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!cmName || !Number(cmPrice)) return;
-                    addCustomMaterial(cmName, Number(cmPrice));
-                    setCmName('');
-                    setCmPrice('');
-                  }}
-                >
-                  추가
-                </button>
-              </div>
-
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f3f7fd' }}>
-                    <th style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                      항목명
-                    </th>
-                    <th
-                      style={{
-                        border: '1px solid #e1e8f5',
-                        padding: '6px',
-                        width: 140,
-                      }}
-                    >
-                      단가
-                    </th>
-                    <th
-                      style={{
-                        border: '1px solid #e1e8f5',
-                        padding: '6px',
-                        width: 80,
-                      }}
-                    >
-                      관리
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customMaterials.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        style={{
-                          border: '1px solid #e1e8f5',
-                          padding: '8px',
-                          textAlign: 'center',
-                          color: '#8aa1c4',
-                        }}
-                      >
-                        추가된 자재가 없습니다.
-                      </td>
-                    </tr>
-                  ) : (
-                    customMaterials.map(m => (
-                      <tr key={m.id}>
-                        <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          {m.name}
-                        </td>
-                        <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          {Number(m.price).toLocaleString()}원
-                        </td>
-                        <td style={{ border: '1px solid #e1e8f5', padding: '6px' }}>
-                          <button
-                            type="button"
-                            onClick={() => removeCustomMaterial(m.id)}
-                          >
-                            삭제
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div
-              style={{
-                padding: '12px',
-                border: '1px solid #e4eef8',
-                borderRadius: 6,
-                background: '#fff',
-              }}
-            >
-              {extraCatList.length === 0 ? (
-                <div style={{ color: '#8aa1c4' }}>추가 옵션이 없습니다.</div>
-              ) : (
-                extraCatList.map(([cat, arr]) => (
-                  <div key={cat} style={{ marginBottom: 10 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 4 }}>{cat}</div>
-                    {arr.map(opt => {
-                      const checked = extraOptionsSel.includes(opt.id);
-                      // ✅ 관리자 수정 단가 반영
+        <div>
+          {/* 추가옵션 표시 로직 */}
+          {extraCatList.length > 0 && (
+            <div>
+              <h4>추가옵션</h4>
+              {extraCatList.map(([cat, arr]) => (
+                <div key={cat} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
+                    {cat}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {Array.isArray(arr) && arr.map(opt => {
+                      const isChecked = extraOptionsSel.includes(opt.id);
                       const effectivePrice = getExtraOptionPrice(opt);
-                      const isModified = extraOptionsPrices[opt.id]?.price > 0;            
+                      const isModified = extraOptionsPrices[opt.id] && extraOptionsPrices[opt.id].price > 0;
+                      
                       return (
-                        <label key={opt.id} style={{ display: 'block', margin: '4px 0' }}>
+                        <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                           <input
                             type="checkbox"
-                            checked={checked}
+                            checked={isChecked}
                             onChange={() => toggleExtra(opt.id)}
                           />
-                          <span style={{ marginLeft: 6 }}>
-                            {kgLabelFix(opt.name)}{' '}
+                          <span>
+                            {opt.name}
                             {effectivePrice > 0 && (
                               <span style={{ 
+                                fontSize: '12px', 
+                                marginLeft: '4px',
                                 color: isModified ? '#dc3545' : '#666',
                                 fontWeight: isModified ? '600' : 'normal'
                               }}>
@@ -502,17 +420,57 @@ export default function OptionSelector() {
                       );
                     })}
                   </div>
-                ))
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 경량랙 커스텀 자재 */}
+          {selectedType === '경량랙' && (
+            <div style={{ marginTop: 12 }}>
+              <h4>사용자 정의 자재</h4>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <input
+                  placeholder="자재명"
+                  value={cmName}
+                  onChange={e => setCmName(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="가격"
+                  value={cmPrice}
+                  onChange={e => setCmPrice(e.target.value)}
+                />
+                <button
+                  onClick={() => {
+                    if (cmName.trim() && Number(cmPrice) > 0) {
+                      addCustomMaterial(cmName.trim(), Number(cmPrice));
+                      setCmName('');
+                      setCmPrice('');
+                    }
+                  }}
+                >
+                  추가
+                </button>
+              </div>
+              {customMaterials.length > 0 && (
+                <ul>
+                  {customMaterials.map(m => (
+                    <li key={m.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{m.name}: {Number(m.price).toLocaleString()}원</span>
+                      <button onClick={() => removeCustomMaterial(m.id)}>삭제</button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {showPrice && (
         <div style={{ marginTop: 12 }}>
           <span>
-            {/* ✅ 정확한 우선순위: customPrice > 관리자단가 > 기본가격, NaN 완전 방지 */}
             계산 가격: {getFinalDisplayPrice().toLocaleString()}원
           </span>
           {customPrice > 0 && (
