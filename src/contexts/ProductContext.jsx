@@ -426,11 +426,9 @@ export const ProductProvider=({children})=>{
       
       // ✅ 우선순위: BOM 가격 > 기본가격
       if (bomPrice > 0) {
-        basePrice = bomPrice * (Number(quantity) || 0);
-        console.log(`✅ BOM 가격 사용 (추가옵션 포함): ${basePrice}원`);
+        basePrice = bomPrice; // BOM에서 이미 수량 적용됨
       } else if (basicPrice > 0) {
-        basePrice = basicPrice * (Number(quantity) || 0);
-        console.log(`📋 기본가격 사용: ${basePrice}원`);
+        basePrice = basicPrice * (Number(quantity) || 0); // 기본가격만 수량 곱하기
       }
       
     } else if (selectedType === "스텐랙") {
@@ -445,7 +443,7 @@ export const ProductProvider=({children})=>{
       }
       
       if (bomPrice > 0) {
-        basePrice = bomPrice * quantity;
+        basePrice = bomPrice;
       } else {
         const p = data["스텐랙"]["기본가격"]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level];
         if (p) basePrice = p * quantity;
@@ -462,7 +460,7 @@ export const ProductProvider=({children})=>{
       }
       
       if (bomPrice > 0) {
-        basePrice = bomPrice * quantity;
+        basePrice = bomPrice;
       } else {
         const { size, color, height, level, formType } = selectedOptions;
         if (size && color && height && level && formType) {
