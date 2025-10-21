@@ -28,7 +28,7 @@ const EXTRA_OPTIONS = {
 };
 
 const COMMON_LEVELS = ["2단","3단","4단","5단","6단"];
-export const colorLabelMap = { "200kg":"270kg", "350kg":"450kg", "700kg":"550kg" };
+export const colorLabelMap = { "200kg":"270kg", "350kg":"450kg", "700kg":"600kg" };
 
 const parseSizeKey=(s="")=>{
   const m=String(s).replace(/\s+/g,"").match(/W?(\d+)\s*[xX]\s*D?(\d+)/);
@@ -46,8 +46,8 @@ const parseNum=(s="")=>{
 const sortHeights=(arr=[])=>[...new Set(arr)].sort((a,b)=>parseNum(a)-parseNum(b));
 const sortLevels=(arr=[])=>[...new Set(arr)].sort((a,b)=>parseNum(a)-parseNum(b));
 
-const HIGHRACK_550_ALIAS_VIEW_FROM_DATA = { "80x146":"80x108", "80x206":"80x150" };
-const HIGHRACK_550_ALIAS_DATA_FROM_VIEW = { "80x108":"80x146", "80x150":"80x206" };
+const HIGHRACK_600_ALIAS_VIEW_FROM_DATA = { "80x146":"80x108", "80x206":"80x150" };
+const HIGHRACK_600_ALIAS_DATA_FROM_VIEW = { "80x108":"80x146", "80x150":"80x206" };
 
 const parseHeightMm = (h)=>Number(String(h||"").replace(/[^\d]/g,""))||0;
 const parseLevel=(levelStr,rackType)=>{
@@ -302,11 +302,11 @@ export const ProductProvider=({children})=>{
         const color=selectedOptions.color;
         const weightOnly = extractWeightOnly(color);
         const hide45 = ["450kg","550kg","700kg"].includes(weightOnly);
-        const isHeaviest = /(550kg|700kg)$/.test(color);
+        const isHeaviest = /(600kg|700kg)$/.test(color);
         const rawSizes=Object.keys(rd["기본가격"]?.[color]||{});
         const sizeViewList=rawSizes.map(s=>
-          isHeaviest && HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
-            ? HIGHRACK_550_ALIAS_VIEW_FROM_DATA[s]
+          isHeaviest && HIGHRACK_600_ALIAS_VIEW_FROM_DATA[s]
+            ? HIGHRACK_600_ALIAS_VIEW_FROM_DATA[s]
             : s
         );
         let baseSizes = hide45
@@ -325,7 +325,7 @@ export const ProductProvider=({children})=>{
           }
           if(selectedOptions.height){
             const sizeKey = isHeaviest
-              ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[selectedOptions.size]||selectedOptions.size
+              ? HIGHRACK_600_ALIAS_DATA_FROM_VIEW[selectedOptions.size]||selectedOptions.size
               : selectedOptions.size;
             const levelKeys = Object.keys(
               rd["기본가격"]?.[color]?.[sizeKey]?.[selectedOptions.height] || {}
@@ -469,9 +469,9 @@ export const ProductProvider=({children})=>{
       } else {
         const { size, color, height, level, formType } = selectedOptions;
         if (size && color && height && level && formType) {
-          const isHeaviest = /550kg$/.test(color) || /700kg$/.test(color);
+          const isHeaviest = /600kg$/.test(color) || /700kg$/.test(color);
           const dataSizeKey = isHeaviest
-            ? HIGHRACK_550_ALIAS_DATA_FROM_VIEW[size] || size
+            ? HIGHRACK_600_ALIAS_DATA_FROM_VIEW[size] || size
             : size;
           const p = data["하이랙"]["기본가격"]?.[color]?.[dataSizeKey]?.[height]?.[level];
           if (p) basePrice = p * quantity; // 기본가격만 수량 곱하기
