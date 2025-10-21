@@ -301,7 +301,7 @@ export const ProductProvider=({children})=>{
       if(selectedOptions.color){
         const color=selectedOptions.color;
         const weightOnly = extractWeightOnly(color);
-        const hide45 = ["450kg","550kg","700kg"].includes(weightOnly);
+        const hide45 = ["450kg","600kg","700kg"].includes(weightOnly);
         const isHeaviest = /(600kg|700kg)$/.test(color);
         const rawSizes=Object.keys(rd["기본가격"]?.[color]||{});
         const sizeViewList = rawSizes; // ALIAS 매핑 제거
