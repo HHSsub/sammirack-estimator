@@ -33,7 +33,7 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
   
   try {
     // ✅ 수정: 올바른 로컬스토리지 키 사용
-    const stored = localStorage.getItem('inventoryData') || '{}';
+    const stored = localStorage.getItem('inventory_data') || '{}';
     const inventory = JSON.parse(stored);
     
     console.log('📦 현재 재고 상태:', inventory);
@@ -91,7 +91,7 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
     });
     
     // ✅ 수정: 올바른 로컬스토리지 키로 저장
-    localStorage.setItem('inventoryData', JSON.stringify(inventory));
+    localStorage.setItem('inventory_data', JSON.stringify(inventory));
     
     // 재고 업데이트 이벤트 발생
     window.dispatchEvent(new CustomEvent('inventoryUpdated', {
