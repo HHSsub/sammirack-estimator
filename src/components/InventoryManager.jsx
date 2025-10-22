@@ -248,13 +248,29 @@ const InventoryManager = ({ currentUser }) => {
     );
   }
 
-  useEffect(() => {
-    loadAllMaterialsData();
-    loadInventoryData();
-    loadAdminPricesData();
-    loadRackOptions();
-    setupRealtimeListeners();
-  }, []);
+useEffect(() => {
+  // ✅ async 함수를 만들어 순차적으로 데이터 로드
+  const initializeData = async () => {
+    try {
+      setSyncStatus('🔄 초기화 중...');
+      
+      // 순차적으로 데이터 로드
+      await loadAllMaterialsData();
+      await loadInventoryData();  // ✅ 서버 동기화 후 로드
+      loadAdminPricesData();  // 동기 함수는 그대로
+      await loadRackOptions();
+      setupRealtimeListeners();
+      
+      setSyncStatus('✅ 초기화 완료');
+      setLastSyncTime(new Date());
+    } catch (error) {
+      console.error('❌ 초기화 실패:', error);
+      setSyncStatus('❌ 초기화 오류');
+    }
+  };
+  
+  initializeData();
+}, []);
 
   // 실시간 동기화 리스너 설정
   const setupRealtimeListeners = () => {
@@ -317,15 +333,29 @@ const InventoryManager = ({ currentUser }) => {
     }
   };
 
-  // 재고 데이터 로드
-  const loadInventoryData = () => {
+  // 재고 데이터 로드 (서버에서 먼저 동기화)
+  const loadInventoryData = async () => {
     try {
+      console.log('🔄 재고 데이터 로드 시작 - 서버 동기화 중...');
+      
+      // ✅ 1. 서버(GitHub Gist)에서 최신 데이터 먼저 가져오기
+      await forceServerSync();
+      
+      // ✅ 2. 동기화된 로컬 데이터 읽기
       const data = loadInventory();
       setInventory(data);
-      console.log(`📦 재고 데이터 로드: ${Object.keys(data).length}개 항목`);
+      console.log(`📦 재고 데이터 로드 완료: ${Object.keys(data).length}개 항목`);
     } catch (error) {
       console.error('❌ 재고 데이터 로드 실패:', error);
-      setInventory({});
+      // 서버 동기화 실패시에도 로컬 데이터는 읽기
+      try {
+        const data = loadInventory();
+        setInventory(data);
+        console.log(`⚠️ 로컬 재고 데이터 로드: ${Object.keys(data).length}개 항목`);
+      } catch (localError) {
+        console.error('❌ 로컬 재고 데이터도 로드 실패:', localError);
+        setInventory({});
+      }
     }
   };
 
@@ -385,20 +415,26 @@ const InventoryManager = ({ currentUser }) => {
   // 전체 데이터 로드
   const loadAllData = async () => {
     setIsLoading(true);
-    setSyncStatus('🔄 로딩 중...');
+    setSyncStatus('🔄 서버 동기화 중...');
     
     try {
+      // ✅ 서버 동기화 먼저 실행
+      console.log('🔄 전체 데이터 로드 시작 - 서버 동기화 중...');
+      await forceServerSync();
+      
+      // ✅ 동기화 후 각 데이터 로드
       await Promise.all([
         loadAllMaterialsData(),
         loadInventoryData(),
         loadAdminPricesData()
       ]);
       
-      setSyncStatus('✅ 동기화됨');
+      setSyncStatus('✅ 전세계 동기화 완료');
       setLastSyncTime(new Date());
+      console.log('✅ 전체 데이터 로드 완료');
     } catch (error) {
       console.error('❌ 데이터 로드 실패:', error);
-      setSyncStatus('❌ 오류');
+      setSyncStatus('❌ 동기화 오류');
     } finally {
       setIsLoading(false);
     }
