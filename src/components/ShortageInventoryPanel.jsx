@@ -25,7 +25,7 @@ const ShortageInventoryPanel = ({
     setIsLoading(true);
     try {
       // 로컬스토리지에서 현재 재고 데이터 가져오기
-      const inventoryStorage = localStorage.getItem('inventoryData') || '{}';
+      const inventoryStorage = localStorage.getItem('inventory_data') || '{}';
       const currentInventory = JSON.parse(inventoryStorage);
       
       // 부족한 부품들의 현재 재고 정보만 추출
@@ -77,7 +77,7 @@ const ShortageInventoryPanel = ({
     setIsLoading(true);
     try {
       // 현재 전체 재고 데이터 로드
-      const inventoryStorage = localStorage.getItem('inventoryData') || '{}';
+      const inventoryStorage = localStorage.getItem('inventory_data') || '{}';
       const currentInventory = JSON.parse(inventoryStorage);
       
       // 변경된 항목들 업데이트
@@ -90,13 +90,13 @@ const ShortageInventoryPanel = ({
           currentInventory[partId] = {
             quantity: editingItems[partId],
             lastUpdated: new Date().toISOString(),
-            name: inventoryData[partId]?.name || partId
+            name: inventory_data[partId]?.name || partId
           };
         }
       });
       
       // 로컬스토리지에 저장
-      localStorage.setItem('inventoryData', JSON.stringify(currentInventory));
+      localStorage.setItem('inventory_data', JSON.stringify(currentInventory));
       
       // 시스템 전체에 재고 업데이트 이벤트 발생
       window.dispatchEvent(new CustomEvent('inventoryUpdated', {
@@ -192,7 +192,7 @@ const ShortageInventoryPanel = ({
       {/* 재고 부족 목록 */}
       {!isLoading && (
         <div style={{ padding: '15px' }}>
-          {Object.entries(inventoryData).map(([partId, item]) => (
+          {Object.entries(inventory_data).map(([partId, item]) => (
             <div key={partId} style={{
               border: '1px solid #ddd',
               borderRadius: '5px',
