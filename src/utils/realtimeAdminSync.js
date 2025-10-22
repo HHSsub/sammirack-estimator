@@ -22,6 +22,10 @@ class RealtimeAdminSync {
     this.retryCount = 0;
     this.maxRetries = 3;
     
+    // ✅ 저장 큐 시스템 추가
+    this.saveQueue = [];
+    this.isSaving = false;
+    
     this.setupEventListeners();
     this.initBroadcastChannel();
     
@@ -104,6 +108,71 @@ class RealtimeAdminSync {
     }
   }
 
+  // ✅ 딜레이 함수
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // ✅ 저장 큐에 추가
+  async queueSave() {
+    this.saveQueue.push(Date.now());
+    console.log(`📥 저장 큐에 추가 (큐 크기: ${this.saveQueue.length})`);
+    
+    if (!this.isSaving) {
+      await this.processSaveQueue();
+    }
+  }
+
+  // ✅ 저장 큐 순차 처리
+  async processSaveQueue() {
+    if (this.isSaving || this.saveQueue.length === 0) return;
+    
+    this.isSaving = true;
+    console.log(`🔄 저장 큐 처리 시작 (${this.saveQueue.length}개 대기)`);
+    
+    while (this.saveQueue.length > 0) {
+      this.saveQueue.shift(); // 큐에서 제거
+      
+      try {
+        await this.saveToServerWithRetry();
+        console.log(`✅ 저장 완료 (남은 큐: ${this.saveQueue.length}개)`);
+        
+        // 다음 저장까지 1초 대기 (충돌 방지)
+        if (this.saveQueue.length > 0) {
+          await this.delay(1000);
+        }
+      } catch (error) {
+        console.error('❌ 저장 실패:', error);
+      }
+    }
+    
+    this.isSaving = false;
+    console.log('✅ 저장 큐 처리 완료');
+  }
+
+  // ✅ 재시도 로직이 포함된 서버 저장
+  async saveToServerWithRetry(maxRetries = 3) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 서버 저장 시도 ${attempt}/${maxRetries}`);
+        await this.saveToServer();
+        console.log(`✅ 서버 저장 성공`);
+        return; // 성공
+      } catch (error) {
+        console.error(`❌ 저장 시도 ${attempt}/${maxRetries} 실패:`, error.message);
+        
+        if (attempt === maxRetries) {
+          throw error; // 마지막 시도 실패
+        }
+        
+        // Exponential backoff: 1초, 2초, 4초
+        const delayTime = Math.pow(2, attempt - 1) * 1000;
+        console.log(`⏳ ${delayTime / 1000}초 후 재시도...`);
+        await this.delay(delayTime);
+      }
+    }
+  }
+
   // GitHub Gist에서 데이터 로드
   async loadFromServer() {
     if (!this.GIST_ID || !this.GITHUB_TOKEN) {
@@ -173,6 +242,8 @@ class RealtimeAdminSync {
   async saveToServer() {
     if (!this.GIST_ID || !this.GITHUB_TOKEN) {
       console.error('❌ GitHub 설정이 누락되었습니다.');
+      console.error('   GIST_ID:', this.GIST_ID ? '설정됨' : '없음');
+      console.error('   TOKEN:', this.GITHUB_TOKEN ? `설정됨 (${this.GITHUB_TOKEN.substring(0, 4)}...)` : '없음');
       return false;
     }
 
@@ -238,7 +309,7 @@ class RealtimeAdminSync {
       // 실패한 요청을 큐에 추가
       this.addToSyncQueue('save', {});
       
-      return false;
+      throw error; // 재시도를 위해 에러 전파
     }
   }
 
@@ -333,7 +404,7 @@ export const adminSyncManager = {
   getInstance: () => syncInstance || initRealtimeSync()
 };
 
-// 재고 저장 함수
+// ✅ 재고 저장 함수 (큐 시스템 사용)
 export const saveInventorySync = async (partId, quantity, userInfo = {}) => {
   try {
     // 로컬 저장
@@ -346,9 +417,9 @@ export const saveInventorySync = async (partId, quantity, userInfo = {}) => {
       syncInstance.broadcastUpdate('inventory-updated', { [partId]: quantity });
     }
 
-    // 서버 저장
+    // ✅ 저장 큐에 추가 (순차 처리)
     if (syncInstance) {
-      await syncInstance.saveToServer();
+      await syncInstance.queueSave();
     }
 
     return true;
@@ -373,6 +444,12 @@ export const loadInventory = () => {
 export const forceServerSync = async () => {
   if (syncInstance) {
     await syncInstance.loadFromServer();
+  }
+};
+
+// 강제 서버 저장
+export const forceSaveToServer = async () => {
+  if (syncInstance) {
     await syncInstance.saveToServer();
   }
 };
@@ -401,7 +478,7 @@ export const loadAdminPrices = () => {
   }
 };
 
-// 관리자 단가 저장 (실시간 동기화)
+// ✅ 관리자 단가 저장 (큐 시스템 사용)
 export const saveAdminPriceSync = async (partId, price, partInfo = {}, userInfo = {}) => {
   try {
     // 로컬 저장
@@ -426,9 +503,9 @@ export const saveAdminPriceSync = async (partId, price, partInfo = {}, userInfo 
       syncInstance.broadcastUpdate('prices-updated', adminPrices);
     }
 
-    // 서버 저장
+    // ✅ 저장 큐에 추가 (순차 처리)
     if (syncInstance) {
-      await syncInstance.saveToServer();
+      await syncInstance.queueSave();
     }
 
     return true;
