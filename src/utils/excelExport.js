@@ -104,7 +104,7 @@ function setRowHeights(ws, map) {
 function buildTop(ws, type, { date, companyName, contact } = {}) {
   // 문서 제목 A5:H5
   ws.mergeCells('A5:H5');
-  const title = type === 'purchase' ? '청구서' : type === 'transaction' ? '거래명세서' : '견적서';
+  const title = type === 'purchase' ? '청구서' : type === 'delivery' ? '거래명세서' : '견적서';
   const titleCell = ws.getCell('A5');
   titleCell.value = title;
   titleCell.font = { bold: true, size: 20 };
@@ -123,7 +123,7 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
 
   // 아래 문구 A9:C10 병합
   ws.mergeCells('A9:C10');
-  const bottomText = type === 'purchase' ? '아래와 같이 청구합니다' : type === 'transaction' ? '아래와 같이 거래합니다' : '아래와 같이 견적합니다';
+  const bottomText = type === 'purchase' ? '아래와 같이 청구합니다' : type === 'delivery' ? '아래와 같이 거래합니다' : '아래와 같이 견적합니다';
   ws.getCell('A9').value = bottomText;
   ws.getCell('A9').alignment = alignCenter;
   setRowHeights(ws, { 9: 40 });
@@ -374,7 +374,7 @@ async function placeStamp(workbook, ws) {
 export async function exportToExcel(rawData, type = 'estimate') {
   // rawData: { date, companyName, items, materials, subtotal, tax, totalAmount, notes, ... }
   const workbook = new ExcelJS.Workbook();
-  const sheetName = type === 'purchase' ? '청구서' : (type === 'transaction' ? '거래명세서' : '견적서');
+  const sheetName = type === 'purchase' ? '청구서' : (type === 'delievery' ? '거래명세서' : '견적서');
   const ws = workbook.addWorksheet(sheetName);
 
   // 컬럼 너비
@@ -397,7 +397,7 @@ export async function exportToExcel(rawData, type = 'estimate') {
   };
   const notes = rawData?.notes || '';
 
-  if (type === 'purchase' || type === 'transaction') {
+  if (type === 'purchase' || type === 'delivery') {
     // 청구서와 거래명세서는 동일한 레이아웃 (원자재 명세서 포함)
     buildPurchaseOrTransaction(ws, type, items, materials, totals, notes);
   } else {
@@ -415,7 +415,7 @@ export async function exportToExcel(rawData, type = 'estimate') {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const fileName = generateFileName(
-    type === 'transaction' ? 'transaction' : type === 'purchase' ? 'purchase' : 'estimate'
+    type === 'delivery' ? 'delivery' : type === 'purchase' ? 'purchase' : 'estimate'
   );
   saveAs(blob, fileName);
 }
