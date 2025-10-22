@@ -34,8 +34,8 @@ const ShortageInventoryPanel = ({
         const partId = item.partId || item.name;
         shortageInventory[partId] = {
           ...item,
-          currentStock: currentInventory[partId]?.quantity || 0,
-          originalStock: currentInventory[partId]?.quantity || 0
+          currentStock: currentInventory[partId] || 0,  // ✅
+          originalStock: currentInventory[partId] || 0   // ✅
         };
       });
       
