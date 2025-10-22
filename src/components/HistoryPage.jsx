@@ -17,7 +17,7 @@ const HistoryPage = () => {
   const [filteredItems, setFilteredItems] = useState([]);
   // State for filters
   const [filters, setFilters] = useState({
-    documentType: 'all', // 'all', 'estimate', 'order', 'delivery_note'
+    documentType: 'all', // 'all', 'estimate', 'order', 'delivery'
     documentNumber: '',
     dateFrom: '',
     dateTo: '',
@@ -49,7 +49,7 @@ const HistoryPage = () => {
         if (
           key.startsWith('estimate_') || 
           key.startsWith('order_') || 
-          key.startsWith('delivery_note_')
+          key.startsWith('delivery_')
         ) {
           try {
             const item = JSON.parse(localStorage.getItem(key));
@@ -186,7 +186,7 @@ const HistoryPage = () => {
       navigate(`/estimate/edit/${item.id}`, { state: { item } });
     } else if (item.type === 'order') {
       navigate(`/purchase-order/edit/${item.id}`, { state: { item } });
-    } else if (item.type === 'delivery_note') {
+    } else if (item.type === 'delivery') {
       navigate(`/delivery-note/edit/${item.id}`, { state: { item } });
     }
   };
@@ -324,7 +324,7 @@ const HistoryPage = () => {
         </body>
         </html>
       `;
-    } else if (item.type === 'delivery_note') {
+    } else if (item.type === 'delivery') {
       // 거래명세서 인쇄용 HTML (견적서와 디자인 동일)
       printHTML = `
         <!DOCTYPE html>
@@ -720,7 +720,7 @@ const HistoryPage = () => {
                 <strong>연락처:</strong>
                 <span>{selectedItem.contactInfo}</span>
               </div>
-              {!isEstimate && selectedItem.estimateNumber && selectedItem.type !== 'delivery_note' && (
+              {!isEstimate && selectedItem.estimateNumber && selectedItem.type !== 'delivery' && (
                 <div className="details-item">
                   <strong>관련 거래번호:</strong>
                   <span>{selectedItem.estimateNumber}</span>
@@ -934,7 +934,7 @@ const HistoryPage = () => {
                   <option value="all">전체</option>
                   <option value="estimate">견적서</option>
                   <option value="order">청구서</option>
-                  <option value="delivery_note">거래명세서</option>
+                  <option value="delivery">거래명세서</option>
                 </select>
               </div>
               
