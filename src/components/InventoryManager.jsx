@@ -884,7 +884,7 @@ useEffect(() => {
       </div>
 
       <div className="sync-info-banner">
-        🌐 재고 및 단가 변경사항은 전 세계 모든 PC에서 실시간으로 동기화됩니다.
+        🌐 재고 및 단가 변경사항은 모든 PC에서 실시간으로 동기화됩니다.
       </div>
 
       <div className="inventory-table-container">
