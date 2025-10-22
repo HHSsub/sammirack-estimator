@@ -39,7 +39,7 @@ const ShortageInventoryPanel = ({
         };
       });
       
-      setInventoryData(shortageInventory);
+      set_inventory_data(shortageInventory);
       console.log('📦 재고 부족 데이터 로드:', shortageInventory);
     } catch (error) {
       console.error('재고 데이터 로드 실패:', error);
@@ -54,7 +54,7 @@ const ShortageInventoryPanel = ({
     
     const quantity = Math.max(0, parseInt(newQuantity) || 0);
     
-    setInventoryData(prev => ({
+    set_inventory_data(prev => ({
       ...prev,
       [partId]: {
         ...prev[partId],
