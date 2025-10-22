@@ -107,61 +107,65 @@ class RealtimeAdminSync {
   // GitHub Gist에서 데이터 로드
   async loadFromServer() {
     if (!this.GIST_ID || !this.GITHUB_TOKEN) {
-      console.error('❌ GitHub 설정이 누락되었습니다. GIST_ID와 GITHUB_TOKEN을 설정하세요.');
-      return false;
+      console.error('❌ GitHub 설정이 누락되었습니다.');
+      console.error('   GIST_ID:', this.GIST_ID ? '설정됨' : '없음');
+      console.error('   TOKEN:', this.GITHUB_TOKEN ? `설정됨 (${this.GITHUB_TOKEN.substring(0, 4)}...)` : '없음');
+      throw new Error('GitHub 설정 오류: GIST_ID 또는 TOKEN이 없습니다.');
     }
-
+    
     try {
       console.log('🔄 GitHub 서버에서 데이터 로드 중...');
+      console.log('   API URL:', `${this.API_BASE}/${this.GIST_ID}`);
+      console.log('   Token 시작:', this.GITHUB_TOKEN.substring(0, 10) + '...');
       
       const response = await fetch(`${this.API_BASE}/${this.GIST_ID}`, {
         headers: this.getHeaders()
       });
-
+  
       if (!response.ok) {
+        const errorText = await response.text();
         if (response.status === 401) {
-          throw new Error(`GitHub API 오류: ${response.status} - Bad credentials`);
+          throw new Error(`GitHub API 인증 실패 (401): Token 권한 확인 필요. 응답: ${errorText}`);
         } else if (response.status === 404) {
-          throw new Error(`GitHub API 오류: ${response.status} - Gist를 찾을 수 없습니다.`);
+          throw new Error(`Gist를 찾을 수 없음 (404): GIST_ID 확인 필요. 응답: ${errorText}`);
         } else {
-          const errorData = await response.text();
-          throw new Error(`GitHub API 오류: ${response.status} - ${errorData}`);
+          throw new Error(`GitHub API 오류 (${response.status}): ${errorText}`);
         }
       }
-
+  
       const gist = await response.json();
       
-      // 각 파일별로 데이터 복원
       if (gist.files) {
         if (gist.files['inventory.json']) {
           const inventoryData = JSON.parse(gist.files['inventory.json'].content);
           localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
           this.broadcastUpdate('inventory-updated', inventoryData);
         }
-
+  
         if (gist.files['admin_prices.json']) {
           const pricesData = JSON.parse(gist.files['admin_prices.json'].content);
           localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(pricesData));
           this.broadcastUpdate('prices-updated', pricesData);
         }
-
+  
         if (gist.files['price_history.json']) {
           const historyData = JSON.parse(gist.files['price_history.json'].content);
           localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(historyData));
         }
-
+  
         if (gist.files['activity_log.json']) {
           const activityData = JSON.parse(gist.files['activity_log.json'].content);
           localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
         }
       }
-
+  
       console.log('✅ GitHub 서버 데이터 로드 완료');
       return true;
       
     } catch (error) {
       console.error('❌ GitHub 서버 데이터 로드 실패:', error);
-      return false;
+      console.error('   에러 상세:', error.message);
+      throw error;
     }
   }
 
