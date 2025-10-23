@@ -23,7 +23,7 @@ class RealtimeAdminSync {
     // ✅ Debounce용 변수
     this.saveTimeout = null;
     this.lastSaveTime = 0;
-    this.minSaveInterval = 10000; // 10초로 변경 (GitHub Secondary Rate Limit 회피)
+    this.minSaveInterval = 5000; // 5초로 변경 (GitHub Secondary Rate Limit 회피)
     
     // ✅ 403 에러 추적 추가
     this.consecutiveFailures = 0;
