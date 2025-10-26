@@ -279,22 +279,74 @@ export const ProductProvider=({children})=>{
     (async()=>{
       setLoading(true);
       try{
+        // 1. Gist에서 BOM 데이터 로드 (기존 로직 유지)
         const dj=await (await fetch("./data.json")).json();
         const bj=await (await fetch("./bom_data.json")).json();
         const ejRaw=await (await fetch("./extra_options.json")).json();
+        
+        // 2. ✅ 서버 재고 데이터 로드 (추가된 핵심 로직)
+        await loadInventory(); 
+
+        // 3. 데이터 및 BOM 설정 (기존 로직 유지)
         setData(dj); setBomData(bj);
+        
         const canonical=["경량랙","중량랙","파렛트랙","파렛트랙 철판형","하이랙","스텐랙"];
         const fromData=Object.keys(dj||{});
         const types=canonical.filter(t=>fromData.includes(t));
         const leftovers=fromData.filter(t=>!types.includes(t));
-        setAllOptions({types:[...types,...leftovers]});
+        
+        // 기존 로직: setAllOptions({types:[...types,...leftovers]});
+        const allTypes = [...types, ...leftovers];
+        const allOpts = { types: allTypes };
+
+        allTypes.forEach(type=>{
+          allOpts[type]={
+            sizes:sortSizes([...new Set(dj[type]?.sizes||[]),...(EXTRA_OPTIONS[type]?.size||[])]),
+            heights:sortHeights([...new Set(dj[type]?.heights||[]),...(EXTRA_OPTIONS[type]?.height||[])]),
+            weights:[...new Set(dj[type]?.weights||[])],
+            levels:sortLevels([...new Set(dj[type]?.levels||[]),...(EXTRA_OPTIONS[type]?.level||[])]),
+          };
+        });
+
+        // 4. 추가 옵션 가격 로드 (기존 로직 유지)
         const ej={...(ejRaw||{})};
         canonical.forEach(t=>{ if(!ej[t]) ej[t]={}; });
-        setExtraProducts(ej);
-      }catch(e){ console.error("데이터 로드 실패",e); setAllOptions({types:[]}); }
+        // setExtraProducts(ej); // 기존 로직 대신 아래 로직으로 대체
+        
+        const extraProducts = ejRaw.map(p=>({...p,unitPrice:getEffectivePrice(p)}));
+        setExtraProducts(extraProducts);
+        
+        setAllOptions(allOpts);
+        setSelectedType(allTypes[0]||"");
+        
+        // 5. 로컬스토리지 복원 로직 (기존 로직 유지)
+        const localSelectedType=localStorage.getItem("selectedType");
+        const localSelectedOptions=localStorage.getItem("selectedOptions");
+        if(localSelectedType&&allTypes.includes(localSelectedType)){
+          setSelectedType(localSelectedType);
+          if(localSelectedOptions) setSelectedOptions(JSON.parse(localSelectedOptions));
+        }
+        
+        // 6. 로컬스토리지에서 장바구니 복원 (기존 로직 유지)
+        const localCart=localStorage.getItem("cart");
+        if(localCart) setCart(JSON.parse(localCart));
+        
+        // 7. 로컬스토리지에서 커스텀 자재 복원 (기존 로직 유지)
+        const localCustomMaterials=localStorage.getItem("customMaterials");
+        if(localCustomMaterials) setCustomMaterials(JSON.parse(localCustomMaterials));
+        
+        // 8. 로컬스토리지에서 적용 환율 복원 (기존 로직 유지)
+        const localApplyRate=localStorage.getItem("applyRate");
+        if(localApplyRate) setApplyRate(Number(localApplyRate));
+        
+        
+      }catch(e){ 
+        console.error("데이터 로드 실패",e); 
+        setAllOptions({types:[]}); 
+      }
       finally{ setLoading(false); }
     })();
-  },[]);
+  },[loadInventory, getEffectivePrice]); // ✅ loadInventory와 getEffectivePrice를 의존성에 추가
 
   useEffect(()=>{
     if(!selectedType){ setAvailableOptions({}); return; }
