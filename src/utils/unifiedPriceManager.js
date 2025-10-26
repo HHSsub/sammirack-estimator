@@ -10,7 +10,9 @@
  *    - 하이랙 색상: 메트그레이→매트, 오렌지/블루→제거
  *    - 괄호/공백 제거, *→x 변환
  * 4. 275개 부품 전체 로드, 파렛트랙 H4500/H5000 포함
- * 5. 모든 export 함수 포함 (getEffectivePrice 등)
+ * 5. 하이랙 이중 ID 시스템:
+ *    - generatePartId: 단가 관리용 (색상 제거)
+ *    - generateInventoryPartId: 재고 관리용 (색상 포함)
  */
 
 // 로컬스토리지 키
@@ -20,7 +22,7 @@ const INVENTORY_KEY = 'inventory_data';
 const RACK_OPTIONS_KEY = 'rack_options_registry';
 const EXTRA_OPTIONS_PRICES_KEY = 'extra_options_prices';
 
-// ✅ 표준 partID 생성 함수 (기존 서버 방식 완벽 재현)
+// ✅ 표준 partID 생성 함수 (단가 관리용 - 색상 제거)
 export const generatePartId = (item) => {
   if (!item) {
     console.warn('generatePartId: item이 undefined입니다');
@@ -35,10 +37,11 @@ export const generatePartId = (item) => {
     .replace(/\s+/g, '')   // 공백 제거
     .replace(/\*/g, 'x');  // * → x 변환 (700*300 → 700x300)
   
-  // 하이랙 전용: 색상 처리
+  // 하이랙 전용: 색상 제거 (단가 통합 관리)
   if (rackType === '하이랙') {
     cleanName = cleanName
       .replace(/메트그레이/g, '')  // 메트그레이 제거
+      .replace(/매트그레이/g, '')  // 매트그레이 제거
       .replace(/오렌지/g, '')        // 오렌지 제거
       .replace(/블루/g, '');          // 블루 제거
   }
@@ -51,6 +54,35 @@ export const generatePartId = (item) => {
     const cleanSpec = String(specification)
       .replace(/\s+/g, '')  // 공백 제거
       .toLowerCase();       // 소문자 변환
+    return `${rackType}-${cleanName}-${cleanSpec}`;
+  } else {
+    return `${rackType}-${cleanName}-`;
+  }
+};
+
+// ✅ 재고 관리용 partID 생성 함수 (색상 포함)
+export const generateInventoryPartId = (item) => {
+  if (!item) {
+    console.warn('generateInventoryPartId: item이 undefined입니다');
+    return 'unknown-part-inv';
+  }
+  
+  const { rackType = '', name = '', specification = '' } = item;
+  
+  // 부품명 처리 (색상은 유지!)
+  let cleanName = String(name)
+    .replace(/[()]/g, '')  // 괄호 제거
+    .replace(/\s+/g, '')   // 공백 제거
+    .replace(/\*/g, 'x');  // * → x 변환
+  
+  // 소문자 변환
+  cleanName = cleanName.toLowerCase();
+  
+  // 규격 처리
+  if (specification && String(specification).trim()) {
+    const cleanSpec = String(specification)
+      .replace(/\s+/g, '')
+      .toLowerCase();
     return `${rackType}-${cleanName}-${cleanSpec}`;
   } else {
     return `${rackType}-${cleanName}-`;
@@ -214,7 +246,7 @@ const parseCSV = (text) => {
   return result;
 };
 
-// ✅ 완전 수정: CSV 기반 전체 원자재 로드
+// ✅ CSV 기반 전체 원자재 로드 (정규화된 partId로 재생성)
 export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
@@ -222,7 +254,7 @@ export const loadAllMaterials = async () => {
     
     const materials = new Map();
     
-    // ✅ 교정된 CSV 파일 로드
+    // ✅ CSV 파일 로드
     const csvResponse = await fetch('./all_materials_list_v1.csv');
     if (!csvResponse.ok) {
       throw new Error(`CSV 파일 로드 실패: ${csvResponse.status}`);
@@ -238,7 +270,6 @@ export const loadAllMaterials = async () => {
     let skippedCount = 0;
     
     csvData.forEach((row, index) => {
-      const partId = String(row['부품ID'] || '').trim();
       const rackType = String(row['랙타입'] || '').trim();
       const name = String(row['부품명'] || '').trim();
       const specification = String(row['규격'] || '').trim();
@@ -249,19 +280,26 @@ export const loadAllMaterials = async () => {
       const categoryName = String(row['카테고리'] || '').trim();
       
       // 빈 행이나 유효하지 않은 데이터 스킵
-      if (!partId || !rackType || !name) {
+      if (!rackType || !name) {
         skippedCount++;
         return;
       }
       
+      // ✅ generatePartId로 정규화된 partId 생성 (CSV의 부품ID는 무시!)
+      const normalizedPartId = generatePartId({
+        rackType,
+        name,
+        specification
+      });
+      
       // 중복 체크
-      if (materials.has(partId)) {
-        console.warn(`⚠️ 중복 부품 발견: ${partId} (행 ${index + 2})`);
+      if (materials.has(normalizedPartId)) {
+        console.warn(`⚠️ 중복 부품 발견: ${normalizedPartId} (행 ${index + 2})`);
         return;
       }
       
-      materials.set(partId, {
-        partId,
+      materials.set(normalizedPartId, {
+        partId: normalizedPartId,
         rackType,
         name,
         specification,
@@ -276,7 +314,7 @@ export const loadAllMaterials = async () => {
       
       // 디버깅: 처음 5개, 마지막 5개만 출력
       if (validCount <= 5 || validCount > csvData.length - 5) {
-        console.log(`  ➕ [${validCount}] ${partId}`);
+        console.log(`  ➕ [${validCount}] ${normalizedPartId}`);
       } else if (validCount === 6) {
         console.log(`  ... (중간 ${csvData.length - 10}개 생략)`);
       }
@@ -383,6 +421,7 @@ export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') =>
 
 export default {
   generatePartId,
+  generateInventoryPartId,
   generateRackOptionId,
   loadAdminPrices,
   saveAdminPrice,
