@@ -638,7 +638,7 @@ export const ProductProvider=({children})=>{
 
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
-    // ✅ specification을 필수로 받도록 수정
+    
     const pushIfAbsent = (name, quantity, specification = '') => {
       const normalized = normalizePartName(name);
       if (!names.has(normalized)) {
@@ -646,15 +646,19 @@ export const ProductProvider=({children})=>{
           rackType: selectedType,
           size: selectedOptions.size || "",
           name,
-          specification: specification, // ✅ specification 명시적 설정
+          specification: specification, // ✅ 여기가 핵심!
           note: "",
           quantity,
           unitPrice: 0,
           totalPrice: 0
         });
         names.add(normalized);
+        
+        // ✅ 디버깅 로그 추가
+        console.log(`➕ 하드웨어 추가: ${name}, spec="${specification}", partId=${generatePartId({rackType: selectedType, name, specification})}`);
       }
     };
+    
     if(selectedType==="파렛트랙"||selectedType==="파렛트랙 철판형"){
       const isConn=selectedOptions.formType==="연결형";
       const h=selectedOptions.height;
@@ -671,15 +675,19 @@ export const ProductProvider=({children})=>{
       const diagonal=(baseDiagonal+additionalDiagonal)*qtyNum;
       const horizontal=(isConn?2:4)*qtyNum;
       const anchor=(isConn?2:4)*qtyNum;
-
-      // ✅ specification 정확히 계산하여 전달
+  
+      // ✅ specification 정확히 계산
       const { d } = parseWD(selectedOptions.size || '');
-      const bracingSpec = d ? String(d) : '';        
-      pushIfAbsent("수평브레싱", horizontal, bracingSpec);  // ✅ spec 전달
-      pushIfAbsent("경사브레싱", diagonal, bracingSpec);   // ✅ spec 전달
-      pushIfAbsent("앙카볼트", anchor, '');                // ✅ 빈 문자열 명시
-      pushIfAbsent("브레싱볼트", braceBolt, '');           // ✅ 빈 문자열 명시
-      pushIfAbsent("브러싱고무", rubber, '');              // ✅ 빈 문자열 명시
+      const bracingSpec = d ? String(d) : '';
+      
+      console.log(`🔧 하드웨어 생성 준비: size=${selectedOptions.size}, d=${d}, bracingSpec="${bracingSpec}"`);
+        
+      // ✅ specification을 명시적으로 전달
+      pushIfAbsent("수평브레싱", horizontal, bracingSpec);
+      pushIfAbsent("경사브레싱", diagonal, bracingSpec);
+      pushIfAbsent("앙카볼트", anchor, '');
+      pushIfAbsent("브레싱볼트", braceBolt, '');
+      pushIfAbsent("브러싱고무", rubber, '');
     }
   };
 
