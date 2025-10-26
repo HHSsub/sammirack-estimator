@@ -638,7 +638,8 @@ export const ProductProvider=({children})=>{
 
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
-    const pushIfAbsent = (name, quantity, specification = '') => {  // ✅ specification 매개변수 추가
+    // ✅ specification을 필수로 받도록 수정
+    const pushIfAbsent = (name, quantity, specification = '') => {
       const normalized = normalizePartName(name);
       if (!names.has(normalized)) {
         base.push({
@@ -671,10 +672,9 @@ export const ProductProvider=({children})=>{
       const horizontal=(isConn?2:4)*qtyNum;
       const anchor=(isConn?2:4)*qtyNum;
 
-      // ✅ specification 파라미터 추가
+      // ✅ specification 정확히 계산하여 전달
       const { d } = parseWD(selectedOptions.size || '');
-      const bracingSpec = d ? String(d) : '';
-        
+      const bracingSpec = d ? String(d) : '';        
       pushIfAbsent("수평브레싱", horizontal, bracingSpec);  // ✅ spec 전달
       pushIfAbsent("경사브레싱", diagonal, bracingSpec);   // ✅ spec 전달
       pushIfAbsent("앙카볼트", anchor, '');                // ✅ 빈 문자열 명시
@@ -712,6 +712,7 @@ const getFallbackBOM = () => {
     }
     let filteredBase = base.filter(i => !i.name.includes("철판"));
     appendCommonHardwareIfMissing(filteredBase, qty);
+    
     const filtered = [...filteredBase, ...makeExtraOptionBOM()]
       .filter(r => !/베이스볼트/.test(r.name))
       .map(r => ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) }));
