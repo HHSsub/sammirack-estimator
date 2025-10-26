@@ -1,5 +1,6 @@
 // src/components/ShortageInventoryPanel.jsx
 import React, { useState, useEffect } from 'react';
+import { generatePartId } from './unifiedPriceManager';
 
 const ShortageInventoryPanel = ({ 
   isVisible, 
@@ -31,7 +32,7 @@ const ShortageInventoryPanel = ({
       // 부족한 부품들의 현재 재고 정보만 추출
       const shortageInventory = {};
       shortageItems.forEach(item => {
-        const partId = item.partId || item.name;
+        const partId = generatePartId(item) || item.partId || item.name;
         shortageInventory[partId] = {
           ...item,
           currentStock: currentInventory[partId] || 0,  // ✅
