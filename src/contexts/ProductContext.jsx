@@ -638,14 +638,14 @@ export const ProductProvider=({children})=>{
 
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
-    const pushIfAbsent = (name, quantity) => {
+    const pushIfAbsent = (name, quantity, specification = '') => {  // ✅ specification 매개변수 추가
       const normalized = normalizePartName(name);
       if (!names.has(normalized)) {
         base.push({
           rackType: selectedType,
           size: selectedOptions.size || "",
           name,
-          specification: "",
+          specification: specification, // ✅ specification 명시적 설정
           note: "",
           quantity,
           unitPrice: 0,
@@ -670,11 +670,16 @@ export const ProductProvider=({children})=>{
       const diagonal=(baseDiagonal+additionalDiagonal)*qtyNum;
       const horizontal=(isConn?2:4)*qtyNum;
       const anchor=(isConn?2:4)*qtyNum;
-      pushIfAbsent("수평브레싱",horizontal);
-      pushIfAbsent("경사브레싱",diagonal);
-      pushIfAbsent("앙카볼트",anchor);
-      pushIfAbsent("브레싱볼트",braceBolt);
-      pushIfAbsent("브러싱고무",rubber);
+
+      // ✅ specification 파라미터 추가
+      const { d } = parseWD(selectedOptions.size || '');
+      const bracingSpec = d ? String(d) : '';
+        
+      pushIfAbsent("수평브레싱", horizontal, bracingSpec);  // ✅ spec 전달
+      pushIfAbsent("경사브레싱", diagonal, bracingSpec);   // ✅ spec 전달
+      pushIfAbsent("앙카볼트", anchor, '');                // ✅ 빈 문자열 명시
+      pushIfAbsent("브레싱볼트", braceBolt, '');           // ✅ 빈 문자열 명시
+      pushIfAbsent("브러싱고무", rubber, '');              // ✅ 빈 문자열 명시
     }
   };
 
