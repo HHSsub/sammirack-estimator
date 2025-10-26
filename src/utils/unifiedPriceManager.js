@@ -10,6 +10,7 @@
  *    - 하이랙 색상: 메트그레이→매트, 오렌지/블루→제거
  *    - 괄호/공백 제거, *→x 변환
  * 4. 275개 부품 전체 로드, 파렛트랙 H4500/H5000 포함
+ * 5. 모든 export 함수 포함 (getEffectivePrice 등)
  */
 
 // 로컬스토리지 키
@@ -56,37 +57,6 @@ export const generatePartId = (item) => {
   }
 };
 
-// ✅ 단가 관리용 partId (하이랙만 색상 완전 제거)
-export const generatePricePartId = (item) => {
-  if (!item) return 'unknown-part';
-  
-  const { rackType = '', name = '', specification = '' } = item;
-  
-  // 부품명 처리
-  let cleanName = String(name)
-    .replace(/[()]/g, '')
-    .replace(/\s+/g, '')
-    .replace(/\*/g, 'x');
-  
-  // 하이랙: 모든 색상 제거 (단가 통합용)
-  if (rackType === '하이랙') {
-    cleanName = cleanName
-      .replace(/메트그레이/g, '')
-      .replace(/오렌지/g, '')
-      .replace(/블루/g, '')
-      .replace(/매트/g, '');
-  }
-  
-  cleanName = cleanName.toLowerCase();
-  
-  if (specification && String(specification).trim()) {
-    const cleanSpec = String(specification).replace(/\s+/g, '').toLowerCase();
-    return `${rackType}-${cleanName}-${cleanSpec}`;
-  } else {
-    return `${rackType}-${cleanName}-`;
-  }
-};
-
 // 랙옵션 고유 ID 생성
 export const generateRackOptionId = (rackType, size, height, level, formType, color = '') => {
   const parts = [rackType, formType, size, height, level, color].filter(Boolean);
@@ -115,30 +85,11 @@ export const loadExtraOptionsPrices = () => {
   }
 };
 
-// 관리자 단가 저장
-export const saveAdminPrice = (partId, newPrice) => {
-  try {
-    const prices = loadAdminPrices();
-    const oldPrice = prices[partId] || 0;
-    
-    prices[partId] = Number(newPrice);
-    localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(prices));
-    
-    // 히스토리 저장
-    savePriceHistory(partId, oldPrice, newPrice);
-    
-    return true;
-  } catch (error) {
-    console.error('단가 저장 실패:', error);
-    return false;
-  }
-};
-
 // ✅ extra_options 단가 저장
-export const saveExtraOptionPrice = (optionKey, newPrice) => {
+export const saveExtraOptionsPrice = (optionId, price) => {
   try {
     const prices = loadExtraOptionsPrices();
-    prices[optionKey] = Number(newPrice);
+    prices[optionId] = Number(price);
     localStorage.setItem(EXTRA_OPTIONS_PRICES_KEY, JSON.stringify(prices));
     return true;
   } catch (error) {
@@ -147,46 +98,82 @@ export const saveExtraOptionPrice = (optionKey, newPrice) => {
   }
 };
 
-// 단가 히스토리 저장
-const savePriceHistory = (partId, oldPrice, newPrice) => {
+// 관리자 단가 저장
+export const saveAdminPrice = (partId, price, partInfo = {}) => {
   try {
-    const history = JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '[]');
-    history.push({
-      partId,
-      oldPrice,
-      newPrice,
-      timestamp: new Date().toISOString(),
-    });
+    const prices = loadAdminPrices();
+    const oldPrice = prices[partId]?.price || 0;
     
-    // 최근 100개만 보관
-    if (history.length > 100) {
-      history.splice(0, history.length - 100);
-    }
+    prices[partId] = {
+      price: Number(price),
+      ...partInfo,
+      updatedAt: new Date().toISOString()
+    };
     
-    localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(history));
+    localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(prices));
+    
+    // 히스토리 저장
+    savePriceHistory(partId, oldPrice, price);
+    
+    return true;
   } catch (error) {
-    console.error('히스토리 저장 실패:', error);
+    console.error('단가 저장 실패:', error);
+    return false;
   }
 };
 
-// 단가 히스토리 조회
-export const getPriceHistory = (partId = null) => {
-  try {
-    const history = JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '[]');
-    if (partId) {
-      return history.filter(h => h.partId === partId);
-    }
-    return history;
-  } catch (error) {
-    console.error('히스토리 조회 실패:', error);
-    return [];
-  }
-};
-
-// 최종 단가 조회 (관리자 수정 우선)
-export const getFinalPrice = (partId, basePrice = 0) => {
+// ✅ 실제 사용할 단가 계산 (우선순위: 관리자 수정 > 기존 단가)
+export const getEffectivePrice = (item) => {
+  const partId = generatePartId(item);
   const adminPrices = loadAdminPrices();
-  return adminPrices[partId] !== undefined ? adminPrices[partId] : basePrice;
+  
+  if (adminPrices[partId]?.price > 0) {
+    return adminPrices[partId].price;
+  }
+  
+  return Number(item.unitPrice) || 0;
+};
+
+// 랙옵션 레지스트리 저장
+export const saveRackOptionsRegistry = (registry) => {
+  try {
+    localStorage.setItem(RACK_OPTIONS_KEY, JSON.stringify(registry));
+    return true;
+  } catch (error) {
+    console.error('랙옵션 레지스트리 저장 실패:', error);
+    return false;
+  }
+};
+
+// 랙옵션 레지스트리 로드
+export const loadRackOptionsRegistry = () => {
+  try {
+    const stored = localStorage.getItem(RACK_OPTIONS_KEY) || '{}';
+    return JSON.parse(stored);
+  } catch (error) {
+    console.error('랙옵션 레지스트리 로드 실패:', error);
+    return {};
+  }
+};
+
+// 특정 랙옵션의 컴포넌트 조회
+export const getRackOptionComponents = (optionId) => {
+  const registry = loadRackOptionsRegistry();
+  return registry[optionId]?.components || [];
+};
+
+// 특정 부품을 사용하는 랙옵션들 조회
+export const getRackOptionsUsingPart = (partId) => {
+  const registry = loadRackOptionsRegistry();
+  const usingOptions = [];
+  
+  Object.values(registry).forEach(option => {
+    if (option.components && option.components.some(comp => comp.partId === partId)) {
+      usingOptions.push(option);
+    }
+  });
+  
+  return usingOptions;
 };
 
 // ✅ CSV 파싱 헬퍼 함수
@@ -357,83 +344,56 @@ export const loadAllMaterials = async () => {
   }
 };
 
-// 재고 데이터 로드
-export const loadInventory = () => {
+// 단가 히스토리 조회
+export const loadPriceHistory = (partId) => {
   try {
-    const stored = localStorage.getItem(INVENTORY_KEY) || '{}';
-    return JSON.parse(stored);
+    const history = JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '[]');
+    if (partId) {
+      return history.filter(h => h.partId === partId);
+    }
+    return history;
   } catch (error) {
-    console.error('재고 로드 실패:', error);
-    return {};
+    console.error('히스토리 조회 실패:', error);
+    return [];
   }
 };
 
-// 재고 저장
-export const saveInventory = (inventory) => {
+// 단가 히스토리 저장
+export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') => {
   try {
-    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-    return true;
+    const history = JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '[]');
+    history.push({
+      partId,
+      oldPrice,
+      newPrice,
+      rackOption,
+      timestamp: new Date().toISOString(),
+    });
+    
+    // 최근 100개만 보관
+    if (history.length > 100) {
+      history.splice(0, history.length - 100);
+    }
+    
+    localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(history));
   } catch (error) {
-    console.error('재고 저장 실패:', error);
-    return false;
-  }
-};
-
-// 특정 부품 재고 조회
-export const getInventoryQuantity = (partId) => {
-  const inventory = loadInventory();
-  return inventory[partId] || 0;
-};
-
-// 특정 부품 재고 수정
-export const updateInventoryQuantity = (partId, quantity) => {
-  try {
-    const inventory = loadInventory();
-    inventory[partId] = Number(quantity);
-    return saveInventory(inventory);
-  } catch (error) {
-    console.error('재고 수정 실패:', error);
-    return false;
-  }
-};
-
-// 랙옵션 레지스트리 저장
-export const saveRackOptionsRegistry = (registry) => {
-  try {
-    localStorage.setItem(RACK_OPTIONS_KEY, JSON.stringify(registry));
-    return true;
-  } catch (error) {
-    console.error('랙옵션 레지스트리 저장 실패:', error);
-    return false;
-  }
-};
-
-// 랙옵션 레지스트리 로드
-export const loadRackOptionsRegistry = () => {
-  try {
-    const stored = localStorage.getItem(RACK_OPTIONS_KEY) || '{}';
-    return JSON.parse(stored);
-  } catch (error) {
-    console.error('랙옵션 레지스트리 로드 실패:', error);
-    return {};
+    console.error('히스토리 저장 실패:', error);
   }
 };
 
 export default {
   generatePartId,
-  generatePricePartId,
   generateRackOptionId,
   loadAdminPrices,
   saveAdminPrice,
-  getFinalPrice,
-  getPriceHistory,
+  getEffectivePrice,
   loadAllMaterials,
-  loadInventory,
-  saveInventory,
-  getInventoryQuantity,
-  updateInventoryQuantity,
+  loadPriceHistory,
+  savePriceHistory,
   saveRackOptionsRegistry,
   loadRackOptionsRegistry,
+  getRackOptionComponents,
+  getRackOptionsUsingPart,
   loadExtraOptionsPrices,
-  saveExtraOptionPrice,
+  saveExtraOptionsPrice,
 };
