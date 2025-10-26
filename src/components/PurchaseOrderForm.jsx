@@ -224,7 +224,7 @@ const PurchaseOrderForm = () => {
       });
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {  // ← async 추가
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력해주세요.');
       documentNumberInputRef.current?.focus();
