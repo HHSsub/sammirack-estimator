@@ -275,22 +275,22 @@ class RealtimeAdminSync {
             if (!serverData && !localData) {
               continue;
             } else if (!serverData && localData) {
-              console.log(`💰 [${partId}] 로컬만 있음 → 서버 업로드 예정`);
+              // console.log(`💰 [${partId}] 로컬만 있음 → 서버 업로드 예정`);
               finalPrices[partId] = localData;
               needsServerUpdate = true;
             } else if (serverData && !localData) {
-              console.log(`💰 [${partId}] 서버만 있음 → 서버 데이터 사용`);
+              // console.log(`💰 [${partId}] 서버만 있음 → 서버 데이터 사용`);
               finalPrices[partId] = serverData;
             } else {
               const serverTime = new Date(serverData.timestamp || 0).getTime();
               const localTime = new Date(localData.timestamp || 0).getTime();
               
               if (localTime > serverTime) {
-                console.log(`💰 [${partId}] 로컬이 최신 (${new Date(localTime).toLocaleString()}) → 서버 업데이트 예정`);
+                // console.log(`💰 [${partId}] 로컬이 최신 (${new Date(localTime).toLocaleString()}) → 서버 업데이트 예정`);
                 finalPrices[partId] = localData;
                 needsServerUpdate = true;
               } else {
-                console.log(`💰 [${partId}] 서버가 최신 (${new Date(serverTime).toLocaleString()}) → 서버 데이터 사용`);
+                // console.log(`💰 [${partId}] 서버가 최신 (${new Date(serverTime).toLocaleString()}) → 서버 데이터 사용`);
                 finalPrices[partId] = serverData;
               }
             }
@@ -482,17 +482,6 @@ export const forceServerSync = async () => {
   }
 };
 
-// export const generatePartId = (item) => {
-//   if (!item) {
-//     console.warn('generatePartId: item이 undefined입니다');
-//     return 'unknown-part';
-//   }
-  
-//   const { rackType = '', name = '', specification = '' } = item;
-//   const cleanName = String(name).replace(/[^\w가-힣]/g, '');
-//   const cleanSpec = String(specification).replace(/[^\w가-힣]/g, '');
-//   return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-// };
 
 export const loadAdminPrices = () => {
   try {
