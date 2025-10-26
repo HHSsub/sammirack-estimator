@@ -3,7 +3,7 @@
  * 통합 단가 관리 시스템 - 최종 완성본
  * 
  * ✅ 2025-10-26 최종 수정:
- * 1. CSV 파일(all_materials_CORRECTED.csv)을 유일한 데이터 소스로 사용
+ * 1. CSV 파일(all_materials_list_v1.csv)을 유일한 데이터 소스로 사용
  * 2. 기존 서버 재고 데이터와 100% 호환
  * 3. partId 생성 규칙 완벽 재현:
  *    - x 절대 제거 안 함 (900x450 유지)
@@ -218,12 +218,12 @@ const parseCSV = (text) => {
 export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
-    console.log('📋 데이터 소스: all_materials_CORRECTED.csv');
+    console.log('📋 데이터 소스: all_materials_list_v1.csv');
     
     const materials = new Map();
     
     // ✅ 교정된 CSV 파일 로드
-    const csvResponse = await fetch('./all_materials_CORRECTED.csv');
+    const csvResponse = await fetch('./all_materials_list_v1.csv');
     if (!csvResponse.ok) {
       throw new Error(`CSV 파일 로드 실패: ${csvResponse.status}`);
     }
@@ -337,7 +337,7 @@ export const loadAllMaterials = async () => {
     // 에러 상세 정보
     if (error.message.includes('fetch')) {
       console.error('💡 힌트: CSV 파일이 public/ 폴더에 있는지 확인하세요.');
-      console.error('   파일명: all_materials_CORRECTED.csv');
+      console.error('   파일명: all_materials_list_v1.csv');
     }
     
     return [];
