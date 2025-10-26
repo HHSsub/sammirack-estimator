@@ -21,27 +21,64 @@ const INVENTORY_KEY = 'inventory_data';
 const RACK_OPTIONS_KEY = 'rack_options_registry';
 const EXTRA_OPTIONS_PRICES_KEY = 'extra_options_prices';
 
-// ✅ 색상을 제외한 부품 고유 ID 생성 (규격+무게만 사용)
+
+// ✅ 표준 partID 생성 함수 (전체 시스템에서 이것만 사용)
 export const generatePartId = (item) => {
-  const { rackType, name, specification } = item;
+  if (!item) {
+    console.warn('generatePartId: item이 undefined입니다');
+    return 'unknown-part';
+  }
   
-  // 이름에서 색상 관련 키워드 제거
-  const nameWithoutColor = (name || '')
+  const { rackType = '', name = '', specification = '' } = item;
+  
+  // 1. 색상 키워드 제거
+  const nameWithoutColor = String(name)
     .replace(/블루|메트그레이|오렌지|그레이|화이트/g, '')
     .replace(/\s+/g, ' ')
     .trim();
   
-  // specification에서도 색상 제거
-  const specWithoutColor = (specification || '')
+  const specWithoutColor = String(specification)
     .replace(/블루|메트그레이|오렌지|그레이|화이트/g, '')
     .replace(/\s+/g, ' ')
     .trim();
   
+  // 2. 특수문자 제거 (한글, 영문, 숫자만 남김)
   const cleanName = nameWithoutColor.replace(/[^\w가-힣]/g, '');
   const cleanSpec = specWithoutColor.replace(/[^\w가-힣]/g, '');
+  const cleanRackType = String(rackType).replace(/[^\w가-힣]/g, '');
   
-  return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
+  // 3. 소문자 변환
+  const partId = `${cleanRackType}-${cleanName}-${cleanSpec}`.toLowerCase();
+  
+  // 4. 디버깅용 로그 (필요시)
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[partID 생성] ${rackType} ${name} ${specification} → ${partId}`);
+  }
+  
+  return partId;
 };
+
+// ✅ 색상을 제외한 부품 고유 ID 생성 (규격+무게만 사용)
+// export const generatePartId = (item) => {
+//   const { rackType, name, specification } = item;
+  
+//   // 이름에서 색상 관련 키워드 제거
+//   const nameWithoutColor = (name || '')
+//     .replace(/블루|메트그레이|오렌지|그레이|화이트/g, '')
+//     .replace(/\s+/g, ' ')
+//     .trim();
+  
+//   // specification에서도 색상 제거
+//   const specWithoutColor = (specification || '')
+//     .replace(/블루|메트그레이|오렌지|그레이|화이트/g, '')
+//     .replace(/\s+/g, ' ')
+//     .trim();
+  
+//   const cleanName = nameWithoutColor.replace(/[^\w가-힣]/g, '');
+//   const cleanSpec = specWithoutColor.replace(/[^\w가-힣]/g, '');
+  
+//   return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
+// };
 
 // 랙옵션 고유 ID 생성
 export const generateRackOptionId = (rackType, size, height, level, formType, color = '') => {
