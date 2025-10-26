@@ -49,34 +49,53 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
         console.log(`  📦 BOM 항목 수: ${item.bom.length}`);
         
         item.bom.forEach((bomItem, bomIndex) => {
-          const partId = generatePartId(bomItem);
+          // ✅ 수정: partId 생성 시 rackType 보장
+          const safeItem = {
+            rackType: bomItem.rackType || item.selectedType || '미분류',
+            name: bomItem.name || '',
+            specification: bomItem.specification || ''
+          };
+          
+          const partId = generatePartId(safeItem);
           const requiredQty = Number(bomItem.quantity) || 0;
-          const currentStock = inventory[partId] || 0;
+          
+          // ✅ 수정: inventory에서 직접 숫자값 조회
+          let currentStock = 0;
+          if (typeof inventory[partId] === 'number') {
+            currentStock = inventory[partId];
+          } else if (typeof inventory[partId] === 'object' && inventory[partId] !== null) {
+            currentStock = Number(inventory[partId].quantity) || 0;
+          }
           
           console.log(`  - BOM ${bomIndex + 1}: ${bomItem.name}`);
           console.log(`    partId: ${partId}`);
           console.log(`    필요: ${requiredQty}, 현재재고: ${currentStock}`);
+          console.log(`    inventory[partId]:`, inventory[partId]);
           
           if (requiredQty > 0) {
             if (currentStock >= requiredQty) {
               // 충분한 재고가 있는 경우 감소
-              inventory[partId] = currentStock - requiredQty;
+              const newStock = currentStock - requiredQty;
+              
+              // ✅ 수정: 재고 저장 형식 통일 (숫자로 저장)
+              inventory[partId] = newStock;
+              
               deductedParts.push({
                 partId,
                 name: bomItem.name,
                 specification: bomItem.specification || '',
-                rackType: bomItem.rackType || '',
+                rackType: safeItem.rackType,
                 deducted: requiredQty,
-                remainingStock: inventory[partId]
+                remainingStock: newStock
               });
-              console.log(`    ✅ 재고 감소 완료: ${currentStock} → ${inventory[partId]}`);
+              console.log(`    ✅ 재고 감소 완료: ${currentStock} → ${newStock}`);
             } else {
               // 재고 부족 경고
               warnings.push({
                 partId,
                 name: bomItem.name,
                 specification: bomItem.specification || '',
-                rackType: bomItem.rackType || '',
+                rackType: safeItem.rackType,
                 required: requiredQty,
                 available: currentStock,
                 shortage: requiredQty - currentStock
@@ -452,16 +471,17 @@ useEffect(() => {
         username: currentUser?.username || 'admin',
         role: currentUser?.role || 'admin'
       };
-
+  
       const success = await saveInventorySync(partId, quantity, userInfo);
       
       if (success) {
+        // ✅ 수정: 로컬 상태도 숫자 형식으로 저장
         setInventory(prev => ({
           ...prev,
-          [partId]: quantity
+          [partId]: quantity  // 객체가 아닌 순수 숫자값
         }));
         
-        setSyncStatus('✅ 전세계 동기화됨');
+        setSyncStatus('✅ 모든 PC 동기화됨');
         setLastSyncTime(new Date());
       } else {
         setSyncStatus('❌ 저장 실패');
@@ -711,7 +731,15 @@ useEffect(() => {
   // 재고 수량 가져오기
   const getInventoryQuantity = (material) => {
     const partId = material.partId || generatePartId(material);
-    return inventory[partId] || 0;
+    const stockData = inventory[partId];
+    
+    // ✅ 수정: 다양한 형식 대응
+    if (typeof stockData === 'number') {
+      return stockData;
+    } else if (typeof stockData === 'object' && stockData !== null) {
+      return Number(stockData.quantity) || 0;
+    }
+    return 0;
   };
 
   // 표시 가격 정보 가져오기
