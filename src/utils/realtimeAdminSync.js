@@ -9,6 +9,7 @@ const INVENTORY_KEY = 'inventory_data';
 const ADMIN_PRICES_KEY = 'admin_edit_prices';
 const PRICE_HISTORY_KEY = 'admin_price_history';
 const ACTIVITY_LOG_KEY = 'admin_activity_log';
+import { generatePartId } from './unifiedPriceManager';
 
 class RealtimeAdminSync {
   constructor() {
@@ -481,17 +482,17 @@ export const forceServerSync = async () => {
   }
 };
 
-export const generatePartId = (item) => {
-  if (!item) {
-    console.warn('generatePartId: item이 undefined입니다');
-    return 'unknown-part';
-  }
+// export const generatePartId = (item) => {
+//   if (!item) {
+//     console.warn('generatePartId: item이 undefined입니다');
+//     return 'unknown-part';
+//   }
   
-  const { rackType = '', name = '', specification = '' } = item;
-  const cleanName = String(name).replace(/[^\w가-힣]/g, '');
-  const cleanSpec = String(specification).replace(/[^\w가-힣]/g, '');
-  return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-};
+//   const { rackType = '', name = '', specification = '' } = item;
+//   const cleanName = String(name).replace(/[^\w가-힣]/g, '');
+//   const cleanSpec = String(specification).replace(/[^\w가-힣]/g, '');
+//   return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
+// };
 
 export const loadAdminPrices = () => {
   try {
