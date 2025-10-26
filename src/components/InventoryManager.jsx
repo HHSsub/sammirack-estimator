@@ -21,6 +21,19 @@ function kgLabelFix(str) {
   return String(str).replace(/200kg/g, '270kg').replace(/350kg/g, '450kg');
 }
 
+// ✅ 규격 표시용 함수 추가 (x 유지)
+function formatSpecification(str) {
+  if (!str) return '-';
+  
+  // * → x 변환 (700*300 → 700x300)
+  let formatted = String(str).replace(/\*/g, 'x');
+  
+  // 무게 라벨 변환도 적용
+  formatted = kgLabelFix(formatted);
+  
+  return formatted;
+}
+
 // ✅ 재고 감소 함수 수정 (export 필요)
 // ✅ 서버 기반 재고 감소 함수
 export const deductInventoryOnPrint = async (cartItems, documentType = 'document', documentNumber = '') => {
@@ -1037,7 +1050,7 @@ useEffect(() => {
                         )}
                       </div>
                     </td>
-                    <td>{material.specification || '-'}</td>
+                    <td>{formatSpecification(material.specification)}</td>
                     <td>
                       <span className="rack-type">{material.rackType}</span>
                     </td>
