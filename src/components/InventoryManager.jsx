@@ -470,7 +470,7 @@ useEffect(() => {
 
   // 재고 수량 변경 (실시간 동기화)
   const handleInventoryChange = async (material, newQuantity) => {
-    const partId = material.partId || generatePartId(material);
+    const partId = generatePartId(material) || material.partId;
     const quantity = Math.max(0, Number(newQuantity) || 0);
     
     setSyncStatus('📤 저장 중...');
@@ -571,7 +571,7 @@ useEffect(() => {
     // 사용 중인 재고만 보기
     if (showOnlyInUse) {
       result = result.filter(material => {
-        const partId = material.partId || generatePartId(material);
+        const partId = generatePartId(material) || material.partId;
         return (inventory[partId] || 0) > 0;
       });
     }
@@ -591,8 +591,8 @@ useEffect(() => {
             bValue = b.rackType || '';
             break;
           case 'quantity':
-            aValue = inventory[a.partId || generatePartId(a)] || 0;
-            bValue = inventory[b.partId || generatePartId(b)] || 0;
+            aValue = inventory[generatePartId(a) || a.partId] || 0;
+            bValue = inventory[generatePartId(b) || b.partId] || 0;
             break;
           case 'price':
             aValue = getEffectivePrice(a);
@@ -622,7 +622,7 @@ useEffect(() => {
   // 체크박스 처리
   const handleSelectAll = (checked) => {
     if (checked) {
-      const allIds = new Set(filteredMaterials.map(m => m.partId || generatePartId(m)));
+      const allIds = new Set(filteredMaterials.map(m => generatePartId(m) || m.partId));
       setSelectedItems(allIds);
     } else {
       setSelectedItems(new Set());
@@ -681,7 +681,7 @@ useEffect(() => {
   const exportInventory = () => {
     try {
       const inventoryData = filteredMaterials.map(material => {
-        const partId = material.partId || generatePartId(material);
+        const partId = generatePartId(material) || material.partId;
         const quantity = inventory[partId] || 0;
         const effectivePrice = getEffectivePrice(material);
         
@@ -718,7 +718,7 @@ useEffect(() => {
   // 재고 가치 계산
   const getTotalInventoryValue = () => {
     return filteredMaterials.reduce((total, material) => {
-      const partId = material.partId || generatePartId(material);
+      const partId = generatePartId(material) || material.partId;
       const quantity = inventory[partId] || 0;
       const effectivePrice = getEffectivePrice(material);
       return total + (quantity * effectivePrice);
@@ -728,7 +728,7 @@ useEffect(() => {
   // 부족한 재고 알림
   const getLowStockItems = () => {
     return filteredMaterials.filter(material => {
-      const partId = material.partId || generatePartId(material);
+      const partId = generatePartId(material) || material.partId;
       const quantity = inventory[partId] || 0;
       return quantity <= 5;
     });
@@ -739,7 +739,7 @@ useEffect(() => {
 
   // 재고 수량 가져오기
   const getInventoryQuantity = (material) => {
-    const partId = material.partId || generatePartId(material);
+    const partId = generatePartId(material) || material.partId;
     const stockData = inventory[partId];
     
     // ✅ 수정: 다양한 형식 대응
@@ -754,7 +754,7 @@ useEffect(() => {
   // 표시 가격 정보 가져오기
   const getDisplayPrice = (material) => {
     const effectivePrice = getEffectivePrice(material);
-    const hasAdminPrice = adminPrices[material.partId || generatePartId(material)]?.price > 0;
+    const hasAdminPrice = adminPrices[generatePartId(material) || material.partId]?.price > 0;
     
     return {
       price: effectivePrice,
@@ -971,7 +971,7 @@ useEffect(() => {
             </thead>
             <tbody>
               {filteredMaterials.map((material, index) => {
-                const partId = material.partId || generatePartId(material);
+                const partId = generatePartId(material) || material.partId;
                 const quantity = getInventoryQuantity(material);
                 const { price, isModified } = getDisplayPrice(material);
                 const totalValue = quantity * price;
