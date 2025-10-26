@@ -313,7 +313,9 @@ export const ProductProvider=({children})=>{
         canonical.forEach(t=>{ if(!ej[t]) ej[t]={}; });
         // setExtraProducts(ej); // 기존 로직 대신 아래 로직으로 대체
         
-        const extraProducts = ejRaw.map(p=>({...p,unitPrice:getEffectivePrice(p)}));
+        const extraProducts = Array.isArray(ejRaw) 
+          ? ejRaw.map(p=>({...p,unitPrice:getEffectivePrice(p)})) 
+          : [];
         setExtraProducts(extraProducts);
         
         setAllOptions(allOpts);
