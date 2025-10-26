@@ -1,6 +1,7 @@
 // src/components/ShortageInventoryPanel.jsx
 import React, { useState, useEffect } from 'react';
-import { generatePartId } from './unifiedPriceManager';
+import { generatePartId } from '../utils/unifiedPriceManager'; // ✅ 통일된 함수 import
+
 
 const ShortageInventoryPanel = ({ 
   isVisible, 
