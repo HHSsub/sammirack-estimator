@@ -468,267 +468,146 @@ const extractWeightOnly = (colorStr) => {
   return match ? match[1] : '';
 };
 
-// ✅ 개선된 전체 원자재 목록 로드 (엑셀 기반 정확한 조합)
+// ✅ 완전 수정: 엑셀만 사용
 export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
-    
-    const [bomResponse, dataResponse, extraResponse, excelResponse] = await Promise.all([
-      fetch('./bom_data.json'),
-      fetch('./data.json'), 
-      fetch('./extra_options.json'),
-      fetch('./sammirack_all_rackoptions.xlsx')
-    ]);
-    
-    const bomData = await bomResponse.json();
-    const dataJson = await dataResponse.json();
-    const extraOptions = await extraResponse.json();
-    const excelBuffer = await excelResponse.arrayBuffer();
+    console.log('📋 단일 소스: sammirack_all_rackoptions.xlsx');
     
     const materials = new Map();
-    const optionsRegistry = {};
-
-    console.log('📁 데이터 파일 로드 완료');
     
-    // 1. bom_data.json에서 원자재 추출
-    console.log('📦 1단계: bom_data.json 처리 중...');
-    Object.keys(bomData).forEach(rackType => {
-      const rackData = bomData[rackType];
-      
-      Object.keys(rackData).forEach(formType => {
-        if (formType === '기본가격') return;
-        
-        const formData = rackData[formType];
-        
-        Object.keys(formData).forEach(size => {
-          const sizeData = formData[size];
-          
-          Object.keys(sizeData).forEach(height => {
-            const heightData = sizeData[height];
-            
-            Object.keys(heightData).forEach(level => {
-              const components = heightData[level]?.components || [];
-              const optionId = generateRackOptionId(rackType, size, height, level, formType);
-              
-              optionsRegistry[optionId] = {
-                rackType,
-                formType,
-                size,
-                height,
-                level,
-                componentIds: []
-              };
-              
-              components.forEach(comp => {
-                // ✅ 안전좌/베이스 제외 필터
-                const compName = comp.name || '';
-                if (compName.includes('베이스(안전좌)')) {
-                  console.log(`  ⏭️ 베이스(안전좌) 스킵: ${compName}`);
-                  return; // 파렛트랙에서 베이스(안전좌)는 추가하지 않음
-                }
-                
-                const partId = generatePartId({
-                  rackType,
-                  name: comp.name,
-                  specification: comp.specification || ''
-                });
-                
-                optionsRegistry[optionId].componentIds.push(partId);
-                
-                if (!materials.has(partId)) {
-                  const displayName = `${rackType} ${comp.name} ${comp.specification || ''}`.trim();
-                  materials.set(partId, {
-                    partId,
-                    rackType,
-                    name: comp.name,
-                    specification: comp.specification || '',
-                    unitPrice: comp.unitPrice || 0,
-                    displayName,
-                    source: 'bom_data',
-                    note: comp.note || ''
-                  });
-                  console.log(`  ➕ ${displayName}`);
-                }
-              });
-            });
-          });
-        });
-      });
-    });
-
-    // 2. 하이랙 자동 생성 부품 추가
-    console.log('🔧 2단계: 하이랙 부품 생성 중...');
-    const highrackData = dataJson['하이랙']?.['기본가격'] || {};
-    Object.keys(highrackData).forEach(color => {
-      const colorData = highrackData[color];
-      const weightOnly = extractWeightOnly(color);
-      
-      Object.keys(colorData).forEach(size => {
-        const sizeData = colorData[size];
-        
-        Object.keys(sizeData).forEach(height => {
-          const heightData = sizeData[height];
-          
-          Object.keys(heightData).forEach(level => {
-            const { w, d } = parseWD(size);
-            const rodBeamNum = d ? String(d) : '';
-            const shelfNum = w ? String(w) : '';
-            
-            const pillarSpec = `높이 ${height}${weightOnly ? ` ${weightOnly}` : ''}`;
-            const rodSpec = `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ''}`;
-            const shelfSpec = `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ''}`;
-            
-            // ✅ 안전핀 제거 - 하이랙은 안전핀을 사용하지 않음
-            const parts = [
-              { name: `기둥(${height})`, specification: pillarSpec },
-              { name: `로드빔(${rodBeamNum})`, specification: rodSpec },
-              { name: `선반(${shelfNum})`, specification: shelfSpec }
-            ];
-            
-            parts.forEach(part => {
-              const partId = generatePartId({
-                rackType: '하이랙',
-                name: part.name,
-                specification: part.specification
-              });
-              
-              if (!materials.has(partId)) {
-                const displayName = `하이랙 ${part.name} ${part.specification}`.trim();
-                materials.set(partId, {
-                  partId,
-                  rackType: '하이랙',
-                  name: part.name,
-                  specification: part.specification,
-                  unitPrice: 0,
-                  displayName,
-                  source: 'highrack_generated',
-                  note: ''
-                });
-                console.log(`  ➕ ${displayName}`);
-              }
-            });
-          });
-        });
-      });
-    });
-
-    // 3. 스텐랙 자동 생성 부품 추가
-    console.log('🔩 3단계: 스텐랙 부품 생성 중...');
-    const stainlessData = dataJson['스텐랙']?.['기본가격'] || {};
-    Object.keys(stainlessData).forEach(size => {
-      const sizeData = stainlessData[size];
-      
-      Object.keys(sizeData).forEach(height => {
-        const heightData = sizeData[height];
-        
-        Object.keys(heightData).forEach(level => {
-          const { w, d } = parseWD(size);
-          const rodBeamNum = d ? String(d) : '';
-          const shelfNum = w ? String(w) : '';
-          
-          const parts = [
-            { name: `기둥(${height})`, specification: `높이 ${height}` },
-            { name: `로드빔(${rodBeamNum})`, specification: rodBeamNum },
-            { name: `선반(${shelfNum})`, specification: `사이즈 ${size}` },
-            { name: '안전핀(스텐랙)', specification: '안전핀' }
-          ];
-          
-          parts.forEach(part => {
-            const partId = generatePartId({
-              rackType: '스텐랙',
-              name: part.name,
-              specification: part.specification
-            });
-            
-            if (!materials.has(partId)) {
-              const displayName = `스텐랙 ${part.name} ${part.specification}`.trim();
-              materials.set(partId, {
-                partId,
-                rackType: '스텐랙',
-                name: part.name,
-                specification: part.specification,
-                unitPrice: 0,
-                displayName,
-                source: 'stainless_generated',
-                note: ''
-              });
-              console.log(`  ➕ ${displayName}`);
-            }
-          });
-        });
-      });
-    });
-
-    // 4. extra_options.json에서 추가 옵션 부품 추가
-    console.log('📌 4단계: extra_options 부품 처리 중...');
-    Object.keys(extraOptions).forEach(rackType => {
-      const typeOptions = extraOptions[rackType];
-      
-      Object.keys(typeOptions).forEach(categoryName => {
-        const items = typeOptions[categoryName];
-        
-        if (Array.isArray(items)) {
-          items.forEach(option => {
-            if (option.bom && Array.isArray(option.bom)) {
-              option.bom.forEach(bomItem => {
-                const partId = generatePartId({
-                  rackType,
-                  name: bomItem.name,
-                  specification: bomItem.specification || ''
-                });
-                
-                if (!materials.has(partId)) {
-                  // ✅ 추가옵션 부품의 단가 계산
-                  // bom이 1개 부품으로만 구성된 경우, option.price를 부품 단가로 사용
-                  let calculatedUnitPrice = 0;
-                  if (option.bom.length === 1) {
-                    const qty = Number(bomItem.qty) || 1;
-                    calculatedUnitPrice = Math.floor(Number(option.price) / qty);
-                  }
-                  
-                  const displayName = `${rackType} ${bomItem.name} ${categoryName}`;
-                  materials.set(partId, {
-                    partId,
-                    rackType,
-                    name: bomItem.name,
-                    specification: bomItem.specification || '',
-                    unitPrice: calculatedUnitPrice,  // ✅ 계산된 단가 사용
-                    displayName,
-                    source: 'extra_options',
-                    categoryName: categoryName,
-                    extraOptionId: option.id,
-                    note: bomItem.note || ''
-                  });
-                  console.log(`  ➕ ${displayName} (단가: ${calculatedUnitPrice}원)`);
-                }
-              });
-            }
-          });
-        }
-      });
-    });
-
-    console.log(`✅ 원자재 로드 완료: 총 ${materials.size}개`);
-    // console.log(`   bom_data: ${Array.from(materials.values()).filter(m => m.source === 'bom_data').length}개`);
-    // console.log(`   highrack_generated: ${Array.from(materials.values()).filter(m => m.source === 'highrack_generated').length}개`);
-    // console.log(`   stainless_generated: ${Array.from(materials.values()).filter(m => m.source === 'stainless_generated').length}개`);
-    // console.log(`   extra_options: ${Array.from(materials.values()).filter(m => m.source === 'extra_options').length}개`);
-    
-    // optionsRegistry 가볍게 저장 (componentIds만, components 전체 제외)
-    try {
-      saveRackOptionsRegistry(optionsRegistry);
-      console.log(`✅ 랙옵션 레지스트리 저장 완료: ${Object.keys(optionsRegistry).length}개`);
-    } catch (error) {
-      console.warn('⚠️ 랙옵션 레지스트리 저장 실패 (용량 초과):', error.message);
+    // ✅ 엑셀 파일만 사용
+    const excelResponse = await fetch('./sammirack_all_rackoptions.xlsx');
+    if (!excelResponse.ok) {
+      throw new Error(`엑셀 파일 로드 실패: ${excelResponse.status}`);
     }
     
-    return Array.from(materials.values());
+    const excelBuffer = await excelResponse.arrayBuffer();
+    
+    // XLSX 라이브러리 동적 import
+    const XLSX = await import('xlsx');
+    const workbook = XLSX.read(excelBuffer, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const excelData = XLSX.utils.sheet_to_json(worksheet);
+    
+    console.log(`📊 엑셀 데이터: ${excelData.length}개 행 로드됨`);
+    
+    // 엑셀의 각 행을 부품으로 변환
+    let validCount = 0;
+    let skippedCount = 0;
+    
+    excelData.forEach((row, index) => {
+      const rackType = String(row['랙타입'] || '').trim();
+      const name = String(row['부품명'] || '').trim();
+      const specification = String(row['규격'] || '').trim();
+      const unitPrice = Number(row['단가']) || 0;
+      const displayName = String(row['표시명'] || '').trim();
+      const source = String(row['출처'] || '').trim();
+      const categoryName = String(row['카테고리'] || '').trim();
+      
+      // 빈 행이나 유효하지 않은 데이터 스킵
+      if (!rackType || !name) {
+        skippedCount++;
+        return;
+      }
+      
+      // ✅ generatePartId로 정규화된 partId 생성
+      const normalizedPartId = generatePartId({
+        rackType,
+        name,
+        specification
+      });
+      
+      // 중복 체크
+      if (materials.has(normalizedPartId)) {
+        console.warn(`⚠️ 중복 부품 발견: ${normalizedPartId} (행 ${index + 2})`);
+        return;
+      }
+      
+      materials.set(normalizedPartId, {
+        partId: normalizedPartId,
+        rackType,
+        name,
+        specification,
+        unitPrice,
+        displayName: displayName || `${rackType} ${name} ${specification}`.trim(),
+        source: source || 'excel',
+        categoryName: categoryName || '',
+        note: ''
+      });
+      
+      validCount++;
+      
+      // 디버깅: 처음 5개, 마지막 5개만 출력
+      if (validCount <= 5 || validCount > excelData.length - 5) {
+        console.log(`  ➕ [${validCount}] ${normalizedPartId}`);
+      } else if (validCount === 6) {
+        console.log(`  ... (중간 ${excelData.length - 10}개 생략)`);
+      }
+    });
+    
+    const finalMaterials = Array.from(materials.values());
+    
+    console.log(`\n✅ ===== 엑셀 기반 원자재 로드 완료 =====`);
+    console.log(`📦 총 부품 수: ${finalMaterials.length}개`);
+    console.log(`✅ 유효 부품: ${validCount}개`);
+    console.log(`⏭️  스킵된 행: ${skippedCount}개`);
+    
+    // 랙타입별 통계
+    const rackTypes = {};
+    finalMaterials.forEach(m => {
+      rackTypes[m.rackType] = (rackTypes[m.rackType] || 0) + 1;
+    });
+    
+    console.log('\n🏷️ 랙타입별 부품 수:');
+    Object.entries(rackTypes)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([type, count]) => {
+        console.log(`   - ${type}: ${count}개`);
+      });
+    
+    // ✅ 기존 재고 데이터와 호환성 확인
+    const existingInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+    const existingKeys = Object.keys(existingInventory);
+    const newKeys = new Set(finalMaterials.map(m => m.partId));
+    
+    const missingInNew = existingKeys.filter(k => !newKeys.has(k));
+    const matchCount = existingKeys.filter(k => newKeys.has(k)).length;
+    
+    console.log('\n🔍 기존 재고 데이터 호환성:');
+    console.log(`   - 기존 재고 부품: ${existingKeys.length}개`);
+    console.log(`   - 매칭: ${matchCount}개`);
+    
+    if (missingInNew.length > 0) {
+      console.warn(`   ⚠️  엑셀에 없는 부품: ${missingInNew.length}개`);
+      console.warn('   누락된 부품 (최대 10개):');
+      missingInNew.slice(0, 10).forEach(k => {
+        console.warn(`      - ${k}: ${existingInventory[k]}개`);
+      });
+      
+      if (missingInNew.length > 10) {
+        console.warn(`      ... 외 ${missingInNew.length - 10}개`);
+      }
+    } else {
+      console.log('   ✅ 모든 기존 재고 부품이 엑셀에 존재합니다!');
+    }
+    
+    return finalMaterials;
   } catch (error) {
-    console.error('❌ 전체 원자재 로드 실패:', error);
+    console.error('❌ 원자재 로드 실패:', error);
+    console.error('스택:', error.stack);
+    
+    // 에러 상세 정보
+    if (error.message.includes('fetch')) {
+      console.error('💡 힌트: 엑셀 파일이 public/ 폴더에 있는지 확인하세요.');
+    } else if (error.message.includes('XLSX')) {
+      console.error('💡 힌트: xlsx 라이브러리가 설치되어 있는지 확인하세요.');
+    }
+    
     return [];
   }
 };
-
 // Fallback 컴포넌트 생성 함수 (기존 로직 유지)
 const generateFallbackComponents = (rackType, size, height, level, formType) => {
   const components = [];
