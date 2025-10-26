@@ -449,17 +449,15 @@ export const adminSyncManager = {
 export const saveInventorySync = async (partId, quantity, userInfo = {}) => {
   try {
     const inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '{}');
-    inventory[partId] = quantity;
+    // ✅ 수정: 숫자 형식으로 저장 (객체가 아닌 순수 숫자값)
+    inventory[partId] = Number(quantity);
     localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-
     if (syncInstance) {
       syncInstance.broadcastUpdate('inventory-updated', { [partId]: quantity });
     }
-
     if (syncInstance) {
       syncInstance.debouncedSave();
     }
-
     return true;
   } catch (error) {
     console.error('재고 저장 실패:', error);
