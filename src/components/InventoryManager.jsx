@@ -73,6 +73,19 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
         console.log(`    specification: ${bomItem.specification}`);
         console.log(`    partId: ${partId}`);
         console.log(`    필요: ${requiredQty}, 현재재고: ${currentStock}`);
+
+        // ✅ 재고 데이터에서 해당 partId 검색 시도
+        if (currentStock === 0) {
+          // 재고가 0이면 유사한 partId 찾기
+          const similarKeys = Object.keys(inventory).filter(key => 
+            key.includes(bomItem.name.replace(/[^\w가-힣]/g, '').toLowerCase())
+          );
+          if (similarKeys.length > 0) {
+            console.log(`    ⚠️ 재고 0이지만 유사한 키 발견:`, similarKeys);
+            console.log(`    → 현재 partId: "${partId}"`);
+            console.log(`    → 재고에 저장된 유사 키들:`, similarKeys.map(k => `"${k}"`));
+          }
+        }
         
         if (requiredQty > 0) {
           if (currentStock >= requiredQty) {
