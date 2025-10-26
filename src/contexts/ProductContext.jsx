@@ -8,6 +8,7 @@ import {
   generatePartId,
   loadExtraOptionsPrices  // ✅ 추가
 } from '../utils/unifiedPriceManager';
+import { inventoryService } from '../services/InventoryService';
 
 const ProductContext = createContext();
 
@@ -175,6 +176,8 @@ export const ProductProvider=({children})=>{
   const [data,setData]=useState({});
   const [bomData,setBomData]=useState({});
   const [extraProducts,setExtraProducts]=useState({});
+  const [inventory, setInventory] = useState({}); // ✅ 서버 재고 상태
+  const [loadingInventory, setLoadingInventory] = useState(false); // ✅ 재고 로딩 상태
   const [loading,setLoading]=useState(true);
   const [allOptions,setAllOptions]=useState({types:[]});
   const [availableOptions,setAvailableOptions]=useState({});
@@ -222,6 +225,37 @@ export const ProductProvider=({children})=>{
       window.removeEventListener('extraOptionsPriceChanged', handleExtraOptionsPriceChange); // ✅ 추가
     };
   }, []);
+
+    // ✅ 서버에서 재고 데이터를 로드하는 함수
+  const loadInventory = useCallback(async () => {
+    setLoadingInventory(true);
+    try {
+      const inventoryData = await inventoryService.getInventory();
+      setInventory(inventoryData);
+      console.log('📦 서버 재고 데이터 로드 완료:', inventoryData);
+    } catch (error) {
+      console.error('서버 재고 데이터 로드 실패:', error);
+      // 실패 시 로컬 스토리지 데이터 사용 등 대체 로직 고려 가능
+    } finally {
+      setLoadingInventory(false);
+    }
+  }, []);
+
+  // ✅ 서버의 재고 데이터를 업데이트하는 함수
+  const updateInventory = useCallback(async (updates) => {
+    setLoadingInventory(true);
+    try {
+      const newInventory = await inventoryService.updateInventory(updates);
+      setInventory(newInventory);
+      console.log('📦 서버 재고 데이터 업데이트 완료:', newInventory);
+    } catch (error) {
+      console.error('서버 재고 데이터 업데이트 실패:', error);
+      throw error; // 에러를 호출자에게 전파
+    } finally {
+      setLoadingInventory(false);
+    }
+  }, []);
+
 
   // ✅ getEffectivePrice 함수를 먼저 정의하고 adminPricesVersion을 의존성에 추가
   const getEffectivePrice = useCallback((item) => {
