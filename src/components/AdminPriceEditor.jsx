@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   saveAdminPriceSync, 
   loadAdminPrices, 
-  generatePartId 
 } from '../utils/realtimeAdminSync';
+import { generatePartId } from '../utils/unifiedPriceManager'; // ✅ 통일된 함수 import
 
 // 변동 이력 관리 함수들
 const loadPriceHistory = (partId) => {
