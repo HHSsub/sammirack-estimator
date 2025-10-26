@@ -32,87 +32,82 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
   console.log('📦 카트 아이템:', cartItems);
   
   try {
-    // ✅ 수정: 올바른 로컬스토리지 키 사용
+    // ✅ 재고 데이터 로드
     const stored = localStorage.getItem('inventory_data') || '{}';
     const inventory = JSON.parse(stored);
     
     console.log('📦 현재 재고 상태:', inventory);
+    console.log('📦 재고 항목 수:', Object.keys(inventory).length);
     
     const deductedParts = [];
     const warnings = [];
     
-    // 모든 카트 아이템의 BOM 부품들을 추출하여 재고 감소
+    // ✅ 모든 카트 아이템의 BOM 처리
     cartItems.forEach((item, itemIndex) => {
-      console.log(`\n🔍 카트 아이템 ${itemIndex + 1}:`, item);
+      console.log(`\n🔍 카트 아이템 ${itemIndex + 1}:`, {
+        name: item.displayName || item.name,
+        quantity: item.quantity,
+        hasBOM: !!(item.bom && item.bom.length)
+      });
       
-      if (item.bom && Array.isArray(item.bom)) {
-        console.log(`  📦 BOM 항목 수: ${item.bom.length}`);
-        
-        item.bom.forEach((bomItem, bomIndex) => {
-          // ✅ 수정: partId 생성 시 rackType 보장
-          const safeItem = {
-            rackType: bomItem.rackType || item.selectedType || '미분류',
-            name: bomItem.name || '',
-            specification: bomItem.specification || ''
-          };
-          
-          const partId = generatePartId(safeItem);
-          const requiredQty = Number(bomItem.quantity) || 0;
-          
-          // ✅ 수정: inventory에서 직접 숫자값 조회
-          let currentStock = 0;
-          if (typeof inventory[partId] === 'number') {
-            currentStock = inventory[partId];
-          } else if (typeof inventory[partId] === 'object' && inventory[partId] !== null) {
-            currentStock = Number(inventory[partId].quantity) || 0;
-          }
-          
-          console.log(`  - BOM ${bomIndex + 1}: ${bomItem.name}`);
-          console.log(`    partId: ${partId}`);
-          console.log(`    필요: ${requiredQty}, 현재재고: ${currentStock}`);
-          console.log(`    inventory[partId]:`, inventory[partId]);
-          
-          if (requiredQty > 0) {
-            if (currentStock >= requiredQty) {
-              // 충분한 재고가 있는 경우 감소
-              const newStock = currentStock - requiredQty;
-              
-              // ✅ 수정: 재고 저장 형식 통일 (숫자로 저장)
-              inventory[partId] = newStock;
-              
-              deductedParts.push({
-                partId,
-                name: bomItem.name,
-                specification: bomItem.specification || '',
-                rackType: safeItem.rackType,
-                deducted: requiredQty,
-                remainingStock: newStock
-              });
-              console.log(`    ✅ 재고 감소 완료: ${currentStock} → ${newStock}`);
-            } else {
-              // 재고 부족 경고
-              warnings.push({
-                partId,
-                name: bomItem.name,
-                specification: bomItem.specification || '',
-                rackType: safeItem.rackType,
-                required: requiredQty,
-                available: currentStock,
-                shortage: requiredQty - currentStock
-              });
-              console.log(`    ⚠️ 재고 부족: 필요 ${requiredQty}, 가용 ${currentStock}`);
-            }
-          }
-        });
-      } else {
+      if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
         console.log(`  ⚠️ BOM 데이터 없음`);
+        return;
       }
+      
+      console.log(`  📦 BOM 항목 수: ${item.bom.length}`);
+      
+      item.bom.forEach((bomItem, bomIndex) => {
+        // ✅ 통일된 partID 생성 함수 사용
+        const partId = generatePartId({
+          rackType: bomItem.rackType || '',
+          name: bomItem.name || '',
+          specification: bomItem.specification || ''
+        });
+        
+        const requiredQty = Number(bomItem.quantity) || 0;
+        const currentStock = inventory[partId] || 0;
+        
+        console.log(`  - BOM ${bomIndex + 1}: ${bomItem.name}`);
+        console.log(`    rackType: ${bomItem.rackType}`);
+        console.log(`    specification: ${bomItem.specification}`);
+        console.log(`    partId: ${partId}`);
+        console.log(`    필요: ${requiredQty}, 현재재고: ${currentStock}`);
+        
+        if (requiredQty > 0) {
+          if (currentStock >= requiredQty) {
+            // ✅ 충분한 재고 - 감소
+            inventory[partId] = currentStock - requiredQty;
+            deductedParts.push({
+              partId,
+              name: bomItem.name,
+              specification: bomItem.specification || '',
+              rackType: bomItem.rackType || '',
+              deducted: requiredQty,
+              remainingStock: inventory[partId]
+            });
+            console.log(`    ✅ 재고 감소: ${currentStock} → ${inventory[partId]}`);
+          } else {
+            // ✅ 재고 부족 - 경고
+            warnings.push({
+              partId,
+              name: bomItem.name,
+              specification: bomItem.specification || '',
+              rackType: bomItem.rackType || '',
+              required: requiredQty,
+              available: currentStock,
+              shortage: requiredQty - currentStock
+            });
+            console.log(`    ⚠️ 재고 부족: 필요 ${requiredQty}, 가용 ${currentStock}, 부족 ${requiredQty - currentStock}`);
+          }
+        }
+      });
     });
     
-    // ✅ 수정: 올바른 로컬스토리지 키로 저장
+    // ✅ 재고 저장
     localStorage.setItem('inventory_data', JSON.stringify(inventory));
     
-    // 재고 업데이트 이벤트 발생
+    // ✅ 이벤트 발생
     window.dispatchEvent(new CustomEvent('inventoryUpdated', {
       detail: {
         documentType,
@@ -123,9 +118,23 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
       }
     }));
     
-    console.log('\n📋 재고 감소 결과:');
+    console.log('\n📋 재고 감소 결과 요약:');
     console.log(`  ✅ 성공적으로 감소된 부품: ${deductedParts.length}개`);
     console.log(`  ⚠️  재고 부족 경고: ${warnings.length}개`);
+    
+    if (deductedParts.length > 0) {
+      console.log('\n  ✅ 감소된 부품 상세:');
+      deductedParts.forEach(p => {
+        console.log(`    - ${p.name} (${p.specification}): ${p.deducted}개 감소, 남은 재고: ${p.remainingStock}`);
+      });
+    }
+    
+    if (warnings.length > 0) {
+      console.log('\n  ⚠️  부족한 부품 상세:');
+      warnings.forEach(w => {
+        console.log(`    - ${w.name} (${w.specification}): 필요 ${w.required}, 가용 ${w.available}, 부족 ${w.shortage}`);
+      });
+    }
     
     return {
       success: true,
