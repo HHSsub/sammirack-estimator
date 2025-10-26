@@ -147,7 +147,7 @@ const ensureSpecification=(row,ctx={})=>{
     }
     // ✅ 기둥 (높이만)
     else if(/^기둥$/.test(nm) && height) {
-      row.specification=``;
+      row.specification=`${height}`;  // 높이 값 명시!
     }
     // ✅ 로드빔
     else if(/^로드빔$/.test(nm)){
