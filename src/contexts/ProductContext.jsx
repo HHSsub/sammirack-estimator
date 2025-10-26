@@ -1060,6 +1060,8 @@ const getFallbackBOM = () => {
     cartBOMView,
     cartTotal,
     cartBOMTotalCalc,
+    inventory, // ✅ 서버 재고 상태 노출
+    loadingInventory, // ✅ 재고 로딩 상태 노출
     // 추가 옵션 & 커스텀 자재
     extraOptionsSel,
     customMaterials,
@@ -1083,7 +1085,10 @@ const getFallbackBOM = () => {
     clearCustomMaterials,
     setTotalBomQuantity,
     // ✅ getEffectivePrice 함수 노출
-    getEffectivePrice
+    getEffectivePrice,
+    // ✅ 재고 관리 함수 노출
+    loadInventory,
+    updateInventory,
   };
 
   return (
