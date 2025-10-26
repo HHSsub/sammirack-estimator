@@ -709,10 +709,10 @@ export const loadAllMaterials = async () => {
     });
 
     console.log(`✅ 원자재 로드 완료: 총 ${materials.size}개`);
-    console.log(`   bom_data: ${Array.from(materials.values()).filter(m => m.source === 'bom_data').length}개`);
-    console.log(`   highrack_generated: ${Array.from(materials.values()).filter(m => m.source === 'highrack_generated').length}개`);
-    console.log(`   stainless_generated: ${Array.from(materials.values()).filter(m => m.source === 'stainless_generated').length}개`);
-    console.log(`   extra_options: ${Array.from(materials.values()).filter(m => m.source === 'extra_options').length}개`);
+    // console.log(`   bom_data: ${Array.from(materials.values()).filter(m => m.source === 'bom_data').length}개`);
+    // console.log(`   highrack_generated: ${Array.from(materials.values()).filter(m => m.source === 'highrack_generated').length}개`);
+    // console.log(`   stainless_generated: ${Array.from(materials.values()).filter(m => m.source === 'stainless_generated').length}개`);
+    // console.log(`   extra_options: ${Array.from(materials.values()).filter(m => m.source === 'extra_options').length}개`);
     
     // optionsRegistry 가볍게 저장 (componentIds만, components 전체 제외)
     try {
