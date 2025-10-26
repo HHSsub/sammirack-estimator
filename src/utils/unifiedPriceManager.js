@@ -38,7 +38,7 @@ export const generatePartId = (item) => {
   // 하이랙 전용: 색상 처리
   if (rackType === '하이랙') {
     cleanName = cleanName
-      .replace(/메트그레이/g, '매트')  // 메트그레이 → 매트
+      .replace(/메트그레이/g, '')  // 메트그레이 제거
       .replace(/오렌지/g, '')        // 오렌지 제거
       .replace(/블루/g, '');          // 블루 제거
   }
