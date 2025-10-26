@@ -22,7 +22,8 @@ function kgLabelFix(str) {
 }
 
 // ✅ 재고 감소 함수 수정 (export 필요)
-export const deductInventoryOnPrint = (cartItems, documentType = 'document', documentNumber = '') => {
+// ✅ 서버 기반 재고 감소 함수
+export const deductInventoryOnPrint = async (cartItems, documentType = 'document', documentNumber = '') => {
   if (!cartItems || !Array.isArray(cartItems)) {
     console.warn('재고 감소: 유효하지 않은 카트 데이터');
     return { success: false, message: '유효하지 않은 데이터' };
@@ -32,17 +33,18 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
   console.log('📦 카트 아이템:', cartItems);
   
   try {
-    // ✅ 재고 데이터 로드
-    const stored = localStorage.getItem('inventory_data') || '{}';
-    const inventory = JSON.parse(stored);
+    // ✅ 1. 서버에서 최신 재고 데이터 가져오기
+    const { inventoryService } = await import('../services/InventoryService');
+    const serverInventory = await inventoryService.getInventory();
     
-    console.log('📦 현재 재고 상태:', inventory);
-    console.log('📦 재고 항목 수:', Object.keys(inventory).length);
+    console.log('📦 서버 재고 데이터:', serverInventory);
+    console.log('📦 서버 재고 항목 수:', Object.keys(serverInventory).length);
     
     const deductedParts = [];
     const warnings = [];
+    const updates = {};
     
-    // ✅ 모든 카트 아이템의 BOM 처리
+    // ✅ 2. 모든 카트 아이템의 BOM 처리
     cartItems.forEach((item, itemIndex) => {
       console.log(`\n🔍 카트 아이템 ${itemIndex + 1}:`, {
         name: item.displayName || item.name,
@@ -56,9 +58,10 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
       }
       
       console.log(`  📦 BOM 항목 수: ${item.bom.length}`);
+      console.log(`  📦 BOM 전체 데이터:`, JSON.stringify(item.bom, null, 2));
       
       item.bom.forEach((bomItem, bomIndex) => {
-        // ✅ 통일된 partID 생성 함수 사용
+        // ✅ 3. partId 생성 (generatePartId 사용)
         const partId = generatePartId({
           rackType: bomItem.rackType || '',
           name: bomItem.name || '',
@@ -66,42 +69,54 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
         });
         
         const requiredQty = Number(bomItem.quantity) || 0;
-        const currentStock = inventory[partId] || 0;
+        const currentStock = Number(serverInventory[partId]) || 0;
         
-        console.log(`  - BOM ${bomIndex + 1}: ${bomItem.name}`);
-        console.log(`    rackType: ${bomItem.rackType}`);
-        console.log(`    specification: ${bomItem.specification}`);
-        console.log(`    partId: ${partId}`);
-        console.log(`    필요: ${requiredQty}, 현재재고: ${currentStock}`);
-
-        // ✅ 재고 데이터에서 해당 partId 검색 시도
+        console.log(`\n  📌 BOM ${bomIndex + 1}: ${bomItem.name}`);
+        console.log(`    rackType: "${bomItem.rackType}"`);
+        console.log(`    name: "${bomItem.name}"`);
+        console.log(`    specification: "${bomItem.specification}"`);
+        console.log(`    🔑 생성된 partId: "${partId}"`);
+        console.log(`    📊 서버 재고: ${currentStock}개`);
+        console.log(`    📈 필요 수량: ${requiredQty}개`);
+        
+        // ✅ 4. 재고가 0인 경우 디버깅 정보 출력
         if (currentStock === 0) {
-          // 재고가 0이면 유사한 partId 찾기
-          const similarKeys = Object.keys(inventory).filter(key => 
-            key.includes(bomItem.name.replace(/[^\w가-힣]/g, '').toLowerCase())
-          );
+          console.log(`    ❌ 재고 0! 서버에 이 partId가 없음`);
+          console.log(`    🔍 서버에 있는 유사 부품명 검색...`);
+          
+          const cleanName = bomItem.name.replace(/[^\w가-힣]/g, '').toLowerCase();
+          const similarKeys = Object.keys(serverInventory).filter(key => {
+            const keyName = key.split('-')[1] || '';
+            return keyName.includes(cleanName) || cleanName.includes(keyName);
+          });
+          
           if (similarKeys.length > 0) {
-            console.log(`    ⚠️ 재고 0이지만 유사한 키 발견:`, similarKeys);
-            console.log(`    → 현재 partId: "${partId}"`);
-            console.log(`    → 재고에 저장된 유사 키들:`, similarKeys.map(k => `"${k}"`));
+            console.log(`    📋 서버에 있는 유사 키 (최대 5개):`);
+            similarKeys.slice(0, 5).forEach(k => {
+              console.log(`       - "${k}" (재고: ${serverInventory[k]}개)`);
+            });
+          } else {
+            console.log(`    📋 서버에 유사한 키도 없음`);
           }
         }
         
         if (requiredQty > 0) {
           if (currentStock >= requiredQty) {
-            // ✅ 충분한 재고 - 감소
-            inventory[partId] = currentStock - requiredQty;
+            // ✅ 5. 충분한 재고 - 감소 예약
+            const newStock = currentStock - requiredQty;
+            updates[partId] = newStock;
+            
             deductedParts.push({
               partId,
               name: bomItem.name,
               specification: bomItem.specification || '',
               rackType: bomItem.rackType || '',
               deducted: requiredQty,
-              remainingStock: inventory[partId]
+              remainingStock: newStock
             });
-            console.log(`    ✅ 재고 감소: ${currentStock} → ${inventory[partId]}`);
+            console.log(`    ✅ 재고 감소 예약: ${currentStock} → ${newStock}`);
           } else {
-            // ✅ 재고 부족 - 경고
+            // ✅ 6. 재고 부족 - 경고
             warnings.push({
               partId,
               name: bomItem.name,
@@ -111,16 +126,27 @@ export const deductInventoryOnPrint = (cartItems, documentType = 'document', doc
               available: currentStock,
               shortage: requiredQty - currentStock
             });
-            console.log(`    ⚠️ 재고 부족: 필요 ${requiredQty}, 가용 ${currentStock}, 부족 ${requiredQty - currentStock}`);
+            console.log(`    ⚠️ 재고 부족: 필요 ${requiredQty}, 가용 ${currentStock}`);
           }
         }
       });
     });
     
-    // ✅ 재고 저장
-    localStorage.setItem('inventory_data', JSON.stringify(inventory));
+    // ✅ 7. 서버에 재고 업데이트
+    if (Object.keys(updates).length > 0) {
+      console.log('\n📤 서버에 재고 업데이트 전송:', updates);
+      await inventoryService.updateInventory(updates);
+      console.log('✅ 서버 재고 업데이트 완료');
+      
+      // ✅ 8. 로컬스토리지도 동기화 (보조용)
+      const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+      Object.entries(updates).forEach(([partId, newStock]) => {
+        localInventory[partId] = newStock;
+      });
+      localStorage.setItem('inventory_data', JSON.stringify(localInventory));
+    }
     
-    // ✅ 이벤트 발생
+    // ✅ 9. 이벤트 발생
     window.dispatchEvent(new CustomEvent('inventoryUpdated', {
       detail: {
         documentType,
