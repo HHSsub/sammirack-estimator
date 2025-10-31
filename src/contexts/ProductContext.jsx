@@ -351,12 +351,7 @@ export const ProductProvider=({children})=>{
         // 4. 추가 옵션 가격 로드 (기존 로직 유지)
         const ej={...(ejRaw||{})};
         canonical.forEach(t=>{ if(!ej[t]) ej[t]={}; });
-        // setExtraProducts(ej); // 기존 로직 대신 아래 로직으로 대체
-        
-        const extraProducts = Array.isArray(ejRaw) 
-          ? ejRaw.map(p=>({...p,unitPrice:getEffectivePrice(p)})) 
-          : [];
-        setExtraProducts(extraProducts);
+        setExtraProducts(ej);  // ✅ 객체 그대로 설정
         
         setAllOptions(allOpts);
         setSelectedType(allTypes[0]||"");
