@@ -230,6 +230,14 @@ export default function OptionSelector() {
       ? Object.entries(extraProducts[selectedType])
       : [];
 
+  console.log('🔍 추가옵션 디버깅:', {
+    selectedType,
+    extraProducts,
+    extraProductsForType: extraProducts[selectedType],
+    extraCatList,
+    extraCatListLength: extraCatList.length
+  });
+    
   // 가격 표시 여부 결정 - 필수 옵션이 모두 선택된 경우만 표시
   const showPrice = selectedType && (
     (formTypeRacks.includes(selectedType) && 
