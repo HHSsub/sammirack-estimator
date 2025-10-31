@@ -106,7 +106,9 @@ const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    const partId = generatePartId(item); // ✅ import한 함수 사용
+    // 수정: item에 partId가 있으면 사용, 없으면 생성
+    const partId = item.partId || generatePartId(item); // ✅ 수정
+    // const partId = generatePartId(item); // ✅ import한 함수 사용
     const adminPrice = priceData[partId];
     
     console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
