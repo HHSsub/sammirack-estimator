@@ -182,11 +182,15 @@ const HistoryPage = () => {
   const editItem = (item) => {
     if (!item || !item.type) return;
     
+    // 견적서와 청구서의 편집 버튼 클릭 시, 문서 편집 화면으로 이동하도록 수정
     if (item.type === 'estimate') {
+      // EstimateForm은 OptionSelector를 거치지 않고 바로 편집 모드로 진입해야 함
       navigate(`/estimate/edit/${item.id}`, { state: { item } });
     } else if (item.type === 'purchase') {
+      // PurchaseOrderForm은 OptionSelector를 거치지 않고 바로 편집 모드로 진입해야 함
       navigate(`/purchase-order/edit/${item.id}`, { state: { item } });
     } else if (item.type === 'delivery') {
+      // DeliveryNoteForm은 OptionSelector를 거치지 않고 바로 편집 모드로 진입해야 함
       navigate(`/delivery-note/edit/${item.id}`, { state: { item } });
     }
   };
