@@ -331,7 +331,7 @@ export const ProductProvider=({children})=>{
       try{
         // 1. Gist에서 BOM 데이터 로드 (기존 로직 유지)
         const dj=await (await fetch("./data.json")).json();
-        const bj=await (await fetch("./bom_data.json")).json();
+        const bj=await (await fetch("./bom_data_weight_added.json")).json(); // bom_data
         const ejRaw=await (await fetch("./extra_options.json")).json();
         
         // 2. ✅ 서버 재고 데이터 로드 (추가된 핵심 로직)
