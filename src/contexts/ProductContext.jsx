@@ -106,8 +106,8 @@ const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    // 수정: item에 partId가 있으면 사용, 없으면 생성
-    const partId = item.partId || generatePartId(item); // ✅ 수정
+    // 수정: item에 partId를 통일된 양식으로 우선 생송시도 없으면 이전 partid
+    const partId = generatePartId(item) || item.partId ; // ✅ 수정
     // const partId = generatePartId(item); // ✅ import한 함수 사용
     const adminPrice = priceData[partId];
     
