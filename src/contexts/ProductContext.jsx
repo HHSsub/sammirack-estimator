@@ -129,46 +129,48 @@ const applyAdminEditPrice = (item) => {
   return item;
 };
 
-const ensureSpecification=(row,ctx={})=>{
-  if(!row) return row;
-  const {size,height,weight}=ctx;
-  row.name = normalizePartName(row.name||"");
+const ensureSpecification = (row, ctx = {}) => {
+  if (!row) return row;
+  const { size, height, weight } = ctx;
+  row.name = normalizePartName(row.name || "");
   const weightOnly = weight ? extractWeightOnly(weight) : "";
-  
-  if(!row.specification || !row.specification.trim()){
-    const nm=row.name||"";
-    
+
+  // ✅ 파렛트랙 3t 전용 플래그
+  const isPalletRack3t = row.rackType === "파렛트랙" && String(weight).trim() === "3t";
+
+  if (!row.specification || !row.specification.trim()) {
+    const nm = row.name || "";
+
     // ✅ 하드웨어 (specification 빈 문자열)
-    if(/브러싱고무|브레싱고무|브레싱볼트|앙카볼트/.test(nm)){
-      row.specification="";
+    if (/브러싱고무|브레싱고무|브레싱볼트|앙카볼트/.test(nm)) {
+      row.specification = "";
     }
     // ✅ 브레싱
-    else if(/(수평|경사)브레?싱/.test(nm)){
-      const {d}=parseWD(size||"");
-      row.specification=d?`${d}`:"";
+    else if (/(수평|경사)브레?싱/.test(nm)) {
+      const { d } = parseWD(size || "");
+      row.specification = d ? `${d}` : "";
     }
-    // ✅ 기둥 (높이만)
-    else if(/^기둥$/.test(nm) && height) {
-      row.specification=`${height}`;  // 높이 값 명시!
+    // ✅ 기둥
+    else if (/^기둥$/.test(nm) && height) {
+      row.specification = `${height}`;
     }
     // ✅ 로드빔
-    else if(/^로드빔$/.test(nm)){
-      const {w}=parseWD(size||"");
-      row.specification=w?`${w}`:"";
+    else if (/^로드빔$/.test(nm)) {
+      const { w } = parseWD(size || "");
+      row.specification = w ? `${w}` : "";
     }
     // ✅ 타이빔
-    else if(/^타이빔$/.test(nm)){
-      const {d}=parseWD(size||"");
-      row.specification=d?`${d}`:"";
+    else if (/^타이빔$/.test(nm)) {
+      const { d } = parseWD(size || "");
+      row.specification = d ? `${d}` : "";
     }
     // ✅ 선반
-    else if(/^선반$/.test(nm)){
-      const {w,d}=parseWD(size||"");
-      if(row.rackType==="경량랙"||row.rackType==="중량랙"){
-        // 수정: W와 D를 포함하여 specification을 "W900xD300" 형태로 만듭니다.
-        row.specification=w&&d?`W${w}xD${d}`:"";
+    else if (/^선반$/.test(nm)) {
+      const { w, d } = parseWD(size || "");
+      if (row.rackType === "경량랙" || row.rackType === "중량랙") {
+        row.specification = w && d ? `W${w}xD${d}` : "";
       } else {
-        row.specification=`사이즈 ${size||""}${weightOnly?` ${weightOnly}`:""}`;
+        row.specification = `사이즈 ${size || ""}${weightOnly ? ` ${weightOnly}` : ""}`;
       }
     }
     // ✅ 받침
@@ -182,38 +184,41 @@ const ensureSpecification=(row,ctx={})=>{
       row.specification = w ? `W${w}` : "";
     }
     // ✅ 안전핀/안전좌
-    else if(/^안전핀$/.test(nm)||/^안전좌$/.test(nm)){
-      row.specification="";
+    else if (/^안전핀$/.test(nm) || /^안전좌$/.test(nm)) {
+      row.specification = "";
     }
-    // ✅ 하이랙 기둥
-    else if(/기둥\(/.test(nm)&&height&&row.rackType==="하이랙") {
-      row.specification=`높이 ${height}${weightOnly?` ${weightOnly}`:""}`;
+    // ✅ 하이랙
+    else if (/기둥\(/.test(nm) && height && row.rackType === "하이랙") {
+      row.specification = `높이 ${height}${weightOnly ? ` ${weightOnly}` : ""}`;
+    } else if (/로드빔\(/.test(nm) && row.rackType === "하이랙") {
+      const m = nm.match(/\((\d+)\)/);
+      if (m) row.specification = `${m[1]}${weightOnly ? ` ${weightOnly}` : ""}`;
+    } else if (/선반\(/.test(nm) && row.rackType === "하이랙") {
+      row.specification = `사이즈 ${size || ""}${weightOnly ? ` ${weightOnly}` : ""}`;
     }
-    // ✅ 하이랙 로드빔
-    else if(/로드빔\(/.test(nm)&&row.rackType==="하이랙"){
-      const m=nm.match(/\((\d+)\)/); 
-      if(m) row.specification=`${m[1]}${weightOnly?` ${weightOnly}`:""}`;
-    }
-    // ✅ 하이랙 선반
-    else if(/선반\(/.test(nm)&&row.rackType==="하이랙"){
-      row.specification=`사이즈 ${size||""}${weightOnly?` ${weightOnly}`:""}`;
-    }
-    // ✅ 스텐랙 기둥
-    else if(/기둥\(/.test(nm)&&height&&row.rackType==="스텐랙") {
-      row.specification=`높이 ${height}`;
-    }
-    // ✅ 스텐랙 선반
-    else if(/선반\(/.test(nm)&&row.rackType==="스텐랙"){
-      row.specification=`사이즈 ${size||""}`;
-    }
-    else if(!row.specification && size){
-      row.specification=``;
+    // ✅ 스텐랙
+    else if (/기둥\(/.test(nm) && height && row.rackType === "스텐랙") {
+      row.specification = `높이 ${height}`;
+    } else if (/선반\(/.test(nm) && row.rackType === "스텐랙") {
+      row.specification = `사이즈 ${size || ""}`;
+    } else if (!row.specification && size) {
+      row.specification = ``;
     }
   } else {
-    if(weightOnly && row.rackType==="하이랙" && !row.specification.includes(weightOnly)){
-      row.specification=`${row.specification} ${weightOnly}`;
+    // ✅ 기존 specification이 존재하는 경우 하이랙 무게 추가
+    if (weightOnly && row.rackType === "하이랙" && !row.specification.includes(weightOnly)) {
+      row.specification = `${row.specification} ${weightOnly}`;
     }
   }
+
+  // ✅ 추가 규칙: 파렛트랙 & 3t일 경우 `_3t` suffix 부착
+  if (isPalletRack3t && row.specification) {
+    // 이미 _3t이 붙어있지 않다면 추가
+    if (!/_3t$/i.test(row.specification)) {
+      row.specification = `${row.specification}_3t`;
+    }
+  }
+
   return row;
 };
 
