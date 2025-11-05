@@ -1180,6 +1180,11 @@ export const ProductProvider=({children})=>{
     // setCurrentBOM(bom);
     setCurrentBOM(mergeDuplicateParts(bom))
     setTotalBomQuantity(bom.reduce((sum,item)=>sum+(Number(item.quantity)||0),0));
+
+    // ✅ 추가: BOM이 바뀌면 가격도 즉시 재계산
+    const newPrice = calculatePrice();
+    console.log(`💰 BOM 변경 감지 - 가격 재계산: ${newPrice}원`);
+    setCurrentPrice(newPrice);
   },[calculateCurrentBOM]);
 
   // ✅ calculatePrice가 변경될 때마다 가격 업데이트 + 강제 재계산
