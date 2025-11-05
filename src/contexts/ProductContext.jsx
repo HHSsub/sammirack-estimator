@@ -836,10 +836,14 @@ export const ProductProvider=({children})=>{
       
       let filteredBase = base.filter(i => !i.name.includes("철판"));
       appendCommonHardwareIfMissing(filteredBase, qty);
-      
+
+      // ✅ 파렛트랙만 weight 추가
       const filtered = [...filteredBase, ...makeExtraOptionBOM()]
         .filter(r => !/베이스볼트/.test(r.name))
-        .map(r => ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) }));
+        .map(r => 
+          ensureSpecification(r, { size: sz,height: ht,...parseWD(sz),
+    ...(selectedType === "파렛트랙" ? { weight: selectedOptions.weight || "" } : {})
+  }));
       const filteredWithAdminPrices = filtered.map(applyAdminEditPrice);
       return sortBOMByMaterialRule(filteredWithAdminPrices);
     }
@@ -1097,6 +1101,22 @@ export const ProductProvider=({children})=>{
     setCart(prev=>prev.map(item=>item.id===id?{...item,price:Number(newPrice)||0}:item));
   };
 
+  // ✅ BOM 병합 유틸 (같은 partId 자동 합산)
+  function mergeDuplicateParts(bomArray) {
+    const merged = {};
+    for (const item of bomArray) {
+      const pid = generatePartId(item);
+      if (!merged[pid]) {
+        merged[pid] = { ...item };
+      } else {
+        merged[pid].quantity += Number(item.quantity) || 0;
+        const unit = Number(item.unitPrice) || 0;
+        merged[pid].totalPrice = (Number(merged[pid].totalPrice) || 0) + unit * (Number(item.quantity) || 0);
+      }
+    }
+    return Object.values(merged);
+  }
+
   // ✅ 수정된 cartBOMView - specification을 포함한 키로 그룹핑
   const cartBOMView = useMemo(() => {
     const bomMap = new Map();
@@ -1148,7 +1168,8 @@ export const ProductProvider=({children})=>{
   // ✅ calculateCurrentBOM이 변경될 때마다 BOM 업데이트
   useEffect(()=>{
     const bom=calculateCurrentBOM();
-    setCurrentBOM(bom);
+    // setCurrentBOM(bom);
+    setCurrentBOM(mergeDuplicateParts(bomList))
     setTotalBomQuantity(bom.reduce((sum,item)=>sum+(Number(item.quantity)||0),0));
   },[calculateCurrentBOM]);
 
