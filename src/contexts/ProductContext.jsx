@@ -165,7 +165,7 @@ const ensureSpecification=(row,ctx={})=>{
     else if(/^선반$/.test(nm)){
       const {w,d}=parseWD(size||"");
       if(row.rackType==="경량랙"||row.rackType==="중량랙"){
-        // 수정: 사용자가 원하는 "W900xD900" 형태를 유지하도록 수정
+        // 수정: W와 D를 포함하여 specification을 "W900xD300" 형태로 만듭니다.
         row.specification=w&&d?`W${w}xD${d}`:"";
       } else {
         row.specification=`사이즈 ${size||""}${weightOnly?` ${weightOnly}`:""}`;
@@ -954,7 +954,8 @@ export const ProductProvider=({children})=>{
         else if(name.includes("연결대")){ name="연결대"; specification=``; }
         else if(name.includes("선반")){ 
           name="선반"; 
-          specification=`${W_num}${D_num}`; 
+          // 수정: W와 D를 포함하여 specification을 "W900xD300" 형태로 만듭니다.
+          specification=`W${W_num}xD${D_num}`; 
         }
         else if(name.includes("안전좌")){ name="안전좌"; specification=``; }
         else if(name.includes("안전핀")){ name="안전핀"; specification=``; }
