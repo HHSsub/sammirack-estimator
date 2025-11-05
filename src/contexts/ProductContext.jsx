@@ -165,7 +165,8 @@ const ensureSpecification=(row,ctx={})=>{
     else if(/^선반$/.test(nm)){
       const {w,d}=parseWD(size||"");
       if(row.rackType==="경량랙"||row.rackType==="중량랙"){
-        row.specification=w&&d?`${w}${d}`:"";
+        // 수정: 사용자가 원하는 "W900xD900" 형태를 유지하도록 수정
+        row.specification=w&&d?`W${w}xD${d}`:"";
       } else {
         row.specification=`사이즈 ${size||""}${weightOnly?` ${weightOnly}`:""}`;
       }
