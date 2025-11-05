@@ -1169,7 +1169,7 @@ export const ProductProvider=({children})=>{
   useEffect(()=>{
     const bom=calculateCurrentBOM();
     // setCurrentBOM(bom);
-    setCurrentBOM(mergeDuplicateParts(bomList))
+    setCurrentBOM(mergeDuplicateParts(bom))
     setTotalBomQuantity(bom.reduce((sum,item)=>sum+(Number(item.quantity)||0),0));
   },[calculateCurrentBOM]);
 
