@@ -258,6 +258,10 @@ export default function OptionSelector() {
     (formTypeRacks.includes(selectedType) && 
      selectedOptions.size && selectedOptions.height && 
      selectedOptions.level && selectedOptions.formType) ||
+    (selectedType === '파렛트랙' && 
+     selectedOptions.weight && selectedOptions.size && 
+     selectedOptions.height && selectedOptions.level && 
+     selectedOptions.formType) ||
     (selectedType === '하이랙' && 
      selectedOptions.color && selectedOptions.size && 
      selectedOptions.height && selectedOptions.level && 
@@ -304,6 +308,57 @@ export default function OptionSelector() {
               !!selectedOptions.height &&
               !!selectedOptions.level
             )}
+          </>
+        )}
+
+        // 파렛트랙 조건분기문 새롭게 짜기 (파렛트랙에 무게 변수 추가)
+        {selectedType === '파렛트랙' && (
+          <>
+            {renderOptionSelect('weight', '무게', true)}
+            {renderOptionSelect('size', '규격', !!selectedOptions.weight)}
+            {renderOptionSelect(
+              'height',
+              '높이',
+              !!selectedOptions.weight && !!selectedOptions.size
+            )}
+            {renderOptionSelect(
+              'level',
+              '단수',
+              !!selectedOptions.weight &&
+              !!selectedOptions.size &&
+              !!selectedOptions.height
+            )}
+            {/* 파렛트랙 형식: availableOptions에 없어도 Fallback 렌더 */}
+            {availableOptions.formType?.length
+              ? renderOptionSelect(
+                'formType',
+                '형식',
+                !!selectedOptions.weight &&
+                !!selectedOptions.size &&
+                !!selectedOptions.height &&
+                !!selectedOptions.level
+              )
+              : (
+                <div>
+                  <label>형식</label>
+                  <select
+                    disabled={
+                      !(
+                        selectedOptions.weight &&
+                        selectedOptions.size &&
+                        selectedOptions.height &&
+                        selectedOptions.level
+                      ) || loading
+                    }
+                    value={selectedOptions.formType || ''}
+                    onChange={e => handleOptionChange('formType', e.target.value)}
+                  >
+                    <option value="">형식 선택</option>
+                    <option value="독립형">독립형</option>
+                    <option value="연결형">연결형</option>
+                  </select>
+                </div>
+              )}
           </>
         )}
 
