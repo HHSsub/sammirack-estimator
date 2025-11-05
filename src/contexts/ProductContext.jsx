@@ -624,7 +624,21 @@ export const ProductProvider=({children})=>{
         basePrice = basicPrice * (Number(quantity) || 0); // 기본가격만 수량 곱하기
         console.log(`📋 기본가격 사용: ${basePrice}원`);
       }
-      
+
+      } else if (selectedType === "파렛트랙") {
+     // ✅ 파렛트랙은 BOM 합산 기준으로 가격 계산
+     const bom = calculateCurrentBOM();
+     if (bom && bom.length > 0) {
+       const bomPrice = bom.reduce((sum, item) => {
+       const effectivePrice = getEffectivePrice(item);
+       const quantity = Number(item.quantity) || 0;
+       return sum + (effectivePrice * quantity);
+       }, 0);
+       basePrice = bomPrice;  // ← 수량 중복 곱하지 않음
+     } else {
+     // (선택) 기본가격 백업 경로가 필요하면 여기서 data["파렛트랙"]["기본가격"] 구조 맞춰 보조처리
+     basePrice = 0;
+     }
     } else if (selectedType === "스텐랙") {
       const bom = calculateCurrentBOM();
       
