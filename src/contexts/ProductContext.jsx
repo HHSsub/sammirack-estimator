@@ -106,9 +106,8 @@ const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    // 수정: item에 partId를 통일된 양식으로 우선 생송시도 없으면 이전 partid
-    const partId = generatePartId(item) || item.partId ; // ✅ 수정
-    // const partId = generatePartId(item); // ✅ import한 함수 사용
+    // 수정: item에 partId를 통일된 양식으로 우선 생성 
+    const partId = generatePartId(item); // ✅ 없으면 이전 partid하고 싶으면, || item.partId  
     const adminPrice = priceData[partId];
     
     console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
@@ -691,22 +690,29 @@ export const ProductProvider=({children})=>{
     const ht = "H750";
     const form = selectedOptions.formType || "독립형";
     const level = parseInt((selectedOptions.level || "").replace(/[^\d]/g, "")) || 0;
-    const sizeMatch = sz.match(/W?(\d+)[xX]D?(\d+)/i) || [];
-    const W_num = sizeMatch[1] || "";
-    const D_num = sizeMatch[2] || "";
-  
+    // const sizeMatch = sz.match(/W?(\d+)[xX]D?(\d+)/i) || [];
+    // const W_num = sizeMatch[1] || "";
+    // const D_num = sizeMatch[2] || "";
+
+    // ⚠️ 초기엔 spec 비워두고 -> 나중에 ensureSpecification으로 통일 포맷 적용
     const base = [
       { rackType: selectedType, size: sz, name: "기둥", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0 },
       { rackType: selectedType, size: sz, name: "받침(상)", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0 },
       { rackType: selectedType, size: sz, name: "받침(하)", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0 },
       { rackType: selectedType, size: sz, name: "연결대", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "선반", specification: `${W_num}${D_num}`, quantity: level * q, unitPrice: 0, totalPrice: 0 },
+      // { rackType: selectedType, size: sz, name: "선반", specification: `${W_num}${D_num}`, quantity: level * q, unitPrice: 0, totalPrice: 0 },
+      { rackType: selectedType, size: sz, name: "선반",      specification: "", quantity: level * q, unitPrice: 0, totalPrice: 0 },
       { rackType: selectedType, size: sz, name: "안전좌", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0 },
       { rackType: selectedType, size: sz, name: "안전핀", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0 },
     ];
   
-    const baseWithAdminPrices = base.map(applyAdminEditPrice);
-    return sortBOMByMaterialRule([...baseWithAdminPrices, ...makeExtraOptionBOM()]);
+    // const baseWithAdminPrices = base.map(applyAdminEditPrice);
+    // return sortBOMByMaterialRule([...baseWithAdminPrices, ...makeExtraOptionBOM()]);
+
+    // ✅ 항상 정규화 → 그 다음 관리자 단가 적용 (순서 보장)
+       const normalized = base.map(r => ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) }));
+       const withAdmin = normalized.map(applyAdminEditPrice);
+       return sortBOMByMaterialRule([...withAdmin, ...makeExtraOptionBOM()]);
   };
 
     const makeExtraOptionBOM = () => {
@@ -1022,7 +1028,8 @@ export const ProductProvider=({children})=>{
         else if(name.includes("선반")){ 
           name="선반"; 
           // 수정: W와 D를 포함하여 specification을 "W900xD300" 형태로 만듭니다.
-          specification=`W${W_num}xD${D_num}`; 
+          // specification=`W${W_num}xD${D_num}`; 
+          specification="";
         }
         else if(name.includes("안전좌")){ name="안전좌"; specification=``; }
         else if(name.includes("안전핀")){ name="안전핀"; specification=``; }
@@ -1124,7 +1131,9 @@ export const ProductProvider=({children})=>{
       if (item.bom && Array.isArray(item.bom)) {
         item.bom.forEach(bomItem => {
           // ✅ specification을 포함한 고유 키 생성
-          const key = `${bomItem.rackType}|${bomItem.size || ''}|${bomItem.name}|${bomItem.specification || ''}`;
+          // const key = `${bomItem.rackType}|${bomItem.size || ''}|${bomItem.name}|${bomItem.specification || ''}`;
+          // ✅ spec 정규화가 끝난 BOM을 가정 → partId로 그룹
+          const key = generatePartId(bomItem);
           
           if (bomMap.has(key)) {
             const existing = bomMap.get(key);
