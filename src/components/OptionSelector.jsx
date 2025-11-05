@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useProducts } from '../contexts/ProductContext';
 import { loadExtraOptionsPrices } from '../utils/unifiedPriceManager'; 
 
-const formTypeRacks = ['경량랙', '중량랙', '파렛트랙', '파렛트랙 철판형'];
+const formTypeRacks = ['경량랙', '중량랙', '파렛트랙 철판형']; // '파렛트랙',
 
 // 무게명칭 변환
 function kgLabelFix(str) {
@@ -310,8 +310,6 @@ export default function OptionSelector() {
             )}
           </>
         )}
-
-        // 파렛트랙 조건분기문 새롭게 짜기 (파렛트랙에 무게 변수 추가)
         {selectedType === '파렛트랙' && (
           <>
             {renderOptionSelect('weight', '무게', true)}
