@@ -12,7 +12,7 @@ import { inventoryService } from '../services/InventoryService';
 
 const ProductContext = createContext();
 
-const formTypeRacks = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형"];
+const formTypeRacks = ["경량랙", "중량랙", "파렛트랙 철판형"]; // "파렛트랙", 은 이제 별도 분리임
 
 // 하이랙 고정 높이
 const HIGH_RACK_HEIGHTS = ["150","200","250"];
@@ -397,6 +397,62 @@ export const ProductProvider=({children})=>{
 
   useEffect(()=>{
     if(!selectedType){ setAvailableOptions({}); return; }
+    
+    // ======================
+    // ✅ 파렛트랙만 weight → size → height → level → formType 순서로
+    // ======================
+    
+    if (selectedType === "파렛트랙") {
+      const bd = bomData["파렛트랙"] || {};
+      const next = { weight: [], size: [], height: [], level: [], formType: [] };
+  
+      // 1️⃣ weight 리스트 구성
+      const weightKeys = Object.keys(bd || {}); // ['2t','3t']
+      next.weight = weightKeys;
+  
+      // 2️⃣ weight 선택되면 size 리스트 구성
+      if (selectedOptions.weight) {
+        const weightBlock = bd[selectedOptions.weight] || {};
+        const sizesFromData = Object.keys(weightBlock || {});
+        const extraSizes = EXTRA_OPTIONS["파렛트랙"]?.size || [];
+        next.size = sortSizes([...sizesFromData, ...extraSizes]);
+      }
+  
+      // 3️⃣ size 선택되면 height 구성
+      if (selectedOptions.weight && selectedOptions.size) {
+        const heightsFromData = Object.keys(
+          bd[selectedOptions.weight]?.[selectedOptions.size] || {}
+        );
+        next.height = sortHeights([
+          ...heightsFromData,
+          ...(EXTRA_OPTIONS["파렛트랙"]?.height || [])
+        ]);
+      }
+  
+      // 4️⃣ height 선택되면 level 구성
+      if (selectedOptions.weight && selectedOptions.size && selectedOptions.height) {
+        const levelsFromData = Object.keys(
+          bd[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height] || {}
+        );
+        next.level = sortLevels(levelsFromData.length ? levelsFromData : ["L1","L2","L3","L4","L5","L6"]);
+      }
+  
+      // 5️⃣ level 선택되면 formType 구성
+      if (
+        selectedOptions.weight && selectedOptions.size &&
+        selectedOptions.height && selectedOptions.level
+      ) {
+        const fm = bd[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
+        next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
+      }
+  
+      setAvailableOptions(next);
+      return;
+    }
+  
+    // ======================
+    // 기존 로직 (경량랙/중량랙/하이랙 등)
+    // ======================
     if(formTypeRacks.includes(selectedType)){
       const bd=bomData[selectedType]||{};
       const next={size:[],height:[],level:[],formType:[]};
