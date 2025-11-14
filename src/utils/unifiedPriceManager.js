@@ -248,6 +248,7 @@ const parseCSV = (text) => {
 };
 
 // ✅ CSV 기반 전체 원자재 로드 (정규화된 partId로 재생성)
+// ✅ CSV 기반 전체 원자재 로드 (CSV 부품ID 우선 사용)
 export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
@@ -269,8 +270,10 @@ export const loadAllMaterials = async () => {
     // CSV의 각 행을 부품으로 변환
     let validCount = 0;
     let skippedCount = 0;
+    let generatedIdCount = 0;
     
     csvData.forEach((row, index) => {
+      const csvPartId = String(row['부품ID'] || '').trim(); // ✅ CSV의 부품ID
       const rackType = String(row['랙타입'] || '').trim();
       const name = String(row['부품명'] || '').trim();
       const specification = String(row['규격'] || '').trim();
@@ -286,21 +289,31 @@ export const loadAllMaterials = async () => {
         return;
       }
       
-      // ✅ generatePartId로 정규화된 partId 생성 (CSV의 부품ID는 무시!)
-      const normalizedPartId = generatePartId({
-        rackType,
-        name,
-        specification
-      });
+      // ✅ 우선순위: CSV 부품ID > 자동 생성
+      let finalPartId;
+      if (csvPartId) {
+        // CSV에 부품ID가 있으면 그대로 사용
+        finalPartId = csvPartId;
+        console.log(`  📋 CSV 부품ID 사용: ${finalPartId}`);
+      } else {
+        // CSV에 부품ID가 없으면 자동 생성
+        finalPartId = generatePartId({
+          rackType,
+          name,
+          specification
+        });
+        generatedIdCount++;
+        console.warn(`  ⚠️ 부품ID 없음 - 자동 생성: ${finalPartId} (행 ${index + 2})`);
+      }
       
       // 중복 체크
-      if (materials.has(normalizedPartId)) {
-        console.warn(`⚠️ 중복 부품 발견: ${normalizedPartId} (행 ${index + 2})`);
+      if (materials.has(finalPartId)) {
+        console.warn(`⚠️ 중복 부품 발견: ${finalPartId} (행 ${index + 2})`);
         return;
       }
       
-      materials.set(normalizedPartId, {
-        partId: normalizedPartId,
+      materials.set(finalPartId, {
+        partId: finalPartId,
         rackType,
         name,
         specification,
@@ -315,7 +328,7 @@ export const loadAllMaterials = async () => {
       
       // 디버깅: 처음 5개, 마지막 5개만 출력
       if (validCount <= 5 || validCount > csvData.length - 5) {
-        console.log(`  ➕ [${validCount}] ${normalizedPartId}`);
+        console.log(`  ➕ [${validCount}] ${finalPartId}`);
       } else if (validCount === 6) {
         console.log(`  ... (중간 ${csvData.length - 10}개 생략)`);
       }
@@ -326,6 +339,8 @@ export const loadAllMaterials = async () => {
     console.log(`\n✅ ===== CSV 기반 원자재 로드 완료 =====`);
     console.log(`📦 총 부품 수: ${finalMaterials.length}개`);
     console.log(`✅ 유효 부품: ${validCount}개`);
+    console.log(`📋 CSV 부품ID 사용: ${validCount - generatedIdCount}개`);
+    console.log(`🔧 자동 생성 ID: ${generatedIdCount}개`);
     console.log(`⏭️  스킵된 행: ${skippedCount}개`);
     
     // 랙타입별 통계
@@ -376,7 +391,7 @@ export const loadAllMaterials = async () => {
     // 에러 상세 정보
     if (error.message.includes('fetch')) {
       console.error('💡 힌트: CSV 파일이 public/ 폴더에 있는지 확인하세요.');
-      console.error('   파일명: all_materials_list_v1.csv');
+      console.error('   파일명: all_materials_list_v2.csv');
     }
     
     return [];
