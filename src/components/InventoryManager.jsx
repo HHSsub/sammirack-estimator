@@ -524,8 +524,8 @@ useEffect(() => {
 
   // ✅ 수정: 재고 수량 변경 (실시간 동기화)
   const handleInventoryChange = async (material, newQuantity) => {
-    // ✅ 재고용 Part ID 사용
-    const inventoryPartId = generateInventoryPartId(material) || material.partId;
+    // ✅ CSV partId 그대로 사용
+    const partId = material.partId;
     const quantity = Math.max(0, Number(newQuantity) || 0);
     
     setSyncStatus('📤 저장 중...');
@@ -536,13 +536,12 @@ useEffect(() => {
         role: currentUser?.role || 'admin'
       };
   
-      const success = await saveInventorySync(inventoryPartId, quantity, userInfo);
+      const success = await saveInventorySync(partId, quantity, userInfo);
       
       if (success) {
-        // ✅ 수정: 로컬 상태도 숫자 형식으로 저장
         setInventory(prev => ({
           ...prev,
-          [inventoryPartId]: quantity  // 객체가 아닌 순수 숫자값
+          [partId]: quantity
         }));
         
         setSyncStatus('✅ 모든 PC 동기화됨');
@@ -623,11 +622,10 @@ useEffect(() => {
       result = result.filter(material => material.rackType === selectedRackType);
     }
 
-    // ✅ 수정: 사용 중인 재고만 보기
+    // ✅ CSV partId 그대로 사용
     if (showOnlyInUse) {
       result = result.filter(material => {
-        const inventoryPartId = generateInventoryPartId(material) || material.partId;
-        return (inventory[inventoryPartId] || 0) > 0;
+        return (inventory[material.partId] || 0) > 0;
       });
     }
 
@@ -646,9 +644,9 @@ useEffect(() => {
             bValue = b.rackType || '';
             break;
           case 'quantity':
-            // ✅ 수정
-            aValue = inventory[generateInventoryPartId(a) || a.partId] || 0;
-            bValue = inventory[generateInventoryPartId(b) || b.partId] || 0;
+            // ✅ CSV partId 그대로 사용
+            aValue = inventory[a.partId] || 0;
+            bValue = inventory[b.partId] || 0;
             break;
           case 'price':
             aValue = getEffectivePrice(a);
@@ -657,6 +655,7 @@ useEffect(() => {
           default:
             return 0;
         }
+
 
         if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
@@ -678,7 +677,8 @@ useEffect(() => {
   // 체크박스 처리
   const handleSelectAll = (checked) => {
     if (checked) {
-      const allIds = new Set(filteredMaterials.map(m => generateInventoryPartId(m) || m.partId));
+      // ✅ CSV partId 그대로 사용
+      const allIds = new Set(filteredMaterials.map(m => m.partId));
       setSelectedItems(allIds);
     } else {
       setSelectedItems(new Set());
@@ -737,11 +737,12 @@ useEffect(() => {
   const exportInventory = () => {
     try {
       const inventoryData = filteredMaterials.map(material => {
-        const inventoryPartId = generateInventoryPartId(material) || material.partId;
-        const quantity = inventory[inventoryPartId] || 0;
+        // ✅ CSV partId 그대로 사용
+        const quantity = inventory[material.partId] || 0;
         const effectivePrice = getEffectivePrice(material);
         
         return {
+          부품ID: material.partId,
           부품명: material.name,
           규격: material.specification || '',
           랙타입: material.rackType,
@@ -774,8 +775,8 @@ useEffect(() => {
   // ✅ 수정: 재고 가치 계산
   const getTotalInventoryValue = () => {
     return filteredMaterials.reduce((total, material) => {
-      const inventoryPartId = generateInventoryPartId(material) || material.partId;
-      const quantity = inventory[inventoryPartId] || 0;
+      // ✅ CSV partId 그대로 사용
+      const quantity = inventory[material.partId] || 0;
       const effectivePrice = getEffectivePrice(material);
       return total + (quantity * effectivePrice);
     }, 0);
@@ -784,8 +785,8 @@ useEffect(() => {
   // ✅ 수정: 부족한 재고 알림
   const getLowStockItems = () => {
     return filteredMaterials.filter(material => {
-      const inventoryPartId = generateInventoryPartId(material) || material.partId;
-      const quantity = inventory[inventoryPartId] || 0;
+      // ✅ CSV partId 그대로 사용
+      const quantity = inventory[material.partId] || 0;
       return quantity <= 5;
     });
   };
@@ -795,10 +796,10 @@ useEffect(() => {
 
   // ✅ 수정: 재고 수량 가져오기
   const getInventoryQuantity = (material) => {
-    const inventoryPartId = generateInventoryPartId(material) || material.partId;
-    const stockData = inventory[inventoryPartId];
+    // ✅ CSV에서 로드한 partId를 그대로 사용
+    const partId = material.partId;
+    const stockData = inventory[partId];
     
-    // ✅ 수정: 다양한 형식 대응
     if (typeof stockData === 'number') {
       return stockData;
     } else if (typeof stockData === 'object' && stockData !== null) {
@@ -810,7 +811,8 @@ useEffect(() => {
   // 표시 가격 정보 가져오기
   const getDisplayPrice = (material) => {
     const effectivePrice = getEffectivePrice(material);
-    const hasAdminPrice = adminPrices[generatePartId(material) || material.partId]?.price > 0;
+    // ✅ CSV partId 그대로 사용
+    const hasAdminPrice = adminPrices[material.partId]?.price > 0;
     
     return {
       price: effectivePrice,
@@ -1027,20 +1029,21 @@ useEffect(() => {
             </thead>
             <tbody>
               {filteredMaterials.map((material, index) => {
-                const inventoryPartId = generateInventoryPartId(material) || material.partId;
+                // ✅ CSV partId 그대로 사용
+                const partId = material.partId;
                 const quantity = getInventoryQuantity(material);
                 const { price, isModified } = getDisplayPrice(material);
                 const totalValue = quantity * price;
                 const isLowStock = quantity <= 5;
-                const isEditing = editingPart === inventoryPartId;
+                const isEditing = editingPart === partId;
 
                 return (
-                  <tr key={inventoryPartId || index} className={isLowStock ? 'low-stock' : ''}>
+                  <tr key={partId || index} className={isLowStock ? 'low-stock' : ''}>
                     <td>
                       <input
                         type="checkbox"
-                        checked={selectedItems.has(inventoryPartId)}
-                        onChange={(e) => handleSelectItem(inventoryPartId, e.target.checked)}
+                        checked={selectedItems.has(partId)}
+                        onChange={(e) => handleSelectItem(partId, e.target.checked)}
                       />
                     </td>
                     <td>
@@ -1082,7 +1085,7 @@ useEffect(() => {
                       ) : (
                         <span
                           onClick={() => {
-                            setEditingPart(inventoryPartId);
+                            setEditingPart(partId);
                             setEditQuantity(quantity.toString());
                           }}
                           style={{
@@ -1107,7 +1110,7 @@ useEffect(() => {
                     <td>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
-                          onClick={() => adjustInventory(inventoryPartId, -100)}
+                            onClick={() => adjustInventory(partId, -100)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1121,7 +1124,7 @@ useEffect(() => {
                           -100
                         </button>
                         <button
-                          onClick={() => adjustInventory(inventoryPartId, -50)}
+                          onClick={() => adjustInventory(partId, -50)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1135,7 +1138,7 @@ useEffect(() => {
                           -50
                         </button>
                         <button
-                          onClick={() => adjustInventory(inventoryPartId, -10)}
+                          onClick={() => adjustInventory(partId, -10)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1149,7 +1152,7 @@ useEffect(() => {
                           -10
                         </button>
                         <button
-                          onClick={() => adjustInventory(inventoryPartId, 10)}
+                          onClick={() => adjustInventory(partId, 10)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1163,7 +1166,7 @@ useEffect(() => {
                           +10
                         </button>
                         <button
-                          onClick={() => adjustInventory(inventoryPartId, 50)}
+                          onClick={() => adjustInventory(partId, 50)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1177,7 +1180,7 @@ useEffect(() => {
                           +50
                         </button>
                         <button
-                          onClick={() => adjustInventory(inventoryPartId, 100)}
+                          onClick={() => adjustInventory(partId, 100)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
