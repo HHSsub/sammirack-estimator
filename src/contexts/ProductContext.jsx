@@ -861,13 +861,20 @@ export const ProductProvider=({children})=>{
       let filteredBase = base.filter(i => !i.name.includes("철판"));
       appendCommonHardwareIfMissing(filteredBase, qty);
 
-      // ✅ 파렛트랙만 weight 추가
+      // ✅ 파렛트랙만 weight 추가 (브레싱류는 weight 영향 받지 않도록)
       const filtered = [...filteredBase, ...makeExtraOptionBOM()]
         .filter(r => !/베이스볼트/.test(r.name))
-        .map(r => 
-          ensureSpecification(r, { size: sz,height: ht,...parseWD(sz),
-    ...(selectedType === "파렛트랙" ? { weight: selectedOptions.weight || "" } : {})
-  }));
+        .map(r => {
+          // ⚠️ 브레싱, 브레싱볼트, 브러싱고무는 weight 제외
+          const isHardware = /(수평|경사)브레?싱|브레싱볼트|브러싱고무|브레싱고무/.test(r.name);
+          
+          return ensureSpecification(r, { 
+            size: sz,
+            height: ht,
+            ...parseWD(sz),
+            ...(selectedType === "파렛트랙" && !isHardware ? { weight: selectedOptions.weight || "" } : {})
+          });
+        });
       const filteredWithAdminPrices = filtered.map(applyAdminEditPrice);
       return sortBOMByMaterialRule(filteredWithAdminPrices);
     }
