@@ -8,14 +8,6 @@ import { generatePartId } from './unifiedPriceManager';
 const ADMIN_PRICES_KEY = 'admin_edit_prices';
 const PRICE_HISTORY_KEY = 'admin_price_history';
 
-// 부품 고유 ID 생성 (다른 컴포넌트와 동일한 로직 사용)
-// export const generatePartId = (item) => {
-//   const { rackType, name, specification } = item;
-//   const cleanName = name.replace(/[^\w가-힣]/g, '');
-//   const cleanSpec = (specification || '').replace(/[^\w가-힣]/g, '');
-//   return `${rackType}-${cleanName}-${cleanSpec}`.toLowerCase();
-// };
-
 // 관리자 수정 단가 로드
 export const loadAdminPrices = () => {
   try {
@@ -68,8 +60,8 @@ export const loadPriceHistory = (partId) => {
   }
 };
 
-// 가격 변경 히스토리 저장
-export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') => {
+// ✅ 가격 변경 히스토리 저장 (서버 동기화 추가)
+export const savePriceHistory = async (partId, oldPrice, newPrice, rackOption = '') => {
   try {
     const stored = localStorage.getItem(PRICE_HISTORY_KEY) || '{}';
     const historyData = JSON.parse(stored);
@@ -96,8 +88,20 @@ export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') =>
 
     localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(historyData));
     
-    // JSON 파일로 백업
-    exportToJsonFile(historyData, 'admin_price_history.json');
+    console.log(`📜 단가 이력 추가: ${partId}`);
+    console.log(`   ${oldPrice}원 → ${newPrice}원`);
+    
+    // ✅ 서버 동기화 (비동기)
+    try {
+      const { adminSyncManager } = await import('./realtimeAdminSync');
+      const syncManager = adminSyncManager.getInstance();
+      if (syncManager) {
+        syncManager.debouncedSave();
+        console.log('📤 서버 동기화 예약됨 (10초 후)');
+      }
+    } catch (syncError) {
+      console.warn('서버 동기화 예약 실패 (네트워크 오프라인일 수 있음):', syncError);
+    }
     
     return true;
   } catch (error) {
