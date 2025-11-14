@@ -901,6 +901,7 @@ export const ProductProvider=({children})=>{
           rackType: selectedType,
           name: "기둥",
           specification: `높이 ${heightValue}${weightOnly ? ` ${weightOnly}` : ""}`,
+          colorWeight: color, // ✅ 핵심: 원본 색상 저장
           quantity: pillarQty,
           unitPrice: 0,
           totalPrice: 0
@@ -909,6 +910,7 @@ export const ProductProvider=({children})=>{
           rackType: selectedType,
           name: "로드빔",
           specification: `${rodBeamNum}${weightOnly ? ` ${weightOnly}` : ""}`,
+          colorWeight: color, // ✅ 핵심: 원본 색상 저장
           quantity: 2 * level * qty,
           unitPrice: 0,
           totalPrice: 0
@@ -917,6 +919,7 @@ export const ProductProvider=({children})=>{
           rackType: selectedType,
           name: "선반",
           specification: `사이즈 ${size}${weightOnly ? ` ${weightOnly}` : ""}`,
+          colorWeight: color, // ✅ 핵심: 원본 색상 저장
           quantity: shelfPerLevel * level * qty,
           unitPrice: 0,
           totalPrice: 0
