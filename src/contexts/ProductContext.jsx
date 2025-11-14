@@ -1011,7 +1011,20 @@ export const ProductProvider=({children})=>{
         appendCommonHardwareIfMissing(base,q);
         const finalized=[...base,...makeExtraOptionBOM()]
           .filter(r=>!/베이스볼트/.test(r.name))
-          .map(r=>ensureSpecification(r,{size:sz,height:ht,...parseWD(sz)}));
+          .map(r=>{
+            // ⚠️ 브레싱, 브레싱볼트, 브러싱고무는 weight 제외
+            const isHardware = /(수평|경사)브레?싱|브레싱볼트|브러싱고무|브레싱고무/.test(r.name);
+            
+            // ✅ 파렛트랙 3t인 경우에도 하드웨어는 weight 전달 안 함
+            const isPalletRack3t = selectedType === "파렛트랙" && String(selectedOptions.weight).trim() === "3t";
+            
+            return ensureSpecification(r, {
+              size: sz,
+              height: ht,
+              ...parseWD(sz),
+              ...(isPalletRack3t && !isHardware ? { weight: selectedOptions.weight } : {})
+            });
+          });
         const finalizedWithAdminPrices = finalized.map(applyAdminEditPrice);
         return sortBOMByMaterialRule(finalizedWithAdminPrices);
       }
