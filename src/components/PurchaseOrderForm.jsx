@@ -4,6 +4,7 @@ import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { loadAdminPricesDirect, resolveAdminPrice, generatePartId } from '../utils/adminPriceHelper';
 import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
+import { generateInventoryPartId } from '../utils/unifiedPriceManager';
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -269,7 +270,7 @@ const handlePrint = async () => {
   
   setTimeout(async () => {
     const confirmDeduct = window.confirm(
-      '인쇄가 완료되었습니까?\n\n확인 = 재고 감소\n취소 = 재고 유지'
+      '인쇄가 완료되었습니까?n확인 = 재고 감소\n취소 = 재고 유지'
     );
     
     if (confirmDeduct && cart && cart.length > 0) {
