@@ -6,6 +6,7 @@ import {
   loadAdminPrices, 
   getEffectivePrice as utilGetEffectivePrice, 
   generatePartId,
+  generateInventoryPartId,
   loadExtraOptionsPrices  // ✅ 추가
 } from '../utils/unifiedPriceManager';
 import { inventoryService } from '../services/InventoryService';
@@ -107,7 +108,7 @@ const applyAdminEditPrice = (item) => {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
     // 수정: item에 partId를 통일된 양식으로 우선 생성 
-    const partId = generatePartId(item); // ✅ 없으면 이전 partid하고 싶으면, || item.partId  
+    const partId = generateInventoryPartId(item); // ✅ 없으면 이전 partid하고 싶으면, || item.partId  
     const adminPrice = priceData[partId];
     
     console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
@@ -787,7 +788,7 @@ export const ProductProvider=({children})=>{
         names.add(normalized);
         
         // ✅ 디버깅 로그 추가
-        console.log(`➕ 하드웨어 추가: ${name}, spec="${specification}", partId=${generatePartId({rackType: selectedType, name, specification})}`);
+        console.log(`➕ 하드웨어 추가: ${name}, spec="${specification}", partId=${generateInventoryPartId({rackType: selectedType, name, specification})}`);
       }
     };
     
@@ -1126,7 +1127,7 @@ export const ProductProvider=({children})=>{
   function mergeDuplicateParts(bomArray) {
     const merged = {};
     for (const item of bomArray) {
-      const pid = generatePartId(item);
+      const pid = generateInventoryPartId(item);
       if (!merged[pid]) {
         merged[pid] = { ...item };
       } else {
@@ -1147,7 +1148,7 @@ export const ProductProvider=({children})=>{
           // ✅ specification을 포함한 고유 키 생성
           // const key = `${bomItem.rackType}|${bomItem.size || ''}|${bomItem.name}|${bomItem.specification || ''}`;
           // ✅ spec 정규화가 끝난 BOM을 가정 → partId로 그룹
-          const key = generatePartId(bomItem);
+          const key = generateInventoryPartId(bomItem);
           
           if (bomMap.has(key)) {
             const existing = bomMap.get(key);
