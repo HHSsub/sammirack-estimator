@@ -66,19 +66,20 @@ export const generateInventoryPartId = (item) => {
     console.warn('generateInventoryPartId: item이 undefined입니다');
     return 'unknown-part-inv';
   }
-  
-  const { rackType = '', name = '', specification = '' } = item;
-  
-  // 부품명 처리 (색상은 유지!)
+  const { rackType = '', name = '', specification = '', colorWeight = '' } = item;
+  // ✅ 하이랙 전용: colorWeight가 있으면 부품명에 색상 포함
   let cleanName = String(name)
-    .replace(/[()]/g, '')  // 괄호 제거
-    .replace(/\s+/g, '')   // 공백 제거
-    .replace(/\*/g, 'x');  // * → x 변환
-  
-  // 소문자 변환
+    .replace(/[()]/g, '')
+    .replace(/\s+/g, '')
+    .replace(/\*/g, 'x');
+  // ✅ 하이랙이고 colorWeight가 있으면 색상 추가
+  if (rackType === '하이랙' && colorWeight) {
+    const cleanColor = String(colorWeight)
+      .replace(/\s+/g, '')
+      .toLowerCase();
+    cleanName = `${cleanName}${cleanColor}`;
+  }
   cleanName = cleanName.toLowerCase();
-  
-  // 규격 처리
   if (specification && String(specification).trim()) {
     const cleanSpec = String(specification)
       .replace(/\s+/g, '')
