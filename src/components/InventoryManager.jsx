@@ -298,6 +298,7 @@ const InventoryManager = ({ currentUser }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyInUse, setShowOnlyInUse] = useState(false);
+  const [showOnlyOutOfStock, setShowOnlyOutOfStock] = useState(false);
   const [selectedRackType, setSelectedRackType] = useState('');
   const [editingPart, setEditingPart] = useState(null);
   const [editQuantity, setEditQuantity] = useState('');
@@ -627,6 +628,10 @@ useEffect(() => {
       result = result.filter(material => {
         return (inventory[material.partId] || 0) > 0;
       });
+    } else if (showOnlyOutOfStock) {
+      result = result.filter(material => {
+        return (inventory[material.partId] || 0) === 0;
+      });
     }
 
     // 정렬
@@ -733,19 +738,18 @@ useEffect(() => {
     }
   };
 
-  // ✅ 수정: 재고 내보내기
+  // ✅ CSV 내보내기 함수 (기존 exportInventory 함수 교체)
   const exportInventory = () => {
     try {
       const inventoryData = filteredMaterials.map(material => {
-        // ✅ CSV partId 그대로 사용
         const quantity = inventory[material.partId] || 0;
         const effectivePrice = getEffectivePrice(material);
         
         return {
           부품ID: material.partId,
+          랙타입: material.rackType,
           부품명: material.name,
           규격: material.specification || '',
-          랙타입: material.rackType,
           재고수량: quantity,
           단가: effectivePrice,
           재고가치: quantity * effectivePrice,
@@ -753,24 +757,56 @@ useEffect(() => {
           카테고리: material.categoryName || ''
         };
       });
-
-      const dataStr = JSON.stringify(inventoryData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  
+      // CSV 형식으로 변환
+      const headers = ['부품ID', '랙타입', '부품명', '규격', '재고수량', '단가', '재고가치', '소스', '카테고리'];
+      const csvRows = [];
       
-      const exportFileName = `inventory_${new Date().toISOString().split('T')[0]}.json`;
+      // 헤더 추가
+      csvRows.push(headers.join(','));
       
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileName);
-      linkElement.click();
+      // 데이터 행 추가
+      inventoryData.forEach(row => {
+        const values = headers.map(header => {
+          const value = row[header];
+          // CSV 이스케이프 처리
+          const stringValue = String(value || '');
+          if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+          }
+          return stringValue;
+        });
+        csvRows.push(values.join(','));
+      });
       
-      console.log(`✅ 재고 데이터 내보내기 완료: ${inventoryData.length}개 항목`);
+      const csvContent = csvRows.join('\n');
+      
+      // BOM 추가 (한글 깨짐 방지)
+      const bom = '\uFEFF';
+      const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      const exportFileName = `재고현황_${new Date().toISOString().split('T')[0]}.csv`;
+      
+      // 다운로드
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', exportFileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      console.log(`✅ 재고 데이터 CSV 내보내기 완료: ${inventoryData.length}개 항목`);
+      alert(`재고 데이터가 CSV 파일로 저장되었습니다.\n파일명: ${exportFileName}`);
       
     } catch (error) {
       console.error('재고 내보내기 실패:', error);
       alert('재고 내보내기에 실패했습니다.');
     }
   };
+
 
   // ✅ 수정: 재고 가치 계산
   const getTotalInventoryValue = () => {
@@ -938,6 +974,17 @@ useEffect(() => {
               onChange={(e) => setShowOnlyInUse(e.target.checked)}
             />
             재고가 있는 부품만 보기
+          </label>
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={showOnlyOutOfStock}
+              onChange={(e) => {
+                setShowOnlyOutOfStock(e.target.checked);
+                if (e.target.checked) setShowOnlyInUse(false);
+              }}
+            />
+            재고가 없는 부품만 보기
           </label>
           
           <div className="search-stats">
@@ -1456,6 +1503,12 @@ useEffect(() => {
           border-bottom: 2px solid #dee2e6;
           position: sticky;
           top: 0;
+        }
+
+        .inventory-table input[type="checkbox"] {
+          width: 20px;
+          height: 20px;
+          transform: scale(1.5);  /* 1.5배 확대 */
         }
 
         .inventory-table th.sortable {
