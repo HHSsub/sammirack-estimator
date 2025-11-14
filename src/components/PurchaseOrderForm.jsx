@@ -224,41 +224,129 @@ const PurchaseOrderForm = () => {
       });
   };
 
-  const handlePrint = async () => {
-    if (!formData.documentNumber.trim()) {
-      alert('거래번호(문서번호)를 입력해주세요.');
-      documentNumberInputRef.current?.focus();
-      return;
-    }
-  
-    // 재고 감소 처리
-    if (cart && cart.length > 0) {
-      const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
+const handlePrint = async () => {
+  if (!formData.documentNumber.trim()) {
+    alert('거래번호(문서번호)를 입력해주세요.');
+    documentNumberInputRef.current?.focus();
+    return;
+  }
+
+  // ✅ 1단계: 재고 부족 여부만 먼저 체크 (실제 감소는 안 함)
+  if (cart && cart.length > 0) {
+    // ✅ 재고 체크만 수행 (감소는 나중에)
+    const checkResult = await checkInventoryAvailability(cart);
+    
+    // 재고 부족 경고가 있는 경우
+    if (checkResult.warnings && checkResult.warnings.length > 0) {
+      const shortageList = checkResult.warnings
+        .slice(0, 5)
+        .map(w => `• ${w.name} (${w.specification || ''}): 필요 ${w.required}개, 가용 ${w.available}개`)
+        .join('\n');
       
-      // 재고 부족 경고가 있는 경우
-      if (result.warnings && result.warnings.length > 0) {
-        const shortageList = result.warnings
-          .slice(0, 5)
-          .map(w => `• ${w.name} (${w.specification || ''}): 필요 ${w.required}개, 가용 ${w.available}개`)
-          .join('\n');
-        
-        const message = result.warnings.length > 5
-          ? `⚠️ 재고 부족 경고 (${result.warnings.length}개 부품)\n\n${shortageList}\n... 외 ${result.warnings.length - 5}개\n\n계속 진행하시겠습니까?`
-          : `⚠️ 재고 부족 경고\n\n${shortageList}\n\n계속 진행하시겠습니까?`;
-        
-        const userChoice = window.confirm(
-          message + '\n\n확인 = 무시하고 인쇄\n취소 = 인쇄 중단'
-        );
-        
-        if (!userChoice) {
-          alert('인쇄가 취소되었습니다.\n재고 관리 탭에서 확인하세요.');
-          return;
-        }
+      const message = checkResult.warnings.length > 5
+        ? `⚠️ 재고 부족 경고 (${checkResult.warnings.length}개 부품)\n\n${shortageList}\n... 외 ${checkResult.warnings.length - 5}개\n\n계속 진행하시겠습니까?`
+        : `⚠️ 재고 부족 경고\n\n${shortageList}\n\n계속 진행하시겠습니까?`;
+      
+      const userChoice = window.confirm(
+        message + '\n\n확인 = 무시하고 인쇄\n취소 = 인쇄 중단'
+      );
+      
+      if (!userChoice) {
+        alert('인쇄가 취소되었습니다.\n재고는 감소되지 않았습니다.');
+        return;  // ✅ 여기서 return하면 재고 감소 안 됨
       }
     }
+  }
+
+  // ✅ 2단계: 브라우저 인쇄 다이얼로그 표시
+  window.print();
+
+  // ✅ 3단계: 인쇄 다이얼로그가 닫힌 후에만 재고 감소
+  // (사용자가 인쇄 다이얼로그에서 "취소"를 누르면 재고 감소 안 됨)
   
-    window.print();
-  };
+  // ⚠️ 중요: window.print()는 동기 함수이지만 다이얼로그 결과를 알 수 없음
+  // 따라서 "인쇄 완료" 확인 후 재고 감소 진행
+  
+  setTimeout(async () => {
+    const confirmDeduct = window.confirm(
+      '인쇄가 완료되었습니까?\n\n확인 = 재고 감소\n취소 = 재고 유지'
+    );
+    
+    if (confirmDeduct && cart && cart.length > 0) {
+      const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
+      
+      if (result.success) {
+        if (result.warnings && result.warnings.length > 0) {
+          alert(`✅ 재고가 감소되었습니다.\n⚠️ ${result.warnings.length}개 부품 재고 부족`);
+        } else {
+          alert('✅ 재고가 정상적으로 감소되었습니다.');
+        }
+      } else {
+        alert(`❌ 재고 감소 실패: ${result.message}`);
+      }
+    } else {
+      alert('재고가 감소되지 않았습니다.');
+    }
+  }, 500);
+};
+
+
+// ✅ 추가: 재고 체크만 수행하는 함수 (감소는 안 함)
+const checkInventoryAvailability = async (cartItems) => {
+  if (!cartItems || !Array.isArray(cartItems)) {
+    return { success: true, warnings: [] };
+  }
+  
+  try {
+    const { inventoryService } = await import('../services/InventoryService');
+    const serverInventory = await inventoryService.getInventory();
+    
+    const warnings = [];
+    
+    cartItems.forEach((item) => {
+      if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
+        return;
+      }
+      
+      item.bom.forEach((bomItem) => {
+        const inventoryPartId = generateInventoryPartId({
+          rackType: bomItem.rackType || '',
+          name: bomItem.name || '',
+          specification: bomItem.specification || '',
+          colorWeight: bomItem.colorWeight || ''
+        });
+        
+        const requiredQty = Number(bomItem.quantity) || 0;
+        const currentStock = Number(serverInventory[inventoryPartId]) || 0;
+        
+        if (requiredQty > 0 && currentStock < requiredQty) {
+          warnings.push({
+            partId: inventoryPartId,
+            name: bomItem.name,
+            specification: bomItem.specification || '',
+            rackType: bomItem.rackType || '',
+            required: requiredQty,
+            available: currentStock,
+            shortage: requiredQty - currentStock
+          });
+        }
+      });
+    });
+    
+    return {
+      success: true,
+      warnings
+    };
+    
+  } catch (error) {
+    console.error('❌ 재고 체크 실패:', error);
+    return {
+      success: false,
+      warnings: [],
+      message: error.message
+    };
+  }
+};
 
   return (
     <div className="purchase-order-form-container">
