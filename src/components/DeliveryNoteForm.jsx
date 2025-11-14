@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel } from '../utils/excelExport';
 import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHelper';
-import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
+import { showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
 
 const PROVIDER = {
