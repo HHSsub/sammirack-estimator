@@ -224,19 +224,39 @@ const PurchaseOrderForm = () => {
       });
   };
 
-  const handlePrint = async () => {  // ← async 추가
+  const handlePrint = async () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력해주세요.');
       documentNumberInputRef.current?.focus();
       return;
     }
-
+  
     // 재고 감소 처리
     if (cart && cart.length > 0) {
-      const result = deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
-      showInventoryResult(result, '청구서');
+      const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
+      
+      // 재고 부족 경고가 있는 경우
+      if (result.warnings && result.warnings.length > 0) {
+        const shortageList = result.warnings
+          .slice(0, 5)
+          .map(w => `• ${w.name} (${w.specification || ''}): 필요 ${w.required}개, 가용 ${w.available}개`)
+          .join('\n');
+        
+        const message = result.warnings.length > 5
+          ? `⚠️ 재고 부족 경고 (${result.warnings.length}개 부품)\n\n${shortageList}\n... 외 ${result.warnings.length - 5}개\n\n계속 진행하시겠습니까?`
+          : `⚠️ 재고 부족 경고\n\n${shortageList}\n\n계속 진행하시겠습니까?`;
+        
+        const userChoice = window.confirm(
+          message + '\n\n확인 = 무시하고 인쇄\n취소 = 인쇄 중단'
+        );
+        
+        if (!userChoice) {
+          alert('인쇄가 취소되었습니다.\n재고 관리 탭에서 확인하세요.');
+          return;
+        }
+      }
     }
-
+  
     window.print();
   };
 
