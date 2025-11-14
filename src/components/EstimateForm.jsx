@@ -148,13 +148,6 @@ const EstimateForm = () => {
       documentNumberInputRef.current?.focus();
       return;
     }
-
-    // 재고 감소 처리
-    if (cart && cart.length > 0) {
-      const result = deductInventoryOnPrint(cart, '견적서', formData.documentNumber);
-      showInventoryResult(result, '견적서');
-    }
-
     window.print();
   };
 
