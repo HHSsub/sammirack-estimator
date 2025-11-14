@@ -251,12 +251,12 @@ const parseCSV = (text) => {
 export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
-    console.log('📋 데이터 소스: all_materials_list_v1.csv');
+    console.log('📋 데이터 소스: all_materials_list_v2.csv');
     
     const materials = new Map();
     
     // ✅ CSV 파일 로드
-    const csvResponse = await fetch('./all_materials_list_v1.csv');
+    const csvResponse = await fetch('./all_materials_list_v2.csv');
     if (!csvResponse.ok) {
       throw new Error(`CSV 파일 로드 실패: ${csvResponse.status}`);
     }
