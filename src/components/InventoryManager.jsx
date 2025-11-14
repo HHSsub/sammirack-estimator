@@ -1210,9 +1210,11 @@ useEffect(() => {
                     </td>
                     <td>
                       <button
-                        onClick={() => setEditingPrice(material)}
+                        onClick={() => setEditingPrice({
+                          ...material,
+                          partId: partId  // ← 재고 데이터의 정확한 partId 전달
+                        })}
                         className="edit-price-btn"
-                        title="단가 수정"
                       >
                         💰 단가수정
                       </button>
