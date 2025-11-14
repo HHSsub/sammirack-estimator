@@ -212,9 +212,12 @@ const ensureSpecification = (row, ctx = {}) => {
   }
 
   // ✅ 추가 규칙: 파렛트랙 & 3t일 경우 `_3t` suffix 부착
+  // 단, 브레싱/브레싱볼트/브러싱고무는 제외
   if (isPalletRack3t && row.specification) {
-    // 이미 _3t이 붙어있지 않다면 추가
-    if (!/_3t$/i.test(row.specification)) {
+    // ⚠️ 브레싱, 브레싱볼트, 브러싱고무 등등은 무게급 구분 없음
+    const isHardware = /(수평|경사)브레?싱|브레싱볼트|브러싱고무|브레싱고무/.test(row.name);
+    
+    if (!isHardware && !/_3t$/i.test(row.specification)) {
       row.specification = `${row.specification}_3t`;
     }
   }
