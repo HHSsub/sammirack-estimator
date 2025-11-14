@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
-import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
+import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
 
 const PROVIDER = {
