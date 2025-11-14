@@ -79,7 +79,8 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
         const inventoryPartId = generateInventoryPartId({
           rackType: bomItem.rackType || '',
           name: bomItem.name || '',
-          specification: bomItem.specification || ''
+          specification: bomItem.specification || '',
+          colorWeight: bomItem.colorWeight || ''  // ✅✅✅ 추가: 하이랙 색상 정보
         });
         
         const requiredQty = Number(bomItem.quantity) || 0;
