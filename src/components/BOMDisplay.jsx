@@ -7,6 +7,7 @@ import {
   loadAdminPrices, 
   getEffectivePrice, 
   generatePartId,
+  generateInventoryPartId,
   getRackOptionsUsingPart 
 } from '../utils/unifiedPriceManager';
 import AdminPriceEditor from './AdminPriceEditor';
