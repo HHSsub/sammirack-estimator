@@ -1257,23 +1257,10 @@ useEffect(() => {
                     </td>
                     <td>
                       <button
-                        onClick={() => {
-                          // ✅ 단가용 ID 생성 (색상 제거)
-                          const pricePartId = generatePartId({
-                            rackType: material.rackType,
-                            partType: material.partType || material.name,
-                            sizeInfo: material.sizeInfo,
-                            specification: material.specification
-                            // colorWeight 제외 → 색상 무관 동일 단가
-                          });
-                          
-                          console.log('💰 단가용 ID:', pricePartId);
-                          
-                          setEditingPrice({
-                            ...material,
-                            partId: pricePartId  // ✅ 단가용 ID 전달
-                          });
-                        }}
+                        onClick={() => setEditingPrice({
+                          ...material,
+                          partId: partId  // ❌ 색상 포함된 재고용 ID
+                        })}
                         className="edit-price-btn"
                       >
                         💰 단가수정
