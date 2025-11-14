@@ -97,7 +97,7 @@ const AdminPriceEditor = ({ item, part, onClose, currentUser, onSave }) => {
     );
   }
 
-  const partId = generatePartId(targetPart);
+  const partId = targetPart.partId || generatePartId(targetPart);
 
   useEffect(() => {
     loadCurrentPrice();
