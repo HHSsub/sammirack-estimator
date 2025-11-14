@@ -197,13 +197,6 @@ const DeliveryNoteForm = () => {
       documentNumberInputRef.current?.focus();
       return;
     }
-
-    // 재고 감소 처리
-    if (cart && cart.length > 0) {
-      const result = deductInventoryOnPrint(cart, '거래명세서', formData.documentNumber);
-      showInventoryResult(result, '거래명세서');
-    }
-
     window.print();
   };
 
