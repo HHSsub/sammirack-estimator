@@ -2,6 +2,11 @@
 /**
  * 실시간 관리자 데이터 동기화 시스템
  * 전 세계 모든 PC에서 실시간 동기화
+ * 
+ * ✅ 문서 동기화 핵심 원칙:
+ * - 서버 데이터에 로컬 데이터를 "누적" (덮어쓰기 X)
+ * - 동일 문서 ID는 최신 타임스탬프 우선
+ * - 여러 PC 동시 요청 시 각각의 문서가 모두 서버에 누적됨
  */
 
 // 데이터 키
@@ -22,25 +27,38 @@ class RealtimeAdminSync {
     this.isOnline = navigator.onLine;
     this.maxRetries = 3;
     
-    // ✅ Debounce용 변수
+    // Debounce용 변수
     this.saveTimeout = null;
     this.lastSaveTime = 0;
-    this.minSaveInterval = 5000; // 5초로 변경 (GitHub Secondary Rate Limit 회피)
+    this.minSaveInterval = 5000; // 5초
     
-    // ✅ 403 에러 추적 추가
+    // 403 에러 추적
     this.consecutiveFailures = 0;
     this.blockedUntil = 0;
     
     this.setupEventListeners();
     this.initBroadcastChannel();
     
-    // 초기 데이터 로드
-    this.loadFromServer();
+    // 초기 데이터 로드 및 로컬 문서 업로드
+    this.initialSync();
     
     // 5분마다 자동 동기화
     setInterval(() => {
       this.loadFromServer();
     }, 5 * 60 * 1000);
+  }
+
+  // ✅ 초기 동기화: 서버 로드 + 로컬 문서 업로드
+  async initialSync() {
+    try {
+      // 1. 먼저 서버에서 데이터 로드
+      await this.loadFromServer();
+      
+      // 2. 로컬 레거시 문서가 있으면 서버에 누적 업로드
+      await this.uploadLocalDocumentsToServer();
+    } catch (error) {
+      console.error('초기 동기화 실패:', error);
+    }
   }
 
   // 브로드캐스트 채널 초기화 (같은 PC 내 탭 간 동기화)
@@ -123,9 +141,9 @@ class RealtimeAdminSync {
     return `${username}@${userIP}`;
   }
 
-  // ✅ Debounced 저장 (10초 모았다가 한 번만)
+  // Debounced 저장 (10초 모았다가 한 번만)
   debouncedSave() {
-    // ✅ 차단 중이면 저장 예약만 하고 종료
+    // 차단 중이면 저장 예약만 하고 종료
     const now = Date.now();
     if (now < this.blockedUntil) {
       const waitSeconds = Math.ceil((this.blockedUntil - now) / 1000);
@@ -151,7 +169,7 @@ class RealtimeAdminSync {
       const now = Date.now();
       const timeSinceLastSave = now - this.lastSaveTime;
 
-      // 마지막 저장 후 10초 이상 경과했는지 확인
+      // 마지막 저장 후 5초 이상 경과했는지 확인
       if (timeSinceLastSave < this.minSaveInterval) {
         const waitTime = this.minSaveInterval - timeSinceLastSave;
         console.log(`⏳ 너무 빠른 저장 요청. ${Math.ceil(waitTime/1000)}초 후 재시도`);
@@ -163,14 +181,14 @@ class RealtimeAdminSync {
     }, 10000);
   }
 
-  // ✅ 실제 저장 실행 (Exponential Backoff 강화)
+  // 실제 저장 실행 (Exponential Backoff 강화)
   async executeSave() {
     console.log('🔄 서버 저장 실행');
     this.lastSaveTime = Date.now();
 
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
-        await this.saveToServer();
+        await this.saveToServerWithMerge();
         console.log('✅ 서버 저장 완료');
         
         // 성공 시 실패 카운터 리셋
@@ -198,7 +216,6 @@ class RealtimeAdminSync {
           console.error(`   대기 시간: ${Math.ceil(waitTime/1000)}초`);
           console.error(`   차단 해제: ${new Date(this.blockedUntil).toLocaleTimeString('ko-KR')}`);
           
-          // 사용자에게 알림
           window.dispatchEvent(new CustomEvent('githubBlocked', {
             detail: {
               waitSeconds: Math.ceil(waitTime/1000),
@@ -206,13 +223,12 @@ class RealtimeAdminSync {
             }
           }));
           
-          // 더 이상 재시도하지 않음 (차단 해제까지 대기)
           break;
         }
 
         // 일반 에러인 경우 짧은 재시도
         if (attempt < this.maxRetries) {
-          const waitTime = attempt * 3000; // 3초, 6초, 9초
+          const waitTime = attempt * 3000;
           console.log(`⏳ ${waitTime/1000}초 후 재시도...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
@@ -223,12 +239,37 @@ class RealtimeAdminSync {
     return false;
   }
 
-  // GitHub Gist에서 데이터 로드
+  // ✅ 서버에서 최신 데이터 가져오기 (문서만)
+  async getServerDocuments() {
+    try {
+      const response = await fetch(`${this.API_BASE}/${this.GIST_ID}`, {
+        headers: this.getHeaders()
+      });
+
+      if (!response.ok) {
+        throw new Error(`GitHub API 오류: ${response.status}`);
+      }
+
+      const gist = await response.json();
+      
+      if (gist.files && gist.files['documents.json']) {
+        try {
+          return JSON.parse(gist.files['documents.json'].content);
+        } catch (e) {
+          return {};
+        }
+      }
+      return {};
+    } catch (error) {
+      console.error('서버 문서 로드 실패:', error);
+      return {};
+    }
+  }
+
+  // GitHub Gist에서 데이터 로드 (읽기 전용 - 로컬에 저장)
   async loadFromServer() {
     if (!this.GIST_ID || !this.GITHUB_TOKEN) {
       console.error('❌ GitHub 설정이 누락되었습니다.');
-      console.error('   GIST_ID:', this.GIST_ID ? '설정됨' : '없음');
-      console.error('   TOKEN:', this.GITHUB_TOKEN ? `설정됨 (${this.GITHUB_TOKEN.substring(0, 4)}...)` : '없음');
       throw new Error('GitHub 설정 오류: GIST_ID 또는 TOKEN이 없습니다.');
     }
     
@@ -242,85 +283,35 @@ class RealtimeAdminSync {
       if (!response.ok) {
         const errorText = await response.text();
         if (response.status === 401) {
-          throw new Error(`GitHub API 인증 실패 (401): Token 권한 확인 필요`);
+          throw new Error(`GitHub API 인증 실패 (401)`);
         } else if (response.status === 404) {
-          throw new Error(`Gist를 찾을 수 없음 (404): GIST_ID 확인 필요`);
+          throw new Error(`Gist를 찾을 수 없음 (404)`);
         } else if (response.status === 403) {
-          if (errorText.includes('rate limit')) {
-            throw new Error(`Rate Limit 초과 (403)`);
-          } else {
-            throw new Error(`접근 거부 (403): GitHub Secondary Rate Limit 또는 Token 권한 문제`);
-          }
+          throw new Error(`Rate Limit 또는 접근 거부 (403)`);
         } else {
-          throw new Error(`GitHub API 오류 (${response.status}): ${errorText}`);
+          throw new Error(`GitHub API 오류 (${response.status})`);
         }
       }
   
       const gist = await response.json();
       
       if (gist.files) {
-        // 기존 재고 데이터 로드
+        // 재고 데이터 로드
         if (gist.files['inventory.json']) {
           const inventoryData = JSON.parse(gist.files['inventory.json'].content);
           localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
           this.broadcastUpdate('inventory-updated', inventoryData);
         }
   
-        // 기존 단가 데이터 로드
+        // 단가 데이터 로드
         if (gist.files['admin_prices.json']) {
           const serverPrices = JSON.parse(gist.files['admin_prices.json'].content);
           const localPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
           
-          const serverKeys = Object.keys(serverPrices);
-          const localKeys = Object.keys(localPrices);
-          
-          console.log(`💰 서버 단가: ${serverKeys.length}개`);
-          console.log(`💰 로컬 단가: ${localKeys.length}개`);
-          
-          let finalPrices = {};
-          let needsServerUpdate = false;
-          
-          const allPartIds = new Set([...serverKeys, ...localKeys]);
-          
-          for (const partId of allPartIds) {
-            const serverData = serverPrices[partId];
-            const localData = localPrices[partId];
-            
-            if (!serverData && !localData) {
-              continue;
-            } else if (!serverData && localData) {
-              finalPrices[partId] = localData;
-              needsServerUpdate = true;
-            } else if (serverData && !localData) {
-              finalPrices[partId] = serverData;
-            } else {
-              const serverTime = new Date(serverData.timestamp || 0).getTime();
-              const localTime = new Date(localData.timestamp || 0).getTime();
-              
-              if (localTime > serverTime) {
-                finalPrices[partId] = localData;
-                needsServerUpdate = true;
-              } else {
-                finalPrices[partId] = serverData;
-              }
-            }
-          }
-          
-          localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(finalPrices));
-          this.broadcastUpdate('prices-updated', finalPrices);
-          
-          if (needsServerUpdate) {
-            console.log('💰 로컬 데이터를 서버에 즉시 업로드');
-            setTimeout(() => this.saveToServer(), 1000);
-          }
-        } else {
-          const localPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
-          const localKeys = Object.keys(localPrices);
-          
-          if (localKeys.length > 0) {
-            console.log(`💰 서버에 관리자 단가 파일 없음. 로컬 ${localKeys.length}개 항목을 서버에 업로드`);
-            setTimeout(() => this.saveToServer(), 1000);
-          }
+          // 단가도 누적 병합 (최신 타임스탬프 우선)
+          const mergedPrices = this.mergeByTimestamp(serverPrices, localPrices);
+          localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(mergedPrices));
+          this.broadcastUpdate('prices-updated', mergedPrices);
         }
   
         if (gist.files['price_history.json']) {
@@ -333,13 +324,24 @@ class RealtimeAdminSync {
           localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
         }
 
-        // ✅ 문서 데이터 로드 및 병합
+        // ✅ 문서 데이터 로드 (서버 → 로컬 동기화)
         if (gist.files['documents.json']) {
-          const serverDocuments = JSON.parse(gist.files['documents.json'].content);
-          await this.mergeDocuments(serverDocuments);
-        } else {
-          // 서버에 documents.json이 없으면 로컬 문서 마이그레이션
-          await this.migrateLocalDocuments();
+          try {
+            const serverDocuments = JSON.parse(gist.files['documents.json'].content);
+            const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+            
+            // 서버 문서를 로컬에 누적 (서버가 기준)
+            const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
+            localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
+            
+            // 레거시 키에도 동기화 (기존 코드 호환)
+            this.syncToLegacyKeys(mergedDocuments);
+            
+            this.broadcastUpdate('documents-updated', mergedDocuments);
+            console.log(`📄 서버 문서 로드 완료: ${Object.keys(mergedDocuments).length}개`);
+          } catch (e) {
+            console.error('문서 파싱 실패:', e);
+          }
         }
       }
   
@@ -348,39 +350,52 @@ class RealtimeAdminSync {
       
     } catch (error) {
       console.error('❌ GitHub 서버 데이터 로드 실패:', error);
-      console.error('   에러 상세:', error.message);
       throw error;
     }
   }
 
-  // ✅ 로컬 문서를 서버로 마이그레이션
-  async migrateLocalDocuments() {
+  // ✅ 로컬 레거시 문서를 서버에 업로드 (누적 방식)
+  async uploadLocalDocumentsToServer() {
     try {
-      const localDocuments = this.getLocalLegacyDocuments();
+      const localLegacyDocuments = this.getLocalLegacyDocuments();
+      const localDocCount = Object.keys(localLegacyDocuments).length;
       
-      if (Object.keys(localDocuments).length === 0) {
-        console.log('📄 마이그레이션할 로컬 문서 없음');
+      if (localDocCount === 0) {
+        console.log('📄 업로드할 로컬 문서 없음');
         return;
       }
 
-      const creatorInfo = await this.getCreatorInfo();
+      console.log(`📄 로컬 문서 ${localDocCount}개 서버 업로드 시작...`);
       
-      // 기존 로컬 문서에 createdBy 정보 추가
-      for (const docId in localDocuments) {
-        if (!localDocuments[docId].createdBy) {
-          localDocuments[docId].createdBy = creatorInfo;
-          localDocuments[docId].syncedAt = new Date().toISOString();
+      // 생성자 정보 추가
+      const creatorInfo = await this.getCreatorInfo();
+      for (const docKey in localLegacyDocuments) {
+        if (!localLegacyDocuments[docKey].createdBy) {
+          localLegacyDocuments[docKey].createdBy = creatorInfo;
+        }
+        if (!localLegacyDocuments[docKey].syncedAt) {
+          localLegacyDocuments[docKey].syncedAt = new Date().toISOString();
         }
       }
 
-      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(localDocuments));
-      console.log(`📄 ${Object.keys(localDocuments).length}개 로컬 문서 마이그레이션 완료`);
+      // 1. 서버에서 현재 문서 가져오기
+      const serverDocuments = await this.getServerDocuments();
+      console.log(`📄 서버 기존 문서: ${Object.keys(serverDocuments).length}개`);
       
-      // 서버에 업로드
-      this.debouncedSave();
+      // 2. 서버 문서 + 로컬 문서 누적 병합
+      const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localLegacyDocuments);
+      console.log(`📄 병합 후 총 문서: ${Object.keys(mergedDocuments).length}개`);
+      
+      // 3. 로컬 synced_documents에 저장
+      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
+      
+      // 4. 서버에 즉시 업로드
+      await this.saveToServerWithMerge();
+      
+      console.log('✅ 로컬 문서 서버 업로드 완료');
       
     } catch (error) {
-      console.error('❌ 문서 마이그레이션 실패:', error);
+      console.error('❌ 로컬 문서 업로드 실패:', error);
     }
   }
 
@@ -391,13 +406,15 @@ class RealtimeAdminSync {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (
-        key.startsWith('estimate_') || 
-        key.startsWith('purchase_') || 
-        key.startsWith('delivery_')
+        key && (
+          key.startsWith('estimate_') || 
+          key.startsWith('purchase_') || 
+          key.startsWith('delivery_')
+        )
       ) {
         try {
           const item = JSON.parse(localStorage.getItem(key));
-          if (item && item.id) {
+          if (item && item.id && item.type) {
             const docKey = `${item.type}_${item.id}`;
             documents[docKey] = item;
           }
@@ -410,117 +427,109 @@ class RealtimeAdminSync {
     return documents;
   }
 
-  // ✅ 서버 문서와 로컬 문서 병합 (최신 타임스탬프 우선)
-  async mergeDocuments(serverDocuments) {
-    try {
-      const localSyncedDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
-      const localLegacyDocuments = this.getLocalLegacyDocuments();
+  // ✅ 문서 병합 (최신 타임스탬프 우선, 누적 방식)
+  mergeDocumentsByTimestamp(serverDocs, localDocs) {
+    const merged = { ...serverDocs }; // 서버 문서 기반
+    
+    for (const docKey in localDocs) {
+      const localDoc = localDocs[docKey];
+      const serverDoc = merged[docKey];
       
-      // 로컬 레거시 문서를 synced 형식으로 변환
-      const creatorInfo = await this.getCreatorInfo();
-      for (const docKey in localLegacyDocuments) {
-        if (!localSyncedDocuments[docKey]) {
-          const doc = localLegacyDocuments[docKey];
-          if (!doc.createdBy) {
-            doc.createdBy = creatorInfo;
-          }
-          if (!doc.syncedAt) {
-            doc.syncedAt = new Date().toISOString();
-          }
-          localSyncedDocuments[docKey] = doc;
-        }
-      }
-
-      let finalDocuments = {};
-      let needsServerUpdate = false;
-      
-      const allDocKeys = new Set([
-        ...Object.keys(serverDocuments),
-        ...Object.keys(localSyncedDocuments)
-      ]);
-      
-      console.log(`📄 서버 문서: ${Object.keys(serverDocuments).length}개`);
-      console.log(`📄 로컬 문서: ${Object.keys(localSyncedDocuments).length}개`);
-      
-      for (const docKey of allDocKeys) {
-        const serverDoc = serverDocuments[docKey];
-        const localDoc = localSyncedDocuments[docKey];
+      if (!serverDoc) {
+        // 서버에 없으면 추가
+        merged[docKey] = localDoc;
+      } else {
+        // 둘 다 있으면 최신 타임스탬프 우선
+        const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
+        const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
         
-        if (!serverDoc && !localDoc) {
-          continue;
-        } else if (!serverDoc && localDoc) {
-          // 로컬에만 있음 → 서버 업로드 필요
-          finalDocuments[docKey] = localDoc;
-          needsServerUpdate = true;
-        } else if (serverDoc && !localDoc) {
-          // 서버에만 있음 → 로컬에 저장
-          finalDocuments[docKey] = serverDoc;
-        } else {
-          // 둘 다 있음 → 최신 타임스탬프 우선
-          const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
-          const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
-          
-          if (localTime > serverTime) {
-            finalDocuments[docKey] = localDoc;
-            needsServerUpdate = true;
-          } else {
-            finalDocuments[docKey] = serverDoc;
-          }
+        if (localTime > serverTime) {
+          merged[docKey] = localDoc;
+        }
+        // 서버가 최신이면 서버 데이터 유지 (이미 merged에 있음)
+      }
+    }
+    
+    return merged;
+  }
+
+  // ✅ 일반 데이터 병합 (최신 타임스탬프 우선)
+  mergeByTimestamp(serverData, localData) {
+    const merged = { ...serverData };
+    
+    for (const key in localData) {
+      const localItem = localData[key];
+      const serverItem = merged[key];
+      
+      if (!serverItem) {
+        merged[key] = localItem;
+      } else {
+        const serverTime = new Date(serverItem.timestamp || 0).getTime();
+        const localTime = new Date(localItem.timestamp || 0).getTime();
+        
+        if (localTime > serverTime) {
+          merged[key] = localItem;
         }
       }
-      
-      // 로컬 저장
-      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(finalDocuments));
-      
-      // 레거시 localStorage 키에도 동기화 (기존 코드 호환성)
-      for (const docKey in finalDocuments) {
-        const doc = finalDocuments[docKey];
-        if (doc && !doc.deleted) {
-          localStorage.setItem(docKey, JSON.stringify(doc));
-        }
+    }
+    
+    return merged;
+  }
+
+  // ✅ 레거시 키에 동기화 (기존 코드 호환성)
+  syncToLegacyKeys(documents) {
+    for (const docKey in documents) {
+      const doc = documents[docKey];
+      if (doc && !doc.deleted) {
+        localStorage.setItem(docKey, JSON.stringify(doc));
+      } else if (doc && doc.deleted) {
+        // 삭제된 문서는 레거시 키에서 제거
+        localStorage.removeItem(docKey);
       }
-      
-      this.broadcastUpdate('documents-updated', finalDocuments);
-      
-      if (needsServerUpdate) {
-        console.log('📄 로컬 문서를 서버에 업로드 예정');
-        this.debouncedSave();
-      }
-      
-      console.log(`📄 문서 병합 완료: 총 ${Object.keys(finalDocuments).length}개`);
-      
-    } catch (error) {
-      console.error('❌ 문서 병합 실패:', error);
     }
   }
 
-  // GitHub Gist에 데이터 저장
-  async saveToServer() {
+  // ✅ 서버에 저장 (누적 병합 방식)
+  async saveToServerWithMerge() {
     if (!this.GIST_ID || !this.GITHUB_TOKEN) {
       console.error('❌ GitHub 설정이 누락되었습니다.');
       return false;
     }
 
     try {
+      // 1. 서버에서 현재 문서 가져오기 (동시 요청 대비)
+      const serverDocuments = await this.getServerDocuments();
+      
+      // 2. 로컬 데이터 가져오기
+      const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
       const inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '{}');
       const adminPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
       const priceHistory = JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '{}');
       const activityLog = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY) || '[]');
-      const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+
+      // 3. 문서 누적 병합 (서버 + 로컬)
+      const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
+      
+      // 4. 로컬에도 병합 결과 저장
+      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
+      this.syncToLegacyKeys(mergedDocuments);
 
       const userIP = await this.getUserIP();
       
+      // 활동 로그 추가
       activityLog.unshift({
         timestamp: new Date().toISOString(),
         action: 'data_sync',
         userIP,
-        dataTypes: ['inventory', 'prices', 'history', 'documents']
+        dataTypes: ['inventory', 'prices', 'history', 'documents'],
+        documentCount: Object.keys(mergedDocuments).length
       });
 
       if (activityLog.length > 1000) {
         activityLog.splice(1000);
       }
 
+      // 5. 서버에 저장
       const files = {
         'inventory.json': {
           content: JSON.stringify(inventory, null, 2)
@@ -535,10 +544,10 @@ class RealtimeAdminSync {
           content: JSON.stringify(activityLog, null, 2)
         },
         'documents.json': {
-          content: JSON.stringify(documents, null, 2)
+          content: JSON.stringify(mergedDocuments, null, 2)
         },
         'last_updated.txt': {
-          content: `Last updated: ${new Date().toISOString()}\nUser IP: ${userIP}\nSync ID: ${this.getInstanceId()}`
+          content: `Last updated: ${new Date().toISOString()}\nUser IP: ${userIP}\nSync ID: ${this.getInstanceId()}\nDocuments: ${Object.keys(mergedDocuments).length}`
         }
       };
 
@@ -552,9 +561,12 @@ class RealtimeAdminSync {
         throw new Error(`GitHub API 저장 실패: ${response.status} - ${response.statusText}`);
       }
 
-      console.log('✅ GitHub 서버에 데이터 저장 완료');
+      console.log(`✅ GitHub 서버에 데이터 저장 완료 (문서 ${Object.keys(mergedDocuments).length}개)`);
       
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+      
+      // 브로드캐스트
+      this.broadcastUpdate('documents-updated', mergedDocuments);
       
       return true;
       
@@ -591,7 +603,6 @@ class RealtimeAdminSync {
     window.dispatchEvent(new CustomEvent('adminPricesUpdated', { detail: data }));
   }
 
-  // ✅ 문서 업데이트 핸들러
   handleDocumentsUpdate(data) {
     console.log('📄 실시간 문서 업데이트 수신:', data);
     window.dispatchEvent(new CustomEvent('documentsUpdated', { detail: data }));
@@ -620,7 +631,6 @@ export const adminSyncManager = {
 export const saveInventorySync = async (partId, quantity, userInfo = {}) => {
   try {
     const inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '{}');
-    // ✅ 수정: 숫자 형식으로 저장 (객체가 아닌 순수 숫자값)
     inventory[partId] = Number(quantity);
     localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
     if (syncInstance) {
@@ -651,7 +661,6 @@ export const forceServerSync = async () => {
     await syncInstance.loadFromServer();
   }
 };
-
 
 export const loadAdminPrices = () => {
   try {
@@ -735,7 +744,7 @@ export const loadDeletedDocuments = () => {
 };
 
 /**
- * 문서 저장 (생성 또는 수정)
+ * 문서 저장 (생성 또는 수정) - 서버 누적 방식
  * @param {Object} document - 저장할 문서 객체
  * @returns {Promise<boolean>} 성공 여부
  */
@@ -800,6 +809,7 @@ export const deleteDocumentSync = async (docId, docType) => {
     // 소프트 삭제 (deleted 플래그 추가)
     documents[docKey].deleted = true;
     documents[docKey].deletedAt = new Date().toISOString();
+    documents[docKey].updatedAt = new Date().toISOString();
     
     if (syncInstance) {
       documents[docKey].deletedBy = await syncInstance.getCreatorInfo();
@@ -848,6 +858,7 @@ export const restoreDocumentSync = async (docId, docType) => {
     delete documents[docKey].deletedBy;
     
     documents[docKey].restoredAt = new Date().toISOString();
+    documents[docKey].updatedAt = new Date().toISOString();
     
     if (syncInstance) {
       documents[docKey].restoredBy = await syncInstance.getCreatorInfo();
