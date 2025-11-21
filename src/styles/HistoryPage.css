@@ -425,3 +425,169 @@
     grid-column: span 1;
   }
 }
+
+/* ============================================
+   ✅ 추가 스타일 - 기존 HistoryPage.css 파일 끝에 추가
+   ============================================ */
+
+/* 페이지 헤더 - 제목과 동기화 상태 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+/* 동기화 상태 영역 */
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.last-sync {
+  font-size: 12px;
+  color: #666;
+}
+
+.sync-button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.sync-button:hover {
+  background-color: #45a049;
+}
+
+.sync-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* 생성자 컬럼 */
+.header-cell.creator,
+.item-cell.creator {
+  width: 120px;
+  min-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-cell.creator {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 생성자 정보 스타일 (상세 페이지) */
+.creator-info {
+  font-family: monospace;
+  background-color: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+/* 삭제된 문서 보기 버튼 */
+.deleted-docs-button {
+  background-color: #ff9800 !important;
+  color: white !important;
+}
+
+.deleted-docs-button:hover {
+  background-color: #f57c00 !important;
+}
+
+/* 삭제된 문서 섹션 */
+.deleted-items-section {
+  padding: 20px 0;
+}
+
+.deleted-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #ff5722;
+}
+
+.deleted-header h2 {
+  margin: 0;
+  color: #ff5722;
+}
+
+/* 삭제된 항목 스타일 */
+.list-item.deleted-item {
+  background-color: #fff8f5;
+  border-left: 3px solid #ff5722;
+}
+
+.list-item.deleted-item:hover {
+  background-color: #ffebe5;
+}
+
+/* 복구 버튼 */
+.restore-button {
+  background-color: #4CAF50 !important;
+  color: white !important;
+  padding: 4px 10px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  margin-right: 5px !important;
+}
+
+.restore-button:hover {
+  background-color: #45a049 !important;
+}
+
+/* 영구 삭제 버튼 */
+.permanent-delete-button {
+  background-color: #d32f2f !important;
+  color: white !important;
+  padding: 4px 10px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+}
+
+.permanent-delete-button:hover {
+  background-color: #b71c1c !important;
+}
+
+/* 반응형 조정 */
+@media (max-width: 1200px) {
+  .header-cell.creator,
+  .item-cell.creator {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .sync-status {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .deleted-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
