@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HistoryPage.css';
+import {
+  loadAllDocuments,
+  loadDeletedDocuments,
+  saveDocumentSync,
+  deleteDocumentSync,
+  restoreDocumentSync,
+  permanentDeleteDocumentSync,
+  forceServerSync
+} from '../utils/realtimeAdminSync';
+
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
  * Features:
@@ -9,6 +19,8 @@ import '../styles/HistoryPage.css';
  * - Convert estimates to orders
  * - Print documents including delivery notes
  * - Edit and delete documents including delivery notes
+ * - ✅ 서버 동기화 (GitHub Gist)
+ * - ✅ 삭제된 문서 목록 보기 및 복구
  */
 const HistoryPage = () => {
   const navigate = useNavigate();
@@ -26,53 +38,91 @@ const HistoryPage = () => {
   // State for selected item
   const [selectedItem, setSelectedItem] = useState(null);
   // State for view options
-  const [view, setView] = useState('list'); // 'list' or 'details'
-  // Load history from localStorage on component mount
+  const [view, setView] = useState('list'); // 'list', 'details', 'deleted'
+  // ✅ 동기화 상태
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState(null);
+  // ✅ 삭제된 문서 목록
+  const [deletedItems, setDeletedItems] = useState([]);
+
+  // Load history on component mount
   useEffect(() => {
     loadHistory();
+    
+    // ✅ 문서 업데이트 이벤트 리스너
+    const handleDocumentsUpdate = () => {
+      console.log('📄 문서 업데이트 감지 - 목록 새로고침');
+      loadHistory();
+    };
+    
+    window.addEventListener('documentsupdated', handleDocumentsUpdate);
+    
+    return () => {
+      window.removeEventListener('documentsupdated', handleDocumentsUpdate);
+    };
   }, []);
+
   // Filter items whenever filters or history items change
   useEffect(() => {
     filterItems();
   }, [filters, historyItems]);
+
   /**
-   * Load history data from localStorage
+   * ✅ Load history data from synced documents
    */
-  const loadHistory = () => {
+  const loadHistory = useCallback(() => {
     try {
-      // Get all items from localStorage
-      const allItems = [];
-      
-      // Find all estimates, orders, and delivery notes in localStorage
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (
-          key.startsWith('estimate_') || 
-          key.startsWith('purchase_') || 
-          key.startsWith('delivery_')
-        ) {
-          try {
-            const item = JSON.parse(localStorage.getItem(key));
-            if (item) {
-              allItems.push(item);
-            }
-          } catch (e) {
-            console.error('Failed to parse item:', key, e);
-          }
-        }
-      }
+      // ✅ 서버 동기화된 문서에서 로드 (삭제되지 않은 것만)
+      const syncedDocuments = loadAllDocuments(false);
       
       // Sort by creation date (newest first)
-      allItems.sort((a, b) => {
+      syncedDocuments.sort((a, b) => {
         return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date);
       });
       
-      setHistoryItems(allItems);
-      setFilteredItems(allItems);
+      setHistoryItems(syncedDocuments);
+      setFilteredItems(syncedDocuments);
+      setLastSyncTime(new Date());
+      
+      console.log(`📄 문서 로드 완료: ${syncedDocuments.length}개`);
     } catch (error) {
       console.error('Error loading history:', error);
     }
+  }, []);
+
+  /**
+   * ✅ 삭제된 문서 로드
+   */
+  const loadDeletedHistory = useCallback(() => {
+    try {
+      const deleted = loadDeletedDocuments();
+      deleted.sort((a, b) => {
+        return new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0);
+      });
+      setDeletedItems(deleted);
+      console.log(`🗑️ 삭제된 문서 로드: ${deleted.length}개`);
+    } catch (error) {
+      console.error('삭제된 문서 로드 실패:', error);
+    }
+  }, []);
+
+  /**
+   * ✅ 서버 강제 동기화
+   */
+  const handleForceSync = async () => {
+    try {
+      setIsSyncing(true);
+      await forceServerSync();
+      loadHistory();
+      alert('서버 동기화가 완료되었습니다.');
+    } catch (error) {
+      console.error('동기화 실패:', error);
+      alert('서버 동기화에 실패했습니다: ' + error.message);
+    } finally {
+      setIsSyncing(false);
+    }
   };
+
   /**
    * Apply filters to history items
    */
@@ -119,6 +169,7 @@ const HistoryPage = () => {
     
     setFilteredItems(filtered);
   };
+
   /**
    * Handle filter changes
    */
@@ -129,6 +180,7 @@ const HistoryPage = () => {
       [name]: value
     }));
   };
+
   /**
    * Reset all filters
    */
@@ -141,41 +193,114 @@ const HistoryPage = () => {
       status: 'all'
     });
   };
+
   /**
-   * Delete a history item
+   * ✅ Delete a history item (소프트 삭제)
    */
-  const deleteItem = (item) => {
+  const deleteItem = async (item) => {
     if (!item || !item.id || !item.type) return;
     
     const confirmDelete = window.confirm(
       `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 삭제하시겠습니까? 
-      ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}`
+      ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+      
+※ 삭제된 문서는 '삭제된 문서 보기'에서 복구할 수 있습니다.`
     );
     
     if (confirmDelete) {
       try {
-        // Remove from localStorage
-        const storageKey = `${item.type}_${item.id}`;
-        localStorage.removeItem(storageKey);
+        // ✅ 소프트 삭제 (서버 동기화)
+        const success = await deleteDocumentSync(item.id, item.type);
         
-        // Update state
-        setHistoryItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
-        
-        if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
-          setSelectedItem(null);
-          setView('list');
+        if (success) {
+          // Update state
+          setHistoryItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+          
+          if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
+            setSelectedItem(null);
+            setView('list');
+          }
+          
+          console.log('✅ 문서 삭제 완료 (복구 가능)');
+        } else {
+          alert('문서 삭제에 실패했습니다.');
         }
       } catch (error) {
         console.error('Error deleting item:', error);
+        alert('문서 삭제 중 오류가 발생했습니다.');
       }
     }
   };
+
+  /**
+   * ✅ 삭제된 문서 복구
+   */
+  const restoreItem = async (item) => {
+    if (!item || !item.id || !item.type) return;
+    
+    const confirmRestore = window.confirm(
+      `이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 복구하시겠습니까?
+      ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}`
+    );
+    
+    if (confirmRestore) {
+      try {
+        const success = await restoreDocumentSync(item.id, item.type);
+        
+        if (success) {
+          // 삭제 목록에서 제거
+          setDeletedItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+          // 일반 목록 새로고침
+          loadHistory();
+          alert('문서가 복구되었습니다.');
+        } else {
+          alert('문서 복구에 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('Error restoring item:', error);
+        alert('문서 복구 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
+  /**
+   * ✅ 문서 영구 삭제
+   */
+  const permanentDeleteItem = async (item) => {
+    if (!item || !item.id || !item.type) return;
+    
+    const confirmDelete = window.confirm(
+      `⚠️ 경고: 이 문서를 영구적으로 삭제하시겠습니까?
+      
+${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+
+이 작업은 되돌릴 수 없습니다!`
+    );
+    
+    if (confirmDelete) {
+      try {
+        const success = await permanentDeleteDocumentSync(item.id, item.type);
+        
+        if (success) {
+          setDeletedItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+          alert('문서가 영구 삭제되었습니다.');
+        } else {
+          alert('영구 삭제에 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('Error permanently deleting item:', error);
+        alert('영구 삭제 중 오류가 발생했습니다.');
+      }
+    }
+  };
+
   /**
    * Convert an estimate to an purchase
    */
   const convertToPurchase = (estimate) => {
     navigate(`/purchase-order/new`, { state: { fromEstimate: estimate } });
   };
+
   /**
    * Edit an existing item
    */
@@ -194,6 +319,7 @@ const HistoryPage = () => {
       navigate(`/delivery-note/edit/${item.id}`, { state: { item } });
     }
   };
+
   /**
    * Print an item
    */
@@ -618,6 +744,7 @@ const HistoryPage = () => {
       printWindow.close();
     };
   };
+
   /**
    * Get status badge CSS class
    */
@@ -634,10 +761,11 @@ const HistoryPage = () => {
         return 'status-pending';
     }
   };
+
   /**
-   * Update item status
+   * ✅ Update item status (서버 동기화)
    */
-  const updateStatus = (item, newStatus) => {
+  const updateStatus = async (item, newStatus) => {
     if (!item || !item.id || !item.type) return;
     
     try {
@@ -648,25 +776,28 @@ const HistoryPage = () => {
         updatedAt: new Date().toISOString()
       };
       
-      // Save to localStorage
-      const storageKey = `${item.type}_${item.id}`;
-      localStorage.setItem(storageKey, JSON.stringify(updatedItem));
+      // ✅ 서버 동기화 저장
+      const success = await saveDocumentSync(updatedItem);
       
-      // Update state
-      setHistoryItems(prev => prev.map(i => {
-        if (i.id === item.id && i.type === item.type) {
-          return updatedItem;
+      if (success) {
+        // Update state
+        setHistoryItems(prev => prev.map(i => {
+          if (i.id === item.id && i.type === item.type) {
+            return updatedItem;
+          }
+          return i;
+        }));
+        
+        if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
+          setSelectedItem(updatedItem);
         }
-        return i;
-      }));
-      
-      if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
-        setSelectedItem(updatedItem);
       }
     } catch (error) {
       console.error('Error updating status:', error);
+      alert('상태 업데이트에 실패했습니다.');
     }
   };
+
   /**
    * Format date for display
    */
@@ -680,6 +811,21 @@ const HistoryPage = () => {
       return dateString;
     }
   };
+
+  /**
+   * ✅ Format datetime for display
+   */
+  const formatDateTime = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    } catch {
+      return dateString;
+    }
+  };
+
   /**
    * Render item details view
    */
@@ -724,6 +870,20 @@ const HistoryPage = () => {
                 <strong>연락처:</strong>
                 <span>{selectedItem.contactInfo}</span>
               </div>
+              {/* ✅ 생성자 정보 표시 */}
+              {selectedItem.createdBy && (
+                <div className="details-item">
+                  <strong>생성자:</strong>
+                  <span className="creator-info">{selectedItem.createdBy}</span>
+                </div>
+              )}
+              {/* ✅ 동기화 시간 표시 */}
+              {selectedItem.syncedAt && (
+                <div className="details-item">
+                  <strong>마지막 동기화:</strong>
+                  <span>{formatDateTime(selectedItem.syncedAt)}</span>
+                </div>
+              )}
               {!isEstimate && selectedItem.estimateNumber && selectedItem.type !== 'delivery' && (
                 <div className="details-item">
                   <strong>관련 거래번호:</strong>
@@ -839,6 +999,84 @@ const HistoryPage = () => {
       </div>
     );
   };
+
+  /**
+   * ✅ Render deleted items list
+   */
+  const renderDeletedItemsList = () => (
+    <div className="deleted-items-section">
+      <div className="deleted-header">
+        <h2>🗑️ 삭제된 문서 목록</h2>
+        <button className="back-button" onClick={() => {
+          setView('list');
+          setDeletedItems([]);
+        }}>
+          ← 문서 목록으로
+        </button>
+      </div>
+      
+      {deletedItems.length === 0 ? (
+        <div className="no-items">
+          <p>삭제된 문서가 없습니다.</p>
+        </div>
+      ) : (
+        <div className="history-list">
+          <div className="list-header">
+            <div className="header-cell document-type">유형</div>
+            <div className="header-cell document-id">거래번호</div>
+            <div className="header-cell date">삭제일</div>
+            <div className="header-cell customer">삭제자</div>
+            <div className="header-cell product">제품</div>
+            <div className="header-cell price">금액</div>
+            <div className="header-cell actions">작업</div>
+          </div>
+          
+          {deletedItems.map((item) => (
+            <div 
+              key={`deleted_${item.type}_${item.id}`}
+              className="list-item deleted-item"
+            >
+              <div className="item-cell document-type">
+                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}
+              </div>
+              <div className="item-cell document-id">
+                {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+              </div>
+              <div className="item-cell date">
+                {formatDateTime(item.deletedAt)}
+              </div>
+              <div className="item-cell customer">
+                {item.deletedBy || '-'}
+              </div>
+              <div className="item-cell product">
+                {item.productType}
+              </div>
+              <div className="item-cell price">
+                {item.totalPrice?.toLocaleString()}원
+              </div>
+              <div className="item-cell actions">
+                <button 
+                  title="복구" 
+                  className="restore-button"
+                  onClick={() => restoreItem(item)}
+                >
+                  ♻️ 복구
+                </button>
+                <button 
+                  title="영구 삭제" 
+                  className="permanent-delete-button"
+                  onClick={() => permanentDeleteItem(item)}
+                >
+                  🔥 영구삭제
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   /**
    * Render list of history items
    */
@@ -849,6 +1087,7 @@ const HistoryPage = () => {
         <div className="header-cell document-id">거래번호</div>
         <div className="header-cell date">날짜</div>
         <div className="header-cell customer">고객명</div>
+        <div className="header-cell creator">생성자</div>
         <div className="header-cell product">제품</div>
         <div className="header-cell price">금액</div>
         <div className="header-cell status">상태</div>
@@ -880,6 +1119,10 @@ const HistoryPage = () => {
             </div>
             <div className="item-cell customer">
               {item.customerName}
+            </div>
+            {/* ✅ 생성자 표시 */}
+            <div className="item-cell creator" title={item.createdBy || ''}>
+              {item.createdBy ? item.createdBy.split('@')[0] : '-'}
             </div>
             <div className="item-cell product">
               {item.productType}
@@ -920,11 +1163,29 @@ const HistoryPage = () => {
       )}
     </div>
   );
+
   return (
     <div className="history-page">
       {view === 'list' && (
         <>
-          <h2>문서 관리</h2>
+          <div className="page-header">
+            <h2>문서 관리</h2>
+            {/* ✅ 동기화 상태 표시 */}
+            <div className="sync-status">
+              {lastSyncTime && (
+                <span className="last-sync">
+                  마지막 동기화: {formatDateTime(lastSyncTime)}
+                </span>
+              )}
+              <button 
+                className="sync-button"
+                onClick={handleForceSync}
+                disabled={isSyncing}
+              >
+                {isSyncing ? '동기화 중...' : '🔄 서버 동기화'}
+              </button>
+            </div>
+          </div>
           
           <div className="filters-section">
             <div className="filters-container">
@@ -1004,7 +1265,16 @@ const HistoryPage = () => {
             <button onClick={() => navigate('/purchase-order/new')}>
               새 청구서 작성
             </button>
-            {/* 거래명세서 새로 작성 버튼도 필요하다면 추가 가능 */}
+            {/* ✅ 삭제된 문서 보기 버튼 */}
+            <button 
+              className="deleted-docs-button"
+              onClick={() => {
+                loadDeletedHistory();
+                setView('deleted');
+              }}
+            >
+              🗑️ 삭제된 문서 보기
+            </button>
           </div>
           
           {renderItemsList()}
@@ -1012,7 +1282,11 @@ const HistoryPage = () => {
       )}
       
       {view === 'details' && renderItemDetails()}
+      
+      {/* ✅ 삭제된 문서 목록 뷰 */}
+      {view === 'deleted' && renderDeletedItemsList()}
     </div>
   );
 };
+
 export default HistoryPage;
