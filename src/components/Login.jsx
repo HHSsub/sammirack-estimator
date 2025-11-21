@@ -60,6 +60,9 @@ const Login = ({ onLogin }) => {
         }
       }
 
+      // ✅ localStorage에 현재 사용자 정보 저장 (문서 생성자 기록용)
+      localStorage.setItem('currentUser', JSON.stringify(userInfo));
+
       // 로그인 성공
       onLogin(true, userInfo);
       
