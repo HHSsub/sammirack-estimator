@@ -336,9 +336,14 @@ class RealtimeAdminSync {
         // ✅ 문서 데이터 로드 및 병합
         if (gist.files['documents.json']) {
           const serverDocuments = JSON.parse(gist.files['documents.json'].content);
-          await this.mergeDocuments(serverDocuments);
+          // ✅ 서버 문서가 비어있어도 로컬 문서 마이그레이션 실행
+          if (Object.keys(serverDocuments).length === 0) {
+            console.log('📄 서버 문서가 비어있음. 로컬 문서 마이그레이션 시작...');
+            await this.migrateLocalDocuments();
+          } else {
+            await this.mergeDocuments(serverDocuments);
+          }
         } else {
-          // 서버에 documents.json이 없으면 로컬 문서 마이그레이션
           console.log('📄 서버에 문서 파일 없음. 로컬 문서 마이그레이션 시작...');
           await this.migrateLocalDocuments();
         }
