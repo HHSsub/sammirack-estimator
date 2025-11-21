@@ -9,6 +9,7 @@ const INVENTORY_KEY = 'inventory_data';
 const ADMIN_PRICES_KEY = 'admin_edit_prices';
 const PRICE_HISTORY_KEY = 'admin_price_history';
 const ACTIVITY_LOG_KEY = 'admin_activity_log';
+const DOCUMENTS_KEY = 'synced_documents';
 import { generatePartId } from './unifiedPriceManager';
 
 class RealtimeAdminSync {
@@ -58,6 +59,9 @@ class RealtimeAdminSync {
             break;
           case 'prices-updated':
             this.handlePricesUpdate(data);
+            break;
+          case 'documents-updated':
+            this.handleDocumentsUpdate(data);
             break;
           case 'force-reload':
             this.handleForceReload();
@@ -109,6 +113,14 @@ class RealtimeAdminSync {
     } catch (error) {
       return 'unknown';
     }
+  }
+
+  // ✅ 생성자 정보 생성 (사용자명@IP)
+  async getCreatorInfo() {
+    const userIP = await this.getUserIP();
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const username = currentUser.username || currentUser.name || 'unknown';
+    return `${username}@${userIP}`;
   }
 
   // ✅ Debounced 저장 (10초 모았다가 한 번만)
@@ -247,12 +259,14 @@ class RealtimeAdminSync {
       const gist = await response.json();
       
       if (gist.files) {
+        // 기존 재고 데이터 로드
         if (gist.files['inventory.json']) {
           const inventoryData = JSON.parse(gist.files['inventory.json'].content);
           localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
           this.broadcastUpdate('inventory-updated', inventoryData);
         }
   
+        // 기존 단가 데이터 로드
         if (gist.files['admin_prices.json']) {
           const serverPrices = JSON.parse(gist.files['admin_prices.json'].content);
           const localPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
@@ -275,22 +289,18 @@ class RealtimeAdminSync {
             if (!serverData && !localData) {
               continue;
             } else if (!serverData && localData) {
-              // console.log(`💰 [${partId}] 로컬만 있음 → 서버 업로드 예정`);
               finalPrices[partId] = localData;
               needsServerUpdate = true;
             } else if (serverData && !localData) {
-              // console.log(`💰 [${partId}] 서버만 있음 → 서버 데이터 사용`);
               finalPrices[partId] = serverData;
             } else {
               const serverTime = new Date(serverData.timestamp || 0).getTime();
               const localTime = new Date(localData.timestamp || 0).getTime();
               
               if (localTime > serverTime) {
-                // console.log(`💰 [${partId}] 로컬이 최신 (${new Date(localTime).toLocaleString()}) → 서버 업데이트 예정`);
                 finalPrices[partId] = localData;
                 needsServerUpdate = true;
               } else {
-                // console.log(`💰 [${partId}] 서버가 최신 (${new Date(serverTime).toLocaleString()}) → 서버 데이터 사용`);
                 finalPrices[partId] = serverData;
               }
             }
@@ -322,6 +332,16 @@ class RealtimeAdminSync {
           const activityData = JSON.parse(gist.files['activity_log.json'].content);
           localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
         }
+
+        // ✅ 문서 데이터 로드 및 병합
+        if (gist.files['documents.json']) {
+          const serverDocuments = JSON.parse(gist.files['documents.json'].content);
+          await this.mergeDocuments(serverDocuments);
+        } else {
+          // 서버에 documents.json이 없으면 로컬 문서 마이그레이션
+          console.log('📄 서버에 문서 파일 없음. 로컬 문서 마이그레이션 시작...');
+          await this.migrateLocalDocuments();
+        }
       }
   
       console.log('✅ GitHub 서버 데이터 로드 완료');
@@ -331,6 +351,147 @@ class RealtimeAdminSync {
       console.error('❌ GitHub 서버 데이터 로드 실패:', error);
       console.error('   에러 상세:', error.message);
       throw error;
+    }
+  }
+
+  // ✅ 로컬 문서를 서버로 마이그레이션
+  async migrateLocalDocuments() {
+    try {
+      const localDocuments = this.getLocalLegacyDocuments();
+      
+      if (Object.keys(localDocuments).length === 0) {
+        console.log('📄 마이그레이션할 로컬 문서 없음');
+        return;
+      }
+
+      const creatorInfo = await this.getCreatorInfo();
+      
+      // 기존 로컬 문서에 createdBy 정보 추가
+      for (const docId in localDocuments) {
+        if (!localDocuments[docId].createdBy) {
+          localDocuments[docId].createdBy = creatorInfo;
+          localDocuments[docId].syncedAt = new Date().toISOString();
+        }
+      }
+
+      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(localDocuments));
+      console.log(`📄 ${Object.keys(localDocuments).length}개 로컬 문서 마이그레이션 완료`);
+      
+      // 서버에 업로드
+      this.debouncedSave();
+      
+    } catch (error) {
+      console.error('❌ 문서 마이그레이션 실패:', error);
+    }
+  }
+
+  // ✅ 로컬 레거시 문서 가져오기 (estimate_, purchase_, delivery_ 접두사)
+  getLocalLegacyDocuments() {
+    const documents = {};
+    
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key.startsWith('estimate_') || 
+        key.startsWith('purchase_') || 
+        key.startsWith('delivery_')
+      ) {
+        try {
+          const item = JSON.parse(localStorage.getItem(key));
+          if (item && item.id) {
+            const docKey = `${item.type}_${item.id}`;
+            documents[docKey] = item;
+          }
+        } catch (e) {
+          console.error('문서 파싱 실패:', key, e);
+        }
+      }
+    }
+    
+    return documents;
+  }
+
+  // ✅ 서버 문서와 로컬 문서 병합 (최신 타임스탬프 우선)
+  async mergeDocuments(serverDocuments) {
+    try {
+      const localSyncedDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+      const localLegacyDocuments = this.getLocalLegacyDocuments();
+      
+      // 로컬 레거시 문서를 synced 형식으로 변환
+      const creatorInfo = await this.getCreatorInfo();
+      for (const docKey in localLegacyDocuments) {
+        if (!localSyncedDocuments[docKey]) {
+          const doc = localLegacyDocuments[docKey];
+          if (!doc.createdBy) {
+            doc.createdBy = creatorInfo;
+          }
+          if (!doc.syncedAt) {
+            doc.syncedAt = new Date().toISOString();
+          }
+          localSyncedDocuments[docKey] = doc;
+        }
+      }
+
+      let finalDocuments = {};
+      let needsServerUpdate = false;
+      
+      const allDocKeys = new Set([
+        ...Object.keys(serverDocuments),
+        ...Object.keys(localSyncedDocuments)
+      ]);
+      
+      console.log(`📄 서버 문서: ${Object.keys(serverDocuments).length}개`);
+      console.log(`📄 로컬 문서: ${Object.keys(localSyncedDocuments).length}개`);
+      
+      for (const docKey of allDocKeys) {
+        const serverDoc = serverDocuments[docKey];
+        const localDoc = localSyncedDocuments[docKey];
+        
+        if (!serverDoc && !localDoc) {
+          continue;
+        } else if (!serverDoc && localDoc) {
+          // 로컬에만 있음 → 서버 업로드 필요
+          finalDocuments[docKey] = localDoc;
+          needsServerUpdate = true;
+        } else if (serverDoc && !localDoc) {
+          // 서버에만 있음 → 로컬에 저장
+          finalDocuments[docKey] = serverDoc;
+        } else {
+          // 둘 다 있음 → 최신 타임스탬프 우선
+          const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
+          const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
+          
+          if (localTime > serverTime) {
+            finalDocuments[docKey] = localDoc;
+            needsServerUpdate = true;
+          } else {
+            finalDocuments[docKey] = serverDoc;
+          }
+        }
+      }
+      
+      // 로컬 저장
+      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(finalDocuments));
+      
+      // 레거시 localStorage 키에도 동기화 (기존 코드 호환성)
+      for (const docKey in finalDocuments) {
+        const doc = finalDocuments[docKey];
+        if (doc && !doc.deleted) {
+          localStorage.setItem(docKey, JSON.stringify(doc));
+        }
+      }
+      
+      this.broadcastUpdate('documents-updated', finalDocuments);
+      
+      if (needsServerUpdate) {
+        console.log('📄 로컬 문서를 서버에 업로드 예정');
+        this.debouncedSave();
+      }
+      
+      console.log(`📄 문서 병합 완료: 총 ${Object.keys(finalDocuments).length}개`);
+      
+    } catch (error) {
+      console.error('❌ 문서 병합 실패:', error);
     }
   }
 
@@ -346,6 +507,7 @@ class RealtimeAdminSync {
       const adminPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
       const priceHistory = JSON.parse(localStorage.getItem(PRICE_HISTORY_KEY) || '{}');
       const activityLog = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY) || '[]');
+      const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
 
       const userIP = await this.getUserIP();
       
@@ -353,7 +515,7 @@ class RealtimeAdminSync {
         timestamp: new Date().toISOString(),
         action: 'data_sync',
         userIP,
-        dataTypes: ['inventory', 'prices', 'history']
+        dataTypes: ['inventory', 'prices', 'history', 'documents']
       });
 
       if (activityLog.length > 1000) {
@@ -372,6 +534,9 @@ class RealtimeAdminSync {
         },
         'activity_log.json': {
           content: JSON.stringify(activityLog, null, 2)
+        },
+        'documents.json': {
+          content: JSON.stringify(documents, null, 2)
         },
         'last_updated.txt': {
           content: `Last updated: ${new Date().toISOString()}\nUser IP: ${userIP}\nSync ID: ${this.getInstanceId()}`
@@ -425,6 +590,12 @@ class RealtimeAdminSync {
   handlePricesUpdate(data) {
     console.log('💰 실시간 단가 업데이트 수신:', data);
     window.dispatchEvent(new CustomEvent('adminPricesUpdated', { detail: data }));
+  }
+
+  // ✅ 문서 업데이트 핸들러
+  handleDocumentsUpdate(data) {
+    console.log('📄 실시간 문서 업데이트 수신:', data);
+    window.dispatchEvent(new CustomEvent('documentsUpdated', { detail: data }));
   }
 
   handleForceReload() {
@@ -522,6 +693,238 @@ export const saveAdminPriceSync = async (partId, price, partInfo = {}, userInfo 
   } catch (error) {
     console.error('관리자 단가 저장 실패:', error);
     return false;
+  }
+};
+
+// ============================================
+// ✅ 문서 동기화 관련 함수들
+// ============================================
+
+/**
+ * 모든 문서 로드 (삭제되지 않은 문서만)
+ * @param {boolean} includeDeleted - 삭제된 문서 포함 여부
+ * @returns {Array} 문서 배열
+ */
+export const loadAllDocuments = (includeDeleted = false) => {
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const docArray = Object.values(documents);
+    
+    if (includeDeleted) {
+      return docArray;
+    }
+    
+    return docArray.filter(doc => !doc.deleted);
+  } catch (error) {
+    console.error('문서 로드 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 삭제된 문서만 로드
+ * @returns {Array} 삭제된 문서 배열
+ */
+export const loadDeletedDocuments = () => {
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    return Object.values(documents).filter(doc => doc.deleted === true);
+  } catch (error) {
+    console.error('삭제된 문서 로드 실패:', error);
+    return [];
+  }
+};
+
+/**
+ * 문서 저장 (생성 또는 수정)
+ * @param {Object} document - 저장할 문서 객체
+ * @returns {Promise<boolean>} 성공 여부
+ */
+export const saveDocumentSync = async (document) => {
+  try {
+    if (!document || !document.id || !document.type) {
+      console.error('유효하지 않은 문서:', document);
+      return false;
+    }
+
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const docKey = `${document.type}_${document.id}`;
+    
+    // 생성자 정보 추가 (새 문서인 경우)
+    if (!documents[docKey] && syncInstance) {
+      document.createdBy = await syncInstance.getCreatorInfo();
+    }
+    
+    // 수정 시간 업데이트
+    document.updatedAt = new Date().toISOString();
+    document.syncedAt = new Date().toISOString();
+    
+    documents[docKey] = document;
+    
+    // synced_documents에 저장
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+    
+    // 레거시 키에도 저장 (기존 코드 호환성)
+    localStorage.setItem(docKey, JSON.stringify(document));
+    
+    // 브로드캐스트 및 서버 동기화
+    if (syncInstance) {
+      syncInstance.broadcastUpdate('documents-updated', documents);
+      syncInstance.debouncedSave();
+    }
+    
+    console.log(`📄 문서 저장 완료: ${docKey}`);
+    return true;
+    
+  } catch (error) {
+    console.error('문서 저장 실패:', error);
+    return false;
+  }
+};
+
+/**
+ * 문서 소프트 삭제
+ * @param {string} docId - 문서 ID
+ * @param {string} docType - 문서 타입 (estimate, purchase, delivery)
+ * @returns {Promise<boolean>} 성공 여부
+ */
+export const deleteDocumentSync = async (docId, docType) => {
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const docKey = `${docType}_${docId}`;
+    
+    if (!documents[docKey]) {
+      console.warn('삭제할 문서를 찾을 수 없음:', docKey);
+      return false;
+    }
+    
+    // 소프트 삭제 (deleted 플래그 추가)
+    documents[docKey].deleted = true;
+    documents[docKey].deletedAt = new Date().toISOString();
+    
+    if (syncInstance) {
+      documents[docKey].deletedBy = await syncInstance.getCreatorInfo();
+    }
+    
+    // synced_documents 업데이트
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+    
+    // 레거시 키에서는 제거 (UI에서 안 보이도록)
+    localStorage.removeItem(docKey);
+    
+    // 브로드캐스트 및 서버 동기화
+    if (syncInstance) {
+      syncInstance.broadcastUpdate('documents-updated', documents);
+      syncInstance.debouncedSave();
+    }
+    
+    console.log(`🗑️ 문서 소프트 삭제 완료: ${docKey}`);
+    return true;
+    
+  } catch (error) {
+    console.error('문서 삭제 실패:', error);
+    return false;
+  }
+};
+
+/**
+ * 삭제된 문서 복구
+ * @param {string} docId - 문서 ID
+ * @param {string} docType - 문서 타입
+ * @returns {Promise<boolean>} 성공 여부
+ */
+export const restoreDocumentSync = async (docId, docType) => {
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const docKey = `${docType}_${docId}`;
+    
+    if (!documents[docKey]) {
+      console.warn('복구할 문서를 찾을 수 없음:', docKey);
+      return false;
+    }
+    
+    // 삭제 플래그 제거
+    delete documents[docKey].deleted;
+    delete documents[docKey].deletedAt;
+    delete documents[docKey].deletedBy;
+    
+    documents[docKey].restoredAt = new Date().toISOString();
+    
+    if (syncInstance) {
+      documents[docKey].restoredBy = await syncInstance.getCreatorInfo();
+    }
+    
+    // synced_documents 업데이트
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+    
+    // 레거시 키에도 복원
+    localStorage.setItem(docKey, JSON.stringify(documents[docKey]));
+    
+    // 브로드캐스트 및 서버 동기화
+    if (syncInstance) {
+      syncInstance.broadcastUpdate('documents-updated', documents);
+      syncInstance.debouncedSave();
+    }
+    
+    console.log(`♻️ 문서 복구 완료: ${docKey}`);
+    return true;
+    
+  } catch (error) {
+    console.error('문서 복구 실패:', error);
+    return false;
+  }
+};
+
+/**
+ * 문서 영구 삭제 (서버에서도 완전 삭제)
+ * @param {string} docId - 문서 ID
+ * @param {string} docType - 문서 타입
+ * @returns {Promise<boolean>} 성공 여부
+ */
+export const permanentDeleteDocumentSync = async (docId, docType) => {
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const docKey = `${docType}_${docId}`;
+    
+    if (!documents[docKey]) {
+      console.warn('영구 삭제할 문서를 찾을 수 없음:', docKey);
+      return false;
+    }
+    
+    // 완전 삭제
+    delete documents[docKey];
+    
+    localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
+    localStorage.removeItem(docKey);
+    
+    if (syncInstance) {
+      syncInstance.broadcastUpdate('documents-updated', documents);
+      syncInstance.debouncedSave();
+    }
+    
+    console.log(`🔥 문서 영구 삭제 완료: ${docKey}`);
+    return true;
+    
+  } catch (error) {
+    console.error('문서 영구 삭제 실패:', error);
+    return false;
+  }
+};
+
+/**
+ * 특정 문서 조회
+ * @param {string} docId - 문서 ID
+ * @param {string} docType - 문서 타입
+ * @returns {Object|null} 문서 객체 또는 null
+ */
+export const getDocumentById = (docId, docType) => {
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const docKey = `${docType}_${docId}`;
+    return documents[docKey] || null;
+  } catch (error) {
+    console.error('문서 조회 실패:', error);
+    return null;
   }
 };
 
