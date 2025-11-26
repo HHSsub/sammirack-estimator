@@ -84,7 +84,7 @@
 .quote-table th:nth-child(2) { width:auto; }
 .quote-table th:nth-child(3) { width:48px; }
 .quote-table th:nth-child(4) { width:55px; }
-.quote-table th:nth-child(5) { width:78px; }
+.quote-table th:nth-child(5) { width:90px; } // 기존 78 -> 90
 .quote-table th:nth-child(6) { width:88px; }
 .quote-table th:nth-child(7) { width:70px; }
 .quote-table th:nth-child(8) { width:60px; }
@@ -217,12 +217,12 @@
     }
 
   .quote-table th:nth-child(1), .quote-table td:nth-child(1) { width:5% !important; }
-  .quote-table th:nth-child(2), .quote-table td:nth-child(2) { width:41.5% !important; }
+  .quote-table th:nth-child(2), .quote-table td:nth-child(2) { width:40.5% !important; }
   .quote-table th:nth-child(3), .quote-table td:nth-child(3) { width:13% !important; }
   .quote-table th:nth-child(4), .quote-table td:nth-child(4) { width:4.5% !important; min-width:12px !important; white-space:nowrap !important; }
-  .quote-table th:nth-child(5), .quote-table td:nth-child(5) { width:11% !important; min-width:70px !important; }
-  .quote-table th:nth-child(6), .quote-table td:nth-child(6) { width:11% !important; min-width:60px !important; }
-  .quote-table th:nth-child(7), .quote-table td:nth-child(7) { width:11% !important; min-width:60px !important; }
+  .quote-table th:nth-child(5), .quote-table td:nth-child(5) { width:13% !important; min-width:70px !important; }
+  .quote-table th:nth-child(6), .quote-table td:nth-child(6) { width:10.5% !important; min-width:60px !important; }
+  .quote-table th:nth-child(7), .quote-table td:nth-child(7) { width:10.5% !important; min-width:60px !important; }
   .quote-table th:nth-child(8), .quote-table td:nth-child(8) { width:3% !important; min-width:28px !important; }
 
   /* 수량/단가/공급가 열 가독성 */
