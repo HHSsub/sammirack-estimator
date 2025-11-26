@@ -299,8 +299,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   /**
    * Convert an estimate to an purchase
    */
-  const convertToPurchase = (estimate) => {
-    console.log('🔍 견적서 원본 데이터:', estimate); // ✅ 디버깅
+    const convertToPurchase = (estimate) => {
+    console.log('🔍 견적서 원본:', estimate);
     
     const cart = (estimate.items || []).map(item => ({
       name: item.name,
@@ -313,6 +313,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     let totalBom = [];
     
     if (estimate.materials && estimate.materials.length > 0) {
+      // ✅ 저장된 materials 사용
       totalBom = estimate.materials.map(mat => ({
         name: mat.name,
         rackType: mat.rackType,
@@ -323,33 +324,26 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       }));
       console.log('✅ 저장된 materials 사용:', totalBom.length);
     } else {
+      // ✅ materials 없으면 재생성
       console.log('⚠️ materials 없음 - items에서 BOM 재생성');
       
+      const allBoms = [];
+      
       estimate.items.forEach(item => {
-        console.log('🔍 품목 처리:', {
-          name: item.name,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice
-        }); // ✅ 각 품목 상세 확인
+        console.log('  🔍 품목:', item.name, '수량:', item.quantity, '가격:', item.totalPrice);
         
         if (item.name) {
           const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
           
           if (bom.length === 0) {
-            // ✅ 파싱 실패 → 품목 그 자체를 원자재로 추가
+            // ✅ 파싱 실패 → 품목 그 자체를 기타 품목으로
             const qty = Number(item.quantity) || 1;
             const totalPrice = Number(item.totalPrice) || 0;
             const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
             
-            console.log('📦 기타 품목 추가:', {
-              name: item.name,
-              qty,
-              unitPrice,
-              totalPrice
-            }); // ✅ 기타 품목 확인
+            console.log('  📦 기타 품목:', item.name, '단가:', unitPrice);
             
-            totalBom.push({
+            allBoms.push({
               rackType: '기타',
               name: item.name,
               specification: '',
@@ -359,16 +353,33 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               note: '기타 품목'
             });
           } else {
-            totalBom.push(...bom);
+            allBoms.push(...bom);
           }
         }
       });
       
-      console.log('✅ BOM 재생성 완료:', totalBom);
+      // ✅ 중복 제거 및 수량 합산
+      const bomMap = new Map();
+      allBoms.forEach(item => {
+        const key = generatePartId(item);
+        
+        if (bomMap.has(key)) {
+          const existing = bomMap.get(key);
+          bomMap.set(key, {
+            ...existing,
+            quantity: existing.quantity + (item.quantity || 0),
+            totalPrice: existing.totalPrice + (item.totalPrice || 0)
+          });
+        } else {
+          bomMap.set(key, { ...item });
+        }
+      });
+      
+      totalBom = Array.from(bomMap.values());
+      console.log('✅ 중복 제거 후:', totalBom.length, '개');
     }
     
     console.log('📋 청구서 생성:', { cart, totalBom });
-    
     navigate(`/purchase-order/new`, { state: { cart, totalBom } });
   };
   
