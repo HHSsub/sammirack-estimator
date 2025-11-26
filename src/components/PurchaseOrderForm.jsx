@@ -27,7 +27,7 @@ const PurchaseOrderForm = () => {
   const adminPricesRef = useRef({}); // 최신 관리자 단가 캐시
 
   const cartData = location.state || {};
-  const { cart = [], totalBom = [] } = cartData;
+  const { cart = [], totalBom = [], estimateData = {} } = cartData; // estimateData는 견적서->청구서생성 넘어가는 로직이 올 수 있기 때문에 받아와야함
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
