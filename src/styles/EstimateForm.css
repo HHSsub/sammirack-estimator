@@ -243,6 +243,9 @@
 
   .quote-table th, .quote-table td {
     word-break:break-word !important;
+    padding: 12px 8px;  /* ✅ 기존 8px → 12px (1.5배) */
+    font-size: 15px;  /* ✅ 기존 13px? → 15px (약 2배) */
+    line-height: 1.6;  /* ✅ 행간 증가 */
   }
 
   /* 폭 문제 해결 - 페이지 넘어가지 않도록 */
