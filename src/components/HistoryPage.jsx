@@ -324,8 +324,12 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       
       estimate.items.forEach(item => {
         if (item.name) {
-          // ✅ require 제거 - 상단에서 import한 함수 직접 사용
-          const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
+          // ✅ itemPrice도 함께 전달
+          const bom = regenerateBOMFromDisplayName(
+            item.name, 
+            item.quantity || 1, 
+            item.totalPrice || 0
+          );
           totalBom.push(...bom);
         }
       });
