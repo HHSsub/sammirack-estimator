@@ -299,7 +299,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   /**
    * Convert an estimate to an purchase
    */
-    const convertToPurchase = (estimate) => {
+  const convertToPurchase = (estimate) => {
     console.log('🔍 견적서 원본:', estimate);
     
     const cart = (estimate.items || []).map(item => ({
@@ -313,7 +313,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     let totalBom = [];
     
     if (estimate.materials && estimate.materials.length > 0) {
-      // ✅ 저장된 materials 사용
       totalBom = estimate.materials.map(mat => ({
         name: mat.name,
         rackType: mat.rackType,
@@ -324,7 +323,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       }));
       console.log('✅ 저장된 materials 사용:', totalBom.length);
     } else {
-      // ✅ materials 없으면 재생성
       console.log('⚠️ materials 없음 - items에서 BOM 재생성');
       
       const allBoms = [];
@@ -336,7 +334,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
           
           if (bom.length === 0) {
-            // ✅ 파싱 실패 → 품목 그 자체를 기타 품목으로
             const qty = Number(item.quantity) || 1;
             const totalPrice = Number(item.totalPrice) || 0;
             const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
@@ -358,7 +355,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         }
       });
       
-      // ✅ 중복 제거 및 수량 합산
       const bomMap = new Map();
       allBoms.forEach(item => {
         const key = generatePartId(item);
@@ -379,8 +375,19 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       console.log('✅ 중복 제거 후:', totalBom.length, '개');
     }
     
-    console.log('📋 청구서 생성:', { cart, totalBom });
-    navigate(`/purchase-order/new`, { state: { cart, totalBom } });
+    // ✅ 메타정보 전달
+    const estimateData = {
+      estimateNumber: estimate.estimateNumber || estimate.documentNumber || '',
+      companyName: estimate.customerName || estimate.companyName || '',
+      bizNumber: estimate.bizNumber || '',
+      contactInfo: estimate.contactInfo || '',
+      notes: estimate.notes || '',
+      topMemo: estimate.topMemo || ''
+    };
+    
+    console.log('📋 청구서 생성:', { cart, totalBom, estimateData });
+    
+    navigate(`/purchase-order/new`, { state: { cart, totalBom, estimateData } });
   };
   
   /**
