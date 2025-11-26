@@ -152,15 +152,17 @@ const DeliveryNoteForm = () => {
   const addMat=()=>setFormData(p=>({...p,materials:[...p.materials,{name:'',specification:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
   const rmMat=(idx)=>setFormData(p=>({...p,materials:p.materials.filter((_,i)=>i!==idx)}));
 
-  const handleSave=()=>{
+  const handleSave = async () => {  // ✅ async 추가
     if(!formData.documentNumber.trim()){
       alert('거래번호(문서번호)를 입력하세요.');
       documentNumberInputRef.current?.focus();
       return;
     }
+    
     const itemId=isEditMode?id:Date.now();
     const storageKey=`delivery_${itemId}`;
-    const newDoc={
+    
+    const newDoc={  // ✅ 기존 변수명 그대로 사용
       ...formData,
       id:itemId,
       type:'delivery',
@@ -174,8 +176,19 @@ const DeliveryNoteForm = () => {
       updatedAt:new Date().toISOString(),
       ...(isEditMode?{}:{createdAt:new Date().toISOString()})
     };
+    
+    // ✅ 레거시 키 저장
     localStorage.setItem(storageKey,JSON.stringify(newDoc));
-    alert(isEditMode?'문서가 수정되었습니다.':'문서가 저장되었습니다.');
+    
+    // ✅ 서버 동기화 저장 추가
+    const success = await saveDocumentSync(newDoc);
+    
+    if (success) {
+      alert(isEditMode?'문서가 수정되었습니다.':'문서가 저장되었습니다.');
+      window.dispatchEvent(new Event('documentsupdated'));
+    } else {
+      alert('저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleExport=()=>{
