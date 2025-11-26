@@ -299,7 +299,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    * Convert an estimate to an purchase
    */
   const convertToPurchase = (estimate) => {
-    // ✅ estimate.items를 cart 형식으로 변환
     const cart = (estimate.items || []).map(item => ({
       name: item.name,
       displayName: item.name,
@@ -308,10 +307,9 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       unit: item.unit || '개'
     }));
     
-    // ✅ estimate.materials가 있으면 사용, 없으면 items에서 재생성
     let totalBom = [];
+    
     if (estimate.materials && estimate.materials.length > 0) {
-      // 저장된 materials 사용
       totalBom = estimate.materials.map(mat => ({
         name: mat.name,
         rackType: mat.rackType,
@@ -322,12 +320,11 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       }));
       console.log('✅ 저장된 materials 사용:', totalBom.length);
     } else {
-      // materials 없으면 items에서 BOM 재생성
       console.log('⚠️ materials 없음 - items에서 BOM 재생성');
       
       estimate.items.forEach(item => {
         if (item.name) {
-          const { regenerateBOMFromDisplayName } = require('../utils/bomRegeneration');
+          // ✅ require 제거 - 상단에서 import한 함수 직접 사용
           const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
           totalBom.push(...bom);
         }
@@ -336,12 +333,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       console.log('✅ BOM 재생성 완료:', totalBom.length);
     }
     
-    console.log('📋 청구서 생성 데이터:', { 
-      cartItems: cart.length, 
-      bomItems: totalBom.length 
-    });
+    console.log('📋 청구서 생성:', { cart: cart.length, totalBom: totalBom.length });
     
-    // ✅ 변환된 데이터를 PurchaseOrderForm에 전달
     navigate(`/purchase-order/new`, { state: { cart, totalBom } });
   };
 
