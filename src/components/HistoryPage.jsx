@@ -299,6 +299,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    * Convert an estimate to an purchase
    */
   const convertToPurchase = (estimate) => {
+    console.log('🔍 견적서 원본 데이터:', estimate); // ✅ 디버깅
+    
     const cart = (estimate.items || []).map(item => ({
       name: item.name,
       displayName: item.name,
@@ -310,7 +312,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     let totalBom = [];
     
     if (estimate.materials && estimate.materials.length > 0) {
-      // ✅ materials 있으면 사용
       totalBom = estimate.materials.map(mat => ({
         name: mat.name,
         rackType: mat.rackType,
@@ -321,37 +322,51 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       }));
       console.log('✅ 저장된 materials 사용:', totalBom.length);
     } else {
-      // ✅ materials 없으면 items에서 BOM 재생성
       console.log('⚠️ materials 없음 - items에서 BOM 재생성');
       
       estimate.items.forEach(item => {
+        console.log('🔍 품목 처리:', {
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice
+        }); // ✅ 각 품목 상세 확인
+        
         if (item.name) {
           const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
           
           if (bom.length === 0) {
             // ✅ 파싱 실패 → 품목 그 자체를 원자재로 추가
-            const qty = item.quantity || 1;
-            const unitPrice = Math.round((item.totalPrice || 0) / qty);
+            const qty = Number(item.quantity) || 1;
+            const totalPrice = Number(item.totalPrice) || 0;
+            const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
+            
+            console.log('📦 기타 품목 추가:', {
+              name: item.name,
+              qty,
+              unitPrice,
+              totalPrice
+            }); // ✅ 기타 품목 확인
+            
             totalBom.push({
               rackType: '기타',
               name: item.name,
               specification: '',
               quantity: qty,
               unitPrice: unitPrice,
-              totalPrice: item.totalPrice || 0,
+              totalPrice: totalPrice,
               note: '기타 품목'
             });
           } else {
-            // ✅ 정상 BOM 추가
             totalBom.push(...bom);
           }
         }
       });
       
-      console.log('✅ BOM 재생성 완료:', totalBom.length);
+      console.log('✅ BOM 재생성 완료:', totalBom);
     }
     
-    console.log('📋 청구서 생성:', { cart: cart.length, totalBom: totalBom.length });
+    console.log('📋 청구서 생성:', { cart, totalBom });
     
     navigate(`/purchase-order/new`, { state: { cart, totalBom } });
   };
