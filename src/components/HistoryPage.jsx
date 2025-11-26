@@ -10,6 +10,7 @@ import {
   permanentDeleteDocumentSync,
   forceServerSync
 } from '../utils/realtimeAdminSync';
+import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
@@ -307,17 +308,40 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       unit: item.unit || '개'
     }));
     
-    // ✅ estimate.materials를 totalBom 형식으로 변환
-    const totalBom = (estimate.materials || []).map(mat => ({
-      name: mat.name,
-      rackType: mat.rackType,
-      specification: mat.specification || '',
-      quantity: mat.quantity || 0,
-      unitPrice: mat.unitPrice || 0,
-      note: mat.note || ''
-    }));
+    // ✅ estimate.materials가 있으면 사용, 없으면 items에서 재생성
+    let totalBom = [];
+    if (estimate.materials && estimate.materials.length > 0) {
+      // 저장된 materials 사용
+      totalBom = estimate.materials.map(mat => ({
+        name: mat.name,
+        rackType: mat.rackType,
+        specification: mat.specification || '',
+        quantity: mat.quantity || 0,
+        unitPrice: mat.unitPrice || 0,
+        note: mat.note || ''
+      }));
+      console.log('✅ 저장된 materials 사용:', totalBom.length);
+    } else {
+      // materials 없으면 items에서 BOM 재생성
+      console.log('⚠️ materials 없음 - items에서 BOM 재생성');
+      
+      estimate.items.forEach(item => {
+        if (item.name) {
+          const { regenerateBOMFromDisplayName } = require('../utils/bomRegeneration');
+          const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
+          totalBom.push(...bom);
+        }
+      });
+      
+      console.log('✅ BOM 재생성 완료:', totalBom.length);
+    }
     
-    // ✅ 변환된 데이터를 PurchaseOrderForm이 인식 가능한 형식으로 전달
+    console.log('📋 청구서 생성 데이터:', { 
+      cartItems: cart.length, 
+      bomItems: totalBom.length 
+    });
+    
+    // ✅ 변환된 데이터를 PurchaseOrderForm에 전달
     navigate(`/purchase-order/new`, { state: { cart, totalBom } });
   };
 
