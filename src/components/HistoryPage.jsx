@@ -298,7 +298,27 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    * Convert an estimate to an purchase
    */
   const convertToPurchase = (estimate) => {
-    navigate(`/purchase-order/new`, { state: { fromEstimate: estimate } });
+    // ✅ estimate.items를 cart 형식으로 변환
+    const cart = (estimate.items || []).map(item => ({
+      name: item.name,
+      displayName: item.name,
+      quantity: item.quantity || 1,
+      price: item.totalPrice || 0,
+      unit: item.unit || '개'
+    }));
+    
+    // ✅ estimate.materials를 totalBom 형식으로 변환
+    const totalBom = (estimate.materials || []).map(mat => ({
+      name: mat.name,
+      rackType: mat.rackType,
+      specification: mat.specification || '',
+      quantity: mat.quantity || 0,
+      unitPrice: mat.unitPrice || 0,
+      note: mat.note || ''
+    }));
+    
+    // ✅ 변환된 데이터를 PurchaseOrderForm이 인식 가능한 형식으로 전달
+    navigate(`/purchase-order/new`, { state: { cart, totalBom } });
   };
 
   /**
