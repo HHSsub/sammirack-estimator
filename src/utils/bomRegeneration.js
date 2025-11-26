@@ -345,11 +345,22 @@ export const regenerateBOMFromOptions = (options, quantity, bomData = null) => {
 /**
  * displayName에서 직접 BOM 재생성 (최상위 함수)
  */
-export const regenerateBOMFromDisplayName = (displayName, quantity) => {
+export const regenerateBOMFromDisplayName = (displayName, quantity, itemPrice = 0) => {
   const options = parseDisplayNameToOptions(displayName);
   if (!options) {
-    console.error('❌ displayName 파싱 실패:', displayName);
-    return [];
+    console.warn('⚠️ displayName 파싱 실패 - 기타 품목으로 처리:', displayName);
+    // ✅ 파싱 실패한 경우, 품목 그 자체를 원자재로 반환
+    const qty = Number(quantity) || 1;
+    const unitPrice = Math.round((itemPrice || 0) / qty);
+    return [{
+      rackType: '기타',
+      name: displayName,
+      specification: '',
+      quantity: qty,
+      unitPrice: unitPrice,
+      totalPrice: itemPrice || 0,
+      note: '기타 품목'
+    }];
   }
 
   return regenerateBOMFromOptions(options, quantity);
