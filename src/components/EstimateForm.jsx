@@ -245,7 +245,7 @@ const EstimateForm = () => {
                     />
                   </div>
                   <div style={{display:'flex', flexDirection:'column', flex:'0 0 40%'}}>
-                    <label style={{fontSize:'11px', fontWeight:600, marginBottom:2}}>거래번호</label>
+                    <label style={{fontSize:'12px', fontWeight:600, marginBottom:2}}>거래번호</label>
                     <input
                       ref={documentNumberInputRef}
                       type="text"
