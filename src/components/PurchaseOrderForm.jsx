@@ -56,7 +56,71 @@ const PurchaseOrderForm = () => {
       const storageKey = `purchase_${id}`;
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        try { setFormData(JSON.parse(saved)); } catch {}
+        try {
+          const data = JSON.parse(saved);
+          
+          // ✅ 원자재 검증: 비정상적인 수량 체크 (10000개 이상)
+          const hasBadMaterials = (data.materials || []).some(mat => 
+            Number(mat.quantity) > 10000
+          );
+          
+          if (hasBadMaterials || !data.materials || data.materials.length === 0) {
+            console.warn('⚠️ 원자재 데이터 손상 감지 - 재생성 시작');
+            
+            // ✅ items에서 BOM 재생성
+            const allBoms = [];
+            (data.items || []).forEach(item => {
+              if (item.name) {
+                const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
+                
+                if (bom.length === 0) {
+                  // 기타 품목
+                  const qty = Number(item.quantity) || 1;
+                  const totalPrice = Number(item.totalPrice) || 0;
+                  const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
+                  allBoms.push({
+                    rackType: '기타',
+                    name: item.name,
+                    specification: '',
+                    quantity: qty,
+                    unitPrice: unitPrice,
+                    totalPrice: totalPrice,
+                    note: '기타 품목'
+                  });
+                } else {
+                  allBoms.push(...bom);
+                }
+              }
+            });
+            
+            // ✅ 중복 제거 및 수량 합산
+            const bomMap = new Map();
+            allBoms.forEach(item => {
+              const key = generatePartId(item);
+              if (bomMap.has(key)) {
+                const existing = bomMap.get(key);
+                bomMap.set(key, {
+                  ...existing,
+                  quantity: existing.quantity + (item.quantity || 0),
+                  totalPrice: existing.totalPrice + (item.totalPrice || 0)
+                });
+              } else {
+                bomMap.set(key, { ...item });
+              }
+            });
+            
+            data.materials = Array.from(bomMap.values());
+            
+            console.log('✅ 원자재 재생성 완료:', data.materials.length, '개');
+            
+            // ✅ 즉시 저장 (손상된 데이터 덮어쓰기)
+            localStorage.setItem(storageKey, JSON.stringify(data));
+          }
+          
+          setFormData(data);
+        } catch(e) {
+          console.error('청구서 로드 실패:', e);
+        }
       }
     }
   }, [id, isEditMode]);
