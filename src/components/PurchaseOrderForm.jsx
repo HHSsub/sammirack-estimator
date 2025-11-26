@@ -167,9 +167,9 @@ const PurchaseOrderForm = () => {
     }
   }, [cart, totalBom, isEditMode]);
 
-  // 합계 계산 (BOM 우선: BOM 항목 있고 실합계>0 → matSum, 아니면 itemSum)
+  // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
-    // 관리자 단가 재반영 (사용자가 폼에서 수량 수정 시 단가 유지)
+    // 관리자 단가 재반영 (materials 내부 계산용)
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
@@ -181,9 +181,9 @@ const PurchaseOrderForm = () => {
       };
     });
 
+    // ✅ 무조건 품목 목록 공급가 합계 기준
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    const matSum = materialsWithAdmin.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    const subtotal = (materialsWithAdmin.length > 0 && matSum > 0) ? matSum : itemSum;
+    const subtotal = itemSum;  // ✅ 품목 목록만 사용
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
 
@@ -581,8 +581,8 @@ const checkInventoryAvailability = async (cartItems) => {
             <th style={{width:'190px'}}>부품명</th>
             <th className="spec-col">규격</th>
             <th style={{width:'70px'}}>수량</th>
-            <th style={{width:'70px'}}>단가</th>
-            <th style={{width:'90px'}}>금액</th>
+            <th style={{width:'70px'}} className="hide-unitprice">단가</th>
+            <th style={{width:'90px'}} className="hide-amount">금액</th>
             <th style={{width:'90px'}}>비고</th>
             <th className="no-print" style={{width:'70px'}}>작업</th>
           </tr>
@@ -601,8 +601,8 @@ const checkInventoryAvailability = async (cartItems) => {
                 />
               </td>
               <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
-              <td><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
-              <td className="right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
+              <td className="hide-unitprice"><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
+              <td className="hide-amount right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
               <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="비고" /></td>
               <td className="no-print">
                 <button type="button" onClick={()=>removeMaterial(idx)} className="remove-btn">삭제</button>
