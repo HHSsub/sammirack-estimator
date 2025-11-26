@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
-import { loadAdminPricesDirect, resolveAdminPrice, generatePartId } from '../utils/adminPriceHelper';
+import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHelper';
 import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
-import { generateInventoryPartId } from '../utils/unifiedPriceManager';
+import { generatePartId, generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
 
 const PROVIDER = {
