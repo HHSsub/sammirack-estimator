@@ -5,6 +5,7 @@ import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  // ✅ 추가
+import { saveDocumentSync } from '../utils/realtimeAdminSync';
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -161,14 +162,16 @@ const EstimateForm = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력하세요.');
       documentNumberInputRef.current?.focus();
       return;
     }
+    
     const itemId = isEditMode ? id : Date.now();
     const storageKey = `estimate_${itemId}`;
+    
     const newEstimate = {
       ...formData,
       id: itemId,
@@ -183,8 +186,19 @@ const EstimateForm = () => {
       updatedAt: new Date().toISOString(),
       ...(isEditMode ? {} : { createdAt: new Date().toISOString() })
     };
+    
+    // ✅ 레거시 키 저장
     localStorage.setItem(storageKey, JSON.stringify(newEstimate));
-    alert(isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.');
+    
+    // ✅ 서버 동기화 저장
+    const success = await saveDocumentSync(newEstimate);
+    
+    if (success) {
+      alert(isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.');
+      window.dispatchEvent(new Event('documentsupdated'));
+    } else {
+      alert('저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleExportToExcel = () => {
