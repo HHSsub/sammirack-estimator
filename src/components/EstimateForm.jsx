@@ -22,7 +22,7 @@ const EstimateForm = () => {
 
   const documentNumberInputRef = useRef(null);
   const cartData = location.state || {};
-  const { cart = [] } = cartData;
+  const { cart = [], totalBom = [] } = cartData;  // ✅ totalBom 추가
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -63,9 +63,25 @@ const EstimateForm = () => {
           note: ''
         };
       });
-      setFormData(prev => ({ ...prev, items: cartItems.length ? cartItems : prev.items }));
+      
+      // ✅ totalBom을 materials로 변환 (화면에는 표시 안 함, 내부 저장용)
+      const bomMaterials = (totalBom || []).map(m => ({
+        name: m.name,
+        rackType: m.rackType,
+        specification: m.specification || '',
+        quantity: Number(m.quantity) || 0,
+        unitPrice: Number(m.unitPrice) || 0,
+        totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
+        note: m.note || ''
+      }));
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        items: cartItems.length ? cartItems : prev.items,
+        materials: bomMaterials  // ✅ 내부적으로 BOM 정보 저장
+      }));
     }
-  }, [cart, isEditMode]);
+  }, [cart, totalBom, isEditMode]);  // ✅ totalBom 의존성 추가
 
   useEffect(() => {
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
