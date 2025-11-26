@@ -5,6 +5,7 @@ import { loadAdminPricesDirect, resolveAdminPrice, generatePartId } from '../uti
 import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
+import { saveDocumentSync } from '../utils/realtimeAdminSync';
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -250,14 +251,16 @@ const PurchaseOrderForm = () => {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.documentNumber.trim()) {
-      alert('거래번호(문서번호)를 입력하세요.');
+      alert('거래번호(문서번호)를 입력해주세요.');
       documentNumberInputRef.current?.focus();
       return;
     }
+    
     const itemId = isEditMode ? id : Date.now();
     const storageKey = `purchase_${itemId}`;
+    
     const newOrder = {
       ...formData,
       id: itemId,
@@ -272,8 +275,21 @@ const PurchaseOrderForm = () => {
       updatedAt: new Date().toISOString(),
       ...(isEditMode ? {} : { createdAt: new Date().toISOString() })
     };
+    
+    // ✅ 레거시 키 저장 (하위 호환)
     localStorage.setItem(storageKey, JSON.stringify(newOrder));
-    alert(isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.');
+    
+    // ✅ 서버 동기화 저장 (필수!)
+    const success = await saveDocumentSync(newOrder);
+    
+    if (success) {
+      alert(isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.');
+      
+      // ✅ 문서 업데이트 이벤트 발생
+      window.dispatchEvent(new Event('documentsupdated'));
+    } else {
+      alert('저장 중 오류가 발생했습니다.');
+    }
   };
 
   const handleExportToExcel = () => {
