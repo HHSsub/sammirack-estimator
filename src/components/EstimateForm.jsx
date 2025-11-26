@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
+import { generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  // ✅ 추가
 
 const PROVIDER = {
@@ -49,19 +50,36 @@ const EstimateForm = () => {
         try { 
           const data = JSON.parse(saved);
           
-          // ✅ materials가 없으면 items에서 자동 생성
           if (!data.materials || data.materials.length === 0) {
             console.log('⚠️ 구버전 견적서 - materials 자동 생성');
-            data.materials = [];
             
-            // items의 각 displayName에서 BOM 재생성
+            // ✅ 임시 배열에 모든 BOM 수집
+            const allBoms = [];
             data.items.forEach(item => {
               if (item.name) {
                 const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
-                data.materials.push(...bom);
+                allBoms.push(...bom);
               }
             });
             
+            // ✅ 중복 제거 및 수량 합산
+            const bomMap = new Map();
+            allBoms.forEach(item => {
+              const key = generateInventoryPartId(item);
+              
+              if (bomMap.has(key)) {
+                const existing = bomMap.get(key);
+                bomMap.set(key, {
+                  ...existing,
+                  quantity: existing.quantity + (item.quantity || 0),
+                  totalPrice: existing.totalPrice + (item.totalPrice || 0)
+                });
+              } else {
+                bomMap.set(key, { ...item });
+              }
+            });
+            
+            data.materials = Array.from(bomMap.values());
             console.log(`✅ materials 자동 생성 완료: ${data.materials.length}개`);
           }
           
