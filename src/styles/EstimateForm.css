@@ -44,9 +44,10 @@
 .form-table th { background:#f8f9fa; font-weight:bold; }
 .form-table .label {
   background:#f0f0f0;
-  font-weight:bold;
+  font-weight:700 !important;  /* bold → 700 (더 강함) */
   text-align:center;
   width:120px;
+  font-size:14px !important;  /* 크기 명시 */
 }
 .form-table .right { text-align:right; }
 .form-table .left { text-align:left; }
@@ -180,6 +181,11 @@
     font-size:13px !important;  /* 11px → 13px */
     margin-bottom:10px !important;
   }
+  /* ✅ 라벨 폰트 강화 */
+  .form-table .label {
+    font-weight: 700 !important;
+    font-size: 13px !important;
+  }
   .form-table th,
   .form-table td {
     padding:5px 4px !important;  /* 4px 3px → 5px 4px */
@@ -211,9 +217,14 @@
     /* ✅ 견적서 품목 테이블만 1.5배 크게 */
     .quote-table { table-layout:fixed !important; width:100% !important; }
     .quote-table th, .quote-table td { 
-      font-size: 15px !important;  /* 16.5px → 15px (적당한 크기) */
-      padding: 6px 5px !important;  /* 패딩 약간 증가 */
-      line-height: 1.5 !important;  /* 1.8 → 1.5 */
+      font-size: 15px !important;
+      padding: 6px 5px !important;
+      line-height: 1.5 !important;
+    }
+    
+    /* ✅ 헤더만 더 굵게 */
+    .quote-table th {
+      font-weight: 700 !important;
     }
 
   .quote-table th:nth-child(1), .quote-table td:nth-child(1) { width:5% !important; }
@@ -242,6 +253,11 @@
   /* 수량 헤더 줄바꿈 방지 */
   .quote-table th:nth-child(5) { text-align:center !important; }
 
+  /* ✅ 공급가, 비고 헤더는 가운데 정렬 */
+  .quote-table th:nth-child(6),
+  .quote-table th:nth-child(7) { 
+    text-align:center !important; 
+  }
 
   /* 폭 문제 해결 - 페이지 넘어가지 않도록 */
   .estimate-form-container {
