@@ -11,6 +11,7 @@ import {
   forceServerSync
 } from '../utils/realtimeAdminSync';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
+import { generatePartId } from '../utils/unifiedPriceManager';
 
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
