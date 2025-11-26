@@ -3,6 +3,7 @@ import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
+import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  // ✅ 추가
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -32,6 +33,7 @@ const EstimateForm = () => {
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
+    materials: [],  // ✅ 추가
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
@@ -44,7 +46,29 @@ const EstimateForm = () => {
       const storageKey = `estimate_${id}`;
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        try { setFormData(JSON.parse(saved)); } catch {}
+        try { 
+          const data = JSON.parse(saved);
+          
+          // ✅ materials가 없으면 items에서 자동 생성
+          if (!data.materials || data.materials.length === 0) {
+            console.log('⚠️ 구버전 견적서 - materials 자동 생성');
+            data.materials = [];
+            
+            // items의 각 displayName에서 BOM 재생성
+            data.items.forEach(item => {
+              if (item.name) {
+                const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
+                data.materials.push(...bom);
+              }
+            });
+            
+            console.log(`✅ materials 자동 생성 완료: ${data.materials.length}개`);
+          }
+          
+          setFormData(data);
+        } catch(e) {
+          console.error('견적서 로드 실패:', e);
+        }
       }
     }
   }, [id, isEditMode]);
