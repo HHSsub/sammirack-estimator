@@ -322,15 +322,18 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     } else {
       console.log('⚠️ materials 없음 - items에서 BOM 재생성');
       
+      // ✅ 임시 배열에 모든 BOM 수집
+      const allBoms = [];
+      
       estimate.items.forEach(item => {
         if (item.name) {
           const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
           
-          // ✅ BOM 생성 실패한 경우에만 품목 자체를 원자재로 추가
           if (bom.length === 0) {
+            // 기타 품목으로 추가
             const qty = item.quantity || 1;
             const unitPrice = Math.round((item.totalPrice || 0) / qty);
-            totalBom.push({
+            allBoms.push({
               rackType: '기타',
               name: item.name,
               specification: '',
@@ -340,20 +343,41 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               note: '기타 품목'
             });
           } else {
-            // ✅ 정상적으로 생성된 BOM 추가
-            totalBom.push(...bom);
+            allBoms.push(...bom);
           }
         }
       });
       
-      console.log('✅ BOM 재생성 완료:', totalBom.length);
+      // ✅ 중복 제거 및 수량 합산
+      const bomMap = new Map();
+      allBoms.forEach(item => {
+        const key = generateInventoryPartId(item);
+        
+        if (bomMap.has(key)) {
+          const existing = bomMap.get(key);
+          bomMap.set(key, {
+            ...existing,
+            quantity: existing.quantity + (item.quantity || 0),
+            totalPrice: existing.totalPrice + (item.totalPrice || 0)
+          });
+        } else {
+          bomMap.set(key, {
+            ...item,
+            quantity: item.quantity || 0,
+            totalPrice: item.totalPrice || 0
+          });
+        }
+      });
+      
+      totalBom = Array.from(bomMap.values());
+      
+      console.log('✅ BOM 재생성 및 중복 제거 완료:', totalBom.length);
     }
     
     console.log('📋 청구서 생성:', { cart: cart.length, totalBom: totalBom.length });
     
     navigate(`/purchase-order/new`, { state: { cart, totalBom } });
   };
-
   /**
    * Edit an existing item
    */
