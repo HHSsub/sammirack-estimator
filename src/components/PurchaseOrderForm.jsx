@@ -31,10 +31,10 @@ const PurchaseOrderForm = () => {
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    documentNumber: '',
+    documentNumber: estimateData.estimateNumber || '',  // ✅ 견적서 번호 전달
     orderNumber: '',
-    companyName: '',
-    bizNumber: '',
+    companyName: estimateData.companyName || '',  // ✅ 상호명 전달
+    bizNumber: estimateData.bizNumber || '',  // ✅ 사업자등록번호 전달
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
@@ -42,10 +42,9 @@ const PurchaseOrderForm = () => {
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
-    notes: '',
-    topMemo: ''
+    notes: estimateData.notes || '',  // ✅ 비고 전달
+    topMemo: estimateData.topMemo || ''  // ✅ 메모 전달
   });
-
   // 관리자 단가 로드
   useEffect(() => {
     adminPricesRef.current = loadAdminPricesDirect();
