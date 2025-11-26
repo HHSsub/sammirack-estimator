@@ -324,13 +324,25 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       
       estimate.items.forEach(item => {
         if (item.name) {
-          // ✅ itemPrice도 함께 전달
-          const bom = regenerateBOMFromDisplayName(
-            item.name, 
-            item.quantity || 1, 
-            item.totalPrice || 0
-          );
-          totalBom.push(...bom);
+          const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
+          
+          // ✅ BOM 생성 실패한 경우에만 품목 자체를 원자재로 추가
+          if (bom.length === 0) {
+            const qty = item.quantity || 1;
+            const unitPrice = Math.round((item.totalPrice || 0) / qty);
+            totalBom.push({
+              rackType: '기타',
+              name: item.name,
+              specification: '',
+              quantity: qty,
+              unitPrice: unitPrice,
+              totalPrice: item.totalPrice || 0,
+              note: '기타 품목'
+            });
+          } else {
+            // ✅ 정상적으로 생성된 BOM 추가
+            totalBom.push(...bom);
+          }
         }
       });
       
