@@ -6,6 +6,8 @@ import '../styles/EstimateForm.css';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  // ✅ 추가
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
+import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -26,6 +28,11 @@ const EstimateForm = () => {
   const documentNumberInputRef = useRef(null);
   const cartData = location.state || {};
   const { cart = [], totalBom = [] } = cartData;  // ✅ totalBom 추가
+
+  // ✅ FAX 관련 state 추가
+  const [showFaxModal, setShowFaxModal] = useState(false);
+  const [pdfBlobURL, setPdfBlobURL] = useState(null);
+  const [pdfBase64, setPdfBase64] = useState(null);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -223,6 +230,80 @@ const EstimateForm = () => {
     window.print();
   };
 
+  // ✅ FAX 전송 핸들러 추가 
+  const handleFaxPreview = async () => {
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호(문서번호)를 입력해주세요.');
+      documentNumberInputRef.current?.focus();
+      return;
+    }
+
+    try {
+      // 문서 DOM 요소 찾기
+      const docElement = document.querySelector('.estimate-form-container');
+      if (!docElement) {
+        alert('문서 영역을 찾을 수 없습니다.');
+        return;
+      }
+
+      alert('PDF 생성 중입니다. 잠시만 기다려주세요...');
+
+      // PDF 변환
+      const base64 = await convertDOMToPDFBase64(docElement);
+      setPdfBase64(base64);
+
+      // Blob URL 생성 (미리보기용)
+      const blobURL = base64ToBlobURL(base64);
+      setPdfBlobURL(blobURL);
+
+      // 모달 표시
+      setShowFaxModal(true);
+    } catch (error) {
+      console.error('❌ PDF 생성 오류:', error);
+      alert(`PDF 생성에 실패했습니다.\n오류: ${error.message}`);
+    }
+  };
+
+  const handleSendFax = async (faxNumber) => {
+    if (!pdfBase64) {
+      alert('PDF가 생성되지 않았습니다.');
+      return;
+    }
+
+    try {
+      const result = await sendFax(
+        pdfBase64,
+        faxNumber,
+        formData.companyName,
+        ''
+      );
+
+      if (result.success) {
+        alert(
+          `✅ 팩스 전송이 완료되었습니다!\n\n` +
+          `발송번호: ${result.jobNo}\n` +
+          `페이지 수: ${result.pages}장\n` +
+          `잔액: ${result.cash}원`
+        );
+        setShowFaxModal(false);
+      } else {
+        throw new Error(result.error || '알 수 없는 오류');
+      }
+    } catch (error) {
+      console.error('❌ 팩스 전송 오류:', error);
+      alert(`팩스 전송에 실패했습니다.\n오류: ${error.message}`);
+    }
+  };
+
+  const handleCloseFaxModal = () => {
+    setShowFaxModal(false);
+    if (pdfBlobURL) {
+      URL.revokeObjectURL(pdfBlobURL);
+      setPdfBlobURL(null);
+    }
+    setPdfBase64(null);
+  };
+
   return (
     <div className="estimate-form-container">
       <div className="form-header">
@@ -400,9 +481,18 @@ const EstimateForm = () => {
         <button type="button" onClick={handleSave} className="save-btn">저장하기</button>
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
+        <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
 
       <div className="form-company">({PROVIDER.companyName})</div>
+      {/* ✅ FAX 미리보기 모달 추가 */}
+      {showFaxModal && (
+        <FaxPreviewModal
+          pdfBlobURL={pdfBlobURL}
+          onClose={handleCloseFaxModal}
+          onSendFax={handleSendFax}
+        />
+      )}
     </div>
   );
 };
