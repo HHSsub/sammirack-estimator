@@ -264,36 +264,51 @@ const EstimateForm = () => {
     }
   };
 
-  const handleSendFax = async (faxNumber) => {
-    if (!pdfBase64) {
-      alert('PDF가 생성되지 않았습니다.');
-      return;
-    }
+const handleSendFax = async (faxNumber) => {
+  if (!pdfBase64) {
+    alert('PDF가 생성되지 않았습니다.');
+    return;
+  }
 
-    try {
-      const result = await sendFax(
-        pdfBase64,
-        faxNumber,
-        formData.companyName,
-        ''
+  try {
+    const result = await sendFax(
+      pdfBase64,
+      faxNumber,
+      formData.companyName,
+      ''
+    );
+
+    if (result.success) {
+      // ✅ 성공 시 잔액 정보 표시
+      alert(
+        `✅ 팩스 전송이 완료되었습니다!\n\n` +
+        `📄 발송번호: ${result.jobNo}\n` +
+        `📑 페이지 수: ${result.pages}장\n` +
+        `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
       );
-
-      if (result.success) {
-        alert(
-          `✅ 팩스 전송이 완료되었습니다!\n\n` +
-          `발송번호: ${result.jobNo}\n` +
-          `페이지 수: ${result.pages}장\n` +
-          `잔액: ${result.cash}원`
-        );
-        setShowFaxModal(false);
-      } else {
-        throw new Error(result.error || '알 수 없는 오류');
-      }
-    } catch (error) {
-      console.error('❌ 팩스 전송 오류:', error);
-      alert(`팩스 전송에 실패했습니다.\n오류: ${error.message}`);
+      setShowFaxModal(false);
+    } else {
+      throw new Error(result.error || '알 수 없는 오류');
     }
-  };
+  } catch (error) {
+    console.error('❌ 팩스 전송 오류:', error);
+    
+    // ✅ 오류 유형별 메시지 개선
+    let errorMessage = '팩스 전송에 실패했습니다.\n\n';
+    
+    if (error.message.includes('잔액')) {
+      errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
+    } else if (error.message.includes('타임아웃')) {
+      errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
+    } else if (error.message.includes('네트워크')) {
+      errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
+    } else {
+      errorMessage += `오류: ${error.message}`;
+    }
+    
+    alert(errorMessage);
+  }
+};
 
   const handleCloseFaxModal = () => {
     setShowFaxModal(false);
