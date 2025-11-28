@@ -6,12 +6,26 @@ import { deductInventoryOnPrint, showInventoryResult } from '../components/Inven
 /** ---------------------------
  *  공통 유틸
  * --------------------------- */
-export const generateFileName = (type = 'estimate') => {
+export const generateFileName = (type = 'estimate', documentNumber = '') => {
   const d = new Date();
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  return `${type}_${y}${m}${day}.xlsx`;
+  
+  const typeMap = {
+    estimate: '견적서',
+    delivery: '거래명세서',
+    purchase: '청구서'
+  };
+  
+  const koreanType = typeMap[type] || '견적서';
+  const dateStr = `${y}${m}${day}`;
+  
+  if (documentNumber) {
+    return `${koreanType}_${documentNumber}_${dateStr}.xlsx`;
+  } else {
+    return `${koreanType}_${dateStr}.xlsx`;
+  }
 };
 
 // Vite + GitHub Pages 환경에서 public/ 경로 base 고려
@@ -453,7 +467,8 @@ export async function exportToExcel(rawData, type = 'estimate') {
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const fileName = generateFileName(
-    type === 'delivery' ? 'delivery' : type === 'purchase' ? 'purchase' : 'estimate'
+    type === 'delivery' ? 'delivery' : type === 'purchase' ? 'purchase' : 'estimate',
+    rawData?.documentNumber || ''
   );
   saveAs(blob, fileName);
 }
