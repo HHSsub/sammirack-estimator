@@ -478,24 +478,9 @@ export async function exportToExcel(rawData, type = 'estimate') {
  */
 export const exportEstimateWithInventory = async (formData, cartData, fileName) => {
   try {
-    // 1. 기존 Excel 출력
     await exportToExcel(formData, 'estimate');
     console.log('✅ 견적서 Excel 출력 완료');
-    
-    // 2. 재고 감소 (견적서는 선택적)
-    if (cartData?.cart && window.confirm('견적서 출력과 함께 재고를 감소시키시겠습니까?')) {
-      const result = deductInventoryOnPrint(
-        cartData.cart, 
-        'estimate', 
-        formData.documentNumber || fileName || '견적서'
-      );
-      
-      showInventoryResult(result, '견적서');
-      return result;
-    }
-    
-    return { success: true, message: '견적서 출력 완료 (재고 변경 없음)' };
-    
+    return { success: true, message: '견적서 출력 완료' };
   } catch (error) {
     console.error('견적서 출력 실패:', error);
     throw error;
@@ -507,24 +492,9 @@ export const exportEstimateWithInventory = async (formData, cartData, fileName) 
  */
 export const exportPurchaseWithInventory = async (formData, cartData, fileName) => {
   try {
-    // 1. 기존 Excel 출력
     await exportToExcel(formData, 'purchase');
     console.log('✅ 청구서 Excel 출력 완료');
-    
-    // 2. 재고 자동 감소 (청구서는 자동)
-    if (cartData?.cart) {
-      const result = deductInventoryOnPrint(
-        cartData.cart, 
-        'purchase', 
-        formData.documentNumber || fileName || '청구서'
-      );
-      
-      showInventoryResult(result, '청구서');
-      return result;
-    }
-    
-    return { success: true, message: '청구서 출력 완료 (재고 감소 대상 없음)' };
-    
+    return { success: true, message: '청구서 출력 완료' };
   } catch (error) {
     console.error('청구서 출력 실패:', error);
     throw error;
@@ -536,24 +506,9 @@ export const exportPurchaseWithInventory = async (formData, cartData, fileName) 
  */
 export const exportDeliveryWithInventory = async (formData, cartData, fileName) => {
   try {
-    // 1. 기존 Excel 출력
     await exportToExcel(formData, 'delivery');
     console.log('✅ 거래명세서 Excel 출력 완료');
-    
-    // 2. 재고 자동 감소 (거래명세서는 자동)
-    if (cartData?.cart) {
-      const result = deductInventoryOnPrint(
-        cartData.cart, 
-        'delivery', 
-        formData.documentNumber || fileName || '거래명세서'
-      );
-      
-      showInventoryResult(result, '거래명세서');
-      return result;
-    }
-    
-    return { success: true, message: '거래명세서 출력 완료 (재고 감소 대상 없음)' };
-    
+    return { success: true, message: '거래명세서 출력 완료' };
   } catch (error) {
     console.error('거래명세서 출력 실패:', error);
     throw error;
@@ -576,9 +531,7 @@ export const printDocumentWithInventory = async (documentType, formData, cartDat
       return await exportDeliveryWithInventory(formData, cartData, fileName);
     
     default:
-      // 기본은 기존 방식 (재고 감소 없음)
       await exportToExcel(formData, documentType);
-      console.log("재고 감소 없이 프린트 되었음")
       return { success: true, message: '문서 출력 완료' };
   }
 };
