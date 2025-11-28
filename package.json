@@ -16,7 +16,7 @@
     "xlsx": "^0.18.5",
     "exceljs": "^4.3.0",
     "jspdf": "^2.5.1",
-    "html2canvas": "^1.4.1"
+    "html2canvas": "^1.4.1",
     "axios": "^1.6.8"
   },
   "devDependencies": {
