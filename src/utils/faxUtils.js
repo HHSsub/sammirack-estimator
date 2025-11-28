@@ -12,18 +12,32 @@ export const convertDOMToPDFBase64 = async (element) => {
     throw new Error('DOM 요소를 찾을 수 없습니다.');
   }
 
+  // ✅ 1단계: 인쇄 시 숨겨야 할 요소들 선택
+  const hiddenElements = element.querySelectorAll('.no-print');
+  const originalDisplayValues = [];
+
   try {
-    // html2canvas로 DOM을 이미지로 변환
+    // ✅ 2단계: 모든 no-print 요소를 임시로 숨김
+    hiddenElements.forEach((el, index) => {
+      originalDisplayValues[index] = el.style.display;
+      el.style.display = 'none';
+    });
+
+    // ✅ 3단계: html2canvas로 DOM을 이미지로 변환
     const canvas = await html2canvas(element, {
       scale: 2, // 해상도 향상
       useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      ignoreElements: (element) => {
+        // 추가 안전장치: no-print 클래스가 있으면 무시
+        return element.classList.contains('no-print');
+      }
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     
-    // A4 크기로 PDF 생성
+    // ✅ 4단계: A4 크기로 PDF 생성
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -51,9 +65,15 @@ export const convertDOMToPDFBase64 = async (element) => {
     // Base64 문자열 반환
     const pdfBase64 = pdf.output('datauristring').split(',')[1];
     return pdfBase64;
+
   } catch (error) {
     console.error('❌ PDF 변환 오류:', error);
     throw new Error('PDF 변환에 실패했습니다.');
+  } finally {
+    // ✅ 5단계: 숨긴 요소들 복원 (반드시 실행)
+    hiddenElements.forEach((el, index) => {
+      el.style.display = originalDisplayValues[index];
+    });
   }
 };
 
