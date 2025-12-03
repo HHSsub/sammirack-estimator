@@ -114,6 +114,9 @@ const EstimateForm = () => {
         };
       });
       
+      // ✅ customItems 병합 (직접 추가했던 품목들)
+      const allItems = [...cartItems, ...customItems];
+      
       // ✅ totalBom을 materials로 변환 (화면에는 표시 안 함, 내부 저장용)
       const bomMaterials = (totalBom || []).map(m => ({
         name: m.name,
@@ -127,11 +130,11 @@ const EstimateForm = () => {
       
       setFormData(prev => ({ 
         ...prev, 
-        items: cartItems.length ? cartItems : prev.items,
-        materials: bomMaterials  // ✅ 내부적으로 BOM 정보 저장
+        items: allItems.length ? allItems : prev.items,
+        materials: bomMaterials
       }));
     }
-  }, [cart, totalBom, isEditMode]);  // ✅ totalBom 의존성 추가
+  }, [cart, totalBom, customItems, isEditMode]);  // ✅ customItems 의존성 추가
 
   useEffect(() => {
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
