@@ -34,14 +34,22 @@ const PurchaseOrderForm = () => {
   const [pdfBase64, setPdfBase64] = useState(null);
 
   const cartData = location.state || {};
-  const { cart = [], totalBom = [], estimateData = {} } = cartData; // estimateData는 견적서->청구서생성 넘어가는 로직이 올 수 있기 때문에 받아와야함
+  const { 
+    cart = [], 
+    totalBom = [], 
+    estimateData = {},
+    customItems = [],          // ✅ 추가
+    customMaterials = [],      // ✅ 추가
+    editingDocumentId = null,  // ✅ 추가
+    editingDocumentData = {}   // ✅ 추가
+  } = cartData;
 
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    documentNumber: estimateData.estimateNumber || '',  // ✅ 견적서 번호 전달
+    date: editingDocumentData.date || estimateData.date || new Date().toISOString().split('T')[0],
+    documentNumber: editingDocumentData.documentNumber || estimateData.estimateNumber || '',
     orderNumber: '',
-    companyName: estimateData.companyName || '',  // ✅ 상호명 전달
-    bizNumber: estimateData.bizNumber || '',  // ✅ 사업자등록번호 전달
+    companyName: editingDocumentData.companyName || estimateData.companyName || '',
+    bizNumber: editingDocumentData.bizNumber || estimateData.bizNumber || '',
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
@@ -49,13 +57,9 @@ const PurchaseOrderForm = () => {
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
-    notes: estimateData.notes || '',  // ✅ 비고 전달
-    topMemo: estimateData.topMemo || ''  // ✅ 메모 전달
+    notes: editingDocumentData.notes || estimateData.notes || '',
+    topMemo: editingDocumentData.topMemo || estimateData.topMemo || ''
   });
-  // 관리자 단가 로드
-  useEffect(() => {
-    adminPricesRef.current = loadAdminPricesDirect();
-  }, []);
 
   // 기존 저장 문서 로드
   useEffect(() => {
@@ -133,21 +137,24 @@ const PurchaseOrderForm = () => {
   }, [id, isEditMode]);
 
   // 초기 cart / BOM 반영 (관리자 단가 재적용)
-  useEffect(() => {
+useEffect(() => {
     if (!isEditMode && cart.length > 0) {
-      adminPricesRef.current = loadAdminPricesDirect(); // 혹시 직전 수정 직후일 수 있으니 재로드
+      adminPricesRef.current = loadAdminPricesDirect();
       const cartItems = cart.map(item => {
         const qty = item.quantity || 1;
         const unitPrice = Math.round((item.price || 0) / (qty || 1));
         return {
           name: item.displayName || item.name || '',
-            unit: '개',
-            quantity: qty,
-            unitPrice,
-            totalPrice: unitPrice * qty,
-            note: ''
+          unit: '개',
+          quantity: qty,
+          unitPrice,
+          totalPrice: unitPrice * qty,
+          note: ''
         };
       });
+
+      // ✅ customItems 병합
+      const allItems = [...cartItems, ...customItems];
 
       const bomMaterials = (totalBom || []).map(m => {
         const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
@@ -166,13 +173,16 @@ const PurchaseOrderForm = () => {
         };
       });
 
+      // ✅ customMaterials 병합
+      const allMaterials = [...bomMaterials, ...customMaterials];
+
       setFormData(prev => ({
         ...prev,
-        items: cartItems.length ? cartItems : prev.items,
-        materials: bomMaterials.length ? bomMaterials : prev.materials
+        items: allItems.length ? allItems : prev.items,
+        materials: allMaterials.length ? allMaterials : prev.materials
       }));
     }
-  }, [cart, totalBom, isEditMode]);
+  }, [cart, totalBom, customItems, customMaterials, isEditMode]);  // ✅ 의존성 추가
 
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
@@ -264,9 +274,36 @@ const PurchaseOrderForm = () => {
       return;
     }
     
-    const itemId = isEditMode ? id : Date.now();
-    const storageKey = `purchase_${itemId}`;
+    // ✅ 동일 거래번호 찾기
+    let itemId;
+    let existingDoc = null;
     
+    if (editingDocumentId) {
+      // 편집 모드: 기존 ID 재사용
+      itemId = editingDocumentId;
+    } else if (isEditMode) {
+      // 기존 편집 모드 (URL 기반)
+      itemId = id;
+    } else {
+      // ✅ 신규 작성: 동일 거래번호 검색
+      existingDoc = findDocumentByNumber(formData.documentNumber, 'purchase');
+      if (existingDoc) {
+        // 동일 거래번호 발견 -> 덮어쓰기 확인
+        const confirmOverwrite = window.confirm(
+          `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
+        );
+        if (confirmOverwrite) {
+          itemId = existingDoc.id;
+        } else {
+          return; // 취소
+        }
+      } else {
+        // 새 문서
+        itemId = Date.now();
+      }
+    }
+    
+    const storageKey = `purchase_${itemId}`;
     const newOrder = {
       ...formData,
       id: itemId,
@@ -743,5 +780,24 @@ const checkInventoryAvailability = async (cartItems) => {
     </div>
   );
 };
+
+// ✅ 파일 맨 아래, export default 바로 위에 추가
+function findDocumentByNumber(docNumber, docType) {
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(`${docType}_`)) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        const checkNumber = docType === 'estimate' ? data.estimateNumber :
+                           docType === 'purchase' ? data.purchaseNumber :
+                           data.documentNumber;
+        if (checkNumber === docNumber) {
+          return data;
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
 
 export default PurchaseOrderForm;
