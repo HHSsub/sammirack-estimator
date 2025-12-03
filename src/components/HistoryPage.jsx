@@ -389,24 +389,89 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     
     navigate(`/purchase-order/new`, { state: { cart, totalBom, estimateData } });
   };
-  
+    
   /**
-   * Edit an existing item
+   * Edit an existing item - 홈 화면으로 이동하여 cart 기반 편집
    */
   const editItem = (item) => {
     if (!item || !item.type) return;
     
-    // 견적서와 청구서의 편집 버튼 클릭 시, 문서 편집 화면으로 이동하도록 수정
-    if (item.type === 'estimate') {
-      // EstimateForm은 OptionSelector를 거치지 않고 바로 편집 모드로 진입해야 함
-      navigate(`/estimate/edit/${item.id}`, { state: { item } });
-    } else if (item.type === 'purchase') {
-      // PurchaseOrderForm은 OptionSelector를 거치지 않고 바로 편집 모드로 진입해야 함
-      navigate(`/purchase-order/edit/${item.id}`, { state: { item } });
-    } else if (item.type === 'delivery') {
-      // DeliveryNoteForm은 OptionSelector를 거치지 않고 바로 편집 모드로 진입해야 함
-      navigate(`/delivery-note/edit/${item.id}`, { state: { item } });
+    console.log('📝 문서 편집 시작:', item);
+    
+    // items를 cart로 변환 + 시스템에 없는 항목 분리
+    const cart = [];
+    const customItems = [];
+    
+    (item.items || []).forEach(itemData => {
+      if (!itemData.name) return;
+      
+      // BOM 재생성 시도
+      const bom = regenerateBOMFromDisplayName(itemData.name, itemData.quantity || 1);
+      
+      if (bom.length > 0) {
+        // 시스템 품목 -> cart에 추가
+        const qty = Number(itemData.quantity) || 1;
+        const totalPrice = Number(itemData.totalPrice) || 0;
+        
+        cart.push({
+          id: `edit_${Date.now()}_${Math.random()}`,
+          name: itemData.name,
+          displayName: itemData.name,
+          quantity: qty,
+          price: totalPrice,
+          unit: itemData.unit || '개',
+          bom: bom
+        });
+      } else {
+        // 직접 추가 품목 -> customItems에 보관
+        customItems.push({ ...itemData });
+      }
+    });
+    
+    // materials도 처리 (청구서용)
+    const customMaterials = [];
+    if (item.materials && Array.isArray(item.materials)) {
+      item.materials.forEach(mat => {
+        // materials는 대부분 시스템 자재이지만, 사용자가 직접 추가한 것도 있을 수 있음
+        // Part ID 생성 불가능한 것들은 customMaterials로 보관
+        try {
+          const partId = generatePartId(mat);
+          if (!partId || partId === 'unknown') {
+            customMaterials.push({ ...mat });
+          }
+        } catch {
+          customMaterials.push({ ...mat });
+        }
+      });
     }
+    
+    console.log('🛒 Cart 변환:', cart.length, '개');
+    console.log('📦 Custom Items:', customItems.length, '개');
+    console.log('🔧 Custom Materials:', customMaterials.length, '개');
+    
+    // 홈 화면으로 이동 (타입별로 다른 route)
+    const editingData = {
+      cart,
+      customItems,
+      customMaterials,
+      editingDocumentId: item.id,
+      editingDocumentType: item.type,
+      editingDocumentData: {
+        documentNumber: item.type === 'estimate' ? item.estimateNumber : 
+                        item.type === 'purchase' ? item.purchaseNumber : 
+                        item.documentNumber,
+        companyName: item.customerName || item.companyName,
+        bizNumber: item.bizNumber,
+        contactInfo: item.contactInfo,
+        notes: item.notes,
+        topMemo: item.topMemo,
+        date: item.date,
+        status: item.status
+      }
+    };
+    
+    // 홈 화면으로 이동
+    navigate('/', { state: editingData });
   };
 
   /**
