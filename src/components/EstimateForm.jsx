@@ -27,7 +27,13 @@ const EstimateForm = () => {
 
   const documentNumberInputRef = useRef(null);
   const cartData = location.state || {};
-  const { cart = [], totalBom = [] } = cartData;  // ✅ totalBom 추가
+  const { 
+    cart = [], 
+    totalBom = [],
+    customItems = [],          // ✅ 추가
+    editingDocumentId = null,  // ✅ 추가
+    editingDocumentData = {}   // ✅ 추가
+  } = cartData;
 
   // ✅ FAX 관련 state 추가
   const [showFaxModal, setShowFaxModal] = useState(false);
@@ -35,19 +41,19 @@ const EstimateForm = () => {
   const [pdfBase64, setPdfBase64] = useState(null);
 
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    documentNumber: '',
-    companyName: '',
-    bizNumber: '',
+    date: editingDocumentData.date || new Date().toISOString().split('T')[0],
+    documentNumber: editingDocumentData.documentNumber || '',
+    companyName: editingDocumentData.companyName || '',
+    bizNumber: editingDocumentData.bizNumber || '',
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
-    materials: [],  // ✅ 추가
+    materials: [],  // ✅ 절대 삭제하지 않음
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
-    notes: '',
-    topMemo: ''
+    notes: editingDocumentData.notes || '',
+    topMemo: editingDocumentData.topMemo || ''
   });
 
   useEffect(() => {
