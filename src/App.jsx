@@ -240,31 +240,62 @@ return (
       <CartDisplay />
 
       {canProceed && (
-        <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <Link 
-            to="/estimate/new"
-            state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
-            className={`create-estimate-button`}
-          >
-            견적서 작성
-          </Link>
-          <Link 
-            to="/delivery-note/new"
-            state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
-            className={`create-delivery-note-button`}
-          >
-            거래명세서 작성
-          </Link>
-          <Link 
-            to="/purchase-order/new"
-            state={{ cart, cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), totalBom: totalBomForDisplay }}
-            className={`create-order-button`}
-          >
-            청구서 작성
-          </Link>
-        </div>
-      )}
-
+              <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <Link 
+                  to="/estimate/new"
+                  state={{ 
+                    cart, 
+                    cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
+                    totalBom: totalBomForDisplay,
+                    // ✅ 편집 모드 데이터 전달
+                    ...(isEditMode && editingData.editingDocumentType === 'estimate' ? {
+                      customItems: editingData.customItems || [],
+                      editingDocumentId: editingData.editingDocumentId,
+                      editingDocumentData: editingData.editingDocumentData || {}
+                    } : {})
+                  }}
+                  className={`create-estimate-button`}
+                >
+                  견적서 작성
+                </Link>
+                <Link 
+                  to="/delivery-note/new"
+                  state={{ 
+                    cart, 
+                    cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
+                    totalBom: totalBomForDisplay,
+                    // ✅ 편집 모드 데이터 전달
+                    ...(isEditMode && editingData.editingDocumentType === 'delivery' ? {
+                      customItems: editingData.customItems || [],
+                      customMaterials: editingData.customMaterials || [],
+                      editingDocumentId: editingData.editingDocumentId,
+                      editingDocumentData: editingData.editingDocumentData || {}
+                    } : {})
+                  }}
+                  className={`create-delivery-note-button`}
+                >
+                  거래명세서 작성
+                </Link>
+                <Link 
+                  to="/purchase-order/new"
+                  state={{ 
+                    cart, 
+                    cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
+                    totalBom: totalBomForDisplay,
+                    // ✅ 편집 모드 데이터 전달
+                    ...(isEditMode && editingData.editingDocumentType === 'purchase' ? {
+                      customItems: editingData.customItems || [],
+                      customMaterials: editingData.customMaterials || [],
+                      editingDocumentId: editingData.editingDocumentId,
+                      editingDocumentData: editingData.editingDocumentData || {}
+                    } : {})
+                  }}
+                  className={`create-order-button`}
+                >
+                  청구서 작성
+                </Link>
+              </div>
+            )}
       {showTotalBOM && (
         <BOMDisplay 
           bom={totalBomForDisplay} 
