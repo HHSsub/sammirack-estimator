@@ -25,7 +25,14 @@ const DeliveryNoteForm = () => {
   const documentNumberInputRef = useRef(null);
 
   const cartData = location.state || {};
-  const { cart = [], totalBom = [] } = cartData;
+  const { 
+    cart = [], 
+    totalBom = [],
+    customItems = [],          // ✅ 추가
+    customMaterials = [],      // ✅ 추가
+    editingDocumentId = null,  // ✅ 추가
+    editingDocumentData = {}   // ✅ 추가
+  } = cartData;
 
   const adminPricesRef = useRef({});
     
@@ -35,11 +42,11 @@ const DeliveryNoteForm = () => {
   const [pdfBase64, setPdfBase64] = useState(null);
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    documentNumber: '',
+    date: editingDocumentData.date || new Date().toISOString().split('T')[0],
+    documentNumber: editingDocumentData.documentNumber || '',
     orderNumber: '',
-    companyName: '',
-    bizNumber: '',
+    companyName: editingDocumentData.companyName || '',
+    bizNumber: editingDocumentData.bizNumber || '',
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
@@ -47,8 +54,8 @@ const DeliveryNoteForm = () => {
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
-    notes: '',
-    topMemo: ''
+    notes: editingDocumentData.notes || '',      // ✅ 수정
+    topMemo: editingDocumentData.topMemo || ''   // ✅ 수정
   });
 
   // 관리자 단가 로드
@@ -83,6 +90,10 @@ const DeliveryNoteForm = () => {
           note: ''
         };
       });
+      
+      // ✅ customItems 병합
+      const allItems = [...cartItems, ...customItems];
+      
       const bomMaterials = (totalBom || []).map(m => {
         const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
         const appliedUnitPrice = adminPrice && adminPrice > 0
@@ -99,13 +110,17 @@ const DeliveryNoteForm = () => {
           note: m.note || ''
         };
       });
+      
+      // ✅ customMaterials 병합
+      const allMaterials = [...bomMaterials, ...customMaterials];
+      
       setFormData(prev => ({
         ...prev,
-        items: cartItems.length ? cartItems : prev.items,
-        materials: bomMaterials.length ? bomMaterials : prev.materials
+        items: allItems.length ? allItems : prev.items,
+        materials: allMaterials.length ? allMaterials : prev.materials
       }));
     }
-  }, [cart, totalBom, isEditMode]);
+  }, [cart, totalBom, customItems, customMaterials, isEditMode]);  // ✅ 의존성 추가
 
   // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
@@ -159,14 +174,36 @@ const DeliveryNoteForm = () => {
   const addMat=()=>setFormData(p=>({...p,materials:[...p.materials,{name:'',specification:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
   const rmMat=(idx)=>setFormData(p=>({...p,materials:p.materials.filter((_,i)=>i!==idx)}));
 
-  const handleSave = async () => {  // ✅ async 추가
+const handleSave = async () => {
     if(!formData.documentNumber.trim()){
       alert('거래번호(문서번호)를 입력하세요.');
       documentNumberInputRef.current?.focus();
       return;
     }
     
-    const itemId=isEditMode?id:Date.now();
+    // ✅ 동일 거래번호 찾기
+    let itemId;
+    let existingDoc = null;
+    
+    if (editingDocumentId) {
+      itemId = editingDocumentId;
+    } else if (isEditMode) {
+      itemId = id;
+    } else {
+      existingDoc = findDocumentByNumber(formData.documentNumber, 'delivery');
+      if (existingDoc) {
+        const confirmOverwrite = window.confirm(
+          `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
+        );
+        if (confirmOverwrite) {
+          itemId = existingDoc.id;
+        } else {
+          return;
+        }
+      } else {
+        itemId = Date.now();
+      }
+    }
     const storageKey=`delivery_${itemId}`;
     
     const newDoc={  // ✅ 기존 변수명 그대로 사용
@@ -524,5 +561,24 @@ const handleSendFax = async (faxNumber) => {
     </div>
   );
 };
+
+// ✅ 파일 맨 아래, export default 바로 위에 추가
+function findDocumentByNumber(docNumber, docType) {
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(`${docType}_`)) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        const checkNumber = docType === 'estimate' ? data.estimateNumber :
+                           docType === 'purchase' ? data.purchaseNumber :
+                           data.documentNumber;
+        if (checkNumber === docNumber) {
+          return data;
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
 
 export default DeliveryNoteForm;
