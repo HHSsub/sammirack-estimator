@@ -146,21 +146,20 @@ const HistoryPage = () => {
       );
     }
     
-    // Filter by date range
+    // ✅ Filter by date range (문자열 비교로 수정)
     if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
       filtered = filtered.filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate >= fromDate;
+        if (!item.date) return false;
+        const itemDateStr = item.date.split('T')[0]; // ISO 날짜에서 날짜 부분만 추출
+        return itemDateStr >= filters.dateFrom;
       });
     }
     
     if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      toDate.setHours(23, 59, 59, 999); // End of the day
       filtered = filtered.filter(item => {
-        const itemDate = new Date(item.date);
-        return itemDate <= toDate;
+        if (!item.date) return false;
+        const itemDateStr = item.date.split('T')[0]; // ISO 날짜에서 날짜 부분만 추출
+        return itemDateStr <= filters.dateTo;
       });
     }
     
@@ -1342,13 +1341,19 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           </div>
           
           <div className="filters-section">
-            <div className="filters-container">
+            <div className="filters-container" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '12px',
+              alignItems: 'end'
+            }}>
               <div className="filter-group">
                 <label>문서 유형:</label>
                 <select 
                   name="documentType" 
                   value={filters.documentType} 
                   onChange={handleFilterChange}
+                  style={{width: '100%'}}
                 >
                   <option value="all">전체</option>
                   <option value="estimate">견적서</option>
@@ -1366,17 +1371,19 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   value={filters.documentNumber}
                   onChange={handleFilterChange}
                   className="filter-input"
+                  style={{width: '100%'}}
                 />
               </div>
               
-              <div className="filter-group">
+              <div className="filter-group" style={{gridColumn: 'span 2'}}>
                 <label>날짜 범위:</label>
-                <div className="date-range">
+                <div className="date-range" style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                   <input 
                     type="date"
                     name="dateFrom"
                     value={filters.dateFrom}
                     onChange={handleFilterChange}
+                    style={{flex: 1}}
                   />
                   <span>~</span>
                   <input 
@@ -1384,6 +1391,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                     name="dateTo"
                     value={filters.dateTo}
                     onChange={handleFilterChange}
+                    style={{flex: 1}}
                   />
                 </div>
               </div>
@@ -1394,6 +1402,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   name="status" 
                   value={filters.status} 
                   onChange={handleFilterChange}
+                  style={{width: '100%'}}
                 >
                   <option value="all">전체</option>
                   <option value="진행 중">진행 중</option>
@@ -1406,6 +1415,10 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               <button 
                 className="reset-filters" 
                 onClick={resetFilters}
+                style={{
+                  padding: '8px 16px',
+                  height: 'fit-content'
+                }}
               >
                 필터 초기화
               </button>
