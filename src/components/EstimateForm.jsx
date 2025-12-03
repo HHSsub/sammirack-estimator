@@ -173,29 +173,57 @@ const EstimateForm = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.documentNumber.trim()) {
-      alert('거래번호(문서번호)를 입력하세요.');
-      documentNumberInputRef.current?.focus();
-      return;
-    }
-    
-    const itemId = isEditMode ? id : Date.now();
-    const storageKey = `estimate_${itemId}`;
-    
-    const newEstimate = {
-      ...formData,
-      id: itemId,
-      type: 'estimate',
-      status: formData.status || '진행 중',
-      estimateNumber: formData.documentNumber,
-      customerName: formData.companyName,
-      productType: formData.items[0]?.name || '',
-      quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
-      unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
-      totalPrice: formData.totalAmount,
-      updatedAt: new Date().toISOString(),
-      ...(isEditMode ? {} : { createdAt: new Date().toISOString() })
-    };
+      if (!formData.documentNumber.trim()) {
+        alert('거래번호(문서번호)를 입력하세요.');
+        documentNumberInputRef.current?.focus();
+        return;
+      }
+      
+      // ✅ 동일 거래번호 찾기
+      let itemId;
+      let existingDoc = null;
+      
+      if (editingDocumentId) {
+        // 편집 모드: 기존 ID 재사용
+        itemId = editingDocumentId;
+      } else if (isEditMode) {
+        // 기존 편집 모드 (URL 기반)
+        itemId = id;
+      } else {
+        // ✅ 신규 작성: 동일 거래번호 검색
+        existingDoc = findDocumentByNumber(formData.documentNumber, 'estimate');
+        if (existingDoc) {
+          // 동일 거래번호 발견 -> 덮어쓰기 확인
+          const confirmOverwrite = window.confirm(
+            `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
+          );
+          if (confirmOverwrite) {
+            itemId = existingDoc.id;
+          } else {
+            return; // 취소
+          }
+        } else {
+          // 새 문서
+          itemId = Date.now();
+        }
+      }
+      
+      const storageKey = `estimate_${itemId}`;
+      
+      const newEstimate = {
+        ...formData,
+        id: itemId,
+        type: 'estimate',
+        status: formData.status || '진행 중',
+        estimateNumber: formData.documentNumber,
+        customerName: formData.companyName,
+        productType: formData.items[0]?.name || '',
+        quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
+        unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
+        totalPrice: formData.totalAmount,
+        updatedAt: new Date().toISOString(),
+        ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
+      };
     
     // ✅ 레거시 키 저장
     localStorage.setItem(storageKey, JSON.stringify(newEstimate));
@@ -514,5 +542,24 @@ const handleSendFax = async (faxNumber) => {
     </div>
   );
 };
+
+// ✅ EstimateForm.jsx 맨 아래, export default EstimateForm; 바로 위에 추가
+function findDocumentByNumber(docNumber, docType) {
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(`${docType}_`)) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        const checkNumber = docType === 'estimate' ? data.estimateNumber :
+                           docType === 'purchase' ? data.purchaseNumber :
+                           data.documentNumber;
+        if (checkNumber === docNumber) {
+          return data;
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
 
 export default EstimateForm;
