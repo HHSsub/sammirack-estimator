@@ -1328,6 +1328,7 @@ export const ProductProvider=({children})=>{
     // ✅ 재고 관리 함수 노출
     loadInventory,
     updateInventory,
+    setCart,  // ✅ 추가
   };
 
   return (
