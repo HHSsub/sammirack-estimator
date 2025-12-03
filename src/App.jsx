@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';  // ✅ useLocation, useNavigate 추가
 import './App.css';
 import { useProducts } from './contexts/ProductContext';
 import OptionSelector from './components/OptionSelector';
@@ -96,10 +96,26 @@ function App() {
 }
 
 const HomePage = ({ currentUser }) => {
-  const { currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, selectedType, selectedOptions } = useProducts();
+  const location = useLocation();  // ✅ 추가
+  const navigate = useNavigate();  // ✅ 추가
+  const { 
+    currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, 
+    selectedType, selectedOptions, setCart  // ✅ setCart 추가
+  } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
   const [adminPricesVersion, setAdminPricesVersion] = useState(0);
+  
+  // ✅ 편집 상태 확인
+  const editingData = location.state || {};
+  const isEditMode = !!editingData.editingDocumentId;
+  
+  // ✅ 편집 모드 시 cart 초기화
+  useEffect(() => {
+    if (isEditMode && editingData.cart) {
+      setCart(editingData.cart);
+    }
+  }, [isEditMode, editingData.cart, setCart]);
 
   const getFinalPrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
@@ -154,8 +170,44 @@ const HomePage = ({ currentUser }) => {
     ].filter(Boolean).join(" ");
   };
 
-  return (
+return (
     <div className="app-container">
+      {/* ✅ 편집 모드 표시 */}
+      {isEditMode && (
+        <div style={{
+          background: '#fff3cd',
+          border: '1px solid #ffc107',
+          padding: '12px 20px',
+          marginBottom: '20px',
+          borderRadius: '4px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <strong>📝 문서 편집 모드</strong>
+            <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>
+              거래번호: <strong>{editingData.editingDocumentData?.documentNumber}</strong> | 
+              유형: {editingData.editingDocumentType === 'estimate' ? '견적서' : 
+                     editingData.editingDocumentType === 'purchase' ? '청구서' : '거래명세서'}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/history')}
+            style={{
+              padding: '8px 16px',
+              background: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            편집 취소
+          </button>
+        </div>
+      )}
+      
       <h2>랙 제품 견적</h2>
       
       <div className="main-layout">
