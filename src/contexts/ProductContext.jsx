@@ -1115,25 +1115,26 @@ export const ProductProvider=({children})=>{
   };
 
   const addToCart=()=>{
-    if(!selectedType||quantity<=0) return;
-    if(selectedType==="하이랙" && !selectedOptions.formType) return;
-    setCart(prev=>[...prev,{
-      id:`${Date.now()}`,
-      type:selectedType,
-      options:{...selectedOptions},
-      extraOptions:[...extraOptionsSel],
-      quantity,
-      price:customPrice>0?customPrice:currentPrice,
-      bom:calculateCurrentBOM(),
-      displayName:[
-        selectedType,
-        selectedOptions.formType,
-        selectedOptions.size,
-        selectedOptions.height,
-        selectedOptions.level,
-        selectedOptions.color||""
-      ].filter(Boolean).join(" "),
-    }]);
+      if(!selectedType||quantity<=0) return;
+      if(selectedType==="하이랙" && !selectedOptions.formType) return;
+      setCart(prev=>[...prev,{
+        id:`${Date.now()}`,
+        type:selectedType,
+        options:{...selectedOptions},
+        extraOptions:[...extraOptionsSel],
+        quantity,
+        price:customPrice>0?customPrice:currentPrice,
+        customPrice: customPrice > 0 ? customPrice : 0,  // ✅ 추가: customPrice 저장
+        bom:calculateCurrentBOM(),
+        displayName:[
+          selectedType,
+          selectedOptions.formType,
+          selectedOptions.size,
+          selectedOptions.height,
+          selectedOptions.level,
+          selectedOptions.color||""
+        ].filter(Boolean).join(" "),
+      }]);
   };
   const removeFromCart=id=>setCart(prev=>prev.filter(i=>i.id!==id));
 
