@@ -12,11 +12,15 @@ import './ShortageInventoryPanel.css';
  * - shortageItems: 부족한 품목 목록 (배열)
  * - onClose: 패널 닫기 콜백 함수
  * - onSave: 저장 완료 후 콜백 함수
+ * - onConfirm: "무시하고 전송/인쇄" 콜백 함수
+ * - onCancel: "취소" 콜백 함수
  */
 function ShortageInventoryPanel({ 
   shortageItems = [], 
   onClose, 
-  onSave 
+  onSave,
+  onConfirm,
+  onCancel
 }) {
   const [inventory, setInventory] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
@@ -85,6 +89,22 @@ function ShortageInventoryPanel({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // ✅ "무시하고 전송/인쇄" 핸들러
+  const handleProceed = () => {
+    if (onConfirm) {
+      onConfirm();
+    }
+    onClose();
+  };
+
+  // ✅ "취소" 핸들러
+  const handleCancelAction = () => {
+    if (onCancel) {
+      onCancel();
+    }
+    onClose();
   };
 
   if (!shortageItems || shortageItems.length === 0) {
@@ -163,6 +183,7 @@ function ShortageInventoryPanel({
         )}
 
         <div className="shortage-panel-buttons">
+          {/* ✅ 버튼 3개 */}
           {isAdmin && (
             <button
               onClick={handleSave}
@@ -172,12 +193,21 @@ function ShortageInventoryPanel({
               {isSaving ? '저장 중...' : '재고 저장'}
             </button>
           )}
+          {onConfirm && (
+            <button
+              onClick={handleProceed}
+              disabled={isSaving}
+              className="shortage-btn shortage-btn-proceed"
+            >
+              무시하고 진행
+            </button>
+          )}
           <button
-            onClick={onClose}
+            onClick={handleCancelAction}
             disabled={isSaving}
             className="shortage-btn shortage-btn-close"
           >
-            닫기
+            {onCancel ? '취소 (중단)' : '닫기'}
           </button>
         </div>
       </div>
