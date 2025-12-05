@@ -50,13 +50,15 @@ function App() {
         <div className="nav-links">
           <Link to="/" className="nav-link">홈</Link>
           {currentUser?.role === 'admin' && (
-            <Link to="/inventory" className="nav-link">재고관리</Link>
+            <Link to="/history" className="nav-link">문서 관리</Link>
           )}
           <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
           <Link to="/purchase-order/new" className="nav-link">청구서 작성</Link>
           {currentUser?.role === 'admin' && (
-            <Link to="/history" className="nav-link">문서 관리</Link>
+            <Link to="/inventory" className="nav-link">재고관리</Link>
           )}
+        </div>
+        <div className="nav-user-section">
           <span className="user-info">
             {currentUser?.username} ({currentUser?.role === 'admin' ? '관리자' : '일반사용자'})
           </span>
