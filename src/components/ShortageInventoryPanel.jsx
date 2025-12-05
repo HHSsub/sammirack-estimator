@@ -183,7 +183,7 @@ function ShortageInventoryPanel({
             item.specification || '',
             item.colorWeight || ''
           );
-          const currentStock = inventory[partId] || item.serverInventory || 0;
+          const currentStock = inventory[partId] || 0;
 
           return (
             <div 
@@ -260,8 +260,25 @@ function ShortageInventoryPanel({
                   <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'center', fontSize: 10 }}>
                     {item.specification || '-'}
                   </td>
-                  <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 'bold' }}>
-                    {item.currentStock}
+                  <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right' }}>
+                    {isAdmin ? (
+                      <input
+                        type="number"
+                        value={item.currentStock}
+                        onChange={(e) => handleQuantityChange(item.partId, e.target.value)}
+                        disabled={isSaving}
+                        style={{
+                          width: '50px',
+                          padding: '2px 4px',
+                          textAlign: 'right',
+                          border: '1px solid #ddd',
+                          borderRadius: '3px',
+                          fontSize: '11px'
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontWeight: 'bold' }}>{item.currentStock}</span>
+                    )}
                   </td>
                   <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right', color: '#666' }}>
                     -{item.required}
