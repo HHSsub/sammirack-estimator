@@ -487,6 +487,40 @@ const handleSendFax = async (faxNumber) => {
     return;
   }
 
+  // ✅ FAX 전송 전 재고 체크
+  if (cart && cart.length > 0) {
+    const checkResult = await checkInventoryAvailability(cart);
+    
+    if (checkResult.warnings && checkResult.warnings.length > 0) {
+      // ✅ 재고 부족 패널 표시
+      window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
+        detail: {
+          shortageItems: checkResult.warnings.map(w => ({
+            partId: w.partId,
+            name: w.name,
+            specification: w.specification,
+            rackType: w.rackType,
+            required: w.required,
+            requiredQuantity: w.required, // ✅ 추가
+            available: w.available,
+            shortage: w.shortage
+          })),
+          documentType: '청구서 (FAX)',
+          timestamp: Date.now()
+        }
+      }));
+      
+      const userChoice = window.confirm(
+        `⚠️ ${checkResult.warnings.length}개 부품 재고 부족\n\n계속 진행하시겠습니까?\n\n확인 = FAX 전송 진행\n취소 = 취소`
+      );
+      
+      if (!userChoice) {
+        alert('FAX 전송이 취소되었습니다.');
+        return;
+      }
+    }
+  }
+
   try {
     const result = await sendFax(
       pdfBase64,
@@ -504,6 +538,20 @@ const handleSendFax = async (faxNumber) => {
         `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
       );
       setShowFaxModal(false);
+      // ✅ FAX 전송 성공 후 재고 감소
+      if (cart && cart.length > 0) {
+        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber);
+        
+        if (deductResult.success) {
+          if (deductResult.warnings && deductResult.warnings.length > 0) {
+            console.warn(`⚠️ ${deductResult.warnings.length}개 부품 재고 부족`);
+          } else {
+            console.log('✅ 재고가 정상적으로 감소되었습니다.');
+          }
+        } else {
+          console.error(`❌ 재고 감소 실패: ${deductResult.message}`);
+        }
+      }
     } else {
       throw new Error(result.error || '알 수 없는 오류');
     }
