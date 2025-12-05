@@ -499,7 +499,18 @@ const handleSendFax = async (faxNumber) => {
       </table>
 
       <div className="item-controls no-print">
-        <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
+        <button 
+          type="button" 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔵 버튼 클릭!');
+            addItem();
+          }}
+          className="add-item-btn"
+        >
+          + 품목 추가
+        </button>
       </div>
 
       <table className="form-table total-table">
