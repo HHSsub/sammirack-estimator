@@ -170,25 +170,37 @@ img[alt="도장"] {
 .item-controls { 
   text-align: center; 
   margin-bottom: 30px;
-  position: relative;
-  z-index: 10;
-  pointer-events: auto;
+  position: relative !important;
+  z-index: 9999999 !important;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.item-controls.no-print {
+  display: block !important;
+  visibility: visible !important;
 }
 
 .add-item-btn,
 .add-material-btn {
-  background: #28a745;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: bold;
-  margin: 0 10px;
+  background: #28a745 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 20px !important;
+  border-radius: 5px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+  margin: 0 10px !important;
   pointer-events: auto !important;
-  position: relative;
-  z-index: 100;
+  position: relative !important;
+  z-index: 99999999 !important;
+  display: inline-block !important;
+  touch-action: manipulation !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 .add-item-btn:hover,
 .add-material-btn:hover { background: #218838; }
@@ -376,6 +388,12 @@ button.add-material-btn {
 
 /* PRINT */
 @media print {
+  .no-print,
+  .item-controls.no-print,
+  button.add-item-btn,
+  button.add-material-btn { 
+    display: none !important; 
+  }
   html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
   body * { visibility: visible !important; }
   .no-print { display: none !important; }
