@@ -1149,10 +1149,11 @@ export const ProductProvider=({children})=>{
   const updateCartItemPriceDirect=(id,newPrice)=>{
       setCart(prev=>prev.map(item=>{
         if(item.id!==id) return item;
+        const numPrice = Number(newPrice) || 0;
         return {
           ...item,
-          price:Number(newPrice)||0,
-          customPrice:Number(newPrice)||0  // ✅ 추가: customPrice로 저장
+          price: numPrice,
+          customPrice: numPrice  // ✅ customPrice로 저장
         };
       }));
     };
