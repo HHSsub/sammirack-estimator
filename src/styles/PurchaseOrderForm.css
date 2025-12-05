@@ -137,15 +137,15 @@ img[alt="도장"] {
 .bom-table { table-layout: fixed; width: 100%; }
 .bom-table th,
 .bom-table td { word-break: break-word; white-space: normal; }
-/* ✅ 단가/금액 제거 후 재조정: NO 5% | 부품명 40% | 규격 40% | 수량 10% | 비고 5% */
-.bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 5% !important; }
-.bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 38% !important; }  /* 32% → 38% */
-.bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 38% !important; }  /* 30% → 38% */
-.bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; }  /* 7% → 10% */
-.bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 0% !important; }   /* 숨김 */
-.bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 0% !important; }   /* 숨김 */
-.bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 9% !important; }   /* 11% → 9% */
-.bom-table th:nth-child(8), .bom-table td:nth-child(8) { width: 70px !important; }
+/* ✅ 작성 화면: 모든 컬럼 정상 표시 (프린트 시에만 단가/금액 숨김) */
+.bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 50px !important; }     /* NO */
+.bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 190px !important; }    /* 부품명 */
+.bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: auto !important; }     /* 규격 */
+.bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 70px !important; }     /* 수량 */
+.bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 70px !important; }     /* 단가 - ✅ 화면에서 정상 표시 */
+.bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 90px !important; }     /* 금액 - ✅ 화면에서 정상 표시 */
+.bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 90px !important; }     /* 비고 */
+.bom-table th:nth-child(8), .bom-table td:nth-child(8) { width: 70px !important; }     /* 작업 */
 
 .bom-table td input {
   width: 100%;
@@ -154,12 +154,6 @@ img[alt="도장"] {
   box-sizing: border-box;
 }
 .bom-table input[type=number] { text-align: right; }
-
-/* ✅ 원자재 명세서: 단가/금액 컬럼 숨김 */
-.bom-table .hide-unitprice,
-.bom-table .hide-amount {
-  display: none !important;
-}
 
 .remove-btn {
   background: #dc3545;
@@ -455,12 +449,6 @@ textarea:focus {
     text-align: right !important;
     padding: 2px 6px !important;
   }
-
-  /* ✅ 원자재 명세서: 단가/금액 컬럼 숨김 */
-  .bom-table .hide-unitprice,
-  .bom-table .hide-amount {
-    display: none !important;
-  }
   
   .order-table th, .order-table td,
   .bom-table th, .bom-table td {
@@ -468,27 +456,27 @@ textarea:focus {
   }
 }
 
-  /* FAX 버튼 스타일 */
-  .fax-btn {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .fax-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
-  }
-  
-  .fax-btn:active {
-    transform: translateY(0);
-  }
+/* FAX 버튼 스타일 */
+.fax-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fax-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
+}
+
+.fax-btn:active {
+  transform: translateY(0);
+}
 
 .info-table td { padding: 4px 6px; }
 .estimate-memo.memo-narrow { min-height: 90px; }
