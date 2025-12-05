@@ -308,6 +308,72 @@ textarea:focus {
 .order-table { border: 2px solid #333; }
 .bom-table { border: 2px solid #333; }
 
+/* ✅ 이 내용을 EstimateForm.css 파일 끝에 추가 (기존 버튼 스타일 위에 덮어쓰기) */
+
+/* 모든 상황에서 버튼 작동 강제 */
+.item-controls,
+.item-controls *,
+button.add-item-btn,
+button.add-material-btn {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 999999 !important;
+}
+
+.add-item-btn,
+.add-material-btn {
+  background: #28a745 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 10px 20px !important;
+  border-radius: 5px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  font-weight: bold !important;
+  margin: 0 10px !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 999999 !important;
+  display: inline-block !important;
+  touch-action: manipulation !important;
+}
+
+.add-item-btn:hover {
+  background: #218838 !important;
+}
+
+.add-material-btn {
+  background: #17a2b8 !important;
+}
+
+.add-material-btn:hover {
+  background: #138496 !important;
+}
+
+.remove-btn {
+  background: #dc3545 !important;
+  color: #fff !important;
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+  cursor: pointer !important;
+}
+
+/* 폼 전체 z-index 조정 */
+.estimate-form-container,
+.purchase-order-form-container,
+.delivery-note-form-container {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 모든 오버레이나 모달보다 위에 */
+.item-controls {
+  position: relative !important;
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+}
+
 /* PRINT */
 @media print {
   html, body { height: auto !important; min-height: auto !important; overflow: visible !important; }
