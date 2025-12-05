@@ -1147,8 +1147,15 @@ export const ProductProvider=({children})=>{
   };
 
   const updateCartItemPriceDirect=(id,newPrice)=>{
-    setCart(prev=>prev.map(item=>item.id===id?{...item,price:Number(newPrice)||0}:item));
-  };
+      setCart(prev=>prev.map(item=>{
+        if(item.id!==id) return item;
+        return {
+          ...item,
+          price:Number(newPrice)||0,
+          customPrice:Number(newPrice)||0  // ✅ 추가: customPrice로 저장
+        };
+      }));
+    };
 
   // ✅ BOM 병합 유틸 (같은 partId 자동 합산)
   function mergeDuplicateParts(bomArray) {
