@@ -167,7 +167,13 @@ img[alt="도장"] {
 .remove-btn:hover { background: #c82333; }
 .remove-btn:disabled { background: #6c757d; cursor: not-allowed; }
 
-.item-controls { text-align: center; margin-bottom: 30px; }
+.item-controls { 
+  text-align: center; 
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
 
 .add-item-btn,
 .add-material-btn {
@@ -180,6 +186,9 @@ img[alt="도장"] {
   cursor: pointer;
   font-weight: bold;
   margin: 0 10px;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 100;
 }
 .add-item-btn:hover,
 .add-material-btn:hover { background: #218838; }
