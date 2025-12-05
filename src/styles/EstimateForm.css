@@ -158,6 +158,12 @@
   text-align: center !important;
   margin-bottom: 30px !important;
   display: block !important;
+  visibility: visible !important;  /* ✅ 추가 */
+}
+
+.item-controls.no-print {
+  display: block !important;  /* ✅ 추가 */
+  visibility: visible !important;  /* ✅ 추가 */
 }
 
 button.add-item-btn {
@@ -175,6 +181,8 @@ button.add-item-btn {
   z-index: 99999999 !important;
   display: inline-block !important;
   touch-action: manipulation !important;
+  visibility: visible !important;  /* ✅ 추가 */
+  opacity: 1 !important;  /* ✅ 추가 */
 }
 
 button.add-item-btn:hover {
@@ -255,9 +263,14 @@ button.remove-btn:disabled {
   transform: translateY(0);
 }
 
+
 /* PRINT */
 @media print {
-  .no-print { display:none !important; }
+  .no-print,
+  .item-controls.no-print,
+  button.add-item-btn { 
+    display: none !important; 
+  }
   @page { size:A4; margin:10mm 8mm 10mm; }
 
   .estimate-form-container {
