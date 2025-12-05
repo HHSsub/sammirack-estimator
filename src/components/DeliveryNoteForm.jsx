@@ -139,14 +139,17 @@ const DeliveryNoteForm = () => {
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     
-    // ✅ 조건부 업데이트
-    const materialsChanged = JSON.stringify(materialsRecalc) !== JSON.stringify(formData.materials);
-    const totalsChanged = formData.subtotal !== subtotal || formData.tax !== tax || formData.totalAmount !== totalAmount;
-    
-    if (materialsChanged || totalsChanged) {
-      setFormData(prev => ({ ...prev, materials: materialsRecalc, subtotal, tax, totalAmount }));
-    }
-  }, [formData.items, formData.materials, formData.subtotal, formData.tax, formData.totalAmount]);
+    setFormData(prev => {
+      // ✅ 변경 없으면 같은 객체 반환
+      const materialsChanged = JSON.stringify(materialsRecalc) !== JSON.stringify(prev.materials);
+      const totalsChanged = prev.subtotal !== subtotal || prev.tax !== tax || prev.totalAmount !== totalAmount;
+      
+      if (!materialsChanged && !totalsChanged) {
+        return prev;
+      }
+      return { ...prev, materials: materialsRecalc, subtotal, tax, totalAmount };
+    });
+  }, [formData.items, formData.materials]);
 
   const updateFormData = (f,v) => setFormData(prev => ({ ...prev, [f]: v }));
 
