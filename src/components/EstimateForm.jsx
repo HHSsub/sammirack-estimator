@@ -155,7 +155,7 @@ const EstimateForm = () => {
       }
       return { ...prev, subtotal, tax, totalAmount };
     });
-  }, [formData.items]);  // ✅ 의존성은 items만!
+  }, [formData.items.length, formData.items.map(it => it.totalPrice).join(',')]); // 절대 함부로 수정금지 (안그러면 참조꼬임)
   
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
