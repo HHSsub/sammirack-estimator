@@ -14,13 +14,15 @@ import './ShortageInventoryPanel.css';
  * - onSave: 저장 완료 후 콜백 함수
  * - onConfirm: "무시하고 전송/인쇄" 콜백 함수
  * - onCancel: "취소" 콜백 함수
+ * - allBomItems: 현재 문서의 전체 BOM 목록 (부족 여부 관계없이)
  */
 function ShortageInventoryPanel({ 
   shortageItems = [], 
   onClose, 
   onSave,
   onConfirm,
-  onCancel
+  onCancel,
+  allBomItems = []
 }) {
   const [inventory, setInventory] = useState({});
   const [isAdmin, setIsAdmin] = useState(false);
@@ -30,16 +32,31 @@ function ShortageInventoryPanel({
     const adminStatus = localStorage.getItem('isAdmin') === 'true';
     setIsAdmin(adminStatus);
     
-    // 로컬스토리지에서 inventory_data 불러오기
-    const savedInventory = localStorage.getItem('inventory_data');
-    if (savedInventory) {
-      try {
-        setInventory(JSON.parse(savedInventory));
-      } catch (e) {
-        console.error('재고 데이터 파싱 실패:', e);
+    // 서버 재고 불러오기
+    loadServerInventory();
+  }, []);
+
+  /**
+   * 서버 재고 불러오기
+   */
+  const loadServerInventory = async () => {
+    try {
+      const serverInventory = await inventoryService.getInventory();
+      setInventory(serverInventory);
+    } catch (error) {
+      console.error('재고 데이터 로드 실패:', error);
+      
+      // 실패 시 로컬스토리지에서 불러오기
+      const savedInventory = localStorage.getItem('inventory_data');
+      if (savedInventory) {
+        try {
+          setInventory(JSON.parse(savedInventory));
+        } catch (e) {
+          console.error('재고 데이터 파싱 실패:', e);
+        }
       }
     }
-  }, []);
+  };
 
   /**
    * 재고 수량 변경 핸들러
@@ -82,7 +99,9 @@ function ShortageInventoryPanel({
         onSave(inventory);
       }
       
-      onClose();
+      // 저장 후 서버 재고 다시 불러오기
+      await loadServerInventory();
+      
     } catch (error) {
       console.error('재고 저장 실패:', error);
       alert('재고 저장 중 오류가 발생했습니다: ' + error.message);
@@ -111,6 +130,27 @@ function ShortageInventoryPanel({
     return null;
   }
 
+  // ✅ 전체 BOM 재고 현황 계산
+  const allBomSummary = allBomItems.map(item => {
+    const partId = generateInventoryPartId(
+      item.rackType || '',
+      item.name || '',
+      item.specification || '',
+      item.colorWeight || ''
+    );
+    const currentStock = inventory[partId] || 0;
+    const required = item.quantity || 0;
+    const afterUse = currentStock - required;
+
+    return {
+      ...item,
+      partId,
+      currentStock,
+      required,
+      afterUse
+    };
+  });
+
   return (
     <div className="shortage-inventory-panel">
       {/* 헤더 */}
@@ -126,12 +166,16 @@ function ShortageInventoryPanel({
           </button>
         </div>
         <div className="shortage-panel-subtitle">
-          다음 품목의 재고가 부족합니다
+          {shortageItems.length}개 품목의 재고가 부족합니다
         </div>
       </div>
 
       {/* 부족 품목 목록 */}
       <div className="shortage-panel-content">
+        <h4 style={{ marginTop: 0, marginBottom: 10, color: '#dc3545', fontSize: 14 }}>
+          🚨 부족 품목
+        </h4>
+        
         {shortageItems.map((item, index) => {
           const partId = generateInventoryPartId(
             item.rackType || '',
@@ -144,7 +188,7 @@ function ShortageInventoryPanel({
           return (
             <div 
               key={index} 
-              className={`shortage-item ${item.isShortage ? 'has-shortage' : 'no-shortage'}`}
+              className="shortage-item has-shortage"
             >
               <div className="shortage-item-name">{item.name || '-'}</div>
               <div className="shortage-item-specs">
@@ -183,6 +227,59 @@ function ShortageInventoryPanel({
             </div>
           );
         })}
+
+        {/* ✅ 전체 BOM 재고 현황 테이블 */}
+        <h4 style={{ marginTop: 20, marginBottom: 10, color: '#333', fontSize: 14 }}>
+          📊 전체 원자재 재고 현황
+        </h4>
+        
+        <div style={{ overflowX: 'auto', marginBottom: 15 }}>
+          <table style={{ 
+            width: '100%', 
+            fontSize: 11, 
+            borderCollapse: 'collapse',
+            border: '1px solid #ddd'
+          }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f5f5f5' }}>
+                <th style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'left' }}>품명</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'center' }}>규격</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right' }}>현재</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right' }}>소모</th>
+                <th style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right' }}>잔량</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allBomSummary.map((item, index) => (
+                <tr key={index} style={{ 
+                  backgroundColor: item.afterUse < 0 ? '#ffebee' : 'white'
+                }}>
+                  <td style={{ padding: '6px 4px', border: '1px solid #ddd', fontSize: 10 }}>
+                    {item.name}
+                  </td>
+                  <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'center', fontSize: 10 }}>
+                    {item.specification || '-'}
+                  </td>
+                  <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right', fontWeight: 'bold' }}>
+                    {item.currentStock}
+                  </td>
+                  <td style={{ padding: '6px 4px', border: '1px solid #ddd', textAlign: 'right', color: '#666' }}>
+                    -{item.required}
+                  </td>
+                  <td style={{ 
+                    padding: '6px 4px', 
+                    border: '1px solid #ddd', 
+                    textAlign: 'right',
+                    fontWeight: 'bold',
+                    color: item.afterUse < 0 ? '#dc3545' : '#28a745'
+                  }}>
+                    {item.afterUse}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* 버튼 영역 */}
@@ -193,7 +290,7 @@ function ShortageInventoryPanel({
             disabled={isSaving}
             className="shortage-save-button"
           >
-            {isSaving ? '저장 중...' : '재고 저장'}
+            {isSaving ? '저장 중...' : '💾 재고 저장'}
           </button>
         )}
         
@@ -203,7 +300,7 @@ function ShortageInventoryPanel({
             disabled={isSaving}
             className="shortage-proceed-button"
           >
-            무시하고 진행
+            ✅ 무시하고 진행
           </button>
         )}
         
@@ -212,7 +309,7 @@ function ShortageInventoryPanel({
           disabled={isSaving}
           className="shortage-close-button"
         >
-          {onCancel ? '취소 (중단)' : '닫기'}
+          ❌ {onCancel ? '취소 (중단)' : '닫기'}
         </button>
 
         {/* 관리자만 재고를 직접 수정할 수 있습니다 안내 */}
