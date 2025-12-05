@@ -213,6 +213,11 @@ const PurchaseOrderForm = () => {
 
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
+    // ✅ materials가 비어있으면 실행하지 않음
+    if (formData.materials.length === 0) {
+      return;
+    }
+    
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
