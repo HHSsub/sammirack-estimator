@@ -501,12 +501,7 @@ const handleSendFax = async (faxNumber) => {
       <div className="item-controls no-print">
         <button 
           type="button" 
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🔵 버튼 클릭!');
-            addItem();
-          }}
+          onClick={addItem}  // ✅ 단순화
           className="add-item-btn"
         >
           + 품목 추가
