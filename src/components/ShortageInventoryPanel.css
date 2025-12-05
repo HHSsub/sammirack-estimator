@@ -197,6 +197,29 @@
   transform: translateY(1px);
 }
 
+/* ✅ 추가: 무시하고 진행 버튼 */
+.shortage-proceed-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.shortage-proceed-button:hover {
+  background-color: #f57c00;
+}
+
+.shortage-proceed-button:active {
+  transform: translateY(1px);
+}
+
 .shortage-close-button {
   width: 100%;
   padding: 10px;
