@@ -27,6 +27,7 @@ const PurchaseOrderForm = () => {
 
   const documentNumberInputRef = useRef(null);
   const adminPricesRef = useRef({}); // 최신 관리자 단가 캐시
+  const cartInitializedRef = useRef(false);  // ← 추가
 
   // ✅ FAX 관련 state 추가
   const [showFaxModal, setShowFaxModal] = useState(false);
@@ -138,7 +139,8 @@ const PurchaseOrderForm = () => {
 
   // 초기 cart / BOM 반영 (관리자 단가 재적용)
   useEffect(() => {
-    if (!isEditMode && cart.length > 0) {
+    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
+      cartInitializedRef.current = true;  // ← 추가
       adminPricesRef.current = loadAdminPricesDirect();
       const cartItems = cart.map(item => {
         const qty = item.quantity || 1;
