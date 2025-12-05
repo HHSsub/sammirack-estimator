@@ -5,7 +5,6 @@
   min-height: 100vh;
   font-family: 'Malgun Gothic', 'Nanum Gothic', sans-serif;
 }
-
 /* Navigation Styles */
 .main-nav {
   background-color: #2c3e50;
@@ -24,22 +23,34 @@
   font-weight: bold;
 }
 
+/* ✅ 중앙 정렬 + 넓은 간격 */
 .nav-links {
   display: flex;
-  gap: 20px;
+  gap: 30px; /* 20px → 30px 확대 */
+  justify-content: center; /* ✅ 중앙 정렬 */
+  flex: 1; /* ✅ 중앙 배치 */
 }
 
+/* ✅ 우측 사용자 정보 영역 */
+.nav-user-section {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ✅ 버튼 크기 확대 */
 .nav-link {
   color: white;
   text-decoration: none;
-  padding: 10px 15px;
+  padding: 12px 20px; /* 10px 15px → 12px 20px */
   transition: all 0.2s;
   border-radius: 4px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px; /* 14px → 15px */
   font-family: inherit;
+  font-weight: 500; /* ✅ 약간 굵게 */
 }
 
 .nav-link:hover {
