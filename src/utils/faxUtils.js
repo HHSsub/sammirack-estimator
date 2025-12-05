@@ -53,17 +53,41 @@ export const convertDOMToPDFBase64 = async (element) => {
       
       .form-table th,
       .form-table td {
-        padding: 4px 3px !important;
-        line-height: 1.2 !important;
+        padding: 6px 4px !important;  /* 4px → 6px */
+        line-height: 1.4 !important;  /* 1.2 → 1.4 */
+        vertical-align: middle !important;  /* 추가 */
+      }
+
+      /* ✅ info-table (상단 회사정보) 특별 처리 */
+      .info-table input,
+      .info-table textarea {
+        font-size: 13px !important;  /* 더 크게 */
+        padding: 5px 4px !important;
+        font-weight: 500 !important;
+      }
+  
+      /* ✅ 거래번호 input 크기 증가 */
+      .info-table input[type="text"] {
+        min-height: 24px !important;
       }
       
+      /* ✅ 메모 textarea 높이 증가 */
+      .estimate-memo {
+        min-height: 60px !important;
+        padding: 6px 4px !important;
+        font-size: 12px !important;
+      }
+
       input, textarea {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        font-size: 11px !important;
-        padding: 2px 2px !important;
+        font-size: 12px !important;  /* 11px → 12px */
+        padding: 4px 4px !important;  /* 2px → 4px */
+        line-height: 1.4 !important;  /* 추가 */
+        height: auto !important;  /* 추가 */
+        min-height: 20px !important;  /* 추가 */
       }
       
       .total-table {
