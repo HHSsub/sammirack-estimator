@@ -165,6 +165,11 @@ const DeliveryNoteForm = () => {
 
   // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
+    // ✅ materials가 비어있으면 실행하지 않음
+    if (formData.materials.length === 0) {
+      return;
+    }
+    
     const materialsRecalc = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
