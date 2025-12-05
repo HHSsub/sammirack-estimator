@@ -37,21 +37,26 @@ export default function CartDisplay() {
 
   // ✅ 수정된 장바구니 아이템의 실제 가격 계산 (BOM 기반)
   const calculateItemPrice = (item) => {
-    if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
-      return (item.price || 0) * (Number(item.quantity) || 1);
-    }
-
-    // BOM 기반으로 실제 가격 계산 - 이미 전체 수량이 적용된 가격
-    const bomTotalPrice = item.bom.reduce((sum, bomItem) => {
-      const effectivePrice = getEffectivePrice ? 
-        getEffectivePrice(bomItem) : (Number(bomItem.unitPrice) || 0);
-      const quantity = Number(bomItem.quantity) || 0;
-      return sum + (effectivePrice * quantity);
-    }, 0);
-
-    // ✅ 수정: BOM 가격은 이미 전체 수량이 적용되어 있으므로 그대로 반환
-    return bomTotalPrice;
-  };
+      // ✅ 1순위: customPrice가 설정되어 있으면 무조건 그 가격 사용
+      if (item.customPrice && item.customPrice > 0) {
+        return item.customPrice * (Number(item.quantity) || 1);
+      }
+      
+      // ✅ 2순위: BOM이 없으면 item.price 사용
+      if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
+        return (item.price || 0) * (Number(item.quantity) || 1);
+      }
+  
+      // ✅ 3순위: BOM 기반 재계산 (관리자 단가 반영)
+      const bomTotalPrice = item.bom.reduce((sum, bomItem) => {
+        const effectivePrice = getEffectivePrice ? 
+          getEffectivePrice(bomItem) : (Number(bomItem.unitPrice) || 0);
+        const quantity = Number(bomItem.quantity) || 0;
+        return sum + (effectivePrice * quantity);
+      }, 0);
+  
+      return bomTotalPrice;
+    };
 
   // 전체 장바구니 총액 계산 (실시간 반영)
   const calculateCartTotal = () => {
