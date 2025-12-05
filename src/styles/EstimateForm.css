@@ -7,6 +7,8 @@
   font-family: 'Malgun Gothic', Arial, sans-serif;
   background: #fff;
   min-height: 100vh;
+  position: relative;
+  z-index: 0;
 }
 
 .memo-narrow { max-width: 100%; }
@@ -33,6 +35,8 @@
   border-collapse: collapse;
   margin-bottom: 20px;
   font-size: 14px;
+  position: relative;
+  z-index: 1;
 }
 .form-table th,
 .form-table td {
@@ -44,10 +48,10 @@
 .form-table th { background:#f8f9fa; font-weight:bold; }
 .form-table .label {
   background:#f0f0f0;
-  font-weight:700 !important;  /* bold → 700 (더 강함) */
+  font-weight:700 !important;
   text-align:center;
   width:120px;
-  font-size:14px !important;  /* 크기 명시 */
+  font-size:14px !important;
 }
 .form-table .right { text-align:right; }
 .form-table .left { text-align:left; }
@@ -80,12 +84,16 @@
 }
 
 /* 작성 화면 품목 테이블 */
-.quote-table { table-layout: auto; }
+.quote-table { 
+  table-layout: auto;
+  position: relative;
+  z-index: 1;
+}
 .quote-table th:nth-child(1) { width:42px; }
 .quote-table th:nth-child(2) { width:auto; }
 .quote-table th:nth-child(3) { width:48px; }
 .quote-table th:nth-child(4) { width:55px; }
-.quote-table th:nth-child(5) { width:90px; } // 기존 78 -> 90
+.quote-table th:nth-child(5) { width:90px; }
 .quote-table th:nth-child(6) { width:88px; }
 .quote-table th:nth-child(7) { width:70px; }
 .quote-table th:nth-child(8) { width:60px; }
@@ -135,17 +143,14 @@
   cursor:pointer;
 }
 
-/* ✅ EstimateForm.css 파일 맨 끝에 추가 - 기존 스타일 덮어쓰기 */
-
-* no-print도 z-index 설정 */
-.estimate-form-container .no-print {
+/* ✅ 품목 추가 버튼 - 최우선 z-index */
+.no-print {
   position: relative !important;
   z-index: 999999 !important;
   pointer-events: auto !important;
 }
 
-/* 품목 추가 버튼 영역 */
-.estimate-form-container .item-controls.no-print {
+.item-controls {
   position: relative !important;
   z-index: 9999999 !important;
   pointer-events: auto !important;
@@ -153,11 +158,9 @@
   text-align: center !important;
   margin-bottom: 30px !important;
   display: block !important;
-  background: transparent !important;
 }
 
-/* 버튼 자체 */
-.estimate-form-container button.add-item-btn {
+button.add-item-btn {
   background: #28a745 !important;
   color: #fff !important;
   border: none !important;
@@ -172,40 +175,84 @@
   z-index: 99999999 !important;
   display: inline-block !important;
   touch-action: manipulation !important;
-  user-select: none !important;
 }
 
-.estimate-form-container button.add-item-btn:hover {
+button.add-item-btn:hover {
   background: #218838 !important;
 }
 
-.estimate-form-container button.add-item-btn:active {
+button.add-item-btn:active {
   background: #1e7e34 !important;
 }
 
-/* 삭제 버튼도 동일하게 */
-.estimate-form-container button.remove-btn {
+button.remove-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
   pointer-events: auto !important;
   z-index: 99999999 !important;
-  cursor: pointer !important;
   position: relative !important;
 }
 
-/* 테이블 z-index 낮춤 */
-.estimate-form-container table.quote-table {
-  position: relative !important;
-  z-index: 1 !important;
+button.remove-btn:hover {
+  background: #c82333;
 }
 
-.estimate-form-container table.form-table {
-  position: relative !important;
-  z-index: 1 !important;
+button.remove-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
-/* 전체 컨테이너 */
-.estimate-form-container {
-  position: relative !important;
-  z-index: 0 !important;
+.save-btn {
+  background: #007bff;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background: #0056b3;
+}
+
+.excel-btn {
+  background: #28a745;
+  color: #fff;
+}
+
+.excel-btn:hover {
+  background: #218838;
+}
+
+.print-btn {
+  background: #6c757d;
+  color: #fff;
+}
+
+.print-btn:hover {
+  background: #545b62;
+}
+
+.fax-btn {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fax-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
+}
+
+.fax-btn:active {
+  transform: translateY(0);
 }
 
 /* PRINT */
@@ -221,10 +268,10 @@
     background:#fff !important;
     min-height:auto !important;
     box-sizing:border-box;
-    font-size:14px !important;  /* 11px → 14px */
-    line-height:1.5 !important;  /* 1.25 → 1.5 */
+    font-size:14px !important;
+    line-height:1.5 !important;
   }
-  /* 도장 이미지 프린트 시 제대로 표시 */
+  
   .rep-cell {
     position: relative !important;
     overflow: visible !important;
@@ -238,11 +285,9 @@
     height: 80px !important;
     z-index: 999 !important;
     opacity: 0.8 !important;
-    /* 이미지가 안 보일 때 대체 처리 */
     content: url('./images/도장.png') !important;
   }
   
-  /* 도장 이미지 로드 실패 시 대체 방법 */
   .stamp-inline[src*="도장.png"] {
     background: url('./images/도장.png') no-repeat center !important;
     background-size: contain !important;
@@ -251,54 +296,56 @@
   .form-header h1 { font-size:24px !important; margin-bottom:8px !important; }
 
   .form-table {
-    font-size:13px !important;  /* 11px → 13px */
+    font-size:13px !important;
     margin-bottom:10px !important;
   }
-  /* ✅ 라벨 폰트 강화 */
+  
   .form-table .label {
     font-weight: 700 !important;
     font-size: 13px !important;
   }
+  
   .form-table th,
   .form-table td {
-    padding:5px 4px !important;  /* 4px 3px → 5px 4px */
-    line-height:1.3 !important;  /* 1.2 → 1.3 */
+    padding:5px 4px !important;
+    line-height:1.3 !important;
   }
+  
   input, textarea {
     border:none !important;
     background:transparent !important;
     box-shadow:none !important;
     outline:none !important;
-    font-size:13px !important;  /* 11px → 13px */
-    padding:3px 3px !important;  /* 2px → 3px */
+    font-size:13px !important;
+    padding:3px 3px !important;
   }
+  
   .total-table {
     width:240px !important;
     margin-bottom:8px !important;
   }
+  
   .form-company {
     margin-top:20px !important;
     padding-top:10px !important;
     font-size:14px !important;
   }
+  
   .quote-table,
   .total-table { page-break-inside:auto !important; }
+  
   body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 
-  /* ==== 최종 프린트 비율  ====
-     NO 5 | 품명 41.5 | 단위 13 | 수량 4.5 | 단가 11 | 공급가 11 | 비고 11 | 작업 3 */
-    /* ✅ 견적서 품목 테이블만 1.5배 크게 */
-    .quote-table { table-layout:fixed !important; width:100% !important; }
-    .quote-table th, .quote-table td { 
-      font-size: 15px !important;
-      padding: 6px 5px !important;
-      line-height: 1.5 !important;
-    }
-    
-    /* ✅ 헤더만 더 굵게 */
-    .quote-table th {
-      font-weight: 700 !important;
-    }
+  .quote-table { table-layout:fixed !important; width:100% !important; }
+  .quote-table th, .quote-table td { 
+    font-size: 15px !important;
+    padding: 6px 5px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .quote-table th {
+    font-weight: 700 !important;
+  }
 
   .quote-table th:nth-child(1), .quote-table td:nth-child(1) { width:5% !important; }
   .quote-table th:nth-child(2), .quote-table td:nth-child(2) { width:40.5% !important; }
@@ -309,7 +356,6 @@
   .quote-table th:nth-child(7), .quote-table td:nth-child(7) { width:10.5% !important; min-width:60px !important; }
   .quote-table th:nth-child(8), .quote-table td:nth-child(8) { width:3% !important; min-width:28px !important; }
 
-  /* 수량/단가/공급가 열 가독성 */
   .quote-table th:nth-child(5),
   .quote-table th:nth-child(6),
   .quote-table th:nth-child(7),
@@ -319,46 +365,20 @@
     white-space:nowrap !important;
     font-feature-settings:'tnum' 1;
     text-align:right !important;
-    padding: 4px 8px !important;  /* 3px 9px → 4px 8px */
+    padding: 4px 8px !important;
     letter-spacing:0 !important;
-    font-size: 13px !important;  /* 추가 */
+    font-size: 13px !important;
   }
-  /* 수량 헤더 줄바꿈 방지 */
+  
   .quote-table th:nth-child(5) { text-align:center !important; }
 
-  /* ✅ 공급가, 비고 헤더는 가운데 정렬 */
   .quote-table th:nth-child(6),
   .quote-table th:nth-child(7) { 
     text-align:center !important; 
   }
 
-  /* 폭 문제 해결 - 페이지 넘어가지 않도록 */
   .estimate-form-container {
     transform: scale(0.90) !important;
     transform-origin: top left !important;
   }
-
-    /* FAX 버튼 스타일 */
-    .fax-btn {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .fax-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
-    }
-    
-    .fax-btn:active {
-      transform: translateY(0);
-    }
-
-  /* 필요시 더 넓히려면: 수량 16%로 올리고 품명 40%로 내리는 식으로 조정 가능 */
 }
