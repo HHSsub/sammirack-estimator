@@ -142,16 +142,19 @@ const EstimateForm = () => {
   }, [cart, totalBom, customItems, isEditMode]);
 
   useEffect(() => {
+    console.log('🟢 합계 계산 useEffect 실행, items 길이:', formData.items.length);
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     
     // ✅ 값이 실제로 바뀌었을 때만 업데이트
     if (formData.subtotal !== subtotal || formData.tax !== tax || formData.totalAmount !== totalAmount) {
+      console.log('🟢 합계 업데이트:', { subtotal, tax, totalAmount });
       setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
+    } else {
+      console.log('🟢 합계 변경 없음, setFormData 스킵');
     }
   }, [formData.items, formData.subtotal, formData.tax, formData.totalAmount]);
-
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -168,10 +171,19 @@ const EstimateForm = () => {
   };
 
   const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
-    }));
+    console.log('🔴 addItem 호출됨!');
+    console.log('🔴 현재 items:', formData.items);
+    
+    setFormData(prev => {
+      const newItems = [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }];
+      console.log('🔴 새로운 items:', newItems);
+      return {
+        ...prev,
+        items: newItems
+      };
+    });
+    
+    console.log('🔴 setFormData 호출 완료');
   };
 
   const removeItem = (idx) => {
