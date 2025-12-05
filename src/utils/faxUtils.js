@@ -271,8 +271,9 @@ export const sendFax = async (pdfBase64, faxNumber, companyName = '', receiverNa
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        pdfBase64,
         faxNumber,
+        documentBase64: pdfBase64,  // ← 필드명 변경
+        fileName: `${companyName || '문서'}_${Date.now()}.pdf`,  // ← fileName 추가
         companyName,
         receiverName
       })
