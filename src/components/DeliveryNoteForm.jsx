@@ -149,7 +149,7 @@ const DeliveryNoteForm = () => {
       }
       return { ...prev, materials: materialsRecalc, subtotal, tax, totalAmount };
     });
-  }, [formData.items, formData.materials]);
+  }, [formData.items.length, formData.materials.length]);
 
   const updateFormData = (f,v) => setFormData(prev => ({ ...prev, [f]: v }));
 
