@@ -1124,7 +1124,7 @@ export const ProductProvider=({children})=>{
         extraOptions:[...extraOptionsSel],
         quantity,
         price:customPrice>0?customPrice:currentPrice,
-        customPrice: customPrice > 0 ? customPrice : 0,  // ✅ 추가: customPrice 저장
+        customPrice: customPrice > 0 ? customPrice : 0,  // 이 줄 추가
         bom:calculateCurrentBOM(),
         displayName:[
           selectedType,
@@ -1147,16 +1147,16 @@ export const ProductProvider=({children})=>{
   };
 
   const updateCartItemPriceDirect=(id,newPrice)=>{
-      setCart(prev=>prev.map(item=>{
-        if(item.id!==id) return item;
-        const numPrice = Number(newPrice) || 0;
-        return {
-          ...item,
-          price: numPrice,
-          customPrice: numPrice  // ✅ customPrice로 저장
-        };
-      }));
-    };
+    setCart(prev=>prev.map(item=>{
+      if(item.id!==id) return item;
+      const numPrice = Number(newPrice) || 0;
+      return {
+        ...item,
+        price: numPrice,
+        customPrice: numPrice
+      };
+    }));
+  };
 
   // ✅ BOM 병합 유틸 (같은 partId 자동 합산)
   function mergeDuplicateParts(bomArray) {
