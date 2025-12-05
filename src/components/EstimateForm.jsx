@@ -26,6 +26,7 @@ const EstimateForm = () => {
   const isEditMode = !!id;
 
   const documentNumberInputRef = useRef(null);
+  const cartInitializedRef = useRef(false);  // ← 추가
   const cartData = location.state || {};
   const { 
     cart = [], 
@@ -106,7 +107,8 @@ const EstimateForm = () => {
   }, [id, isEditMode]);
 
   useEffect(() => {
-    if (!isEditMode && cart.length > 0) {
+    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
+      cartInitializedRef.current = true;  // ← 추가
       const cartItems = cart.map(item => {
         const qty = item.quantity || 1;
         const unitPrice = Math.round((item.price || 0) / (qty || 1));
