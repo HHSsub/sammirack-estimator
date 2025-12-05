@@ -217,7 +217,12 @@ const PurchaseOrderForm = () => {
         totalAmount
       };
     });
-  }, [formData.items.length, formData.materials.length]);
+  }, [
+    formData.items.length,
+    formData.materials.length,
+    formData.items.map(it => it.totalPrice).join(','),
+    formData.materials.map(m => m.totalPrice).join(',')
+  ]);
 
 
   const updateFormData = (f, v) => setFormData(prev => ({ ...prev, [f]: v }));
