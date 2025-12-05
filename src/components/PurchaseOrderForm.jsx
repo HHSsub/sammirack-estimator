@@ -157,13 +157,13 @@ const PurchaseOrderForm = () => {
   
       const allItems = [...cartItems, ...customItems];
   
-      // ✅ BOM 추출: totalBom이 있으면 사용, 없으면 cart에서 직접 추출
+      // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출
       let bomMaterials = [];
       
       if (totalBom && totalBom.length > 0) {
         bomMaterials = totalBom.map(m => {
           const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
-          const appliedUnitPrice = (adminPrice && adminPrice > 0)
+          const appliedUnitPrice = adminPrice && adminPrice > 0
             ? adminPrice
             : (Number(m.unitPrice) || 0);
           const quantity = Number(m.quantity) || 0;
@@ -184,7 +184,8 @@ const PurchaseOrderForm = () => {
             item.bom.forEach(bomItem => {
               const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
               const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
-              const quantity = Number(bomItem.quantity) || 0;  // ✅
+              const quantity = Number(bomItem.quantity) || 0;
+              
               bomMaterials.push({
                 name: bomItem.name,
                 rackType: bomItem.rackType,
