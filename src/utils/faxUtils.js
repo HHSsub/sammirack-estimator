@@ -16,6 +16,50 @@ export const convertDOMToPDFBase64 = async (element) => {
   const hiddenElements = element.querySelectorAll('.no-print');
   const originalDisplayValues = [];
 
+  // ✅ 임시 스타일 저장용
+  const tempStyleElement = document.createElement('style');
+  const tempStyles = `
+    /* ✅ 팩스 전송용 임시 스타일 */
+    .purchase-order-form-container .form-table th,
+    .purchase-order-form-container .form-table td {
+      padding: 10px 8px !important; /* ✅ 패딩 증가 */
+      font-size: 15px !important; /* ✅ 폰트 크기 증가 */
+      line-height: 1.6 !important; /* ✅ 줄 높이 증가 */
+      min-height: 45px !important; /* ✅ 최소 높이 증가 */
+    }
+    
+    /* ✅ 숫자 칸에 특히 더 큰 폰트 */
+    .purchase-order-form-container .bom-table th:nth-child(4),
+    .purchase-order-form-container .bom-table th:nth-child(5),
+    .purchase-order-form-container .bom-table th:nth-child(6),
+    .purchase-order-form-container .bom-table td:nth-child(4),
+    .purchase-order-form-container .bom-table td:nth-child(5),
+    .purchase-order-form-container .bom-table td:nth-child(6),
+    .purchase-order-form-container .order-table th:nth-child(4),
+    .purchase-order-form-container .order-table th:nth-child(5),
+    .purchase-order-form-container .order-table th:nth-child(6),
+    .purchase-order-form-container .order-table td:nth-child(4),
+    .purchase-order-form-container .order-table td:nth-child(5),
+    .purchase-order-form-container .order-table td:nth-child(6) {
+      font-size: 16px !important; /* ✅ 더 큰 폰트 */
+      font-weight: 600 !important; /* ✅ 굵게 */
+      padding: 12px 8px !important; /* ✅ 더 큰 패딩 */
+    }
+    
+    /* ✅ input 필드도 동일하게 */
+    .purchase-order-form-container .form-table input {
+      font-size: 15px !important;
+      padding: 8px !important;
+      min-height: 38px !important;
+    }
+    
+    /* ✅ 테이블 전체 높이 증가 */
+    .purchase-order-form-container .bom-table tr,
+    .purchase-order-form-container .order-table tr {
+      min-height: 50px !important;
+    }
+  `;
+
   try {
     // ✅ 2단계: 모든 no-print 요소를 임시로 숨김
     hiddenElements.forEach((el, index) => {
@@ -23,12 +67,21 @@ export const convertDOMToPDFBase64 = async (element) => {
       el.style.display = 'none';
     });
 
-    // ✅ 3단계: html2canvas로 DOM을 이미지로 변환
+    // ✅ 3단계: 임시 스타일 적용
+    tempStyleElement.textContent = tempStyles;
+    document.head.appendChild(tempStyleElement);
+
+    // ✅ 4단계: 스타일 적용을 위해 잠시 대기
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // ✅ 5단계: html2canvas로 DOM을 이미지로 변환
     const canvas = await html2canvas(element, {
-      scale: 2, // 해상도 향상
+      scale: 3, // ✅ 해상도를 2에서 3으로 증가
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
       ignoreElements: (element) => {
         // 추가 안전장치: no-print 클래스가 있으면 무시
         return element.classList.contains('no-print');
@@ -37,7 +90,7 @@ export const convertDOMToPDFBase64 = async (element) => {
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     
-    // ✅ 4단계: A4 크기로 PDF 생성
+    // ✅ 6단계: A4 크기로 PDF 생성
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -70,7 +123,12 @@ export const convertDOMToPDFBase64 = async (element) => {
     console.error('❌ PDF 변환 오류:', error);
     throw new Error('PDF 변환에 실패했습니다.');
   } finally {
-    // ✅ 5단계: 숨긴 요소들 복원 (반드시 실행)
+    // ✅ 7단계: 임시 스타일 제거
+    if (tempStyleElement.parentNode) {
+      tempStyleElement.parentNode.removeChild(tempStyleElement);
+    }
+
+    // ✅ 8단계: 숨긴 요소들 복원 (반드시 실행)
     hiddenElements.forEach((el, index) => {
       el.style.display = originalDisplayValues[index];
     });
