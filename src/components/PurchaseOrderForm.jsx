@@ -185,7 +185,6 @@ const PurchaseOrderForm = () => {
 
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
-    // 관리자 단가 재반영 (materials 내부 계산용)
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
@@ -196,14 +195,17 @@ const PurchaseOrderForm = () => {
         totalPrice: unitPrice * quantity
       };
     });
-
-    // ✅ 무조건 품목 목록 공급가 합계 기준
+  
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
-    const subtotal = itemSum;  // ✅ 품목 목록만 사용
+    const subtotal = itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-
-    if (JSON.stringify(materialsWithAdmin) !== JSON.stringify(formData.materials)) {
+  
+    // ✅ 조건부 업데이트
+    const materialsChanged = JSON.stringify(materialsWithAdmin) !== JSON.stringify(formData.materials);
+    const totalsChanged = formData.subtotal !== subtotal || formData.tax !== tax || formData.totalAmount !== totalAmount;
+  
+    if (materialsChanged || totalsChanged) {
       setFormData(prev => ({
         ...prev,
         materials: materialsWithAdmin,
@@ -211,10 +213,8 @@ const PurchaseOrderForm = () => {
         tax,
         totalAmount
       }));
-    } else {
-      setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
     }
-  }, [formData.items, formData.materials]);
+  }, [formData.items, formData.materials, formData.subtotal, formData.tax, formData.totalAmount]);
 
   const updateFormData = (f, v) => setFormData(prev => ({ ...prev, [f]: v }));
 
