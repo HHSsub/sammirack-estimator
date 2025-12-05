@@ -392,45 +392,55 @@ const handlePrint = async () => {
     return;
   }
 
-  // ✅ 1단계: 재고 부족 여부만 먼저 체크 (실제 감소는 안 함)
+  // ✅ 1단계: 재고 부족 여부 체크
   if (cart && cart.length > 0) {
-    // ✅ 재고 체크만 수행 (감소는 나중에)
     const checkResult = await checkInventoryAvailability(cart);
     
-    // 재고 부족 경고가 있는 경우
     if (checkResult.warnings && checkResult.warnings.length > 0) {
-      const shortageList = checkResult.warnings
-        .slice(0, 5)
-        .map(w => `• ${w.name} (${w.specification || ''}): 필요 ${w.required}개, 가용 ${w.available}개`)
-        .join('\n');
+      // ✅ 재고 부족 패널 표시 (confirm 창 제거)
+      window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
+        detail: {
+          shortageItems: checkResult.warnings.map(w => ({
+            partId: w.partId,
+            name: w.name,
+            specification: w.specification,
+            rackType: w.rackType,
+            quantity: w.required,
+            requiredQuantity: w.required,
+            serverInventory: w.available,
+            shortage: w.shortage,
+            isShortage: true
+          })),
+          documentType: '청구서 (인쇄)',
+          timestamp: Date.now(),
+          // ✅ 콜백 함수 추가
+          onConfirm: () => {
+            // "무시하고 인쇄" 클릭 시 실행
+            proceedWithPrint();
+          },
+          onCancel: () => {
+            alert('인쇄가 취소되었습니다.\n재고는 감소되지 않았습니다.');
+          }
+        }
+      }));
       
-      const message = checkResult.warnings.length > 5
-        ? `⚠️ 재고 부족 경고 (${checkResult.warnings.length}개 부품)\n\n${shortageList}\n... 외 ${checkResult.warnings.length - 5}개\n\n계속 진행하시겠습니까?`
-        : `⚠️ 재고 부족 경고\n\n${shortageList}\n\n계속 진행하시겠습니까?`;
-      
-      const userChoice = window.confirm(
-        message + '\n\n확인 = 무시하고 인쇄\n취소 = 인쇄 중단'
-      );
-      
-      if (!userChoice) {
-        alert('인쇄가 취소되었습니다.\n재고는 감소되지 않았습니다.');
-        return;  // ✅ 여기서 return하면 재고 감소 안 됨
-      }
+      return;  // ✅ 여기서 리턴 (패널에서 선택하도록)
     }
   }
 
-  // ✅ 2단계: 브라우저 인쇄 다이얼로그 표시
+  // 재고 부족 없으면 바로 인쇄
+  await proceedWithPrint();
+};
+
+// ✅ 실제 인쇄 로직 분리
+const proceedWithPrint = async () => {
+  // ✅ 브라우저 인쇄 다이얼로그 표시
   window.print();
 
-  // ✅ 3단계: 인쇄 다이얼로그가 닫힌 후에만 재고 감소
-  // (사용자가 인쇄 다이얼로그에서 "취소"를 누르면 재고 감소 안 됨)
-  
-  // ⚠️ 중요: window.print()는 동기 함수이지만 다이얼로그 결과를 알 수 없음
-  // 따라서 "인쇄 완료" 확인 후 재고 감소 진행
-  
+  // ✅ 인쇄 다이얼로그가 닫힌 후 재고 감소
   setTimeout(async () => {
     const confirmDeduct = window.confirm(
-      '인쇄가 완료되었습니까?n확인 = 재고 감소\n취소 = 재고 유지'
+      '인쇄가 완료되었습니까?\n\n확인 = 재고 감소\n취소 = 재고 유지'
     );
     
     if (confirmDeduct && cart && cart.length > 0) {
@@ -450,6 +460,7 @@ const handlePrint = async () => {
     }
   }, 500);
 };
+
 
 // ✅ FAX 전송 핸들러 추가 (handlePrint 함수 바로 아래에 추가)
   const handleFaxPreview = async () => {
@@ -492,7 +503,7 @@ const handleSendFax = async (faxNumber) => {
     const checkResult = await checkInventoryAvailability(cart);
     
     if (checkResult.warnings && checkResult.warnings.length > 0) {
-      // ✅ 재고 부족 패널 표시
+      // ✅ 재고 부족 패널 표시 (confirm 창 제거)
       window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
         detail: {
           shortageItems: checkResult.warnings.map(w => ({
@@ -500,27 +511,35 @@ const handleSendFax = async (faxNumber) => {
             name: w.name,
             specification: w.specification,
             rackType: w.rackType,
-            required: w.required,
-            requiredQuantity: w.required, // ✅ 추가
-            available: w.available,
-            shortage: w.shortage
+            quantity: w.required,
+            requiredQuantity: w.required,
+            serverInventory: w.available,
+            shortage: w.shortage,
+            isShortage: true
           })),
           documentType: '청구서 (FAX)',
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          // ✅ 콜백 함수 추가
+          onConfirm: () => {
+            // "무시하고 전송" 클릭 시 실행
+            proceedWithFax(faxNumber);
+          },
+          onCancel: () => {
+            alert('FAX 전송이 취소되었습니다.');
+          }
         }
       }));
       
-      const userChoice = window.confirm(
-        `⚠️ ${checkResult.warnings.length}개 부품 재고 부족\n\n계속 진행하시겠습니까?\n\n확인 = FAX 전송 진행\n취소 = 취소`
-      );
-      
-      if (!userChoice) {
-        alert('FAX 전송이 취소되었습니다.');
-        return;
-      }
+      return;  // ✅ 여기서 리턴 (패널에서 선택하도록)
     }
   }
 
+  // 재고 부족 없으면 바로 전송
+  await proceedWithFax(faxNumber);
+};
+
+// ✅ 실제 FAX 전송 로직 분리
+const proceedWithFax = async (faxNumber) => {
   try {
     const result = await sendFax(
       pdfBase64,
@@ -530,7 +549,6 @@ const handleSendFax = async (faxNumber) => {
     );
 
     if (result.success) {
-      // ✅ 성공 시 잔액 정보 표시
       alert(
         `✅ 팩스 전송이 완료되었습니다!\n\n` +
         `📄 발송번호: ${result.jobNo}\n` +
@@ -538,6 +556,7 @@ const handleSendFax = async (faxNumber) => {
         `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
       );
       setShowFaxModal(false);
+      
       // ✅ FAX 전송 성공 후 재고 감소
       if (cart && cart.length > 0) {
         const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber);
@@ -558,7 +577,6 @@ const handleSendFax = async (faxNumber) => {
   } catch (error) {
     console.error('❌ 팩스 전송 오류:', error);
     
-    // ✅ 오류 유형별 메시지 개선
     let errorMessage = '팩스 전송에 실패했습니다.\n\n';
     
     if (error.message.includes('잔액')) {
