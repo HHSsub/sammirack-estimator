@@ -94,11 +94,16 @@ const DeliveryNoteForm = () => {
       });
       
       const allItems = [...cartItems, ...customItems];
+
+      // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출
+      console.log('🔍 totalBom:', totalBom);
+      console.log('🔍 cart:', cart);
       
       // ✅ BOM 추출: totalBom이 있으면 사용, 없으면 cart에서 직접 추출
       let bomMaterials = [];
       
       if (totalBom && totalBom.length > 0) {
+        console.log('✅ totalBom 사용');
         bomMaterials = totalBom.map(m => {
           const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
           const appliedUnitPrice = adminPrice && adminPrice > 0
@@ -116,13 +121,19 @@ const DeliveryNoteForm = () => {
           };
         });
       } else {
-        // ✅ totalBom이 없으면 cart에서 직접 BOM 추출
+        console.warn('⚠️ totalBom 비어있음 - cart에서 BOM 추출 시도');
+        
+        // ✅ cart에서 직접 BOM 추출
         cart.forEach(item => {
+          console.log('🔍 cart item:', item);
+          console.log('🔍 item.bom:', item.bom);
+          
           if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
             item.bom.forEach(bomItem => {
               const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
               const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
               const quantity = Number(bomItem.quantity) || 0;
+              
               bomMaterials.push({
                 name: bomItem.name,
                 rackType: bomItem.rackType,
@@ -135,7 +146,11 @@ const DeliveryNoteForm = () => {
             });
           }
         });
+        
+        console.log('✅ cart에서 추출한 bomMaterials:', bomMaterials);
       }
+      
+      console.log('🔍 최종 bomMaterials:', bomMaterials);
       
       const allMaterials = [...bomMaterials, ...customMaterials];
       
