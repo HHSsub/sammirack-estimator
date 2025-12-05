@@ -101,12 +101,14 @@ const ShortageInventoryManager = ({ isAdmin = false }) => {
     <ShortageInventoryPanel
       isVisible={isPanelVisible}
       onClose={handleClosePanel}
-      shortageItems={finalShortageItems} // 보강된 아이템 리스트 전달
+      shortageItems={finalShortageItems}
+      allBomItems={shortageData.allBomItems || []}  // ✅ 추가
       documentType={shortageData.documentType}
       isAdmin={isAdmin}
-      // 재고 업데이트 함수도 패널에 전달하여 서버 연동을 돕습니다.
-      onUpdateInventory={updateInventory} 
+      onUpdateInventory={updateInventory}
       isLoading={loadingInventory}
+      onConfirm={shortageData.onConfirm}  // ✅ 추가
+      onCancel={shortageData.onCancel}    // ✅ 추가
     />
   );
 };
