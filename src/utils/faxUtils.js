@@ -261,28 +261,25 @@ export const base64ToBlobURL = (base64) => {
  * @param {string} receiverName - 수신자명 (선택)
  * @returns {Promise<Object>} 전송 결과
  */
-export const sendFax = async (pdfBase64, faxNumber, companyName = '', receiverName = '') => {
-  const VERCEL_FAX_API = 'https://fax-server-git-main-knowgrams-projects.vercel.app/api/send-fax';
-
+export const sendFax = async (pdfBase64, faxNumber, companyName, receiverName) => {
   try {
-    const response = await fetch(VERCEL_FAX_API, {
+    const response = await fetch('https://fax-server-git-main-knowgrams-projects.vercel.app/api/send-fax', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        faxNumber,
-        documentBase64: pdfBase64,  // ← 필드명 변경
-        fileName: `${companyName || '문서'}_${Date.now()}.pdf`,  // ← fileName 추가
-        companyName,
-        receiverName
+        pdfBase64: pdfBase64,
+        faxNumber: faxNumber,
+        companyName: companyName,
+        receiverName: receiverName
       })
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || `HTTP ${response.status} 오류`);
+      throw new Error(result.error || result.message || '팩스 전송 실패');
     }
 
     return result;
@@ -291,3 +288,4 @@ export const sendFax = async (pdfBase64, faxNumber, companyName = '', receiverNa
     throw error;
   }
 };
+
