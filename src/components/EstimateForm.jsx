@@ -145,8 +145,12 @@ const EstimateForm = () => {
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-    setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
-  }, [formData.items]);
+    
+    // ✅ 값이 실제로 바뀌었을 때만 업데이트
+    if (formData.subtotal !== subtotal || formData.tax !== tax || formData.totalAmount !== totalAmount) {
+      setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
+    }
+  }, [formData.items, formData.subtotal, formData.tax, formData.totalAmount]);
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
