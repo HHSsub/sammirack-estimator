@@ -120,10 +120,8 @@ const EstimateForm = () => {
         };
       });
       
-      // ✅ customItems 병합 (직접 추가했던 품목들)
       const allItems = [...cartItems, ...customItems];
       
-      // ✅ totalBom을 materials로 변환 (화면에는 표시 안 함, 내부 저장용)
       const bomMaterials = (totalBom || []).map(m => ({
         name: m.name,
         rackType: m.rackType,
@@ -134,13 +132,14 @@ const EstimateForm = () => {
         note: m.note || ''
       }));
       
+      // ✅ 수정: allItems가 비어있어도 강제 설정
       setFormData(prev => ({ 
         ...prev, 
-        items: allItems.length ? allItems : prev.items,
+        items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
         materials: bomMaterials
       }));
     }
-  }, [cart, totalBom, customItems, isEditMode]);  // ✅ customItems 의존성 추가
+  }, [cart, totalBom, customItems, isEditMode]);
 
   useEffect(() => {
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
