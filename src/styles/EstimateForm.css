@@ -135,6 +135,81 @@
   cursor:pointer;
 }
 
+/* ✅ 견적서 - 품목 추가 버튼 스타일 */
+
+.item-controls {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.add-item-btn {
+  background: #28a745;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 0 10px;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 100;
+}
+
+.add-item-btn:hover {
+  background: #218838;
+}
+
+.remove-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.remove-btn:hover {
+  background: #c82333;
+}
+
+.remove-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.save-btn {
+  background: #007bff;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background: #0056b3;
+}
+
+.excel-btn {
+  background: #28a745;
+  color: #fff;
+}
+
+.excel-btn:hover {
+  background: #218838;
+}
+
+.print-btn {
+  background: #6c757d;
+  color: #fff;
+}
+
+.print-btn:hover {
+  background: #545b62;
+}
+
 /* PRINT */
 @media print {
   .no-print { display:none !important; }
