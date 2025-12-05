@@ -23,6 +23,7 @@ const DeliveryNoteForm = () => {
   const location = useLocation();
   const isEditMode = !!id;
   const documentNumberInputRef = useRef(null);
+  const cartInitializedRef = useRef(false);  // ← 추가
 
   const cartData = location.state || {};
   const { 
@@ -76,7 +77,8 @@ const DeliveryNoteForm = () => {
 
   // 초기 cart / BOM 반영
   useEffect(() => {
-    if (!isEditMode && cart.length) {
+    if (!isEditMode && cart.length && !cartInitializedRef.current) {
+      cartInitializedRef.current = true;  // ← 추가
       adminPricesRef.current = loadAdminPricesDirect();
       const cartItems = cart.map(item => {
         const qty = item.quantity || 1;
