@@ -184,7 +184,7 @@ const PurchaseOrderForm = () => {
             item.bom.forEach(bomItem => {
               const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
               const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
-              const quantity = Number(bomItem.quantity) || 0);
+              const quantity = Number(bomItem.quantity) || 0;  // ✅
               bomMaterials.push({
                 name: bomItem.name,
                 rackType: bomItem.rackType,
