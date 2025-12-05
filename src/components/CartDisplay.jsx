@@ -12,47 +12,40 @@ export default function CartDisplay() {
   } = useProducts();
   
   const [refreshKey, setRefreshKey] = useState(0);
+  const [editingPrices, setEditingPrices] = useState({});
   
   const safePrice = v => typeof v === 'number' && !isNaN(v) ? v.toLocaleString() : '0';
 
   // 관리자 단가 변경 이벤트 리스너
   useEffect(() => {
-    const handlePriceChange = () => {
+    const handleRefresh = () => {
       setRefreshKey(prev => prev + 1);
     };
 
-    const handleSystemRestore = () => {
-      setRefreshKey(prev => prev + 1);
-    };
-
-    const handleExtraOptionsPriceChange = () => {
-      setRefreshKey(prev => prev + 1);
-    };
-
-    window.addEventListener('adminPriceChanged', handlePriceChange);
-    window.addEventListener('systemDataRestored', handleSystemRestore);
-    window.addEventListener('extraOptionsPriceChanged', handleExtraOptionsPriceChange);
+    window.addEventListener('adminPriceChanged', handleRefresh);
+    window.addEventListener('systemDataRestored', handleRefresh);
+    window.addEventListener('extraOptionsPriceChanged', handleRefresh);
     
     return () => {
-      window.removeEventListener('adminPriceChanged', handlePriceChange);
-      window.removeEventListener('systemDataRestored', handleSystemRestore);
-      window.removeEventListener('extraOptionsPriceChanged', handleExtraOptionsPriceChange);
+      window.removeEventListener('adminPriceChanged', handleRefresh);
+      window.removeEventListener('systemDataRestored', handleRefresh);
+      window.removeEventListener('extraOptionsPriceChanged', handleRefresh);
     };
   }, []);
 
   // ✅ 장바구니 아이템의 실제 가격 계산
   const calculateItemPrice = (item) => {
-    // ✅ 1순위: customPrice가 설정되어 있으면 무조건 그 가격 사용
+    // 1순위: customPrice
     if (item.customPrice && item.customPrice > 0) {
       return item.customPrice * (Number(item.quantity) || 1);
     }
     
-    // ✅ 2순위: BOM이 없으면 item.price 사용
+    // 2순위: BOM이 없으면 item.price 사용
     if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
       return (item.price || 0) * (Number(item.quantity) || 1);
     }
 
-    // ✅ 3순위: BOM 기반 재계산 (관리자 단가 반영)
+    // 3순위: BOM 기반 재계산
     const bomTotalPrice = item.bom.reduce((sum, bomItem) => {
       const effectivePrice = getEffectivePrice ? 
         getEffectivePrice(bomItem) : (Number(bomItem.unitPrice) || 0);
@@ -63,27 +56,60 @@ export default function CartDisplay() {
     return bomTotalPrice;
   };
 
-  // ✅ 아이템의 단가 계산 (수량으로 나눈 값)
+  // 아이템의 단가 계산
   const getItemUnitPrice = (item) => {
     const totalPrice = calculateItemPrice(item);
     const quantity = Number(item.quantity) || 1;
     return Math.round(totalPrice / quantity);
   };
 
-  // 전체 장바구니 총액 계산
+  // 전체 장바구니 총액
   const calculateCartTotal = () => {
-    return cart.reduce((sum, item) => {
-      return sum + calculateItemPrice(item);
-    }, 0);
+    return cart.reduce((sum, item) => sum + calculateItemPrice(item), 0);
   };
 
-  // ✅ 금액 직접 수정 핸들러
-  const handlePriceChange = (itemId, newUnitPrice) => {
-    const numPrice = Number(newUnitPrice);
-    if (isNaN(numPrice) || numPrice < 0) return;
-    
-    // customPrice로 저장 (단가 기준)
-    updateCartItemPriceDirect(itemId, numPrice);
+  // ✅ 금액 입력 시작
+  const handlePriceFocus = (itemId) => {
+    const item = cart.find(i => i.id === itemId);
+    if (item) {
+      const unitPrice = getItemUnitPrice(item);
+      setEditingPrices(prev => ({
+        ...prev,
+        [itemId]: String(unitPrice)
+      }));
+    }
+  };
+
+  // ✅ 금액 입력 중
+  const handlePriceInputChange = (itemId, value) => {
+    setEditingPrices(prev => ({
+      ...prev,
+      [itemId]: value
+    }));
+  };
+
+  // ✅ 금액 입력 완료
+  const handlePriceBlur = (itemId) => {
+    const inputValue = editingPrices[itemId];
+    if (inputValue !== undefined) {
+      const numPrice = Number(inputValue);
+      if (!isNaN(numPrice) && numPrice >= 0) {
+        updateCartItemPriceDirect(itemId, numPrice);
+      }
+      // 편집 상태 제거
+      setEditingPrices(prev => {
+        const newState = { ...prev };
+        delete newState[itemId];
+        return newState;
+      });
+    }
+  };
+
+  // Enter 키로도 완료 가능
+  const handlePriceKeyDown = (e, itemId) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
   };
 
   if (!cart.length) {
@@ -115,6 +141,8 @@ export default function CartDisplay() {
             const itemTotalPrice = calculateItemPrice(item);
             const itemUnitPrice = getItemUnitPrice(item);
             const hasCustomPrice = item.customPrice && item.customPrice > 0;
+            const isEditing = editingPrices.hasOwnProperty(item.id);
+            const displayValue = isEditing ? editingPrices[item.id] : itemUnitPrice;
             
             return (
               <tr key={`${item.id}-${refreshKey}`}>
@@ -161,8 +189,11 @@ export default function CartDisplay() {
                   <input
                     type="number"
                     min={0}
-                    value={itemUnitPrice}
-                    onChange={(e) => handlePriceChange(item.id, e.target.value)}
+                    value={displayValue}
+                    onFocus={() => handlePriceFocus(item.id)}
+                    onChange={(e) => handlePriceInputChange(item.id, e.target.value)}
+                    onBlur={() => handlePriceBlur(item.id)}
+                    onKeyDown={(e) => handlePriceKeyDown(e, item.id)}
                     style={{ 
                       width: 100, 
                       textAlign: 'right',
