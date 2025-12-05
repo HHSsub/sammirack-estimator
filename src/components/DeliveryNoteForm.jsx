@@ -138,12 +138,15 @@ const DeliveryNoteForm = () => {
     const subtotal = (materialsRecalc.length > 0 && matSum > 0) ? matSum : itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-    if (JSON.stringify(materialsRecalc) !== JSON.stringify(formData.materials)) {
+    
+    // ✅ 조건부 업데이트
+    const materialsChanged = JSON.stringify(materialsRecalc) !== JSON.stringify(formData.materials);
+    const totalsChanged = formData.subtotal !== subtotal || formData.tax !== tax || formData.totalAmount !== totalAmount;
+    
+    if (materialsChanged || totalsChanged) {
       setFormData(prev => ({ ...prev, materials: materialsRecalc, subtotal, tax, totalAmount }));
-    } else {
-      setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
     }
-  }, [formData.items, formData.materials]);
+  }, [formData.items, formData.materials, formData.subtotal, formData.tax, formData.totalAmount]);
 
   const updateFormData = (f,v) => setFormData(prev => ({ ...prev, [f]: v }));
 
