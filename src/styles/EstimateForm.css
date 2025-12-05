@@ -137,18 +137,27 @@
 
 /* ✅ EstimateForm.css 파일 맨 끝에 추가 - 기존 스타일 덮어쓰기 */
 
-/* 품목 추가 버튼 강제 작동 */
-.estimate-form-container .item-controls {
+* no-print도 z-index 설정 */
+.estimate-form-container .no-print {
   position: relative !important;
   z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+/* 품목 추가 버튼 영역 */
+.estimate-form-container .item-controls.no-print {
+  position: relative !important;
+  z-index: 9999999 !important;
   pointer-events: auto !important;
   isolation: isolate !important;
   text-align: center !important;
   margin-bottom: 30px !important;
   display: block !important;
+  background: transparent !important;
 }
 
-.estimate-form-container .add-item-btn {
+/* 버튼 자체 */
+.estimate-form-container button.add-item-btn {
   background: #28a745 !important;
   color: #fff !important;
   border: none !important;
@@ -160,36 +169,43 @@
   margin: 0 10px !important;
   pointer-events: auto !important;
   position: relative !important;
-  z-index: 9999999 !important;
+  z-index: 99999999 !important;
   display: inline-block !important;
   touch-action: manipulation !important;
+  user-select: none !important;
 }
 
-.estimate-form-container .add-item-btn:hover {
+.estimate-form-container button.add-item-btn:hover {
   background: #218838 !important;
 }
 
-.estimate-form-container .remove-btn {
-  pointer-events: auto !important;
-  z-index: 9999999 !important;
-  cursor: pointer !important;
+.estimate-form-container button.add-item-btn:active {
+  background: #1e7e34 !important;
 }
 
-/* 폼 컨테이너 z-index 낮춤 */
-.estimate-form-container {
+/* 삭제 버튼도 동일하게 */
+.estimate-form-container button.remove-btn {
+  pointer-events: auto !important;
+  z-index: 99999999 !important;
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+/* 테이블 z-index 낮춤 */
+.estimate-form-container table.quote-table {
   position: relative !important;
   z-index: 1 !important;
 }
 
-/* 테이블이 버튼을 가리지 않도록 */
-.estimate-form-container table {
+.estimate-form-container table.form-table {
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 1 !important;
 }
 
-.estimate-form-container .quote-table {
+/* 전체 컨테이너 */
+.estimate-form-container {
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 0 !important;
 }
 
 /* PRINT */
