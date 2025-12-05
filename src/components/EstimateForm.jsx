@@ -142,19 +142,19 @@ const EstimateForm = () => {
   }, [cart, totalBom, customItems, isEditMode]);
 
   useEffect(() => {
-    console.log('🟢 합계 계산 useEffect 실행, items 길이:', formData.items.length);
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     
-    // ✅ 값이 실제로 바뀌었을 때만 업데이트
-    if (formData.subtotal !== subtotal || formData.tax !== tax || formData.totalAmount !== totalAmount) {
-      console.log('🟢 합계 업데이트:', { subtotal, tax, totalAmount });
-      setFormData(prev => ({ ...prev, subtotal, tax, totalAmount }));
-    } else {
-      console.log('🟢 합계 변경 없음, setFormData 스킵');
-    }
-  }, [formData.items, formData.subtotal, formData.tax, formData.totalAmount]);
+    setFormData(prev => {
+      // ✅ 값이 바뀌지 않았으면 같은 객체 반환 (리렌더링 방지)
+      if (prev.subtotal === subtotal && prev.tax === tax && prev.totalAmount === totalAmount) {
+        return prev;
+      }
+      return { ...prev, subtotal, tax, totalAmount };
+    });
+  }, [formData.items]);  // ✅ 의존성은 items만!
+  
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
