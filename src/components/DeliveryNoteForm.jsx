@@ -95,22 +95,47 @@ const DeliveryNoteForm = () => {
       
       const allItems = [...cartItems, ...customItems];
       
-      const bomMaterials = (totalBom || []).map(m => {
-        const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
-        const appliedUnitPrice = adminPrice && adminPrice > 0
-          ? adminPrice
-          : (Number(m.unitPrice) || 0);
-        const quantity = Number(m.quantity) || 0;
-        return {
-          name: m.name,
-          rackType: m.rackType,
-          specification: m.specification || '',
-          quantity,
-          unitPrice: appliedUnitPrice,
-          totalPrice: appliedUnitPrice * quantity,
-          note: m.note || ''
-        };
-      });
+      // ✅ BOM 추출: totalBom이 있으면 사용, 없으면 cart에서 직접 추출
+      let bomMaterials = [];
+      
+      if (totalBom && totalBom.length > 0) {
+        bomMaterials = totalBom.map(m => {
+          const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
+          const appliedUnitPrice = adminPrice && adminPrice > 0
+            ? adminPrice
+            : (Number(m.unitPrice) || 0);
+          const quantity = Number(m.quantity) || 0;
+          return {
+            name: m.name,
+            rackType: m.rackType,
+            specification: m.specification || '',
+            quantity,
+            unitPrice: appliedUnitPrice,
+            totalPrice: appliedUnitPrice * quantity,
+            note: m.note || ''
+          };
+        });
+      } else {
+        // ✅ totalBom이 없으면 cart에서 직접 BOM 추출
+        cart.forEach(item => {
+          if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+            item.bom.forEach(bomItem => {
+              const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
+              const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
+              const quantity = Number(bomItem.quantity) || 0;
+              bomMaterials.push({
+                name: bomItem.name,
+                rackType: bomItem.rackType,
+                specification: bomItem.specification || '',
+                quantity,
+                unitPrice: appliedUnitPrice,
+                totalPrice: appliedUnitPrice * quantity,
+                note: bomItem.note || ''
+              });
+            });
+          }
+        });
+      }
       
       const allMaterials = [...bomMaterials, ...customMaterials];
       
