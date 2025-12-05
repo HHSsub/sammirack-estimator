@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+ Fimport React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHelper';
@@ -462,48 +462,28 @@ const proceedWithPrint = async () => {
 };
 
 
-// ✅ FAX 전송 핸들러 추가 (handlePrint 함수 바로 아래에 추가)
-  const handleFaxPreview = async () => {
-    if (!formData.documentNumber.trim()) {
-      alert('거래번호(문서번호)를 입력해주세요.');
-      documentNumberInputRef.current?.focus();
-      return;
-    }
-
-    try {
-      const docElement = document.querySelector('.purchase-order-form-container');
-      if (!docElement) {
-        alert('문서 영역을 찾을 수 없습니다.');
-        return;
-      }
-
-      alert('PDF 생성 중입니다. 잠시만 기다려주세요...');
-
-      const base64 = await convertDOMToPDFBase64(docElement);
-      setPdfBase64(base64);
-
-      const blobURL = base64ToBlobURL(base64);
-      setPdfBlobURL(blobURL);
-
-      setShowFaxModal(true);
-    } catch (error) {
-      console.error('❌ PDF 생성 오류:', error);
-      alert(`PDF 생성에 실패했습니다.\n오류: ${error.message}`);
-    }
-  };
-
-const handleSendFax = async (faxNumber) => {
-  if (!pdfBase64) {
-    alert('PDF가 생성되지 않았습니다.');
+// ✅ FAX 전송 핸들러 - FAX 미리보기 버튼을 누를 때 재고부터 체크
+const handleFaxPreview = async () => {
+  if (!formData.documentNumber.trim()) {
+    alert('거래번호(문서번호)를 입력해주세요.');
+    documentNumberInputRef.current?.focus();
     return;
   }
 
-  // ✅ FAX 전송 전 재고 체크
+  // ✅ FAX 전송 전 재고 체크 (PDF 생성 전에 먼저 체크)
   if (cart && cart.length > 0) {
     const checkResult = await checkInventoryAvailability(cart);
     
     if (checkResult.warnings && checkResult.warnings.length > 0) {
-      // ✅ 재고 부족 패널 표시 (confirm 창 제거)
+      // ✅ 전체 BOM 목록 추출
+      const allBomItems = [];
+      cart.forEach((item) => {
+        if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+          allBomItems.push(...item.bom);
+        }
+      });
+
+      // ✅ 재고 부족 패널 표시
       window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
         detail: {
           shortageItems: checkResult.warnings.map(w => ({
@@ -517,12 +497,12 @@ const handleSendFax = async (faxNumber) => {
             shortage: w.shortage,
             isShortage: true
           })),
+          allBomItems: allBomItems,  // ✅ 전체 BOM 추가
           documentType: '청구서 (FAX)',
           timestamp: Date.now(),
-          // ✅ 콜백 함수 추가
           onConfirm: () => {
-            // "무시하고 전송" 클릭 시 실행
-            proceedWithFax(faxNumber);
+            // "무시하고 진행" 클릭 시 PDF 생성 후 FAX 모달 표시
+            proceedWithFaxPreview();
           },
           onCancel: () => {
             alert('FAX 전송이 취소되었습니다.');
@@ -534,8 +514,92 @@ const handleSendFax = async (faxNumber) => {
     }
   }
 
-  // 재고 부족 없으면 바로 전송
-  await proceedWithFax(faxNumber);
+  // 재고 부족 없으면 바로 PDF 생성
+  await proceedWithFaxPreview();
+};
+
+// ✅ 실제 PDF 생성 및 FAX 모달 표시 로직 분리
+const proceedWithFaxPreview = async () => {
+  try {
+    const docElement = document.querySelector('.purchase-order-form-container');
+    if (!docElement) {
+      alert('문서 영역을 찾을 수 없습니다.');
+      return;
+    }
+
+    alert('PDF 생성 중입니다. 잠시만 기다려주세요...');
+
+    const base64 = await convertDOMToPDFBase64(docElement);
+    setPdfBase64(base64);
+
+    const blobURL = base64ToBlobURL(base64);
+    setPdfBlobURL(blobURL);
+
+    setShowFaxModal(true);
+  } catch (error) {
+    console.error('❌ PDF 생성 오류:', error);
+    alert(`PDF 생성에 실패했습니다.\n오류: ${error.message}`);
+  }
+};
+
+// ✅ handleSendFax는 이제 재고 체크 없이 바로 전송만 수행
+const handleSendFax = async (faxNumber) => {
+  if (!pdfBase64) {
+    alert('PDF가 생성되지 않았습니다.');
+    return;
+  }
+
+  try {
+    const result = await sendFax(
+      pdfBase64,
+      faxNumber,
+      formData.companyName,
+      ''
+    );
+
+    if (result.success) {
+      alert(
+        `✅ 팩스 전송이 완료되었습니다!\n\n` +
+        `📄 발송번호: ${result.jobNo}\n` +
+        `📑 페이지 수: ${result.pages}장\n` +
+        `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+      );
+      setShowFaxModal(false);
+      
+      // ✅ FAX 전송 성공 후 재고 감소
+      if (cart && cart.length > 0) {
+        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber);
+        
+        if (deductResult.success) {
+          if (deductResult.warnings && deductResult.warnings.length > 0) {
+            console.warn(`⚠️ ${deductResult.warnings.length}개 부품 재고 부족`);
+          } else {
+            console.log('✅ 재고가 정상적으로 감소되었습니다.');
+          }
+        } else {
+          console.error(`❌ 재고 감소 실패: ${deductResult.message}`);
+        }
+      }
+    } else {
+      throw new Error(result.error || '알 수 없는 오류');
+    }
+  } catch (error) {
+    console.error('❌ 팩스 전송 오류:', error);
+    
+    let errorMessage = '팩스 전송에 실패했습니다.\n\n';
+    
+    if (error.message.includes('잔액')) {
+      errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
+    } else if (error.message.includes('타임아웃')) {
+      errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
+    } else if (error.message.includes('네트워크')) {
+      errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
+    } else {
+      errorMessage += `오류: ${error.message}`;
+    }
+    
+    alert(errorMessage);
+  }
 };
 
 // ✅ 실제 FAX 전송 로직 분리
