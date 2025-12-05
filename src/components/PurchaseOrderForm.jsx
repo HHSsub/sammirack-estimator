@@ -461,8 +461,7 @@ const proceedWithPrint = async () => {
   }, 500);
 };
 
-
-// ✅ FAX 전송 핸들러 - FAX 미리보기 버튼을 누를 때 재고부터 체크
+// ✅ FAX 전송 버튼 클릭 시 - 재고부터 체크 후 PDF 생성
 const handleFaxPreview = async () => {
   if (!formData.documentNumber.trim()) {
     alert('거래번호(문서번호)를 입력해주세요.');
@@ -470,20 +469,20 @@ const handleFaxPreview = async () => {
     return;
   }
 
-  // ✅ FAX 전송 전 재고 체크 (PDF 생성 전에 먼저 체크)
+  // ✅ 1단계: 재고 체크
   if (cart && cart.length > 0) {
     const checkResult = await checkInventoryAvailability(cart);
     
+    // ✅ 전체 BOM 목록 추출 (부족 여부 상관없이 모든 BOM)
+    const allBomItems = [];
+    cart.forEach((item) => {
+      if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+        allBomItems.push(...item.bom);
+      }
+    });
+    
+    // ✅ 재고 부족이 있든 없든 패널 표시 (전체 BOM 현황 보여주기 위해)
     if (checkResult.warnings && checkResult.warnings.length > 0) {
-      // ✅ 전체 BOM 목록 추출
-      const allBomItems = [];
-      cart.forEach((item) => {
-        if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
-          allBomItems.push(...item.bom);
-        }
-      });
-
-      // ✅ 재고 부족 패널 표시
       window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
         detail: {
           shortageItems: checkResult.warnings.map(w => ({
@@ -495,13 +494,14 @@ const handleFaxPreview = async () => {
             requiredQuantity: w.required,
             serverInventory: w.available,
             shortage: w.shortage,
-            isShortage: true
+            isShortage: true,
+            colorWeight: w.colorWeight || ''
           })),
           allBomItems: allBomItems,  // ✅ 전체 BOM 추가
           documentType: '청구서 (FAX)',
           timestamp: Date.now(),
           onConfirm: () => {
-            // "무시하고 진행" 클릭 시 PDF 생성 후 FAX 모달 표시
+            // "무시하고 진행" 클릭 시
             proceedWithFaxPreview();
           },
           onCancel: () => {
@@ -510,7 +510,7 @@ const handleFaxPreview = async () => {
         }
       }));
       
-      return;  // ✅ 여기서 리턴 (패널에서 선택하도록)
+      return;  // ✅ 패널에서 사용자 선택 대기
     }
   }
 
@@ -518,7 +518,7 @@ const handleFaxPreview = async () => {
   await proceedWithFaxPreview();
 };
 
-// ✅ 실제 PDF 생성 및 FAX 모달 표시 로직 분리
+// ✅ 실제 PDF 생성 및 FAX 모달 표시
 const proceedWithFaxPreview = async () => {
   try {
     const docElement = document.querySelector('.purchase-order-form-container');
@@ -541,7 +541,7 @@ const proceedWithFaxPreview = async () => {
     alert(`PDF 생성에 실패했습니다.\n오류: ${error.message}`);
   }
 };
-
+ 
 // ✅ handleSendFax는 이제 재고 체크 없이 바로 전송만 수행
 const handleSendFax = async (faxNumber) => {
   if (!pdfBase64) {
