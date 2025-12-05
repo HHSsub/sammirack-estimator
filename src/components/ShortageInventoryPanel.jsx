@@ -112,103 +112,114 @@ function ShortageInventoryPanel({
   }
 
   return (
-    <div className="shortage-panel-overlay">
-      <div className="shortage-panel-content">
-        <h2 className="shortage-panel-title">
-          ⚠️ 재고 부족 알림
-        </h2>
-        
-        <div className="shortage-panel-warning">
-          <p style={{ margin: 0, fontWeight: 'bold' }}>
-            다음 품목의 재고가 부족합니다:
-          </p>
-        </div>
-
-        <div className="shortage-panel-table-wrapper">
-          <table className="shortage-panel-table">
-            <thead>
-              <tr>
-                <th>규격</th>
-                <th>품명</th>
-                <th>거치대</th>
-                <th>필요 수량</th>
-                <th>부족 수량</th>
-                <th>현재 재고</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shortageItems.map((item, index) => {
-                const partId = generateInventoryPartId(
-                  item.rackType || '',
-                  item.name || '',
-                  item.specification || '',
-                  item.colorWeight || ''
-                );
-                const currentStock = inventory[partId] || item.serverInventory || 0;
-
-                return (
-                  <tr key={index} className={item.isShortage ? 'shortage-row' : ''}>
-                    <td>{item.specification || '-'}</td>
-                    <td>{item.name || '-'}</td>
-                    <td className="text-center">{item.rackType || '-'}</td>
-                    <td className="text-right">{item.quantity || 0}</td>
-                    <td className="text-right shortage-amount">
-                      {item.shortage || 0}
-                    </td>
-                    <td className="text-right">
-                      {isAdmin ? (
-                        <input
-                          type="number"
-                          value={currentStock}
-                          onChange={(e) => handleQuantityChange(partId, e.target.value)}
-                          disabled={isSaving}
-                          className="shortage-input"
-                        />
-                      ) : (
-                        <span>{currentStock}</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 관리자만 재고를 직접 수정할 수 있습니다 안내 */}
-        {!isAdmin && (
-          <div className="shortage-panel-info">
-            <p>💡 관리자만 재고를 직접 수정할 수 있습니다.</p>
-          </div>
-        )}
-
-        <div className="shortage-panel-buttons">
-          {/* ✅ 버튼 3개 */}
-          {isAdmin && (
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="shortage-btn shortage-btn-save"
-            >
-              {isSaving ? '저장 중...' : '재고 저장'}
-            </button>
-          )}
-          {onConfirm && (
-            <button
-              onClick={handleProceed}
-              disabled={isSaving}
-              className="shortage-btn shortage-btn-proceed"
-            >
-              무시하고 진행
-            </button>
-          )}
-          <button
+    <div className="shortage-inventory-panel">
+      {/* 헤더 */}
+      <div className="shortage-panel-header">
+        <div className="shortage-panel-title">
+          <span>⚠️ 재고 부족 알림</span>
+          <button 
+            className="shortage-panel-close" 
             onClick={handleCancelAction}
             disabled={isSaving}
-            className="shortage-btn shortage-btn-close"
           >
-            {onCancel ? '취소 (중단)' : '닫기'}
+            ✕
           </button>
+        </div>
+        <div className="shortage-panel-subtitle">
+          다음 품목의 재고가 부족합니다
+        </div>
+      </div>
+
+      {/* 부족 품목 목록 */}
+      <div className="shortage-panel-content">
+        {shortageItems.map((item, index) => {
+          const partId = generateInventoryPartId(
+            item.rackType || '',
+            item.name || '',
+            item.specification || '',
+            item.colorWeight || ''
+          );
+          const currentStock = inventory[partId] || item.serverInventory || 0;
+
+          return (
+            <div 
+              key={index} 
+              className={`shortage-item ${item.isShortage ? 'has-shortage' : 'no-shortage'}`}
+            >
+              <div className="shortage-item-name">{item.name || '-'}</div>
+              <div className="shortage-item-specs">
+                규격: {item.specification || '-'} | 거치대: {item.rackType || '-'}
+              </div>
+
+              <div className="shortage-item-grid">
+                <div className="shortage-required">
+                  필요 수량:
+                  <span className="shortage-required-value">{item.quantity || 0}</span>
+                </div>
+                <div className="shortage-shortage">
+                  부족 수량:
+                  <span className="shortage-shortage-value">{item.shortage || 0}</span>
+                </div>
+              </div>
+
+              <div className="shortage-current-stock">
+                <div className="shortage-current-stock-row">
+                  <span className="shortage-current-stock-label">현재 재고:</span>
+                  {isAdmin ? (
+                    <input
+                      type="number"
+                      value={currentStock}
+                      onChange={(e) => handleQuantityChange(partId, e.target.value)}
+                      disabled={isSaving}
+                      className="shortage-quantity-input"
+                    />
+                  ) : (
+                    <span className={`shortage-quantity-display ${currentStock === 0 ? 'zero' : 'normal'}`}>
+                      {currentStock}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 버튼 영역 */}
+      <div className="shortage-panel-actions">
+        {isAdmin && (
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="shortage-save-button"
+          >
+            {isSaving ? '저장 중...' : '재고 저장'}
+          </button>
+        )}
+        
+        {onConfirm && (
+          <button
+            onClick={handleProceed}
+            disabled={isSaving}
+            className="shortage-proceed-button"
+          >
+            무시하고 진행
+          </button>
+        )}
+        
+        <button
+          onClick={handleCancelAction}
+          disabled={isSaving}
+          className="shortage-close-button"
+        >
+          {onCancel ? '취소 (중단)' : '닫기'}
+        </button>
+
+        {/* 관리자만 재고를 직접 수정할 수 있습니다 안내 */}
+        <div className={`shortage-permission-info ${isAdmin ? 'admin' : 'guest'}`}>
+          {isAdmin 
+            ? '💡 관리자 권한으로 재고를 수정할 수 있습니다.' 
+            : '💡 관리자만 재고를 직접 수정할 수 있습니다.'}
         </div>
       </div>
     </div>
