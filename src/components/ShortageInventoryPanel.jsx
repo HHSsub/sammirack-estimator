@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
-import inventoryService from '../services/InventoryService';
+import { inventoryService } from '../services/InventoryService';
 import './ShortageInventoryPanel.css';
 
 /**
