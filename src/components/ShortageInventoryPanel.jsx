@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
-import inventoryService from '../services/inventoryService';
+import InventoryService from '../services/InventoryService';
 import './ShortageInventoryPanel.css';
 
 /**
@@ -65,7 +65,8 @@ function ShortageInventoryPanel({
       localStorage.setItem('inventory_data', JSON.stringify(inventory));
       
       // 2. 서버 재고 동기화
-      await inventoryService.updateInventory(inventory);
+      const inventoryServiceInstance = new InventoryService();
+      await inventoryServiceInstance.updateInventory(inventory);
       
       // 3. inventoryUpdated 이벤트 발생
       window.dispatchEvent(new CustomEvent('inventoryUpdated', {
