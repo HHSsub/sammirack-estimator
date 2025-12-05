@@ -91,7 +91,6 @@ const DeliveryNoteForm = () => {
         };
       });
       
-      // ✅ customItems 병합
       const allItems = [...cartItems, ...customItems];
       
       const bomMaterials = (totalBom || []).map(m => {
@@ -111,16 +110,16 @@ const DeliveryNoteForm = () => {
         };
       });
       
-      // ✅ customMaterials 병합
       const allMaterials = [...bomMaterials, ...customMaterials];
       
+      // ✅ 수정: 강제 설정
       setFormData(prev => ({
         ...prev,
-        items: allItems.length ? allItems : prev.items,
-        materials: allMaterials.length ? allMaterials : prev.materials
+        items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
+        materials: allMaterials.length ? allMaterials : []
       }));
     }
-  }, [cart, totalBom, customItems, customMaterials, isEditMode]);  // ✅ 의존성 추가
+  }, [cart, totalBom, customItems, customMaterials, isEditMode]);
 
   // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
