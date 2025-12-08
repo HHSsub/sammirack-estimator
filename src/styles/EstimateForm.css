@@ -21,6 +21,8 @@
   padding: 6px 8px;
   box-sizing: border-box;
   resize: vertical;
+  color: #1e5cff;       /* 파란 계열 글자색 */
+  font-weight: 600;     /* 글자 굵게 */
 }
 
 .form-header h1 {
