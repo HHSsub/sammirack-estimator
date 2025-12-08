@@ -311,13 +311,29 @@ function ShortageInventoryPanel({
           </button>
         )}
         
+        {/* ✅ 강제 인쇄하기 버튼 추가 */}
         {onConfirm && (
           <button
             onClick={handleProceed}
             disabled={isSaving}
-            className="shortage-proceed-button"
+            className="shortage-force-print-button"
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#ff5722',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              marginBottom: '8px',
+              transition: 'background-color 0.2s ease'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#e64a19'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#ff5722'}
           >
-            ✅ 무시하고 진행
+            🖨️ 강제 인쇄하기
           </button>
         )}
         
@@ -326,7 +342,7 @@ function ShortageInventoryPanel({
           disabled={isSaving}
           className="shortage-close-button"
         >
-          ❌ {onCancel ? '취소 (중단)' : '닫기'}
+          ❌ {onCancel ? '취소' : '닫기'}
         </button>
 
         {/* 관리자만 재고를 직접 수정할 수 있습니다 안내 */}
@@ -335,6 +351,22 @@ function ShortageInventoryPanel({
             ? '💡 관리자 권한으로 재고를 수정할 수 있습니다.' 
             : '💡 관리자만 재고를 직접 수정할 수 있습니다.'}
         </div>
+        
+        {/* ✅ 강제 인쇄 안내 추가 */}
+        {onConfirm && (
+          <div style={{
+            marginTop: '10px',
+            padding: '10px',
+            backgroundColor: '#fff3cd',
+            border: '1px solid #ffc107',
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: '#856404'
+          }}>
+            ⚠️ <strong>강제 인쇄하기</strong>: 재고 부족해도 인쇄 진행<br/>
+            인쇄 후 재고 감소 여부를 선택할 수 있습니다.
+          </div>
+        )}
       </div>
     </div>
   );
