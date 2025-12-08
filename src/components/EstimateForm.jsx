@@ -195,71 +195,122 @@ const EstimateForm = () => {
     }));
   };
 
+// EstimateForm.jsx - handleSave 함수만 수정
+// 이 함수를 EstimateForm.jsx의 기존 handleSave 함수와 교체하세요
+  
   const handleSave = async () => {
-      if (!formData.documentNumber.trim()) {
-        alert('거래번호(문서번호)를 입력하세요.');
-        documentNumberInputRef.current?.focus();
-        return;
-      }
-      
-      // ✅ 동일 거래번호 찾기
-      let itemId;
-      let existingDoc = null;
-      
-      if (editingDocumentId) {
-        // 편집 모드: 기존 ID 재사용
-        itemId = editingDocumentId;
-      } else if (isEditMode) {
-        // 기존 편집 모드 (URL 기반)
-        itemId = id;
-      } else {
-        // ✅ 신규 작성: 동일 거래번호 검색
-        existingDoc = findDocumentByNumber(formData.documentNumber, 'estimate');
-        if (existingDoc) {
-          // 동일 거래번호 발견 -> 덮어쓰기 확인
-          const confirmOverwrite = window.confirm(
-            `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
-          );
-          if (confirmOverwrite) {
-            itemId = existingDoc.id;
-          } else {
-            return; // 취소
-          }
-        } else {
-          // 새 문서
-          itemId = Date.now();
-        }
-      }
-      
-      const storageKey = `estimate_${itemId}`;
-      
-      const newEstimate = {
-        ...formData,
-        id: itemId,
-        type: 'estimate',
-        status: formData.status || '진행 중',
-        estimateNumber: formData.documentNumber,
-        customerName: formData.companyName,
-        productType: formData.items[0]?.name || '',
-        quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
-        unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
-        totalPrice: formData.totalAmount,
-        updatedAt: new Date().toISOString(),
-        ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
-      };
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호(문서번호)를 입력하세요.');
+      documentNumberInputRef.current?.focus();
+      return;
+    }
     
+    // ✅ 저장 전 데이터 검증 로그
+    console.log('======================================');
+    console.log('📝 견적서 저장 시작');
+    console.log('======================================');
+    console.log('formData.items:', formData.items);
+    console.log('formData.materials:', formData.materials);
+    console.log('--------------------------------------');
+    console.log('items 갯수:', formData.items.length);
+    console.log('materials 갯수:', formData.materials.length);
+    console.log('--------------------------------------');
+    
+    // ✅ items 중복 체크
+    const itemNames = formData.items.map(it => it.name);
+    const duplicateItems = itemNames.filter((name, index) => itemNames.indexOf(name) !== index);
+    if (duplicateItems.length > 0) {
+      console.warn('⚠️ items에 중복 발견:', duplicateItems);
+    }
+    
+    // ✅ materials 수량 체크
+    const badMaterials = formData.materials.filter(mat => Number(mat.quantity) > 10000);
+    if (badMaterials.length > 0) {
+      console.error('❌ 비정상 수량 발견:', badMaterials);
+      const confirm = window.confirm(
+        `⚠️ 원자재에 비정상적인 수량이 있습니다!\n\n예: ${badMaterials[0].name} - ${badMaterials[0].quantity}개\n\n그래도 저장하시겠습니까?`
+      );
+      if (!confirm) return;
+    }
+    
+    // ✅ 동일 거래번호 찾기
+    let itemId;
+    let existingDoc = null;
+    
+    if (editingDocumentId) {
+      itemId = editingDocumentId;
+    } else if (isEditMode) {
+      itemId = id;
+    } else {
+      existingDoc = findDocumentByNumber(formData.documentNumber, 'estimate');
+      if (existingDoc) {
+        const confirmOverwrite = window.confirm(
+          `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
+        );
+        if (confirmOverwrite) {
+          itemId = existingDoc.id;
+        } else {
+          return;
+        }
+      } else {
+        itemId = Date.now();
+      }
+    }
+    
+    const storageKey = `estimate_${itemId}`;
+    
+    const newEstimate = {
+      ...formData,
+      id: itemId,
+      type: 'estimate',
+      status: formData.status || '진행 중',
+      estimateNumber: formData.documentNumber,
+      customerName: formData.companyName,
+      productType: formData.items[0]?.name || '',
+      quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
+      unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
+      totalPrice: formData.totalAmount,
+      updatedAt: new Date().toISOString(),
+      ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
+    };
+  
+    // ✅ 저장할 데이터 로그
+    console.log('======================================');
+    console.log('💾 저장할 데이터:');
+    console.log('======================================');
+    console.log('storageKey:', storageKey);
+    console.log('newEstimate.items:', newEstimate.items);
+    console.log('newEstimate.materials:', newEstimate.materials);
+    console.log('--------------------------------------');
+  
     // ✅ 레거시 키 저장
     localStorage.setItem(storageKey, JSON.stringify(newEstimate));
+    console.log(`✅ localStorage에 저장 완료: ${storageKey}`);
+    
+    // ✅ 즉시 확인
+    const saved = localStorage.getItem(storageKey);
+    const parsed = JSON.parse(saved);
+    console.log('--------------------------------------');
+    console.log('💾 저장 직후 확인:');
+    console.log('parsed.items:', parsed.items);
+    console.log('parsed.materials:', parsed.materials);
+    console.log('materials 갯수:', parsed.materials?.length);
     
     // ✅ 서버 동기화 저장
     const success = await saveDocumentSync(newEstimate);
     
     if (success) {
+      console.log('✅ 서버 동기화 완료');
       alert(isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.');
       window.dispatchEvent(new Event('documentsupdated'));
     } else {
+      console.error('❌ 서버 동기화 실패');
       alert('저장 중 오류가 발생했습니다.');
     }
+    
+    console.log('======================================');
+    console.log('📝 견적서 저장 완료');
+    console.log('======================================');
   };
 
   const handleExportToExcel = () => {
