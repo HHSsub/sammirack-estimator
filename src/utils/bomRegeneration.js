@@ -179,8 +179,14 @@ const appendCommonHardwareIfMissing = (base, selectedType, selectedOptions, qty)
 // ===== 메인 함수: displayName에서 BOM 재생성 =====
 /**
  * displayName 파싱하여 옵션 추출
- * 예: "파렛트랙 독립형 2580x1000 2500 L1" 
+ * 
+ * ✅ 수정 (1208): "파렛트랙 철판형" 같은 2단어 랙타입 처리
+ * 
+ * 예1: "파렛트랙 독립형 2580x1000 2500 L1" 
  * → { type: "파렛트랙", formType: "독립형", size: "2580x1000", height: "2500", level: "L1" }
+ * 
+ * 예2: "파렛트랙 철판형 독립형 2580x1000 2500 L1"
+ * → { type: "파렛트랙 철판형", formType: "독립형", size: "2580x1000", height: "2500", level: "L1" }
  */
 export const parseDisplayNameToOptions = (displayName) => {
   if (!displayName) return null;
@@ -188,15 +194,32 @@ export const parseDisplayNameToOptions = (displayName) => {
   const parts = displayName.trim().split(/\s+/);
   if (parts.length < 4) return null;
 
-  return {
-    type: parts[0],           // 파렛트랙
-    formType: parts[1],        // 독립형
-    size: parts[2],            // 2580x1000
-    height: parts[3],          // 2500
-    level: parts[4] || '',     // L1
-    color: parts[5] || '',     // 색상 (있으면)
-    weight: parts[6] || ''     // 무게 (하이랙 등)
-  };
+  // ✅ "파렛트랙 철판형" 같은 2단어 랙타입 처리
+  let type, formType, size, height, level, color, weight;
+  
+  if (parts[0] === "파렛트랙" && parts[1] === "철판형") {
+    // "파렛트랙 철판형 독립형 2580x1000 2500 L1"
+    type = "파렛트랙 철판형";
+    formType = parts[2];  // 독립형
+    size = parts[3];      // 2580x1000
+    height = parts[4];    // 2500
+    level = parts[5] || '';
+    color = parts[6] || '';
+    weight = parts[7] || '';
+  } else {
+    // 일반 랙 (1단어 랙타입)
+    type = parts[0];      // 파렛트랙, 경량랙, 중량랙, 하이랙, 스텐랙
+    formType = parts[1];  // 독립형
+    size = parts[2];      // 2580x1000
+    height = parts[3];    // 2500
+    level = parts[4] || '';
+    color = parts[5] || '';
+    weight = parts[6] || '';
+  }
+
+  console.log('🔍 displayName 파싱:', { displayName, type, formType, size, height, level });
+
+  return { type, formType, size, height, level, color, weight };
 };
 
 /**
