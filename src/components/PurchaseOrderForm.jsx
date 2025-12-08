@@ -434,24 +434,50 @@ const handlePrint = async () => {
 
 // ✅ 실제 인쇄 로직 분리
 const proceedWithPrint = async () => {
-  // ✅ 브라우저 인쇄 다이얼로그 표시
+  // ✅ 1. 브라우저 인쇄 다이얼로그 표시
   window.print();
 
-  // ✅ 인쇄 다이얼로그가 닫힌 후 재고 감소
+  // ✅ 2. 인쇄 다이얼로그가 닫힌 후 재고 감소 여부 확인
   setTimeout(async () => {
     const confirmDeduct = window.confirm(
-      '인쇄가 완료되었습니까?\n\n확인 = 재고 감소\n취소 = 재고 유지'
+      '인쇄가 완료되었습니까?\n\n' +
+      '✅ 확인: 재고 감소 (부족한 부품은 0으로 처리)\n' +
+      '❌ 취소: 재고 유지'
     );
     
     if (confirmDeduct && cart && cart.length > 0) {
+      // ✅ 재고 감소 실행
       const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
       
       if (result.success) {
-        if (result.warnings && result.warnings.length > 0) {
-          alert(`✅ 재고가 감소되었습니다.\n⚠️ ${result.warnings.length}개 부품 재고 부족`);
-        } else {
-          alert('✅ 재고가 정상적으로 감소되었습니다.');
+        let message = '✅ 재고가 감소되었습니다.\n\n';
+        
+        // ✅ 정상 감소된 부품
+        const normalParts = result.deductedParts.filter(p => !p.wasShortage);
+        const shortageParts = result.deductedParts.filter(p => p.wasShortage);
+        
+        if (normalParts.length > 0) {
+          message += `📦 정상 감소: ${normalParts.length}개 부품\n`;
         }
+        
+        // ✅ 부족하여 0으로 처리된 부품
+        if (shortageParts.length > 0) {
+          message += `⚠️ 재고 부족 (0으로 처리): ${shortageParts.length}개 부품\n\n`;
+          
+          // 최대 3개만 표시
+          const displayParts = shortageParts.slice(0, 3);
+          displayParts.forEach(p => {
+            message += `  • ${p.name}: ${p.deducted}개 감소 → 재고 0\n`;
+          });
+          
+          if (shortageParts.length > 3) {
+            message += `  • 외 ${shortageParts.length - 3}개 부품...\n`;
+          }
+          
+          message += '\n재고 관리 탭에서 부족한 부품을 확인하세요.';
+        }
+        
+        alert(message);
       } else {
         alert(`❌ 재고 감소 실패: ${result.message}`);
       }
