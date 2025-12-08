@@ -391,6 +391,7 @@ button.add-material-btn {
 /* PRINT */
 @media print {
   .no-print,
+  .shortage-inventory-panel,
   .item-controls.no-print,
   button.add-item-btn,
   button.add-material-btn { 
