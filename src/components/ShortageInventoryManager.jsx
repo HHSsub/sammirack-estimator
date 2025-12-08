@@ -32,18 +32,23 @@ const ShortageInventoryManager = ({ isAdmin = false }) => {
 
   // 재고 부족 이벤트 핸들러
   const handleShowShortagePanel = useCallback((event) => {
-    const { shortageItems, documentType, timestamp } = event.detail;
+    const { shortageItems, documentType, timestamp, onConfirm, onCancel, allBomItems } = event.detail;
     
     console.log('📋 재고 부족 패널 표시 요청:', {
       shortageItems,
       documentType,
-      timestamp
+      timestamp,
+      hasOnConfirm: !!onConfirm,
+      hasOnCancel: !!onCancel
     });
     
     setShortageData({
       shortageItems,
       documentType,
-      timestamp
+      timestamp,
+      onConfirm,
+      onCancel,
+      allBomItems
     });
     setIsPanelVisible(true);
   }, []);
