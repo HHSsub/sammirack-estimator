@@ -77,9 +77,20 @@ const HistoryPage = () => {
       // ✅ 서버 동기화된 문서에서 로드 (삭제되지 않은 것만)
       const syncedDocuments = loadAllDocuments(false);
       
-      // Sort by creation date (newest first)
+      // ✅ Sort by updatedAt first, then by date
       syncedDocuments.sort((a, b) => {
-        return new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date);
+        const dateA = new Date(a.updatedAt || a.date || 0);
+        const dateB = new Date(b.updatedAt || b.date || 0);
+        
+        // 1순위: 최종 수정 날짜 최신순
+        if (dateB.getTime() !== dateA.getTime()) {
+          return dateB - dateA;
+        }
+        
+        // 2순위: 생성 날짜 최신순
+        const createA = new Date(a.date || 0);
+        const createB = new Date(b.date || 0);
+        return createB - createA;
       });
       
       setHistoryItems(syncedDocuments);
@@ -335,7 +346,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           if (bom.length === 0) {
             const qty = Number(item.quantity) || 1;
             const totalPrice = Number(item.totalPrice) || 0;
-            const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
+            const unitPrice = Number(item.unitPrice) || (totalPrice > 0 ? Math.round(totalPrice / qty) : 0);
             
             console.log('  📦 기타 품목:', item.name, '단가:', unitPrice);
             
@@ -1239,8 +1250,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         <div className="header-cell document-type">유형</div>
         <div className="header-cell document-id">거래번호</div>
         <div className="header-cell date">날짜</div>
-        <div className="header-cell customer">고객명</div>
-        <div className="header-cell creator">생성자</div>
+        <div className="header-cell updated-date">최종 수정</div>
         <div className="header-cell product">제품</div>
         <div className="header-cell price">금액</div>
         <div className="header-cell status">상태</div>
@@ -1270,12 +1280,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
             <div className="item-cell date">
               {formatDate(item.date)}
             </div>
-            <div className="item-cell customer">
-              {item.customerName}
-            </div>
-            {/* ✅ 생성자 표시 */}
-            <div className="item-cell creator" title={item.createdBy || ''}>
-              {item.createdBy ? item.createdBy.split('@')[0] : '-'}
+            <div className="item-cell updated-date">
+              {item.updatedAt ? formatDateTime(item.updatedAt) : '-'}
             </div>
             <div className="item-cell product">
               {item.productType}
