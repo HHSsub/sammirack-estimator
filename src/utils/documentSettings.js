@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS = {
   companyName: '삼미앵글랙산업',
   ceo: '박이삭',
   address: '경기도 광명시 원노온사로 39, 철제 스틸하우스 1',
-  tel: '(02)2611-4597',
+  tel: '010-9548-9578 010-4311-7733',
   fax: '(02)2611-4595',
   website: 'http://www.ssmake.com',
   updatedAt: new Date().toISOString()
