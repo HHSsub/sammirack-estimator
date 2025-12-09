@@ -23,6 +23,7 @@ import { generatePartId } from '../utils/unifiedPriceManager';
  * - Edit and delete documents including delivery notes
  * - ✅ 서버 동기화 (GitHub Gist)
  * - ✅ 삭제된 문서 목록 보기 및 복구
+ * - ✅ 컬럼별 정렬 기능
  */
 const HistoryPage = () => {
   const navigate = useNavigate();
@@ -46,6 +47,9 @@ const HistoryPage = () => {
   const [lastSyncTime, setLastSyncTime] = useState(null);
   // ✅ 삭제된 문서 목록
   const [deletedItems, setDeletedItems] = useState([]);
+  // ✅ 정렬 상태
+  const [sortColumn, setSortColumn] = useState('updatedAt'); // 기본: 최종수정일
+  const [sortDirection, setSortDirection] = useState('desc'); // 기본: 내림차순
 
   // Load history on component mount
   useEffect(() => {
@@ -77,24 +81,7 @@ const HistoryPage = () => {
       // ✅ 서버 동기화된 문서에서 로드 (삭제되지 않은 것만)
       const syncedDocuments = loadAllDocuments(false);
       
-      // ✅ Sort by updatedAt first, then by date
-      syncedDocuments.sort((a, b) => {
-        const dateA = new Date(a.updatedAt || a.date || 0);
-        const dateB = new Date(b.updatedAt || b.date || 0);
-        
-        // 1순위: 최종 수정 날짜 최신순
-        if (dateB.getTime() !== dateA.getTime()) {
-          return dateB - dateA;
-        }
-        
-        // 2순위: 생성 날짜 최신순
-        const createA = new Date(a.date || 0);
-        const createB = new Date(b.date || 0);
-        return createB - createA;
-      });
-      
       setHistoryItems(syncedDocuments);
-      setFilteredItems(syncedDocuments);
       setLastSyncTime(new Date());
       
       console.log(`📄 문서 로드 완료: ${syncedDocuments.length}개`);
@@ -134,6 +121,79 @@ const HistoryPage = () => {
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  /**
+   * ✅ 컬럼별 정렬 처리
+   */
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // 같은 컬럼 클릭 시 방향 토글
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // 다른 컬럼 클릭 시 해당 컬럼으로 변경, 기본 내림차순
+      setSortColumn(column);
+      setSortDirection('desc');
+    }
+  };
+
+  /**
+   * ✅ 정렬된 아이템 반환
+   */
+  const getSortedItems = (items) => {
+    const sorted = [...items].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortColumn) {
+        case 'documentType':
+          aValue = a.type || '';
+          bValue = b.type || '';
+          break;
+        case 'documentNumber':
+          aValue = a.type === 'estimate' ? a.estimateNumber : 
+                   a.type === 'purchase' ? a.purchaseNumber : 
+                   a.documentNumber || '';
+          bValue = b.type === 'estimate' ? b.estimateNumber : 
+                   b.type === 'purchase' ? b.purchaseNumber : 
+                   b.documentNumber || '';
+          break;
+        case 'date':
+          aValue = new Date(a.date || 0).getTime();
+          bValue = new Date(b.date || 0).getTime();
+          break;
+        case 'updatedAt':
+          aValue = new Date(a.updatedAt || a.date || 0).getTime();
+          bValue = new Date(b.updatedAt || b.date || 0).getTime();
+          break;
+        case 'product':
+          aValue = a.productType || '';
+          bValue = b.productType || '';
+          break;
+        case 'price':
+          aValue = a.totalPrice || 0;
+          bValue = b.totalPrice || 0;
+          break;
+        case 'status':
+          aValue = a.status || '';
+          bValue = b.status || '';
+          break;
+        default:
+          aValue = new Date(a.updatedAt || a.date || 0).getTime();
+          bValue = new Date(b.updatedAt || b.date || 0).getTime();
+      }
+
+      // 문자열 비교
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue, 'ko') 
+          : bValue.localeCompare(aValue, 'ko');
+      }
+
+      // 숫자 비교
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+
+    return sorted;
   };
 
   /**
@@ -991,6 +1051,14 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   };
 
   /**
+   * ✅ 정렬 아이콘 표시
+   */
+  const renderSortIcon = (column) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  /**
    * Render item details view
    */
   const renderItemDetails = () => {
@@ -1244,87 +1312,105 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   /**
    * Render list of history items
    */
-  const renderItemsList = () => (
-    <div className="history-list">
-      <div className="list-header">
-        <div className="header-cell document-type">유형</div>
-        <div className="header-cell document-id">거래번호</div>
-        <div className="header-cell date">날짜</div>
-        <div className="header-cell updated-date">최종 수정</div>
-        <div className="header-cell product">제품</div>
-        <div className="header-cell price">금액</div>
-        <div className="header-cell status">상태</div>
-        <div className="header-cell actions">작업</div>
-      </div>
-      
-      {filteredItems.length === 0 ? (
-        <div className="no-items">
-          <p>표시할 항목이 없습니다.</p>
-        </div>
-      ) : (
-        filteredItems.map((item) => (
-          <div 
-            key={`${item.type}_${item.id}`}
-            className="list-item"
-            onClick={() => {
-              setSelectedItem(item);
-              setView('details');
-            }}
-          >
-            <div className="item-cell document-type">
-              {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}
-            </div>
-            <div className="item-cell document-id">
-              {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
-            </div>
-            <div className="item-cell date">
-              {formatDate(item.date)}
-            </div>
-            <div className="item-cell updated-date">
-              {item.updatedAt ? formatDateTime(item.updatedAt) : '-'}
-            </div>
-            <div className="item-cell product">
-              {item.productType}
-            </div>
-            <div className="item-cell price">
-              {item.totalPrice?.toLocaleString()}원
-            </div>
-            <div className="item-cell status">
-              <span className={`status-badge ${getStatusClass(item.status)}`}>
-                {item.status || '진행 중'}
-              </span>
-            </div>
-            <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
-              <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
-                ✏️
-              </button>
-              <button title="인쇄" onClick={(e) => { e.stopPropagation(); printItem(item); }}>
-                🖨️
-              </button>
-              {item.type === 'estimate' && (
-                <button 
-                  title="청구서 생성" 
-                  onClick={(e) => { e.stopPropagation(); convertToPurchase(item); }}
-                >
-                  📋
-                </button>
-              )}
-              <button 
-                title="삭제" 
-                className="delete-icon"
-                onClick={(e) => { e.stopPropagation(); deleteItem(item); }}
-              >
-                🗑️
-              </button>
-            </div>
+  const renderItemsList = () => {
+    const sortedItems = getSortedItems(filteredItems);
+    
+    return (
+      <div className="history-list">
+        <div className="list-header">
+          <div className="header-cell document-type sortable" onClick={() => handleSort('documentType')}>
+            유형{renderSortIcon('documentType')}
           </div>
-        ))
-      )}
-    </div>
-  );
+          <div className="header-cell document-id sortable" onClick={() => handleSort('documentNumber')}>
+            거래번호{renderSortIcon('documentNumber')}
+          </div>
+          <div className="header-cell date sortable" onClick={() => handleSort('date')}>
+            날짜{renderSortIcon('date')}
+          </div>
+          <div className="header-cell updated-date sortable" onClick={() => handleSort('updatedAt')}>
+            최종 수정{renderSortIcon('updatedAt')}
+          </div>
+          <div className="header-cell product sortable" onClick={() => handleSort('product')}>
+            제품{renderSortIcon('product')}
+          </div>
+          <div className="header-cell price sortable" onClick={() => handleSort('price')}>
+            금액{renderSortIcon('price')}
+          </div>
+          <div className="header-cell status sortable" onClick={() => handleSort('status')}>
+            상태{renderSortIcon('status')}
+          </div>
+          <div className="header-cell actions">작업</div>
+        </div>
+        
+        {sortedItems.length === 0 ? (
+          <div className="no-items">
+            <p>표시할 항목이 없습니다.</p>
+          </div>
+        ) : (
+          sortedItems.map((item) => (
+            <div 
+              key={`${item.type}_${item.id}`}
+              className="list-item"
+              onClick={() => {
+                setSelectedItem(item);
+                setView('details');
+              }}
+            >
+              <div className="item-cell document-type">
+                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}
+              </div>
+              <div className="item-cell document-id">
+                {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+              </div>
+              <div className="item-cell date">
+                {formatDate(item.date)}
+              </div>
+              <div className="item-cell updated-date">
+                {item.updatedAt ? formatDateTime(item.updatedAt) : '-'}
+              </div>
+              <div className="item-cell product">
+                {item.productType}
+              </div>
+              <div className="item-cell price">
+                {item.totalPrice?.toLocaleString()}원
+              </div>
+              <div className="item-cell status">
+                <span className={`status-badge ${getStatusClass(item.status)}`}>
+                  {item.status || '진행 중'}
+                </span>
+              </div>
+              <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
+                <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
+                  ✏️
+                </button>
+                <button title="인쇄" onClick={(e) => { e.stopPropagation(); printItem(item); }}>
+                  🖨️
+                </button>
+                {item.type === 'estimate' && (
+                  <button 
+                    title="청구서 생성" 
+                    onClick={(e) => { e.stopPropagation(); convertToPurchase(item); }}
+                  >
+                    📋
+                  </button>
+                )}
+                <button 
+                  title="삭제" 
+                  className="delete-icon"
+                  onClick={(e) => { e.stopPropagation(); deleteItem(item); }}
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
 
   return (
-    <div className="history-page">
+    <div className="history-page" style={{ padding: '20px 5%' }}>
       {view === 'list' && (
         <>
           <div className="page-header">
