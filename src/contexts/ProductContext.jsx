@@ -1141,11 +1141,35 @@ export const ProductProvider=({children})=>{
   const updateCartItemQuantity=(id,nextQtyRaw)=>{
     setCart(prev=>prev.map(item=>{
       if(item.id!==id) return item;
-      const nextQty=Math.max(1,parseInt(nextQtyRaw)||1);
-      return {...item,quantity:nextQty};
+      
+      const oldQty = Number(item.quantity) || 1;
+      const nextQty = Math.max(1, parseInt(nextQtyRaw) || 1);
+      
+      // ✅ 수량 변경 비율 계산
+      const ratio = nextQty / oldQty;
+      
+      // ✅ BOM 수량도 비례하여 조정
+      const newBom = item.bom && Array.isArray(item.bom) 
+        ? item.bom.map(bomItem => ({
+            ...bomItem,
+            quantity: Math.round((Number(bomItem.quantity) || 0) * ratio),
+            totalPrice: Math.round((Number(bomItem.totalPrice) || 0) * ratio)
+          }))
+        : item.bom;
+      
+      // ✅ price도 비례하여 조정 (customPrice 없을 때만)
+      const newPrice = item.customPrice && item.customPrice > 0
+        ? item.customPrice * nextQty
+        : Math.round((Number(item.price) || 0) * ratio);
+      
+      return {
+        ...item,
+        quantity: nextQty,
+        bom: newBom,
+        price: newPrice
+      };
     }));
   };
-
   const updateCartItemPriceDirect=(id,newPrice)=>{
     setCart(prev=>prev.map(item=>{
       if(item.id!==id) return item;
