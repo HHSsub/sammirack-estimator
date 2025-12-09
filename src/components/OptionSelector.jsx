@@ -440,8 +440,10 @@ export default function OptionSelector() {
           <label>가격 직접입력</label>
           <input
             type="number"
-            value={customPrice}
+            placeholder="0"
+            value={customPrice > 0 ? customPrice : ''}
             onChange={e => setCustomPrice(Number(e.target.value) || 0)}
+            onFocus={(e) => e.target.select()}
           />
         </div>
       </div>
