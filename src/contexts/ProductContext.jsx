@@ -692,7 +692,7 @@ export const ProductProvider=({children})=>{
     // ✅ 최종 가격: basePrice (BOM에 이미 사용자 정의 자재 포함됨)
     const finalPrice = Math.round(basePrice * (applyRate / 100));
     
-    console.log(`💵 최종 가격: ${finalPrice}원 (BOM기반: ${basePrice}, 커스텀: ${customExtra}, 적용률: ${applyRate}%)`);
+    console.log(`💵 최종 가격: ${finalPrice}원 (BOM기반: ${basePrice}, 적용률: ${applyRate}%)`);
     
     return finalPrice;
   }, [selectedType, selectedOptions, quantity, customPrice, applyRate, data, bomData, extraProducts, extraOptionsSel, customMaterials, getEffectivePrice, adminPricesVersion]);
