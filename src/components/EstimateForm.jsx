@@ -628,7 +628,7 @@ const handleSendFax = async (faxNumber) => {
         </tbody>
       </table>
 
-      <div className="item-controls no-print">
+      <div className="item-controls no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
         <button 
           type="button" 
           onClick={addItem}  // ✅ 단순화
