@@ -258,7 +258,7 @@ const DeliveryNoteForm = () => {
     }
     setFormData(p=>({...p,materials}));
   };
-  const addMat=()=>setFormData(p=>({...p,materials:[...p.materials,{name:'',specification:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
+  const addMaterial=()=>setFormData(p=>({...p,materials:[...p.materials,{name:'',specification:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
   const rmMat=(idx)=>setFormData(p=>({...p,materials:p.materials.filter((_,i)=>i!==idx)}));
 
 const handleSave = async () => {
@@ -636,7 +636,7 @@ const handleSendFax = async (faxNumber) => {
         </tbody>
       </table>
       <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
-        <button type="button" onClick={addMat} className="add-item-btn">+ 자재 추가</button>
+        <button type="button" onClick={addMaterial} className="add-item-btn">+ 자재 추가</button>
       </div>
 
       <table className="form-table total-table">
