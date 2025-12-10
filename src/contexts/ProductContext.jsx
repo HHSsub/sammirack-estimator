@@ -746,46 +746,50 @@ export const ProductProvider=({children})=>{
        return sortBOMByMaterialRule([...withAdmin, ...makeExtraOptionBOM(), ...customBOM]);
       };
 
-      const makeExtraOptionBOM = () => {
-            const extraBOM = [];
-            const extraOptionsPrices = loadExtraOptionsPrices();
-            const q = Number(quantity) || 1;  // ✅ 사용자 입력 수량
+const makeExtraOptionBOM = () => {
+      const extraBOM = [];
+      const extraOptionsPrices = loadExtraOptionsPrices();
+      const q = Number(quantity) || 1;
+      
+      (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
+        if (Array.isArray(arr)) {
+          arr.forEach(opt => {
+            // ✅ "기타자재" 제외 (사용자 정의 자재는 별도 처리)
+            if (opt.name && opt.name.includes('기타자재')) {
+              return;
+            }
             
-            (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
-              if (Array.isArray(arr)) {
-                arr.forEach(opt => {
-                  if (extraOptionsSel.includes(opt.id)) {
-                    const cleanName = opt.name.replace(/\s*\(.*\)\s*/g, '').trim();
-                    const partIdForPrice = generatePartId({ rackType: selectedType, name: cleanName, specification: '' });
-        
-                    const adminPrices = loadAdminPrices();
-                    const adminPriceEntry = adminPrices[partIdForPrice];
-                    
-                    const effectivePrice = adminPriceEntry && adminPriceEntry.price > 0 
-                      ? adminPriceEntry.price 
-                      : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0);
-                    
-                    // ✅ 추가옵션 자체 수량 * 사용자 입력 수량
-                    const optionQty = Number(opt.quantity) || 1;
-                    const totalQty = optionQty * q;
-                    
-                    extraBOM.push({
-                      rackType: selectedType,
-                      size: selectedOptions.size || "",
-                      name: opt.name,
-                      partId: partIdForPrice,
-                      specification: opt.specification || "",
-                      note: opt.note || "",
-                      quantity: totalQty,  // ✅ 수정: 수량 곱하기
-                      unitPrice: effectivePrice,
-                      totalPrice: effectivePrice * totalQty  // ✅ 수정: 수량 곱하기
-                    });
-                  }
-                });
-              }
-            });
-            return extraBOM;
-          };
+            if (extraOptionsSel.includes(opt.id)) {
+              const cleanName = opt.name.replace(/\s*\(.*\)\s*/g, '').trim();
+              const partIdForPrice = generatePartId({ rackType: selectedType, name: cleanName, specification: '' });
+  
+              const adminPrices = loadAdminPrices();
+              const adminPriceEntry = adminPrices[partIdForPrice];
+              
+              const effectivePrice = adminPriceEntry && adminPriceEntry.price > 0 
+                ? adminPriceEntry.price 
+                : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0);
+              
+              const optionQty = Number(opt.quantity) || 1;
+              const totalQty = optionQty * q;
+              
+              extraBOM.push({
+                rackType: selectedType,
+                size: selectedOptions.size || "",
+                name: opt.name,
+                partId: partIdForPrice,
+                specification: opt.specification || "",
+                note: opt.note || "",
+                quantity: totalQty,
+                unitPrice: effectivePrice,
+                totalPrice: effectivePrice * totalQty
+              });
+            }
+          });
+        }
+      });
+      return extraBOM;
+    };
 
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
