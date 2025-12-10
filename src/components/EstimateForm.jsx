@@ -69,16 +69,20 @@ const EstimateForm = () => {
 
   // ✅ 관리자 체크 및 전역 설정 로드
   useEffect(() => {
-    const userInfoStr = localStorage.getItem('currentUser');
-    console.log(userInfoStr);
-    if (userInfoStr) {
-      try {
-        const userInfo = JSON.parse(userInfoStr);
-        setIsAdmin(userInfo.role === 'admin' || userInfo.username === 'admin');
-      } catch (e) {
-        setIsAdmin(false);
+      const userInfoStr = localStorage.getItem('currentUser');
+      console.log(userInfoStr);
+      if (userInfoStr) {
+        try {
+          const userInfo = JSON.parse(userInfoStr);
+          setIsAdmin(userInfo.role === 'admin' || userInfo.username === 'admin');
+        } catch (e) {
+          setIsAdmin(false);
+        }
       }
-    }
+      
+      const globalSettings = getDocumentSettings();
+      setCurrentGlobalSettings(globalSettings);
+    }, []);
   
   useEffect(() => {
     if (isEditMode) {
