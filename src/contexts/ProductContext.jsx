@@ -727,11 +727,24 @@ export const ProductProvider=({children})=>{
     // const baseWithAdminPrices = base.map(applyAdminEditPrice);
     // return sortBOMByMaterialRule([...baseWithAdminPrices, ...makeExtraOptionBOM()]);
 
-    // ✅ 항상 정규화 → 그 다음 관리자 단가 적용 (순서 보장)
+      // ✅ 항상 정규화 → 그 다음 관리자 단가 적용 (순서 보장)
        const normalized = base.map(r => ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) }));
        const withAdmin = normalized.map(applyAdminEditPrice);
-       return sortBOMByMaterialRule([...withAdmin, ...makeExtraOptionBOM()]);
-  };
+       
+       // ✅ 사용자 정의 자재 추가 (경량랙 전용)
+       const customBOM = customMaterials.map(cm => ({
+         rackType: selectedType,
+         size: sz,
+         name: cm.name,
+         specification: '사용자 정의',
+         note: '사용자 직접 추가',
+         quantity: q,  // 사용자 입력 수량 적용
+         unitPrice: Number(cm.price) || 0,
+         totalPrice: (Number(cm.price) || 0) * q
+       }));
+       
+       return sortBOMByMaterialRule([...withAdmin, ...makeExtraOptionBOM(), ...customBOM]);
+      };
 
       const makeExtraOptionBOM = () => {
             const extraBOM = [];
