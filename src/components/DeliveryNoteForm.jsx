@@ -593,9 +593,11 @@ const handleSendFax = async (faxNumber) => {
         </tbody>
       </table>
 
-      <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
-        <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
-      </div>
+      {!(showFaxModal || showSettingsModal) && (
+        <div className="item-controls no-print" style={{marginBottom:18}}>
+          <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
+        </div>
+      )}
 
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>원자재 명세서</h3>
       <table className="form-table bom-table">
