@@ -471,8 +471,8 @@ const handleSendFax = async (faxNumber) => {
             onClick={() => setShowSettingsModal(true)}
             style={{
               position: 'fixed',
-              top: '80px',
-              left: '20px',
+              top: '10px',
+              left: '10px',
               padding: '10px 18px',
               backgroundColor: '#6c757d',
               color: 'white',
@@ -665,7 +665,7 @@ const handleSendFax = async (faxNumber) => {
         />
       </div>
 
-      <div className="form-actions no-print" style={{ display: showFaxModal ? 'none' : 'flex' }}>
+      <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
         <button type="button" onClick={handleSave} className="save-btn">저장하기</button>
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
