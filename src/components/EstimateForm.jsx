@@ -70,6 +70,8 @@ const EstimateForm = () => {
   // ✅ 관리자 체크 및 전역 설정 로드
   useEffect(() => {
     const username = localStorage.getItem('username');
+    console.log('👤 현재 사용자:', username);
+    console.log('👤 isAdmin:', username === 'admin');
     setIsAdmin(username === 'admin');
     
     const globalSettings = getDocumentSettings();
@@ -457,28 +459,29 @@ const handleSendFax = async (faxNumber) => {
   return (
     <div className="estimate-form-container">
       {/* ✅ 문서 양식 수정 버튼 (관리자만) */}
-      {isAdmin && (
-        <button
-          className="document-settings-btn no-print"
-          onClick={() => setShowSettingsModal(true)}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            padding: '8px 16px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '600',
-            zIndex: 100
-          }}
-        >
-          ⚙️ 문서 양식 수정
-        </button>
-      )}
+        {isAdmin && (
+          <button
+            className="document-settings-btn no-print"
+            onClick={() => setShowSettingsModal(true)}
+            style={{
+              position: 'fixed',
+              top: '80px',
+              left: '20px',
+              padding: '10px 18px',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '600',
+              zIndex: 9999,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+            }}
+          >
+            ⚙️ 문서 양식 수정
+          </button>
+        )}
       <div className="form-header">
         <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
