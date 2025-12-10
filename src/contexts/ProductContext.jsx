@@ -732,7 +732,7 @@ export const ProductProvider=({children})=>{
          size: sz,
          name: cm.name,
          specification: '',
-         note: '사용자 직접 추가',
+         note: '추가 옵션',
          quantity: q,  // 사용자 입력 수량 적용
          unitPrice: Number(cm.price) || 0,
          totalPrice: (Number(cm.price) || 0) * q
