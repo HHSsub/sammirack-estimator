@@ -731,7 +731,7 @@ export const ProductProvider=({children})=>{
          rackType: selectedType,
          size: sz,
          name: cm.name,
-         specification: '사용자 정의',
+         specification: '',
          note: '사용자 직접 추가',
          quantity: q,  // 사용자 입력 수량 적용
          unitPrice: Number(cm.price) || 0,
