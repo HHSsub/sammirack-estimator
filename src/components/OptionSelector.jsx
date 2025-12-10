@@ -462,7 +462,9 @@ export default function OptionSelector() {
           {extraCatList.length > 0 && (
             <div>
               <h4>기타추가옵션</h4>
-              {extraCatList.map(([cat, arr]) => (
+                {extraCatList
+                  .filter(([cat]) => cat !== '기타자재')  // ✅ "기타자재" 카테고리 제외
+                  .map(([cat, arr]) => (
                 <div key={cat} style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 4 }}>
                     {cat}
