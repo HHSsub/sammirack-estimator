@@ -6,6 +6,8 @@ import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager'
 import '../styles/PurchaseOrderForm.css';
 import { generatePartId, generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { getDocumentSettings } from '../utils/documentSettings';
+import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
 
@@ -28,7 +30,14 @@ const PurchaseOrderForm = () => {
   const documentNumberInputRef = useRef(null);
   const adminPricesRef = useRef({}); // 최신 관리자 단가 캐시
   const cartInitializedRef = useRef(false);  // ← 추가
-
+  
+  // ✅ 관리자 체크
+  const [isAdmin, setIsAdmin] = useState(false);
+  // ✅ 설정 모달
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  // ✅ 현재 전역 설정
+  const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
+  
   // ✅ FAX 관련 state 추가
   const [showFaxModal, setShowFaxModal] = useState(false);
   const [pdfBlobURL, setPdfBlobURL] = useState(null);
@@ -59,9 +68,26 @@ const PurchaseOrderForm = () => {
     tax: 0,
     totalAmount: 0,
     notes: editingDocumentData.notes || estimateData.notes || '',
-    topMemo: editingDocumentData.topMemo || estimateData.topMemo || ''
+    topMemo: editingDocumentData.topMemo || estimateData.topMemo || '',
+    documentSettings: null  // ✅ 이 문서의 회사정보
   });
 
+  // ✅ 관리자 체크 및 전역 설정 로드
+  useEffect(() => {
+    const userInfoStr = localStorage.getItem('currentUser');
+    if (userInfoStr) {
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        setIsAdmin(userInfo.role === 'admin' || userInfo.username === 'admin');
+      } catch (e) {
+        setIsAdmin(false);
+      }
+    }
+    
+    const globalSettings = getDocumentSettings();
+    setCurrentGlobalSettings(globalSettings);
+  }, []);
+  
   // 기존 저장 문서 로드
   useEffect(() => {
     if (isEditMode && id) {
@@ -128,11 +154,13 @@ const PurchaseOrderForm = () => {
             // ✅ 즉시 저장 (손상된 데이터 덮어쓰기)
             localStorage.setItem(storageKey, JSON.stringify(data));
           }
-          
-          setFormData(data);
-        } catch(e) {
-          console.error('청구서 로드 실패:', e);
-        }
+          setFormData({
+              ...data,
+              documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
+            });
+          } catch(e) {
+            console.error('청구서 로드 실패:', e);
+          }
       }
     }
   }, [id, isEditMode]);
@@ -253,7 +281,8 @@ const PurchaseOrderForm = () => {
   }, [formData.items, formData.materials]);
 
 
-
+  // ✅ 표시용 설정
+  const displaySettings = formData.documentSettings || currentGlobalSettings || PROVIDER;
   const updateFormData = (f, v) => setFormData(prev => ({ ...prev, [f]: v }));
 
   // 품목 편집
@@ -347,6 +376,10 @@ const PurchaseOrderForm = () => {
       type: 'purchase',
       status: formData.status || '진행 중',
       purchaseNumber: formData.documentNumber,
+      // ✅ 문서 설정: 편집=기존유지, 신규=현재전역설정
+      documentSettings: (existingDoc || isEditMode || editingDocumentId) 
+        ? (formData.documentSettings || currentGlobalSettings)
+        : currentGlobalSettings,
       customerName: formData.companyName,
       productType: formData.items[0]?.name || '',
       quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
@@ -751,6 +784,30 @@ const checkInventoryAvailability = async (cartItems) => {
 
   return (
     <div className="purchase-order-form-container">
+      {/* ✅ 문서 양식 수정 버튼 (관리자만) */}
+      {isAdmin && (
+        <button
+          className="document-settings-btn no-print"
+          onClick={() => setShowSettingsModal(true)}
+          style={{
+            position: 'fixed',
+            top: '10px',
+            left: '10px',
+            padding: '10px 18px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            zIndex: 9999,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+          }}
+        >
+          ⚙️ 문서 양식 수정
+        </button>
+      )}
       <div className="form-header">
         <h1>청&nbsp;구&nbsp;서</h1>
       </div>
@@ -788,7 +845,7 @@ const checkInventoryAvailability = async (cartItems) => {
                 </div>
               </td>
               <td className="label">사업자등록번호</td>
-              <td>{PROVIDER.bizNumber}</td>
+              <td>{displaySettings.bizNumber}</td>
             </tr>
             <tr>
               <td className="label">사업자등록번호</td>
@@ -801,7 +858,7 @@ const checkInventoryAvailability = async (cartItems) => {
                 />
               </td>
               <td className="label">상호명</td>
-              <td>{PROVIDER.companyName}</td>
+              <td>{displaySettings.companyName}</td>
             </tr>
             <tr>
               <td className="label">상호명</td>
@@ -816,7 +873,7 @@ const checkInventoryAvailability = async (cartItems) => {
               <td className="label">대표자</td>
               <td className="rep-cell" style={{whiteSpace:'nowrap'}}>
                 <span className="ceo-inline">
-                  <span className="ceo-name">{PROVIDER.ceo}</span>
+                  <span className="ceo-name">{displaySettings.ceo}</span>
                   {PROVIDER.stampImage && (
                     <img
                       src={PROVIDER.stampImage}
@@ -838,19 +895,19 @@ const checkInventoryAvailability = async (cartItems) => {
                 />
               </td>
               <td className="label">소재지</td>
-              <td>{PROVIDER.address}</td>
+              <td>{displaySettings.address}</td>
             </tr>
             <tr>
               <td className="label">TEL</td>
-              <td>{PROVIDER.tel}</td>
+              <td>{displaySettings.tel}</td>
             </tr>
             <tr>
               <td className="label">홈페이지</td>
-              <td>{PROVIDER.homepage}</td>
+              <td>{displaySettings.website}</td>
             </tr>
             <tr>
               <td className="label">FAX</td>
-              <td>{PROVIDER.fax}</td>
+              <td>{displaySettings.fax}</td>
             </tr>
           </tbody>
         </table>
@@ -889,7 +946,7 @@ const checkInventoryAvailability = async (cartItems) => {
         </tbody>
       </table>
 
-      <div className="item-controls no-print" style={{marginBottom:18}}>
+      <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
         <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
       </div>
 
@@ -932,8 +989,8 @@ const checkInventoryAvailability = async (cartItems) => {
           ))}
         </tbody>
       </table>
-      <div className="item-controls no-print" style={{marginBottom:18}}>
-        <button type="button" onClick={addMaterial} className="add-item-btn">+ 자재 추가</button>
+      <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
+        <button type="button" onClick={addMat} className="add-item-btn">+ 자재 추가</button>
       </div>
 
       <table className="form-table total-table">
@@ -954,7 +1011,7 @@ const checkInventoryAvailability = async (cartItems) => {
         />
       </div>
 
-      <div className="form-actions no-print" style={{ display: showFaxModal ? 'none' : 'flex' }}>
+      <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
         <button type="button" onClick={handleSave} className="save-btn">저장하기</button>
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
@@ -970,6 +1027,16 @@ const checkInventoryAvailability = async (cartItems) => {
           onSendFax={handleSendFax}
         />
       )}
+      
+      {/* ✅ 문서 양식 설정 모달 */}
+      <DocumentSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => {
+          setShowSettingsModal(false);
+          const globalSettings = getDocumentSettings();
+          setCurrentGlobalSettings(globalSettings);
+        }}
+      />
     </div>
   );
 };
