@@ -584,7 +584,7 @@ const handleSendFax = async (faxNumber) => {
               <td><input type="number" value={it.quantity} onChange={e=>upItem(idx,'quantity',e.target.value)} placeholder="수량" /></td>
               <td><input type="number" value={it.unitPrice} onChange={e=>upItem(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
               <td className="right">{it.totalPrice?parseInt(it.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={it.note} onChange={e=>upItem(idx,'note',e.target.value)} placeholder="비고" /></td>
+              <td><input type="text" value={it.note} onChange={e=>upItem(idx,'note',e.target.value)} placeholder="" /></td>
               <td className="no-print">
                 <button type="button" onClick={()=>rmItem(idx)} disabled={formData.items.length===1} className="remove-btn">삭제</button>
               </td>
@@ -629,7 +629,7 @@ const handleSendFax = async (faxNumber) => {
               <td><input type="number" value={m.quantity} onChange={e=>upMat(idx,'quantity',e.target.value)} placeholder="수량" /></td>
               <td><input type="number" value={m.unitPrice} onChange={e=>upMat(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
               <td className="right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={m.note} onChange={e=>upMat(idx,'note',e.target.value)} placeholder="비고" /></td>
+              <td><input type="text" value={m.note} onChange={e=>upMat(idx,'note',e.target.value)} placeholder="" /></td>
               <td className="no-print">
                 <button type="button" onClick={()=>rmMat(idx)} className="remove-btn">삭제</button>
               </td>
