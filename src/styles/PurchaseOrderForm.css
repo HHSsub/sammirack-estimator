@@ -462,8 +462,8 @@ button.add-material-btn {
     background: transparent !important;
     box-shadow: none !important;
     outline: none !important;
-    font-size: 11px !important;
-    padding: 2px 2px !important;
+    font-size: 14px !important;
+    padding: 2.5px 2.5px !important;
   }
 
   .total-table {
@@ -474,7 +474,7 @@ button.add-material-btn {
   .form-company {
     margin-top: 20px !important;
     padding-top: 10px !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
   }
 
   .order-table th:last-child,
