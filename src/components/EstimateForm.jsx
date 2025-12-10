@@ -6,6 +6,8 @@ import '../styles/EstimateForm.css';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  // ✅ 추가
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { getDocumentSettings } from '../utils/documentSettings';
+import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
 
@@ -24,6 +26,13 @@ const EstimateForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const isEditMode = !!id;
+
+  // ✅ 관리자 체크
+  const [isAdmin, setIsAdmin] = useState(false);
+  // ✅ 설정 모달
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  // ✅ 현재 전역 설정
+  const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
 
   const documentNumberInputRef = useRef(null);
   const cartInitializedRef = useRef(false);  // ← 추가
@@ -54,9 +63,19 @@ const EstimateForm = () => {
     tax: 0,
     totalAmount: 0,
     notes: editingDocumentData.notes || '',
-    topMemo: editingDocumentData.topMemo || ''
+    topMemo: editingDocumentData.topMemo || '',
+    documentSettings: null  // ✅ 이 문서의 회사정보
   });
 
+  // ✅ 관리자 체크 및 전역 설정 로드
+  useEffect(() => {
+    const username = localStorage.getItem('username');
+    setIsAdmin(username === 'admin');
+    
+    const globalSettings = getDocumentSettings();
+    setCurrentGlobalSettings(globalSettings);
+  }, []);
+  
   useEffect(() => {
     if (isEditMode) {
       const storageKey = `estimate_${id}`;
@@ -98,10 +117,13 @@ const EstimateForm = () => {
             console.log(`✅ materials 자동 생성 완료: ${data.materials.length}개`);
           }
           
-          setFormData(data);
-        } catch(e) {
-          console.error('견적서 로드 실패:', e);
-        }
+            setFormData({
+              ...data,
+              documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
+            });
+          } catch(e) {
+            console.error('견적서 로드 실패:', e);
+          }
       }
     }
   }, [id, isEditMode]);
@@ -156,6 +178,9 @@ const EstimateForm = () => {
       return { ...prev, subtotal, tax, totalAmount };
     });
   }, [formData.items.length, formData.items.map(it => it.totalPrice).join(',')]); // 절대 함부로 수정금지 (안그러면 참조꼬임)
+
+  // ✅ 표시용 설정
+  const displaySettings = formData.documentSettings || currentGlobalSettings || PROVIDER;
   
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -265,6 +290,11 @@ const EstimateForm = () => {
       type: 'estimate',
       status: formData.status || '진행 중',
       estimateNumber: formData.documentNumber,
+      // ✅ 문서 설정: 편집=기존유지, 신규=현재전역설정
+      documentSettings: (existingDoc || isEditMode || editingDocumentId) 
+        ? (formData.documentSettings || currentGlobalSettings)
+        : currentGlobalSettings,
+      
       customerName: formData.companyName,
       productType: formData.items[0]?.name || '',
       quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
@@ -426,6 +456,29 @@ const handleSendFax = async (faxNumber) => {
 
   return (
     <div className="estimate-form-container">
+      {/* ✅ 문서 양식 수정 버튼 (관리자만) */}
+      {isAdmin && (
+        <button
+          className="document-settings-btn no-print"
+          onClick={() => setShowSettingsModal(true)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            left: '10px',
+            padding: '8px 16px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            zIndex: 100
+          }}
+        >
+          ⚙️ 문서 양식 수정
+        </button>
+      )}
       <div className="form-header">
         <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
@@ -462,7 +515,7 @@ const handleSendFax = async (faxNumber) => {
                 </div>
               </td>
               <td className="label">사업자등록번호</td>
-              <td>{PROVIDER.bizNumber}</td>
+              <td>{displaySettings.bizNumber}</td>
             </tr>
             <tr>
               <td className="label">사업자등록번호</td>
@@ -475,7 +528,7 @@ const handleSendFax = async (faxNumber) => {
                 />
               </td>
               <td className="label">상호명</td>
-              <td>{PROVIDER.companyName}</td>
+              <td>{displaySettings.companyName}</td>
             </tr>
             <tr>
               <td className="label">상호명</td>
@@ -490,7 +543,7 @@ const handleSendFax = async (faxNumber) => {
               <td className="label">대표자</td>
               <td className="rep-cell" style={{whiteSpace:'nowrap'}}>
                 <span className="ceo-inline">
-                  <span className="ceo-name">{PROVIDER.ceo}</span>
+                  <span className="ceo-name">{displaySettings.ceo}</span>
                   {PROVIDER.stampImage && (
                     <img
                       src={PROVIDER.stampImage}
@@ -512,19 +565,19 @@ const handleSendFax = async (faxNumber) => {
                 />
               </td>
               <td className="label">소재지</td>
-              <td>{PROVIDER.address}</td>
+              <td>{displaySettings.address}</td>
             </tr>
             <tr>
               <td className="label">TEL</td>
-              <td>{PROVIDER.tel}</td>
+              <td>{displaySettings.tel}</td>
             </tr>
             <tr>
               <td className="label">홈페이지</td>
-              <td>{PROVIDER.homepage}</td>
+              <td>{displaySettings.website}</td>
             </tr>
             <tr>
               <td className="label">FAX</td>
-              <td>{PROVIDER.fax}</td>
+              <td>{displaySettings.fax}</td>
             </tr>
           </tbody>
         </table>
@@ -619,6 +672,16 @@ const handleSendFax = async (faxNumber) => {
           onSendFax={handleSendFax}
         />
       )}
+      
+      {/* ✅ 문서 양식 설정 모달 */}
+      <DocumentSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => {
+          setShowSettingsModal(false);
+          const globalSettings = getDocumentSettings();
+          setCurrentGlobalSettings(globalSettings);
+        }}
+      />
     </div>
   );
 };
