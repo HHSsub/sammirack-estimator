@@ -534,7 +534,7 @@ export default function OptionSelector() {
                     }
                   }}
                 >
-                  추가
+                  옵션 추가
                 </button>
               </div>
               {customMaterials.length > 0 && (
