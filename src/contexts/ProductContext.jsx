@@ -689,13 +689,8 @@ export const ProductProvider=({children})=>{
       }
     }
   
-    // 커스텀 자재 가격 (경량랙만 - 이것은 BOM에 포함되지 않으므로 별도 계산)
-    const customExtra = selectedType === "경량랙"
-      ? customMaterials.reduce((s, m) => s + (Number(m.price) || 0), 0)
-      : 0;
-  
-    // ✅ 최종 가격: basePrice (BOM 기반, 추가옵션 포함) + customExtra (경량랙 전용)
-    const finalPrice = Math.round((basePrice + customExtra) * (applyRate / 100));
+    // ✅ 최종 가격: basePrice (BOM에 이미 사용자 정의 자재 포함됨)
+    const finalPrice = Math.round(basePrice * (applyRate / 100));
     
     console.log(`💵 최종 가격: ${finalPrice}원 (BOM기반: ${basePrice}, 커스텀: ${customExtra}, 적용률: ${applyRate}%)`);
     
