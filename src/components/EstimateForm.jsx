@@ -4,13 +4,14 @@ import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
-import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  // ✅ 추가
+import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
-import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
-import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
+import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils';
+import FaxPreviewModal from './FaxPreviewModal';
 
+// ✅ PROVIDER는 고정 (도장 이미지 포함)
 const PROVIDER = {
   bizNumber: '232-81-01750',
   companyName: '삼미앵글랙산업',
@@ -27,28 +28,23 @@ const EstimateForm = () => {
   const location = useLocation();
   const isEditMode = !!id;
 
-  // ✅ 관리자 체크
   const [isAdmin, setIsAdmin] = useState(false);
-  // ✅ 설정 모달
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  // ✅ 현재 전역 설정
-  const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
+  const [showFaxModal, setShowFaxModal] = useState(false);
+  const [pdfBlobURL, setPdfBlobURL] = useState(null);
+  const [pdfBase64, setPdfBase64] = useState(null);
 
   const documentNumberInputRef = useRef(null);
-  const cartInitializedRef = useRef(false);  // ← 추가
+  const cartInitializedRef = useRef(false);
+  
   const cartData = location.state || {};
   const { 
     cart = [], 
     totalBom = [],
-    customItems = [],          // ✅ 추가
-    editingDocumentId = null,  // ✅ 추가
-    editingDocumentData = {}   // ✅ 추가
+    customItems = [],
+    editingDocumentId = null,
+    editingDocumentData = {}
   } = cartData;
-
-  // ✅ FAX 관련 state 추가
-  const [showFaxModal, setShowFaxModal] = useState(false);
-  const [pdfBlobURL, setPdfBlobURL] = useState(null);
-  const [pdfBase64, setPdfBase64] = useState(null);
 
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || new Date().toISOString().split('T')[0],
@@ -58,32 +54,29 @@ const EstimateForm = () => {
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
-    materials: [],  // ✅ 절대 삭제하지 않음
+    materials: [],
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
     notes: editingDocumentData.notes || '',
     topMemo: editingDocumentData.topMemo || '',
-    documentSettings: null  // ✅ 이 문서의 회사정보
+    documentSettings: null  // ✅ 이 문서 저장 당시의 회사 정보 (도장 제외)
   });
 
-  // ✅ 관리자 체크 및 전역 설정 로드
+  // ✅ 관리자 체크
   useEffect(() => {
-      const userInfoStr = localStorage.getItem('currentUser');
-      console.log(userInfoStr);
-      if (userInfoStr) {
-        try {
-          const userInfo = JSON.parse(userInfoStr);
-          setIsAdmin(userInfo.role === 'admin' || userInfo.username === 'admin');
-        } catch (e) {
-          setIsAdmin(false);
-        }
+    const userInfoStr = localStorage.getItem('currentUser');
+    if (userInfoStr) {
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        setIsAdmin(userInfo.role === 'admin' || userInfo.username === 'admin');
+      } catch (e) {
+        setIsAdmin(false);
       }
-      
-      const globalSettings = getDocumentSettings();
-      setCurrentGlobalSettings(globalSettings);
-    }, []);
+    }
+  }, []);
   
+  // ✅ 기존 문서 로드
   useEffect(() => {
     if (isEditMode) {
       const storageKey = `estimate_${id}`;
@@ -95,7 +88,6 @@ const EstimateForm = () => {
           if (!data.materials || data.materials.length === 0) {
             console.log('⚠️ 구버전 견적서 - materials 자동 생성');
             
-            // ✅ 임시 배열에 모든 BOM 수집
             const allBoms = [];
             data.items.forEach(item => {
               if (item.name) {
@@ -104,7 +96,6 @@ const EstimateForm = () => {
               }
             });
             
-            // ✅ 중복 제거 및 수량 합산
             const bomMap = new Map();
             allBoms.forEach(item => {
               const key = generateInventoryPartId(item);
@@ -125,20 +116,21 @@ const EstimateForm = () => {
             console.log(`✅ materials 자동 생성 완료: ${data.materials.length}개`);
           }
           
-            setFormData({
-              ...data,
-              documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
-            });
-          } catch(e) {
-            console.error('견적서 로드 실패:', e);
-          }
+          setFormData({
+            ...data,
+            documentSettings: data.documentSettings || null
+          });
+        } catch(e) {
+          console.error('견적서 로드 실패:', e);
+        }
       }
     }
   }, [id, isEditMode]);
 
+  // ✅ 새 문서 - cart 초기화
   useEffect(() => {
     if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
-      cartInitializedRef.current = true;  // ← 추가
+      cartInitializedRef.current = true;
       const cartItems = cart.map(item => {
         const qty = item.quantity || 1;
         const unitPrice = Math.round((item.price || 0) / (qty || 1));
@@ -164,7 +156,6 @@ const EstimateForm = () => {
         note: m.note || ''
       }));
       
-      // ✅ 수정: allItems가 비어있어도 강제 설정
       setFormData(prev => ({ 
         ...prev, 
         items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
@@ -173,22 +164,39 @@ const EstimateForm = () => {
     }
   }, [cart, totalBom, customItems, isEditMode]);
 
+  // ✅ 합계 계산
   useEffect(() => {
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
     
     setFormData(prev => {
-      // ✅ 값이 바뀌지 않았으면 같은 객체 반환 (리렌더링 방지)
       if (prev.subtotal === subtotal && prev.tax === tax && prev.totalAmount === totalAmount) {
         return prev;
       }
       return { ...prev, subtotal, tax, totalAmount };
     });
-  }, [formData.items.length, formData.items.map(it => it.totalPrice).join(',')]); // 절대 함부로 수정금지 (안그러면 참조꼬임)
+  }, [formData.items.length, formData.items.map(it => it.totalPrice).join(',')]);
 
-  // ✅ 표시용 설정
-  const displaySettings = formData.documentSettings || currentGlobalSettings || PROVIDER;
+  // ✅ 표시용 회사 정보 (도장은 항상 PROVIDER 사용)
+  const getDisplaySettings = () => {
+    // 문서에 저장된 설정이 있으면 사용
+    if (formData.documentSettings) {
+      return {
+        ...formData.documentSettings,
+        stampImage: PROVIDER.stampImage  // ✅ 도장은 항상 고정
+      };
+    }
+    
+    // 없으면 현재 localStorage 또는 기본값
+    const currentSettings = getDocumentSettings();
+    return {
+      ...currentSettings,
+      stampImage: PROVIDER.stampImage  // ✅ 도장은 항상 고정
+    };
+  };
+  
+  const displaySettings = getDisplaySettings();
   
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -206,19 +214,10 @@ const EstimateForm = () => {
   };
 
   const addItem = () => {
-    console.log('🔴 addItem 호출됨!');
-    console.log('🔴 현재 items:', formData.items);
-    
-    setFormData(prev => {
-      const newItems = [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }];
-      console.log('🔴 새로운 items:', newItems);
-      return {
-        ...prev,
-        items: newItems
-      };
-    });
-    
-    console.log('🔴 setFormData 호출 완료');
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+    }));
   };
 
   const removeItem = (idx) => {
@@ -228,42 +227,11 @@ const EstimateForm = () => {
     }));
   };
 
-// EstimateForm.jsx - handleSave 함수만 수정
-// 이 함수를 EstimateForm.jsx의 기존 handleSave 함수와 교체하세요
-  
   const handleSave = async () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력하세요.');
       documentNumberInputRef.current?.focus();
       return;
-    }
-    
-    // ✅ 저장 전 데이터 검증 로그
-    console.log('======================================');
-    console.log('📝 견적서 저장 시작');
-    console.log('======================================');
-    console.log('formData.items:', formData.items);
-    console.log('formData.materials:', formData.materials);
-    console.log('--------------------------------------');
-    console.log('items 갯수:', formData.items.length);
-    console.log('materials 갯수:', formData.materials.length);
-    console.log('--------------------------------------');
-    
-    // ✅ items 중복 체크
-    const itemNames = formData.items.map(it => it.name);
-    const duplicateItems = itemNames.filter((name, index) => itemNames.indexOf(name) !== index);
-    if (duplicateItems.length > 0) {
-      console.warn('⚠️ items에 중복 발견:', duplicateItems);
-    }
-    
-    // ✅ materials 수량 체크
-    const badMaterials = formData.materials.filter(mat => Number(mat.quantity) > 10000);
-    if (badMaterials.length > 0) {
-      console.error('❌ 비정상 수량 발견:', badMaterials);
-      const confirm = window.confirm(
-        `⚠️ 원자재에 비정상적인 수량이 있습니다!\n\n예: ${badMaterials[0].name} - ${badMaterials[0].quantity}개\n\n그래도 저장하시겠습니까?`
-      );
-      if (!confirm) return;
     }
     
     // ✅ 동일 거래번호 찾기
@@ -292,63 +260,48 @@ const EstimateForm = () => {
     
     const storageKey = `estimate_${itemId}`;
     
+    // ✅ 현재 문서 양식 설정 (도장 제외)
+    const currentSettings = getDocumentSettings();
+    const documentSettings = {
+      bizNumber: currentSettings.bizNumber,
+      companyName: currentSettings.companyName,
+      ceo: currentSettings.ceo,
+      address: currentSettings.address,
+      homepage: currentSettings.homepage,
+      tel: currentSettings.tel,
+      fax: currentSettings.fax
+      // stampImage는 제외 (항상 PROVIDER 고정)
+    };
+    
     const newEstimate = {
       ...formData,
       id: itemId,
       type: 'estimate',
       status: formData.status || '진행 중',
       estimateNumber: formData.documentNumber,
-      // ✅ 문서 설정: 편집=기존유지, 신규=현재전역설정
-      documentSettings: (existingDoc || isEditMode || editingDocumentId) 
-        ? (formData.documentSettings || currentGlobalSettings)
-        : currentGlobalSettings,
-      
       customerName: formData.companyName,
       productType: formData.items[0]?.name || '',
       quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
       unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
       totalPrice: formData.totalAmount,
       updatedAt: new Date().toISOString(),
+      // ✅ 편집 모드: 기존 documentSettings 유지, 신규: 현재 설정 저장
+      documentSettings: (existingDoc || isEditMode || editingDocumentId) 
+        ? (formData.documentSettings || documentSettings)
+        : documentSettings,
       ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
     };
   
-    // ✅ 저장할 데이터 로그
-    console.log('======================================');
-    console.log('💾 저장할 데이터:');
-    console.log('======================================');
-    console.log('storageKey:', storageKey);
-    console.log('newEstimate.items:', newEstimate.items);
-    console.log('newEstimate.materials:', newEstimate.materials);
-    console.log('--------------------------------------');
-  
-    // ✅ 레거시 키 저장
     localStorage.setItem(storageKey, JSON.stringify(newEstimate));
-    console.log(`✅ localStorage에 저장 완료: ${storageKey}`);
     
-    // ✅ 즉시 확인
-    const saved = localStorage.getItem(storageKey);
-    const parsed = JSON.parse(saved);
-    console.log('--------------------------------------');
-    console.log('💾 저장 직후 확인:');
-    console.log('parsed.items:', parsed.items);
-    console.log('parsed.materials:', parsed.materials);
-    console.log('materials 갯수:', parsed.materials?.length);
-    
-    // ✅ 서버 동기화 저장
     const success = await saveDocumentSync(newEstimate);
     
     if (success) {
-      console.log('✅ 서버 동기화 완료');
       alert(isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.');
       window.dispatchEvent(new Event('documentsupdated'));
     } else {
-      console.error('❌ 서버 동기화 실패');
       alert('저장 중 오류가 발생했습니다.');
     }
-    
-    console.log('======================================');
-    console.log('📝 견적서 저장 완료');
-    console.log('======================================');
   };
 
   const handleExportToExcel = () => {
@@ -364,7 +317,7 @@ const EstimateForm = () => {
       });
   };
 
-  const handlePrint = async () => {  // ← async 추가
+  const handlePrint = async () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력해주세요.');
       documentNumberInputRef.current?.focus();
@@ -373,7 +326,6 @@ const EstimateForm = () => {
     window.print();
   };
 
-  // ✅ FAX 전송 핸들러 추가 
   const handleFaxPreview = async () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력해주세요.');
@@ -382,7 +334,6 @@ const EstimateForm = () => {
     }
 
     try {
-      // 문서 DOM 요소 찾기
       const docElement = document.querySelector('.estimate-form-container');
       if (!docElement) {
         alert('문서 영역을 찾을 수 없습니다.');
@@ -391,15 +342,12 @@ const EstimateForm = () => {
 
       alert('PDF 생성 중입니다. 잠시만 기다려주세요...');
 
-      // PDF 변환
       const base64 = await convertDOMToPDFBase64(docElement);
       setPdfBase64(base64);
 
-      // Blob URL 생성 (미리보기용)
       const blobURL = base64ToBlobURL(base64);
       setPdfBlobURL(blobURL);
 
-      // 모달 표시
       setShowFaxModal(true);
     } catch (error) {
       console.error('❌ PDF 생성 오류:', error);
@@ -407,51 +355,49 @@ const EstimateForm = () => {
     }
   };
 
-const handleSendFax = async (faxNumber) => {
-  if (!pdfBase64) {
-    alert('PDF가 생성되지 않았습니다.');
-    return;
-  }
+  const handleSendFax = async (faxNumber) => {
+    if (!pdfBase64) {
+      alert('PDF가 생성되지 않았습니다.');
+      return;
+    }
 
-  try {
-    const result = await sendFax(
-      pdfBase64,
-      faxNumber,
-      formData.companyName,
-      ''
-    );
-
-    if (result.success) {
-      // ✅ 성공 시 잔액 정보 표시
-      alert(
-        `✅ 팩스 전송이 완료되었습니다!\n\n` +
-        `📄 발송번호: ${result.jobNo}\n` +
-        `📑 페이지 수: ${result.pages}장\n` +
-        `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+    try {
+      const result = await sendFax(
+        pdfBase64,
+        faxNumber,
+        formData.companyName,
+        ''
       );
-      setShowFaxModal(false);
-    } else {
-      throw new Error(result.error || '알 수 없는 오류');
+
+      if (result.success) {
+        alert(
+          `✅ 팩스 전송이 완료되었습니다!\n\n` +
+          `📄 발송번호: ${result.jobNo}\n` +
+          `📑 페이지 수: ${result.pages}장\n` +
+          `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+        );
+        setShowFaxModal(false);
+      } else {
+        throw new Error(result.error || '알 수 없는 오류');
+      }
+    } catch (error) {
+      console.error('❌ 팩스 전송 오류:', error);
+      
+      let errorMessage = '팩스 전송에 실패했습니다.\n\n';
+      
+      if (error.message.includes('잔액')) {
+        errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
+      } else if (error.message.includes('타임아웃')) {
+        errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
+      } else if (error.message.includes('네트워크')) {
+        errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
+      } else {
+        errorMessage += `오류: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     }
-  } catch (error) {
-    console.error('❌ 팩스 전송 오류:', error);
-    
-    // ✅ 오류 유형별 메시지 개선
-    let errorMessage = '팩스 전송에 실패했습니다.\n\n';
-    
-    if (error.message.includes('잔액')) {
-      errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
-    } else if (error.message.includes('타임아웃')) {
-      errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
-    } else if (error.message.includes('네트워크')) {
-      errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
-    } else {
-      errorMessage += `오류: ${error.message}`;
-    }
-    
-    alert(errorMessage);
-  }
-};
+  };
 
   const handleCloseFaxModal = () => {
     setShowFaxModal(false);
@@ -464,30 +410,30 @@ const handleSendFax = async (faxNumber) => {
 
   return (
     <div className="estimate-form-container">
-      {/* ✅ 문서 양식 수정 버튼 (관리자만) */}
-        {isAdmin && (
-          <button
-            className="document-settings-btn no-print"
-            onClick={() => setShowSettingsModal(true)}
-            style={{
-              position: 'fixed',
-              top: '10px',
-              left: '10px',
-              padding: '10px 18px',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '600',
-              zIndex: 9999,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-            }}
-          >
-            ⚙️ 문서 양식 수정
-          </button>
-        )}
+      {isAdmin && (
+        <button
+          className="document-settings-btn no-print"
+          onClick={() => setShowSettingsModal(true)}
+          style={{
+            position: 'fixed',
+            top: '10px',
+            left: '10px',
+            padding: '10px 18px',
+            backgroundColor: '#6c757d',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '600',
+            zIndex: 9999,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+          }}
+        >
+          ⚙️ 문서 양식 수정
+        </button>
+      )}
+      
       <div className="form-header">
         <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
@@ -553,9 +499,9 @@ const handleSendFax = async (faxNumber) => {
               <td className="rep-cell" style={{whiteSpace:'nowrap'}}>
                 <span className="ceo-inline">
                   <span className="ceo-name">{displaySettings.ceo}</span>
-                  {PROVIDER.stampImage && (
+                  {displaySettings.stampImage && (
                     <img
-                      src={PROVIDER.stampImage}
+                      src={displaySettings.stampImage}
                       alt="도장"
                       className="stamp-inline"
                     />
@@ -582,7 +528,7 @@ const handleSendFax = async (faxNumber) => {
             </tr>
             <tr>
               <td className="label">홈페이지</td>
-              <td>{displaySettings.website}</td>
+              <td>{displaySettings.homepage}</td>
             </tr>
             <tr>
               <td className="label">FAX</td>
@@ -629,16 +575,16 @@ const handleSendFax = async (faxNumber) => {
       </table>
 
       {!(showFaxModal || showSettingsModal) && (
-              <div className="item-controls no-print">
-                <button 
-                  type="button" 
-                  onClick={addItem}
-                  className="add-item-btn"
-                >
-                  + 품목 추가
-                </button>
-              </div>
-            )}
+        <div className="item-controls no-print">
+          <button 
+            type="button" 
+            onClick={addItem}
+            className="add-item-btn"
+          >
+            + 품목 추가
+          </button>
+        </div>
+      )}
 
       <table className="form-table total-table">
         <tbody>
@@ -646,14 +592,14 @@ const handleSendFax = async (faxNumber) => {
             <td className="label">소계</td>
             <td className="right">{formData.subtotal.toLocaleString()}</td>
           </tr>
-            <tr>
-              <td className="label">부가세</td>
-              <td className="right">{formData.tax.toLocaleString()}</td>
-            </tr>
-            <tr>
-              <td className="label"><strong>합계</strong></td>
-              <td className="right"><strong>{formData.totalAmount.toLocaleString()}</strong></td>
-            </tr>
+          <tr>
+            <td className="label">부가세</td>
+            <td className="right">{formData.tax.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td className="label"><strong>합계</strong></td>
+            <td className="right"><strong>{formData.totalAmount.toLocaleString()}</strong></td>
+          </tr>
         </tbody>
       </table>
 
@@ -675,7 +621,7 @@ const handleSendFax = async (faxNumber) => {
       </div>
 
       <div className="form-company">({PROVIDER.companyName})</div>
-      {/* ✅ FAX 미리보기 모달 추가 */}
+      
       {showFaxModal && (
         <FaxPreviewModal
           pdfBlobURL={pdfBlobURL}
@@ -684,20 +630,14 @@ const handleSendFax = async (faxNumber) => {
         />
       )}
       
-      {/* ✅ 문서 양식 설정 모달 */}
       <DocumentSettingsModal
         isOpen={showSettingsModal}
-        onClose={() => {
-          setShowSettingsModal(false);
-          const globalSettings = getDocumentSettings();
-          setCurrentGlobalSettings(globalSettings);
-        }}
+        onClose={() => setShowSettingsModal(false)}
       />
     </div>
   );
 };
 
-// ✅ EstimateForm.jsx 맨 아래, export default EstimateForm; 바로 위에 추가
 function findDocumentByNumber(docNumber, docType) {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
