@@ -560,7 +560,7 @@ const EstimateForm = () => {
               <td><input type="number" value={it.quantity} onChange={e=>updateItem(idx,'quantity',e.target.value)} placeholder="수량" /></td>
               <td><input type="number" value={it.unitPrice} onChange={e=>updateItem(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
               <td className="right">{it.totalPrice?parseInt(it.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={it.note} onChange={e=>updateItem(idx,'note',e.target.value)} placeholder="비고" /></td>
+              <td><input type="text" value={it.note} onChange={e=>updateItem(idx,'note',e.target.value)} placeholder="" /></td>
               <td className="no-print">
                 <button
                   type="button"
