@@ -140,7 +140,7 @@ function buildTop(ws, type, { date, companyName, contact, documentNumber } = {})
 
   ws.getCell('E6').value = documentNumber || '';
   ws.getCell('E6').alignment = alignCenter;
-  ws.getCell('E6').font = { ...fontDefault, bold: true, color: { argb: 'FFFF6600' } }; // 주황색 굵게
+  ws.getCell('E6').font = { name: '맑은 고딕', size: 14, bold: true, color: { argb: 'FFFF6600' } }; // 주황색 굵게 크게
 
   // 7행: 상호명
   ws.mergeCells('A7:C7');
