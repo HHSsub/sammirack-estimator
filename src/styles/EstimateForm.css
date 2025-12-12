@@ -132,6 +132,13 @@
 
 .info-table td { padding:4px 6px; }
 
+/* 거래번호 input 크게 */
+.info-table input[name="documentNumber"] {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ff6600;
+}
+
 .form-actions {
   margin-top:20px;
   display:flex;
@@ -333,6 +340,13 @@ button.remove-btn:disabled {
     outline:none !important;
     font-size:13px !important;
     padding:3px 3px !important;
+  }
+
+  /* 거래번호만 크게 */
+  input[name="documentNumber"] {
+    font-size: 18px !important;
+    font-weight: bold !important;
+    color: #ff6600 !important;
   }
   
   .total-table {
