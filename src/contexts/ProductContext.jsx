@@ -22,7 +22,7 @@ const EXTRA_OPTIONS = {
   파렛트랙: { height: ["H4500","H5000","H5500","H6000"] },
   "파렛트랙 철판형": {
     height: ["1500","2000","2500","3000","3500","4000","H4500","H5000","H5500","H6000"],
-    size: ["2080x800","2080x1000"]
+    size: ["2090x800","2090x1000"]
   },
   하이랙: { size:["45x150"], level:["5단","6단"] },
   스텐랙: { level:["5단","6단"], height:["210"] },
@@ -68,9 +68,9 @@ const parseWD=(size="")=>{
 
 const calcPalletIronShelfPerLevel=(size)=>{
   const {w}=parseWD(size);
-  if(w===1380) return 2;
-  if(w===2080) return 3;
-  if(w===2580) return 4;
+  if(w===1390) return 2;
+  if(w===2090) return 3;
+  if(w===2590) return 4;
   return 1;
 };
 const calcHighRackShelfPerLevel=(size)=>{
