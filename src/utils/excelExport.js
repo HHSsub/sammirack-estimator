@@ -419,7 +419,7 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   // ws.getCell('E25').value = '수량';
   // ws.getCell('F25').value = '단가';
   // ws.getCell('G25').value = '금액';
-  ws.mergeCells('H25:J25'); ws.getCell('H25').value = '비고';
+  // ws.mergeCells('H25:J25'); ws.getCell('H25').value = '비고';
   styleRange(ws, 25, 1, 25, 10, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
 
   // 원자재 데이터 (단가/금액 제거)
