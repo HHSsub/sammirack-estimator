@@ -839,7 +839,7 @@ const checkInventoryAvailability = async (cartItems) => {
                         updateFormData('purchaseNumber', e.target.value);
                       }}
                       placeholder=""
-                      style={{padding:'6px 8px', fontSize:'13px', width:'100%'}}
+                      style={{padding:'6px 8px', fontSize:'18px', fontWeight:'bold', color:'#ff6600', width:'100%'}}
                     />
                   </div>
                 </div>
