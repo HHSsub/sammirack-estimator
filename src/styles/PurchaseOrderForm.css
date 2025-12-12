@@ -80,13 +80,6 @@ img[alt="도장"] {
   font-size: 13px;
 }
 
-/* 거래번호만 크게 */
-.info-table input[name="documentNumber"] {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ff6600;
-}
-
 .info-table-stamp-wrapper { position: relative; }
 .rep-cell { position: relative; }
 
@@ -471,13 +464,6 @@ button.add-material-btn {
     outline: none !important;
     font-size: 14px !important;
     padding: 2.5px 2.5px !important;
-  }
-
-  /* 거래번호만 크게 */
-  input[name="documentNumber"] {
-    font-size: 18px !important;
-    font-weight: bold !important;
-    color: #ff6600 !important;
   }
 
   .total-table {
