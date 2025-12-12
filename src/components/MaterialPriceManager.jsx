@@ -172,10 +172,10 @@ export default function MaterialPriceManager({ currentUser, cart }) {
   
   // ✅ 부품명 표시 로직 - 추가옵션은 카테고리명 포함
   const getDisplayName = (material) => {
-    // 디버깅 로그 추가
-    if (material.source === 'extra_options') {
-      console.log('추가옵션 발견:', material);
-    }
+    // // 디버깅 로그 추가
+    // if (material.source === 'extra_options') {
+    //   console.log('추가옵션 발견:', material);
+    // }
     
     if (material.source === 'extra_options' && material.categoryName) {
       return `[추가옵션: ${material.categoryName}] ${material.name}`;
