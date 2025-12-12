@@ -65,13 +65,15 @@ const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFF
 // 컬럼 너비(요청 반영: E,F 더 넓게)
 const columnWidths = [
   { width: 5 },  // A: NO
-  { width: 39 }, // B: 품명/부품명
-  { width: 11 },  // C: 단위
-  { width: 8 },  // D: 수량
-  { width: 18 }, // E: 단가(3 정도 더 넓힘)
-  { width: 18 }, // F: 공급가/금액(3 정도 더 넓힘)
-  { width: 15 }, // G: 비고
-  { width: 15 }, // H: 비고 확장
+  { width: 20 }, // B: 품명/부품명 (축소)
+  { width: 11 }, // C: 단위
+  { width: 9 },  // D: 거래번호 라벨 (신규)
+  { width: 12 }, // E: 거래번호 값 (신규)
+  { width: 8 },  // F: 수량 (기존 D)
+  { width: 18 }, // G: 단가 (기존 E)
+  { width: 18 }, // H: 공급가/금액 (기존 F)
+  { width: 15 }, // I: 비고 (기존 G)
+  { width: 15 }, // J: 비고 확장 (기존 H)
 ];
 
 // 보더/정렬/폰트 일괄 적용
@@ -114,9 +116,9 @@ function setRowHeights(ws, map) {
 }
 
 /** 공통 상단 정보(문서제목/회사/고객) */
-function buildTop(ws, type, { date, companyName, contact } = {}) {
-  // 문서 제목 A5:H5
-  ws.mergeCells('A5:H5');
+function buildTop(ws, type, { date, companyName, contact, documentNumber } = {}) {
+  // 문서 제목 A5:J5
+  ws.mergeCells('A5:J5');
   const title = type === 'purchase' ? '청구서' : type === 'delivery' ? '거래명세서' : '견적서';
   const titleCell = ws.getCell('A5');
   titleCell.value = title;
@@ -125,51 +127,99 @@ function buildTop(ws, type, { date, companyName, contact } = {}) {
   titleCell.alignment = alignCenter;
   setRowHeights(ws, { 5: 45 });
 
-  // 고객 정보 라벨/값
-  ws.mergeCells('A6:B6'); ws.getCell('A6').value = '거래일자';
-  ws.mergeCells('A7:B7'); ws.getCell('A7').value = '상호명';
-  ws.mergeCells('A8:B8'); ws.getCell('A8').value = '담당자';
+  // 6행: 거래일자 + 거래번호
+  ws.mergeCells('A6:B6'); 
+  ws.getCell('A6').value = '거래일자';
+  ws.getCell('A6').alignment = alignCenter;
 
   ws.getCell('C6').value = date || '';
-  ws.getCell('C7').value = companyName || '';
-  ws.getCell('C8').value = contact || '';
+  ws.getCell('C6').alignment = alignCenter;
 
-  // 아래 문구 A9:C10 병합
-  ws.mergeCells('A9:C10');
+  ws.getCell('D6').value = '거래번호';
+  ws.getCell('D6').alignment = alignCenter;
+
+  ws.getCell('E6').value = documentNumber || '';
+  ws.getCell('E6').alignment = alignCenter;
+  ws.getCell('E6').font = { ...fontDefault, bold: true, color: { argb: 'FFFF6600' } }; // 주황색 굵게
+
+  // 7행: 상호명
+  ws.mergeCells('A7:C7');
+  ws.getCell('A7').value = '상호명';
+  ws.getCell('A7').alignment = alignCenter;
+
+  ws.mergeCells('D7:E7');
+  ws.getCell('D7').value = companyName || '';
+  ws.getCell('D7').alignment = alignCenter;
+
+  // 8행: 담당자
+  ws.mergeCells('A8:C8');
+  ws.getCell('A8').value = '담당자';
+  ws.getCell('A8').alignment = alignCenter;
+
+  ws.mergeCells('D8:E8');
+  ws.getCell('D8').value = contact || '';
+  ws.getCell('D8').alignment = alignCenter;
+
+  // 하단 문구 A9:E10 병합
+  ws.mergeCells('A9:E10');
   const bottomText = type === 'purchase' ? '아래와 같이 청구합니다' : type === 'delivery' ? '아래와 같이 거래합니다' : '아래와 같이 견적합니다';
   ws.getCell('A9').value = bottomText;
   ws.getCell('A9').alignment = alignCenter;
   setRowHeights(ws, { 9: 40 });
 
-  // 공급자 D6:D10 병합
-  ws.mergeCells('D6:D10');
-  ws.getCell('D6').value = '공급자';
-  ws.getCell('D6').alignment = alignCenter;
+  // 공급자 F6:F10 병합
+  ws.mergeCells('F6:F10');
+  ws.getCell('F6').value = '공급자';
+  ws.getCell('F6').alignment = alignCenter;
 
-  // 공급자 상세
-  ws.getCell('E6').value = '사업자등록번호';
-  ws.mergeCells('F6:H6'); ws.getCell('F6').value = '232-81-01750'; ws.getCell('F6').alignment = alignCenter;
+  // 공급자 상세 정보
+  ws.getCell('G6').value = '사업자등록번호';
+  ws.getCell('G6').alignment = alignCenter;
+  
+  ws.mergeCells('H6:J6'); 
+  ws.getCell('H6').value = '232-81-01750'; 
+  ws.getCell('H6').alignment = alignCenter;
 
-  ws.getCell('E7').value = '상호';
-  ws.getCell('F7').value = '삼미앵글랙산업';
-  ws.getCell('G7').value = '대표자';
-  ws.getCell('H7').value = '박이삭';
+  ws.getCell('G7').value = '상호';
+  ws.getCell('G7').alignment = alignCenter;
+  
+  ws.getCell('H7').value = '삼미앵글랙산업';
+  ws.getCell('H7').alignment = alignCenter;
+  
+  ws.getCell('I7').value = '대표자';
+  ws.getCell('I7').alignment = alignCenter;
+  
+  ws.getCell('J7').value = '박이삭';
+  ws.getCell('J7').alignment = alignCenter;
 
-  ws.getCell('E8').value = '소재지';
-  ws.mergeCells('F8:H8'); ws.getCell('F8').value = '경기도 광명시 원노온사로 39, 철제 스틸하우스 1';
-  ws.getCell('F8').alignment = alignCenter;
+  ws.getCell('G8').value = '소재지';
+  ws.getCell('G8').alignment = alignCenter;
+  
+  ws.mergeCells('H8:J8'); 
+  ws.getCell('H8').value = '경기도 광명시 철도공원로 39, 킴스 스틸하우스 1';
+  ws.getCell('H8').alignment = alignCenter;
 
-  ws.getCell('E9').value = 'TEL';
-  ws.getCell('F9').value = '010-9548-9578  010-4311-7733';
-  ws.getCell('G9').value = 'FAX';
-  ws.getCell('H9').value = '(02)2611-4595';
+  ws.getCell('G9').value = 'TEL';
+  ws.getCell('G9').alignment = alignCenter;
+  
+  ws.getCell('H9').value = '010-9548-9578  010-4311-7733';
+  ws.getCell('H9').alignment = alignCenter;
+  
+  ws.getCell('I9').value = 'FAX';
+  ws.getCell('I9').alignment = alignCenter;
+  
+  ws.getCell('J9').value = '(02)2611-4595';
+  ws.getCell('J9').alignment = alignCenter;
 
-  ws.getCell('E10').value = '홈페이지';
-  ws.mergeCells('F10:H10'); ws.getCell('F10').value = 'http://www.ssmake.com';
-  ws.getCell('F10').alignment = alignCenter;
+  ws.getCell('G10').value = '홈페이지';
+  ws.getCell('G10').alignment = alignCenter;
+  
+  ws.mergeCells('H10:J10'); 
+  ws.getCell('H10').value = 'http://www.ssmake.com';
+  ws.getCell('H10').alignment = alignCenter;
 
   // 전체 상단구간 스타일(폰트/정렬/보더)
-  styleRange(ws, 5, 1, 10, 8, { alignment: alignCenter, border: borderThin });
+  styleRange(ws, 5, 1, 10, 10, { alignment: alignCenter, border: borderThin });
 }
 
 /** 견적서 전용 (기존 estimate 타입만) */
@@ -182,15 +232,15 @@ function buildEstimate(ws, items = [], totals, notes) {
   ws.getCell('A11').font = { bold: true, size: 16 };
   styleRange(ws, 11, 1, 11, 8, { font: fontDefault, border: borderThin });
 
-  // 헤더 A12:H12 (G:H 비고 합치기)
+  // 헤더 A12:J12
   ws.getCell('A12').value = 'NO';
-  ws.getCell('B12').value = '품명';
-  ws.getCell('C12').value = '단위';
-  ws.getCell('D12').value = '수량';
-  ws.getCell('E12').value = '단가';
-  ws.getCell('F12').value = '공급가';
-  ws.mergeCells('G12:H12'); ws.getCell('G12').value = '비고';
-  styleRange(ws, 12, 1, 12, 8, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
+  ws.mergeCells('B12:D12'); ws.getCell('B12').value = '품명';
+  ws.getCell('E12').value = '단위';
+  ws.getCell('F12').value = '수량';
+  ws.getCell('G12').value = '단가';
+  ws.getCell('H12').value = '공급가';
+  ws.mergeCells('I12:J12'); ws.getCell('I12').value = '비고';
+  styleRange(ws, 12, 1, 12, 10, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
 
   // 최소 13행 확보 (NO 1~13)
   const rowCount = Math.max(items?.length || 0, 13);
@@ -198,19 +248,17 @@ function buildEstimate(ws, items = [], totals, notes) {
     const r = 13 + i;
     const item = items[i] || {};
     ws.getCell(`A${r}`).value = i + 1;
+    ws.mergeCells(`B${r}:D${r}`);
     ws.getCell(`B${r}`).value = item.name || '';
-    ws.getCell(`C${r}`).value = item.unit || '';
-    ws.getCell(`D${r}`).value = item.quantity ?? '';
-    ws.getCell(`E${r}`).value = item.unitPrice ?? '';
-    ws.getCell(`F${r}`).value = item.totalPrice ?? '';
-    ws.mergeCells(`G${r}:H${r}`);
-    ws.getCell(`G${r}`).value = item.note || '';
-
-    // 정렬/보더/폰트
-    styleRange(ws, r, 1, r, 8, { font: fontDefault, alignment: alignCenter, border: borderThin });
+    ws.getCell(`E${r}`).value = item.unit || '';
+    ws.getCell(`F${r}`).value = item.quantity ?? '';
+    ws.getCell(`G${r}`).value = item.unitPrice ?? '';
+    ws.getCell(`H${r}`).value = item.totalPrice ?? '';
+    ws.mergeCells(`I${r}:J${r}`);
+    ws.getCell(`I${r}`).value = item.note || '';
+    styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
-  // 숫자 서식 (E,F 열)
-  setNumFmt(ws, 13, 5, 12 + rowCount, 6);
+  setNumFmt(ws, 13, 7, 12 + rowCount, 8); // G, H열 숫자 서식
 
   // ✅ 수식으로 변경: 소계/부가세/합계 (A26:F28 / G26:H28)
   const totalStart = 26;
@@ -226,7 +274,7 @@ function buildEstimate(ws, items = [], totals, notes) {
     // ✅ 고정값 대신 엑셀 수식 적용
     if (i === 0) { // 소계
       ws.getCell(`G${r}`).value = { 
-        formula: `SUM(F13:F${12 + rowCount})`, 
+        formula: `SUM(H13:H${12 + rowCount})`,
         result: totals?.subtotal || 0 
       };
     } else if (i === 1) { // 부가가치세
@@ -282,33 +330,33 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   ws.getCell('A11').font = { bold: true, size: 16 };
   styleRange(ws, 11, 1, 11, 8, { font: fontDefault, border: borderThin });
 
-  // 헤더 A12:H12 (G~H 비고 병합)
+  // 헤더 A12:J12
   ws.getCell('A12').value = 'NO';
-  ws.getCell('B12').value = '품명';
-  ws.getCell('C12').value = '단위';
-  ws.getCell('D12').value = '수량';
-  ws.getCell('E12').value = '단가';
-  ws.getCell('F12').value = '공급가';
-  ws.mergeCells('G12:H12'); ws.getCell('G12').value = '비고';
-  styleRange(ws, 12, 1, 12, 8, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
+  ws.mergeCells('B12:D12'); ws.getCell('B12').value = '품명';
+  ws.getCell('E12').value = '단위';
+  ws.getCell('F12').value = '수량';
+  ws.getCell('G12').value = '단가';
+  ws.getCell('H12').value = '공급가';
+  ws.mergeCells('I12:J12'); ws.getCell('I12').value = '비고';
+  styleRange(ws, 12, 1, 12, 10, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
 
-  // 상품 데이터 최소 8행 확보 (NO 1~8)
+  // 상품 데이터 최소 8행 확보
   const itemRows = Math.max(items?.length || 0, 8);
   for (let i = 0; i < itemRows; i++) {
     const r = 13 + i;
     const it = items[i] || {};
     ws.getCell(`A${r}`).value = i + 1;
+    ws.mergeCells(`B${r}:D${r}`);
     ws.getCell(`B${r}`).value = it.name || '';
-    ws.getCell(`C${r}`).value = it.unit || '';
-    ws.getCell(`D${r}`).value = it.quantity ?? '';
-    ws.getCell(`E${r}`).value = it.unitPrice ?? '';
-    ws.getCell(`F${r}`).value = it.totalPrice ?? '';
-    ws.mergeCells(`G${r}:H${r}`);
-    ws.getCell(`G${r}`).value = it.note || '';
-    styleRange(ws, r, 1, r, 8, { font: fontDefault, alignment: alignCenter, border: borderThin });
+    ws.getCell(`E${r}`).value = it.unit || '';
+    ws.getCell(`F${r}`).value = it.quantity ?? '';
+    ws.getCell(`G${r}`).value = it.unitPrice ?? '';
+    ws.getCell(`H${r}`).value = it.totalPrice ?? '';
+    ws.mergeCells(`I${r}:J${r}`);
+    ws.getCell(`I${r}`).value = it.note || '';
+    styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
-  // 숫자 서식
-  setNumFmt(ws, 13, 5, 12 + itemRows, 6);
+  setNumFmt(ws, 13, 7, 12 + itemRows, 8);
 
   // ✅ 수식으로 변경: 합계 A21:F23 / G21:H23
   const totalStart = 21;
@@ -325,10 +373,14 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     ws.getCell(`A${r}`).alignment = alignCenter;
     ws.mergeCells(`G${r}:H${r}`);
     
-    // ✅ 고정값 대신 엑셀 수식 적용 (원자재 E열 기준)
+    // ✅ 고정값 대신 엑셀 수식 적용 (위의 청구 명세 기준)
     if (i === 0) { // 소계
       ws.getCell(`G${r}`).value = { 
-        formula: `SUM(E26:E${materialEndRow})`, 
+        formula: `SUM(H13:H${12 + itemRows})`,
+    // ✅ 고정값 대신 엑셀 수식 적용 (원자재 E열 기준, 아래의 코드 절대 지우지말것(언제가 쓸수도있음 원자재 가격 기준))
+    // if (i === 0) { // 소계
+    //   ws.getCell(`G${r}`).value = { 
+    //     formula: `SUM(E26:E${materialEndRow})`, 
         result: totals?.subtotal || 0 
       };
     } else if (i === 1) { // 부가가치세
@@ -355,31 +407,35 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   ws.getCell('A24').font = { bold: true, size: 16 };
   styleRange(ws, 24, 1, 24, 8, { font: fontDefault, border: borderThin });
 
-  // 원자재 헤더 A25:H25 — F~H 비고 병합
+  // 원자재 헤더 A25:J25
+  // 원자재 헤더 A25:J25 (단가/금액 제거, 부품명 확대)
   ws.getCell('A25').value = 'NO';
-  ws.getCell('B25').value = '부품명';
-  ws.getCell('C25').value = '수량';
-  ws.getCell('D25').value = '단가';
-  ws.getCell('E25').value = '금액';
-  ws.mergeCells('F25:H25'); ws.getCell('F25').value = '비고';
-  styleRange(ws, 25, 1, 25, 8, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
+  ws.mergeCells('B25:E25'); ws.getCell('B25').value = '부품명';
+  ws.getCell('F25').value = '수량';
+  ws.mergeCells('G25:J25'); ws.getCell('G25').value = '비고';
 
-  // 원자재 데이터 최소 30행 (A26~A55)
+  // 아래 주석 절대 지우지 말것 (단가,금액 다시 쓰고 싶어지면 주석풀기)
+  // ws.mergeCells('B25:D25'); ws.getCell('B25').value = '부품명';
+  // ws.getCell('E25').value = '수량';
+  // ws.getCell('F25').value = '단가';
+  // ws.getCell('G25').value = '금액';
+  ws.mergeCells('H25:J25'); ws.getCell('H25').value = '비고';
+  styleRange(ws, 25, 1, 25, 10, { font: { ...fontDefault, bold: true }, alignment: alignCenter, border: borderThin, fill: fillHeader });
+
+  // 원자재 데이터 (단가/금액 제거)
   for (let i = 0; i < matRows; i++) {
     const r = 26 + i;
     const m = materials[i] || {};
     ws.getCell(`A${r}`).value = i + 1;
+    ws.mergeCells(`B${r}:E${r}`);
     ws.getCell(`B${r}`).value = m.name || '';
-    ws.getCell(`C${r}`).value = m.quantity ?? '';
-    ws.getCell(`D${r}`).value = m.unitPrice ?? '';
-    ws.getCell(`E${r}`).value = m.totalPrice ?? '';
-    ws.mergeCells(`F${r}:H${r}`);
-    ws.getCell(`F${r}`).value = m.note || '';
-    styleRange(ws, r, 1, r, 8, { font: fontDefault, alignment: alignCenter, border: borderThin });
+    ws.getCell(`F${r}`).value = m.quantity ?? '';
+    ws.mergeCells(`G${r}:J${r}`);
+    ws.getCell(`G${r}`).value = m.note || '';
+    styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
-  // 숫자 서식 (D,E)
-  setNumFmt(ws, 26, 4, 25 + matRows, 5);
-
+  // setNumFmt(ws, 26, 6, 25 + matRows, 7);
+  
   // 특기사항 A56:H58
   ws.mergeCells('A56:H58');
   // 특기사항 제목
@@ -437,6 +493,7 @@ export async function exportToExcel(rawData, type = 'estimate') {
     date: rawData?.date,
     companyName: rawData?.companyName,
     contact: rawData?.contact || rawData?.manager || '',
+    documentNumber: rawData?.documentNumber || '',
   });
 
   // 타입별 본문
