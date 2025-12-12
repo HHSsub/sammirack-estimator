@@ -961,8 +961,8 @@ const checkInventoryAvailability = async (cartItems) => {
             <th style={{width:'190px'}}>부품명</th>
             <th className="spec-col">규격</th>
             <th style={{width:'70px'}}>수량</th>
-            <th style={{width:'70px'}} className="hide-unitprice">단가</th>
-            <th style={{width:'90px'}} className="hide-amount">금액</th>
+            <th style={{width:'70px', display:'none'}}>단가</th>
+            <th style={{width:'90px', display:'none'}}>금액</th>
             <th style={{width:'90px'}}>비고</th>
             <th className="no-print" style={{width:'70px'}}>작업</th>
           </tr>
@@ -981,9 +981,9 @@ const checkInventoryAvailability = async (cartItems) => {
                 />
               </td>
               <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
-              <td className="hide-unitprice"><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
-              <td className="hide-amount right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="" /></td>
+              <td style={{display:'none'}}><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
+              <td style={{display:'none'}} className="right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
+              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="비고" /></td>
               <td className="no-print">
                 <button type="button" onClick={()=>removeMaterial(idx)} className="remove-btn">삭제</button>
               </td>
