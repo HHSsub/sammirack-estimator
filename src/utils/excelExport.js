@@ -104,7 +104,7 @@ function setNumFmt(ws, r1, c1, r2, c2, fmt = '#,##0') {
 }
 
 /** 전체 테두리(문서 구간) */
-function fullBorder(ws, r1, r2, c1 = 1, c2 = 8) {
+function fullBorder(ws, r1, r2, c1 = 1, c2 = 10) {
   styleRange(ws, r1, c1, r2, c2, { border: borderThin });
 }
 
@@ -224,13 +224,13 @@ function buildTop(ws, type, { date, companyName, contact, documentNumber } = {})
 
 /** 견적서 전용 (기존 estimate 타입만) */
 function buildEstimate(ws, items = [], totals, notes) {
-  // 섹션 타이틀 A11:H11
-  ws.mergeCells('A11:H11');
+  // 섹션 타이틀 A11:J11
+  ws.mergeCells('A11:J11');
   ws.getCell('A11').value = '견적명세';
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
   ws.getCell('A11').font = { bold: true, size: 16 };
-  styleRange(ws, 11, 1, 11, 8, { font: fontDefault, border: borderThin });
+  styleRange(ws, 11, 1, 11, 10, { font: fontDefault, border: borderThin });
 
   // 헤더 A12:J12
   ws.getCell('A12').value = 'NO';
@@ -269,7 +269,7 @@ function buildEstimate(ws, items = [], totals, notes) {
     ws.mergeCells(`A${r}:F${r}`);
     ws.getCell(`A${r}`).value = labels[i];
     ws.getCell(`A${r}`).alignment = alignCenter;
-    ws.mergeCells(`G${r}:H${r}`);
+    ws.mergeCells(`G${r}:J${r}`);
     
     // ✅ 고정값 대신 엑셀 수식 적용
     if (i === 0) { // 소계
@@ -289,13 +289,13 @@ function buildEstimate(ws, items = [], totals, notes) {
       };
     }
     
-    styleRange(ws, r, 1, r, 8, { font: fontDefault, alignment: alignCenter, border: borderThin });
+    styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
   // 합계 숫자 서식
-  setNumFmt(ws, totalStart, 7, totalStart + 2, 8);
+  setNumFmt(ws, totalStart, 7, totalStart + 2, 10);
 
-  // 특기사항 A29:H31 (흰색 배경, 좌상단 정렬)
-  ws.mergeCells('A29:H31');
+  // 특기사항 A29:J31 (흰색 배경, 좌상단 정렬)
+  ws.mergeCells('A29:J31');
   
   // 특기사항 제목
   ws.getCell('A29').value = "특기사항";
@@ -308,27 +308,27 @@ function buildEstimate(ws, items = [], totals, notes) {
     ws.getCell('A30').alignment = { vertical: "top", horizontal: "left", wrapText: true };
   }
   
-  styleRange(ws, 29, 1, 31, 8, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
+  styleRange(ws, 29, 1, 31, 10, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
-  // 회사명 푸터 H32
-  ws.getCell('H32').value = '(주)삼미앵글산업';
-  ws.getCell('H32').font = { ...fontDefault, size: 10 };
-  ws.getCell('H32').alignment = alignCenter;
+  // 회사명 푸터 J32
+  ws.getCell('J32').value = '(주)삼미앵글산업';
+  ws.getCell('J32').font = { ...fontDefault, size: 10 };
+  ws.getCell('J32').alignment = alignCenter;
 
   // 전체 테두리(5~32행)
-  fullBorder(ws, 5, 32, 1, 8);
+  fullBorder(ws, 5, 32, 1, 10);
 }
 
 /** 청구서 & 거래명세서 공통 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
 function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals, notes) {
-  // 섹션 타이틀 A11:H11
-  ws.mergeCells('A11:H11');
+  // 섹션 타이틀 A11:J11
+  ws.mergeCells('A11:J11');
   const sectionTitle = type === 'purchase' ? '청구명세' : '거래명세';
   ws.getCell('A11').value = sectionTitle;
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
   ws.getCell('A11').font = { bold: true, size: 16 };
-  styleRange(ws, 11, 1, 11, 8, { font: fontDefault, border: borderThin });
+  styleRange(ws, 11, 1, 11, 10, { font: fontDefault, border: borderThin });
 
   // 헤더 A12:J12
   ws.getCell('A12').value = 'NO';
@@ -371,7 +371,7 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     ws.mergeCells(`A${r}:F${r}`);
     ws.getCell(`A${r}`).value = labels[i];
     ws.getCell(`A${r}`).alignment = alignCenter;
-    ws.mergeCells(`G${r}:H${r}`);
+    ws.mergeCells(`G${r}:J${r}`);
     
     // ✅ 고정값 대신 엑셀 수식 적용 (위의 청구 명세 기준)
     if (i === 0) { // 소계
@@ -395,17 +395,17 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
       };
     }
     
-    styleRange(ws, r, 1, r, 8, { font: fontDefault, alignment: alignCenter, border: borderThin });
+    styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
-  setNumFmt(ws, totalStart, 7, totalStart + 2, 8);
+  setNumFmt(ws, totalStart, 7, totalStart + 2, 10);
 
-  // 원자재 명세서 A24:H24 (25% 회색)
-  ws.mergeCells('A24:H24');
+  // 원자재 명세서 A24:J24 (25% 회색)
+  ws.mergeCells('A24:J24');
   ws.getCell('A24').value = '원자재 명세서';
   ws.getCell('A24').fill = fillItemHeader;
   ws.getCell('A24').alignment = alignCenter;
   ws.getCell('A24').font = { bold: true, size: 16 };
-  styleRange(ws, 24, 1, 24, 8, { font: fontDefault, border: borderThin });
+  styleRange(ws, 24, 1, 24, 10, { font: fontDefault, border: borderThin });
 
   // 원자재 헤더 A25:J25
   // 원자재 헤더 A25:J25 (단가/금액 제거, 부품명 확대)
@@ -436,8 +436,8 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   }
   // setNumFmt(ws, 26, 6, 25 + matRows, 7);
   
-  // 특기사항 A56:H58
-  ws.mergeCells('A56:H58');
+  // 특기사항 A56:J58
+  ws.mergeCells('A56:J58');
   // 특기사항 제목
   ws.getCell('A56').value = "특기사항";
   ws.getCell('A56').font = { bold: true };
@@ -449,15 +449,15 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     ws.getCell('A57').alignment = { vertical: "top", horizontal: "left", wrapText: true };
   }
   
-  styleRange(ws, 56, 1, 58, 8, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
+  styleRange(ws, 56, 1, 58, 10, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
-  // 회사명 H59
-  ws.getCell('H59').value = '(주)삼미앵글산업';
-  ws.getCell('H59').font = { ...fontDefault, size: 10 };
-  ws.getCell('H59').alignment = alignCenter;
+  // 회사명 J59
+  ws.getCell('J59').value = '(주)삼미앵글산업';
+  ws.getCell('J59').font = { ...fontDefault, size: 10 };
+  ws.getCell('J59').alignment = alignCenter;
 
   // 전체 테두리(5~59행)
-  fullBorder(ws, 5, 59, 1, 8);
+  fullBorder(ws, 5, 59, 1, 10);
 }
 
 /** 도장 이미지 배치(H7 근처) */
@@ -515,8 +515,8 @@ export async function exportToExcel(rawData, type = 'estimate') {
   }
 
   // 셀 전체 가운데 정렬 유지 (특기사항 제외 이미 따로 처리)
-  styleRange(ws, 5, 1, ws.rowCount, 8, { alignment: alignCenter });
-
+  styleRange(ws, 5, 1, ws.rowCount, 10, { alignment: alignCenter });
+  
   // 도장 이미지
   await placeStamp(workbook, ws);
 
