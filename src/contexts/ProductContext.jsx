@@ -105,31 +105,41 @@ const extractWeightOnly = (color="")=>{
 const normalizePartName=(name="")=>{
   return name.replace(/브레싱고무/g,"브러싱고무");
 };
-
 const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    // 수정: item에 partId를 통일된 양식으로 우선 생성 
-    const partId = generateInventoryPartId(item); // ✅ 없으면 이전 partid하고 싶으면, || item.partId  
+    const partId = generatePartId(item);
     const adminPrice = priceData[partId];
     
-    console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
+    const qty = Number(item.quantity) || 0;
     
     if (adminPrice && adminPrice.price > 0) {
-      console.log(`✅ 관리자 단가 적용: ${item.name} ${adminPrice.price}원`);
       return {
         ...item,
         unitPrice: adminPrice.price,
-        totalPrice: adminPrice.price * (Number(item.quantity) || 0),
+        totalPrice: adminPrice.price * qty,
         hasAdminPrice: true,
         originalUnitPrice: item.unitPrice
       };
     }
+    
+    const unitPrice = Number(item.unitPrice) || 0;
+    return {
+      ...item,
+      unitPrice: unitPrice,
+      totalPrice: unitPrice * qty
+    };
   } catch (error) {
     console.error('관리자 단가 적용 실패:', error);
+    const qty = Number(item.quantity) || 0;
+    const unitPrice = Number(item.unitPrice) || 0;
+    return {
+      ...item,
+      unitPrice: unitPrice,
+      totalPrice: unitPrice * qty
+    };
   }
-  return item;
 };
 
 const ensureSpecification = (row, ctx = {}) => {
