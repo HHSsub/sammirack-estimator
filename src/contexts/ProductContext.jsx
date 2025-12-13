@@ -7,11 +7,8 @@ import {
   getEffectivePrice as utilGetEffectivePrice, 
   generatePartId,
   generateInventoryPartId,
-  loadExtraOptionsPrices,
-  mapExtraToBasePart,  // ✅ Phase 1-B: 매핑 함수 import
-  EXTRA_TO_BASE_MAPPING  // ✅ Phase 1-B: 매핑 테이블 import
+  loadExtraOptionsPrices  // ✅ 추가
 } from '../utils/unifiedPriceManager';
-
 import { inventoryService } from '../services/InventoryService';
 
 const ProductContext = createContext();
@@ -105,41 +102,31 @@ const extractWeightOnly = (color="")=>{
 const normalizePartName=(name="")=>{
   return name.replace(/브레싱고무/g,"브러싱고무");
 };
+
 const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    const partId = generatePartId(item);
+    // 수정: item에 partId를 통일된 양식으로 우선 생성 
+    const partId = generateInventoryPartId(item); // ✅ 없으면 이전 partid하고 싶으면, || item.partId  
     const adminPrice = priceData[partId];
     
-    const qty = Number(item.quantity) || 0;
+    console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
     
     if (adminPrice && adminPrice.price > 0) {
+      console.log(`✅ 관리자 단가 적용: ${item.name} ${adminPrice.price}원`);
       return {
         ...item,
         unitPrice: adminPrice.price,
-        totalPrice: adminPrice.price * qty,
+        totalPrice: adminPrice.price * (Number(item.quantity) || 0),
         hasAdminPrice: true,
         originalUnitPrice: item.unitPrice
       };
     }
-    
-    const unitPrice = Number(item.unitPrice) || 0;
-    return {
-      ...item,
-      unitPrice: unitPrice,
-      totalPrice: unitPrice * qty
-    };
   } catch (error) {
     console.error('관리자 단가 적용 실패:', error);
-    const qty = Number(item.quantity) || 0;
-    const unitPrice = Number(item.unitPrice) || 0;
-    return {
-      ...item,
-      unitPrice: unitPrice,
-      totalPrice: unitPrice * qty
-    };
   }
+  return item;
 };
 
 const ensureSpecification = (row, ctx = {}) => {
@@ -755,182 +742,49 @@ export const ProductProvider=({children})=>{
       };
 
 const makeExtraOptionBOM = () => {
-  const extraBOM = [];
-  const adminPrices = loadAdminPrices();
+      const extraBOM = [];
+      const extraOptionsPrices = loadExtraOptionsPrices();
+      const q = Number(quantity) || 1;
+      
+      (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
+        if (Array.isArray(arr)) {
+          arr.forEach(opt => {
+            // ✅ "기타자재" 제외 (사용자 정의 자재는 별도 처리)
+            if (opt.name && opt.name.includes('기타자재')) {
+              return;
+            }
+            
+            if (extraOptionsSel.includes(opt.id)) {
+              const cleanName = opt.name.replace(/\s*\(.*\)\s*/g, '').trim();
+              const partIdForPrice = generatePartId({ rackType: selectedType, name: cleanName, specification: '' });
   
-  (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
-    if (Array.isArray(arr)) {
-      arr.forEach(opt => {
-        if (extraOptionsSel.includes(opt.id)) {
-          
-          if (opt.bom && Array.isArray(opt.bom) && opt.bom.length > 0) {
-            const basePrice = Number(opt.price) || 0;
-            const pricePerItem = basePrice / opt.bom.length;
-            
-            opt.bom.forEach(bomItem => {
-              const itemName = bomItem.name || opt.name;
-              const itemQty = Number(bomItem.qty) || 1;
-              const itemSpec = bomItem.specification || "";
+              const adminPrices = loadAdminPrices();
+              const adminPriceEntry = adminPrices[partIdForPrice];
               
-              const nameWithoutColor = itemName.replace(/블루|메트그레이|매트그레이|오렌지/g, '').trim();
+              const effectivePrice = adminPriceEntry && adminPriceEntry.price > 0 
+                ? adminPriceEntry.price 
+                : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0);
               
-              if (selectedType === '하이랙') {
-                const pricePartId = generatePartId({
-                  rackType: selectedType,
-                  name: nameWithoutColor,
-                  specification: itemSpec
-                });
-                
-                const adminPrice = adminPrices[pricePartId];
-                const finalPrice = (adminPrice && adminPrice.price > 0) ? adminPrice.price : pricePerItem;
-                
-                extraBOM.push({
-                  rackType: selectedType,
-                  size: selectedOptions.size || "",
-                  name: nameWithoutColor,
-                  specification: itemSpec,
-                  colorWeight: selectedOptions.color || '',
-                  note: opt.note || "",
-                  quantity: itemQty,
-                  unitPrice: finalPrice,
-                  totalPrice: finalPrice * itemQty
-                });
-              } else {
-                const colorMatch = itemName.match(/블루|메트그레이|매트그레이|오렌지/);
-                const extractedColor = colorMatch ? colorMatch[0] : '';
-                const weightOnly = extractWeightOnly(itemName) || extractWeightOnly(itemSpec) || extractWeightOnly(selectedOptions.color || '');
-                const colorWeight = extractedColor && weightOnly ? `${extractedColor}${weightOnly}` : '';
-                
-                const originalPartId = generateInventoryPartId({
-                  rackType: selectedType,
-                  name: itemName,
-                  specification: itemSpec,
-                  colorWeight: colorWeight
-                });
-                
-                const mappedPartIds = mapExtraToBasePart(originalPartId);
-                
-                if (Array.isArray(mappedPartIds)) {
-                  mappedPartIds.forEach(mappedPartId => {
-                    const parts = mappedPartId.split('-');
-                    const mappedName = parts[1] || itemName;
-                    const mappedSpec = parts[2] || itemSpec;
-                    
-                    const pricePartId = generatePartId({
-                      rackType: selectedType,
-                      name: mappedName,
-                      specification: mappedSpec
-                    });
-                    
-                    const adminPrice = adminPrices[pricePartId];
-                    const finalPrice = (adminPrice && adminPrice.price > 0) ? adminPrice.price : pricePerItem;
-                    
-                    extraBOM.push({
-                      rackType: selectedType,
-                      size: selectedOptions.size || "",
-                      name: mappedName,
-                      specification: mappedSpec,
-                      colorWeight: colorWeight,
-                      note: opt.note || "",
-                      quantity: itemQty,
-                      unitPrice: finalPrice,
-                      totalPrice: finalPrice * itemQty
-                    });
-                  });
-                } else {
-                  const parts = mappedPartIds.split('-');
-                  const mappedName = parts[1] || itemName;
-                  const mappedSpec = parts[2] || itemSpec;
-                  
-                  const pricePartId = generatePartId({
-                    rackType: selectedType,
-                    name: mappedName,
-                    specification: mappedSpec
-                  });
-                  
-                  const adminPrice = adminPrices[pricePartId];
-                  const finalPrice = (adminPrice && adminPrice.price > 0) ? adminPrice.price : pricePerItem;
-                  
-                  extraBOM.push({
-                    rackType: selectedType,
-                    size: selectedOptions.size || "",
-                    name: mappedName,
-                    specification: mappedSpec,
-                    colorWeight: colorWeight,
-                    note: opt.note || "",
-                    quantity: itemQty,
-                    unitPrice: finalPrice,
-                    totalPrice: finalPrice * itemQty
-                  });
-                }
-              }
-            });
-          } else {
-            const nameWithoutColor = opt.name.replace(/블루|메트그레이|매트그레이|오렌지/g, '').trim();
-            
-            if (selectedType === '하이랙') {
-              const pricePartId = generatePartId({
-                rackType: selectedType,
-                name: nameWithoutColor,
-                specification: opt.specification || ""
-              });
-              
-              const adminPrice = adminPrices[pricePartId];
-              const basePrice = Number(opt.price) || 0;
-              const finalPrice = (adminPrice && adminPrice.price > 0) ? adminPrice.price : basePrice;
+              const optionQty = Number(opt.quantity) || 1;
+              const totalQty = optionQty * q;
               
               extraBOM.push({
                 rackType: selectedType,
                 size: selectedOptions.size || "",
-                name: nameWithoutColor,
-                specification: opt.specification || "",
-                colorWeight: selectedOptions.color || '',
-                note: opt.note || "",
-                quantity: Number(opt.quantity) || 1,
-                unitPrice: finalPrice,
-                totalPrice: finalPrice
-              });
-            } else {
-              const originalPartId = generateInventoryPartId({
-                rackType: selectedType,
                 name: opt.name,
-                specification: opt.specification || ""
-              });
-              
-              const mappedPartIds = mapExtraToBasePart(originalPartId);
-              const finalPartId = Array.isArray(mappedPartIds) ? mappedPartIds[0] : mappedPartIds;
-              const parts = finalPartId.split('-');
-              const mappedName = parts[1] || opt.name;
-              const mappedSpec = parts[2] || opt.specification || "";
-              
-              const pricePartId = generatePartId({
-                rackType: selectedType,
-                name: mappedName,
-                specification: mappedSpec
-              });
-              
-              const adminPrice = adminPrices[pricePartId];
-              const basePrice = Number(opt.price) || 0;
-              const finalPrice = (adminPrice && adminPrice.price > 0) ? adminPrice.price : basePrice;
-              
-              extraBOM.push({
-                rackType: selectedType,
-                size: selectedOptions.size || "",
-                name: mappedName,
-                specification: mappedSpec,
+                partId: partIdForPrice,
+                specification: opt.specification || "",
                 note: opt.note || "",
-                quantity: Number(opt.quantity) || 1,
-                unitPrice: finalPrice,
-                totalPrice: finalPrice
+                quantity: totalQty,
+                unitPrice: effectivePrice,
+                totalPrice: effectivePrice * totalQty
               });
             }
-          }
+          });
         }
       });
-    }
-  });
-  return extraBOM;
-};
+      return extraBOM;
+    };
 
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
