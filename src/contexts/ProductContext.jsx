@@ -772,11 +772,6 @@ const makeExtraOptionBOM = () => {
               const itemQty = Number(bomItem.qty) || 1;
               const itemSpec = bomItem.specification || "";
               
-              const colorMatch = itemName.match(/블루|메트그레이|매트그레이|오렌지/);
-              const extractedColor = colorMatch ? colorMatch[0] : '';
-              const weightOnly = extractWeightOnly(itemName) || extractWeightOnly(itemSpec) || extractWeightOnly(selectedOptions.color || '');
-              const colorWeight = extractedColor && weightOnly ? `${extractedColor}${weightOnly}` : '';
-              
               const nameWithoutColor = itemName.replace(/블루|메트그레이|매트그레이|오렌지/g, '').trim();
               
               if (selectedType === '하이랙') {
@@ -789,21 +784,23 @@ const makeExtraOptionBOM = () => {
                 const adminPrice = adminPrices[pricePartId];
                 const finalPrice = (adminPrice && adminPrice.price > 0) ? adminPrice.price : pricePerItem;
                 
-                const userColor = selectedOptions.color || '';
-                const isSameColor = extractedColor && userColor.includes(extractedColor);
-                
                 extraBOM.push({
                   rackType: selectedType,
                   size: selectedOptions.size || "",
-                  name: isSameColor ? nameWithoutColor : itemName,
+                  name: nameWithoutColor,
                   specification: itemSpec,
-                  colorWeight: colorWeight,
+                  colorWeight: selectedOptions.color || '',
                   note: opt.note || "",
                   quantity: itemQty,
                   unitPrice: finalPrice,
                   totalPrice: finalPrice * itemQty
                 });
               } else {
+                const colorMatch = itemName.match(/블루|메트그레이|매트그레이|오렌지/);
+                const extractedColor = colorMatch ? colorMatch[0] : '';
+                const weightOnly = extractWeightOnly(itemName) || extractWeightOnly(itemSpec) || extractWeightOnly(selectedOptions.color || '');
+                const colorWeight = extractedColor && weightOnly ? `${extractedColor}${weightOnly}` : '';
+                
                 const originalPartId = generateInventoryPartId({
                   rackType: selectedType,
                   name: itemName,
@@ -887,6 +884,7 @@ const makeExtraOptionBOM = () => {
                 size: selectedOptions.size || "",
                 name: opt.name,
                 specification: opt.specification || "",
+                colorWeight: selectedOptions.color || '',
                 note: opt.note || "",
                 quantity: Number(opt.quantity) || 1,
                 unitPrice: finalPrice,
