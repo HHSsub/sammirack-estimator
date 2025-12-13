@@ -767,21 +767,12 @@ const makeExtraOptionBOM = () => {
               const weightOnly = extractWeightOnly(itemName) || extractWeightOnly(itemSpec) || extractWeightOnly(selectedOptions.color || '');
               const colorWeight = extractedColor && weightOnly ? `${extractedColor}${weightOnly}` : '';
               
+              const nameWithoutColor = itemName.replace(/블루|메트그레이|매트그레이|오렌지/g, '').trim();
+              
               if (selectedType === '하이랙') {
-                const inventoryPartId = generateInventoryPartId({
-                  rackType: selectedType,
-                  name: itemName,
-                  specification: itemSpec,
-                  colorWeight: colorWeight
-                });
-                
-                const parts = inventoryPartId.split('-');
-                const mappedName = parts[1] || itemName;
-                const mappedSpec = parts[2] || itemSpec;
-                
                 const pricePartId = generatePartId({
                   rackType: selectedType,
-                  name: itemName,
+                  name: nameWithoutColor,
                   specification: itemSpec
                 });
                 
@@ -794,7 +785,7 @@ const makeExtraOptionBOM = () => {
                 extraBOM.push({
                   rackType: selectedType,
                   size: selectedOptions.size || "",
-                  name: isSameColor ? itemName.replace(/블루|메트그레이|매트그레이|오렌지/g, '').trim() : itemName,
+                  name: isSameColor ? nameWithoutColor : itemName,
                   specification: itemSpec,
                   colorWeight: colorWeight,
                   note: opt.note || "",
@@ -868,10 +859,12 @@ const makeExtraOptionBOM = () => {
               }
             });
           } else {
+            const nameWithoutColor = opt.name.replace(/블루|메트그레이|매트그레이|오렌지/g, '').trim();
+            
             if (selectedType === '하이랙') {
               const pricePartId = generatePartId({
                 rackType: selectedType,
-                name: opt.name,
+                name: nameWithoutColor,
                 specification: opt.specification || ""
               });
               
