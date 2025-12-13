@@ -882,7 +882,7 @@ const makeExtraOptionBOM = () => {
               extraBOM.push({
                 rackType: selectedType,
                 size: selectedOptions.size || "",
-                name: opt.name,
+                name: nameWithoutColor,
                 specification: opt.specification || "",
                 colorWeight: selectedOptions.color || '',
                 note: opt.note || "",
