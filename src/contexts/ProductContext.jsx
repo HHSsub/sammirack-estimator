@@ -744,156 +744,94 @@ export const ProductProvider=({children})=>{
        return sortBOMByMaterialRule([...withAdmin, ...makeExtraOptionBOM(), ...customBOM]);
       };
 
-  const makeExtraOptionBOM = () => {
-    const extraBOM = [];
-    
-    if (!extraOptionsSel || extraOptionsSel.length === 0) {
-      return extraBOM;
-    }
+const makeExtraOptionBOM = () => {
+  const extraBOM = [];
+  const extraOptionsPrices = loadExtraOptionsPrices();
   
-    Object.keys(EXTRA_OPTIONS).forEach(rackType => {
-      if (rackType !== selectedType) return;
-      
-      const categories = EXTRA_OPTIONS[rackType];
-      Object.keys(categories).forEach(categoryName => {
-        const options = categories[categoryName];
-        
-        options.forEach(opt => {
-          if (extraOptionsSel.includes(opt.id)) {
-            if (opt.bom && Array.isArray(opt.bom)) {
-              opt.bom.forEach(bomItem => {
-                // ✅ 1. 원래 inventoryPartId 생성
-                const cleanName = bomItem.name.replace(/\s*\(.*\)\s*/g, '').trim();
-                const originalPartId = generateInventoryPartId({ 
-                  rackType: selectedType, 
-                  name: cleanName, 
-                  specification: bomItem.specification || '',
-                  colorWeight: bomItem.colorWeight || ''
-                });
-                
-                console.log(`\n📌 기타 추가 옵션 BOM 처리: ${bomItem.name}`);
-                console.log(`  🔑 원래 partId: "${originalPartId}"`);
-                
-                // ✅ 2. 매핑 테이블 확인
-                const mappedPartIds = mapExtraToBasePart(originalPartId);
-                
-                if (Array.isArray(mappedPartIds)) {
-                  // ✅ 병합 옵션 - 각각 추가
-                  console.log(`  🔀 병합 옵션 분리: ${mappedPartIds.length}개 부품`);
-                  
-                  mappedPartIds.forEach((mappedPartId, index) => {
-                    // 매핑된 partID에서 name과 specification 추출
-                    const parts = mappedPartId.split('-');
-                    const mappedName = parts[1] || bomItem.name;
-                    const mappedSpec = parts.slice(2).join('-') || '';
-                    
-                    // 관리자 수정 단가 우선 사용
-                    const adminPrices = loadAdminPrices();
-                    const adminPriceEntry = adminPrices[mappedPartId];
-                    const extraOptionsPrices = loadExtraOptionsPrices();
-                    
-                    // 가격 계산: 관리자 단가 > 추가옵션 단가 / 부품 수 > 기본 가격 / 부품 수
-                    const effectivePrice = adminPriceEntry && adminPriceEntry.price > 0 
-                      ? adminPriceEntry.price 
-                      : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0) / mappedPartIds.length;
-                    
-                    extraBOM.push({
-                      rackType: selectedType,
-                      size: selectedOptions.size || "",
-                      name: mappedName,
-                      partId: mappedPartId,
-                      specification: mappedSpec,
-                      note: `${bomItem.name} 분리 ${index + 1}/${mappedPartIds.length}`,
-                      quantity: Number(bomItem.qty) || 1,
-                      unitPrice: effectivePrice,
-                      totalPrice: effectivePrice
-                    });
-                    
-                    console.log(`    ✅ 부품 ${index + 1} 추가: ${mappedPartId} (${effectivePrice}원)`);
-                  });
-                } else if (mappedPartIds !== originalPartId) {
-                  // ✅ 단일 매핑 - 기본 원자재로 교체
-                  console.log(`  🔗 매핑됨: "${originalPartId}" → "${mappedPartIds}"`);
-                  
-                  // 매핑된 partID에서 name과 specification 추출
-                  const parts = mappedPartIds.split('-');
-                  const mappedName = parts[1] || bomItem.name;
-                  const mappedSpec = parts.slice(2).join('-') || '';
-                  
-                  // 관리자 수정 단가 우선 사용
-                  const adminPrices = loadAdminPrices();
-                  const adminPriceEntry = adminPrices[mappedPartIds];
-                  const extraOptionsPrices = loadExtraOptionsPrices();
-                  
-                  const effectivePrice = adminPriceEntry && adminPriceEntry.price > 0 
-                    ? adminPriceEntry.price 
-                    : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0);
-                  
-                  extraBOM.push({
-                    rackType: selectedType,
-                    size: selectedOptions.size || "",
-                    name: mappedName,
-                    partId: mappedPartIds,
-                    specification: mappedSpec,
-                    note: bomItem.note || "",
-                    quantity: Number(bomItem.qty) || 1,
-                    unitPrice: effectivePrice,
-                    totalPrice: effectivePrice
-                  });
-                  
-                  console.log(`    ✅ 기본 원자재로 추가: ${mappedPartIds} (${effectivePrice}원)`);
-                } else {
-                  // ✅ 매핑 없음 - 원래 partId 그대로 사용
-                  console.log(`  ➡️ 매핑 없음: 원래 partId 사용`);
-                  
-                  const extraOptionsPrices = loadExtraOptionsPrices();
-                  const adminPrices = loadAdminPrices();
-                  const adminPriceEntry = adminPrices[originalPartId];
-                  
-                  const effectivePrice = adminPriceEntry && adminPriceEntry.price > 0 
-                    ? adminPriceEntry.price 
-                    : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0);
-                  
-                  extraBOM.push({
-                    rackType: selectedType,
-                    size: selectedOptions.size || "",
-                    name: bomItem.name,
-                    partId: originalPartId,
-                    specification: bomItem.specification || "",
-                    note: bomItem.note || "",
-                    quantity: Number(bomItem.qty) || 1,
-                    unitPrice: effectivePrice,
-                    totalPrice: effectivePrice
-                  });
-                  
-                  console.log(`    ✅ 별도 부품으로 추가: ${originalPartId} (${effectivePrice}원)`);
-                }
-              });
-            } else {
-              // ✅ BOM이 없는 경우 (레거시 처리)
-              console.warn(`  ⚠️ BOM 데이터 없음: ${opt.name} (${opt.id})`);
+  (Object.values(extraProducts?.[selectedType] || {})).forEach(arr => {
+    if (Array.isArray(arr)) {
+      arr.forEach(opt => {
+        if (extraOptionsSel.includes(opt.id)) {
+          const effectivePrice = extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0;
+          
+          // ✅ Phase 1-B: opt.bom 배열이 있으면 각각 추가 (병합 옵션 처리)
+          if (opt.bom && Array.isArray(opt.bom) && opt.bom.length > 0) {
+            const pricePerItem = effectivePrice / opt.bom.length;
+            
+            opt.bom.forEach(bomItem => {
+              const itemName = bomItem.name || opt.name;
+              const itemQty = Number(bomItem.qty) || 1;
               
-              const extraOptionsPrices = loadExtraOptionsPrices();
-              const effectivePrice = extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0;
-              
-              extraBOM.push({
+              // ✅ 매핑 확인
+              const originalPartId = generateInventoryPartId({
                 rackType: selectedType,
-                size: selectedOptions.size || "",
-                name: opt.name,
-                specification: opt.specification || "",
-                note: opt.note || "",
-                quantity: Number(opt.quantity) || 1,
-                unitPrice: effectivePrice,
-                totalPrice: effectivePrice
+                name: itemName,
+                specification: bomItem.specification || ""
               });
-            }
+              
+              const mappedPartIds = mapExtraToBasePart(originalPartId);
+              
+              if (Array.isArray(mappedPartIds)) {
+                // 병합 옵션 → 각각 추가
+                mappedPartIds.forEach(mappedPartId => {
+                  const parts = mappedPartId.split('-');
+                  extraBOM.push({
+                    rackType: parts[0] || selectedType,
+                    size: selectedOptions.size || "",
+                    name: parts[1] || itemName,
+                    specification: parts[2] || "",
+                    note: opt.note || "",
+                    quantity: itemQty,
+                    unitPrice: pricePerItem,
+                    totalPrice: pricePerItem * itemQty
+                  });
+                });
+              } else if (mappedPartIds !== originalPartId) {
+                // 단일 매핑
+                const parts = mappedPartIds.split('-');
+                extraBOM.push({
+                  rackType: parts[0] || selectedType,
+                  size: selectedOptions.size || "",
+                  name: parts[1] || itemName,
+                  specification: parts[2] || "",
+                  note: opt.note || "",
+                  quantity: itemQty,
+                  unitPrice: pricePerItem,
+                  totalPrice: pricePerItem * itemQty
+                });
+              } else {
+                // 매핑 없음
+                extraBOM.push({
+                  rackType: selectedType,
+                  size: selectedOptions.size || "",
+                  name: itemName,
+                  specification: bomItem.specification || "",
+                  note: opt.note || "",
+                  quantity: itemQty,
+                  unitPrice: pricePerItem,
+                  totalPrice: pricePerItem * itemQty
+                });
+              }
+            });
+          } else {
+            // ✅ opt.bom 없으면 기존 방식 (단일 아이템)
+            extraBOM.push({
+              rackType: selectedType,
+              size: selectedOptions.size || "",
+              name: opt.name,
+              specification: opt.specification || "",
+              note: opt.note || "",
+              quantity: Number(opt.quantity) || 1,
+              unitPrice: effectivePrice,
+              totalPrice: effectivePrice
+            });
           }
-        });
+        }
       });
-    });
-    
-    return extraBOM;
-  };
+    }
+  });
+  return extraBOM;
+};
 
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
