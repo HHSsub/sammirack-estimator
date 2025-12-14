@@ -887,20 +887,15 @@ const makeExtraOptionBOM = () => {
           const weight = extractWeightFromCategory(categoryName);
           const color = extractColorFromName(opt.name, categoryName);
           
-          // ✅ 3. 중량랙의 경우 사이즈 변환
+          // ✅ 3. specification 초기화 (매핑 테이블에서 추출할 예정)
           let finalSpecification = opt.specification || '';
           let finalColorWeight = opt.colorWeight || '';
           
-          if (selectedType === '중량랙') {
-            // 중량랙: 45x155 → w1500xd450 형식으로 변환
-            const sizeMatch = cleanName.match(/(\d+)x(\d+)/);
-            if (sizeMatch) {
-              const convertedSize = convertWeightRackSize(sizeMatch[0]);
-              if (convertedSize) {
-                finalSpecification = convertedSize;
-              }
-            }
-          } else if (selectedType === '하이랙') {
+          // ⚠️ 중요: 중량랙의 경우 매핑 테이블에서 가져온 partId에서 specification을 추출해야 함
+          // 예: "중량랙-선반-w900xd450" → "w900xd450"
+          // 따라서 여기서는 일단 설정하지 않고, 매핑 테이블 확인 후에 설정
+          
+          if (selectedType === '하이랙') {
             // 하이랙: 색상과 무게 정보 설정
             // ⚠️ 중요: specification에는 무게를 한 번만 포함해야 함
             if (color) {
@@ -1184,6 +1179,16 @@ const makeExtraOptionBOM = () => {
               // 스텐랙/중량랙: mappedInventoryPartIds가 이미 가격용 ID 형식
               // 예: "스텐랙-기둥-높이75", "중량랙-선반-w900xd450"
               partIdForPrice = mappedInventoryPartId;
+              
+              // ⚠️ 중요: 중량랙/스텐랙의 경우 매핑 테이블에서 가져온 partId에서 specification 추출
+              // 예: "중량랙-선반-w900xd450" → "w900xd450"
+              if (selectedType === '중량랙' || selectedType === '스텐랙') {
+                const parts = mappedInventoryPartId.split('-');
+                if (parts.length >= 3) {
+                  finalSpecification = parts[2]; // "w900xd450" 또는 "높이75"
+                  console.log(`    ✅ 매핑 테이블에서 specification 추출: "${finalSpecification}"`);
+                }
+              }
             }
               
               // ⚠️ 중요: 매핑 테이블에서 찾은 ID는 이미 서버(Gist)에 존재하는 ID입니다
@@ -1208,7 +1213,7 @@ const makeExtraOptionBOM = () => {
                 name: opt.name,
                 partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
                 inventoryPartId: finalInventoryPartId, // 재고관리용 (색상 포함, 서버에 있는 ID)
-                specification: finalSpecification,
+                specification: finalSpecification, // ⚠️ 중요: 매핑 테이블에서 추출한 specification 사용
                 colorWeight: finalColorWeight,
                 note: `${opt.name} 분리 ${index + 1}/${mappedInventoryPartIds.length}`,
                 quantity: totalQty,
@@ -1278,6 +1283,16 @@ const makeExtraOptionBOM = () => {
               // 스텐랙/중량랙: mappedInventoryPartIds가 이미 가격용 ID 형식
               // 예: "스텐랙-기둥-높이75", "중량랙-선반-w900xd450"
               partIdForPrice = mappedInventoryPartIds;
+              
+              // ⚠️ 중요: 중량랙/스텐랙의 경우 매핑 테이블에서 가져온 partId에서 specification 추출
+              // 예: "중량랙-선반-w900xd450" → "w900xd450"
+              if (selectedType === '중량랙' || selectedType === '스텐랙') {
+                const parts = mappedInventoryPartIds.split('-');
+                if (parts.length >= 3) {
+                  finalSpecification = parts[2]; // "w900xd450" 또는 "높이75"
+                  console.log(`  ✅ 매핑 테이블에서 specification 추출: "${finalSpecification}"`);
+                }
+              }
             }
             
             // ⚠️ 중요: 매핑 테이블에서 찾은 ID는 이미 서버(Gist)에 존재하는 ID입니다
@@ -1302,7 +1317,7 @@ const makeExtraOptionBOM = () => {
               name: opt.name,
               partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
               inventoryPartId: finalInventoryPartId, // 재고관리용 (색상 포함, 서버에 있는 ID)
-              specification: finalSpecification,
+              specification: finalSpecification, // ⚠️ 중요: 매핑 테이블에서 추출한 specification 사용
               colorWeight: finalColorWeight,
               note: opt.note || "",
               quantity: totalQty,
