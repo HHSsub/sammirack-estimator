@@ -733,7 +733,28 @@ const checkInventoryAvailability = async (cartItems) => {
   
   try {
     const { inventoryService } = await import('../services/InventoryService');
-    const serverInventory = await inventoryService.getInventory();
+    let serverInventory;
+    
+    try {
+      serverInventory = await inventoryService.getInventory();
+      console.log('✅ 서버 재고 데이터 로드 성공:', Object.keys(serverInventory).length, '개 항목');
+    } catch (serverError) {
+      console.warn('⚠️ 서버 재고 데이터 로드 실패, 로컬스토리지 사용:', serverError);
+      // 서버 로드 실패 시 로컬스토리지에서 재고 데이터 가져오기
+      const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+      serverInventory = localInventory;
+      console.log('📦 로컬스토리지 재고 데이터 사용:', Object.keys(serverInventory).length, '개 항목');
+      
+      // 로컬스토리지도 비어있으면 재고 체크 건너뛰기
+      if (Object.keys(serverInventory).length === 0) {
+        console.warn('⚠️ 로컬스토리지 재고 데이터도 없음, 재고 체크 건너뜀');
+        return {
+          success: true,
+          warnings: [],
+          message: '재고 데이터를 불러올 수 없어 재고 체크를 건너뜁니다.'
+        };
+      }
+    }
     
     const warnings = [];
     
@@ -743,12 +764,19 @@ const checkInventoryAvailability = async (cartItems) => {
       }
       
       item.bom.forEach((bomItem) => {
-        const inventoryPartId = generateInventoryPartId({
-          rackType: bomItem.rackType || '',
-          name: bomItem.name || '',
-          specification: bomItem.specification || '',
-          colorWeight: bomItem.colorWeight || ''
-        });
+        // ⚠️ 중요: BOM에 inventoryPartId가 있으면 우선 사용 (하이랙 등)
+        let inventoryPartId;
+        if (bomItem.inventoryPartId) {
+          inventoryPartId = bomItem.inventoryPartId;
+        } else {
+          // 기존 로직 (하위 호환성)
+          inventoryPartId = generateInventoryPartId({
+            rackType: bomItem.rackType || '',
+            name: bomItem.name || '',
+            specification: bomItem.specification || '',
+            colorWeight: bomItem.colorWeight || ''
+          });
+        }
         
         const requiredQty = Number(bomItem.quantity) || 0;
         const currentStock = Number(serverInventory[inventoryPartId]) || 0;
@@ -774,10 +802,11 @@ const checkInventoryAvailability = async (cartItems) => {
     
   } catch (error) {
     console.error('❌ 재고 체크 실패:', error);
+    // 예상치 못한 오류 발생 시 재고 체크 건너뛰기 (재고 부족으로 잘못 판단하지 않음)
     return {
-      success: false,
+      success: true,
       warnings: [],
-      message: error.message
+      message: '재고 체크 중 오류가 발생하여 재고 체크를 건너뜁니다: ' + error.message
     };
   }
 };
