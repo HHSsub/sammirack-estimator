@@ -1329,7 +1329,7 @@ const makeExtraOptionBOM = () => {
           } else {
             // ✅ 매핑 없음 - 별도 부품 (중량바퀴, 합판 등) 또는 매핑 테이블에 없는 하이랙 추가 옵션
             console.log(`  ➡️ 매핑 없음: extraOptionId="${extraOptionId}"`);
-            console.log(`  ⚠️ 매핑 테이블에 없음 - generateInventoryPartId로 생성 시도`);
+            console.log(`  ⚠️ 매핑 테이블에 없음 - generateInventoryPartId로 생성`);
             
             // ⚠️ 중요: 하이랙의 경우 name에서 색상과 사이즈를 제거하고 기본 부품명만 사용
             let baseName = cleanName;
@@ -1364,21 +1364,26 @@ const makeExtraOptionBOM = () => {
               }
             }
             
+            // ⚠️ 중요: 가격용 ID와 재고용 ID 구분
+            // 가격용 ID: 색상 제거 (동일 가격)
             const partIdForPrice = generatePartId({ 
               rackType: selectedType, 
               name: baseName, 
               specification: correctSpecification || finalSpecification || '' 
             });
             
+            // 재고용 ID: 색상 포함 (정확한 재고 추적)
+            // ⚠️ 중요: 하이랙의 경우 colorWeight가 올바르게 설정되어 있어야 함
             const originalInventoryPartId = generateInventoryPartId({
               rackType: selectedType,
               name: baseName, // ⚠️ 중요: 색상 제거된 기본 부품명 사용
               specification: correctSpecification || finalSpecification || '',
-              colorWeight: finalColorWeight || ''
+              colorWeight: finalColorWeight || '' // ⚠️ 중요: 색상 정보 포함
             });
             
             console.log(`  ✅ 생성된 partId: "${partIdForPrice}"`);
             console.log(`  ✅ 생성된 inventoryPartId: "${originalInventoryPartId}"`);
+            console.log(`  ✅ 사용된 colorWeight: "${finalColorWeight}"`);
             
             const adminPrices = loadAdminPrices();
             const adminPriceEntry = adminPrices[partIdForPrice];
@@ -1394,9 +1399,9 @@ const makeExtraOptionBOM = () => {
               rackType: selectedType,
               size: selectedOptions.size || "",
               name: opt.name,
-              partId: partIdForPrice,
-              inventoryPartId: originalInventoryPartId,
-              specification: finalSpecification,
+              partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
+              inventoryPartId: originalInventoryPartId, // 재고관리용 (색상 포함, 정확한 재고 추적)
+              specification: correctSpecification || finalSpecification,
               colorWeight: finalColorWeight,
               note: opt.note || "",
               quantity: totalQty,
