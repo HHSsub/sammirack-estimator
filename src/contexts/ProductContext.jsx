@@ -1348,18 +1348,31 @@ const makeExtraOptionBOM = () => {
             // ⚠️ 중요: finalSpecification이 올바르게 설정되어 있는지 확인
             // 기둥: "높이150270kg", 선반: "사이즈45x108270kg"
             let correctSpecification = finalSpecification;
-            if (selectedType === '하이랙' && !correctSpecification) {
-              // finalSpecification이 없으면 cleanName에서 추출
+            if (selectedType === '하이랙') {
+              // ⚠️ 중요: 기둥과 선반을 구분하여 specification 재설정
+              // finalSpecification이 이미 잘못 설정되어 있을 수 있으므로 항상 재설정
               if (baseName === '기둥') {
+                // 기둥: "45x150메트그레이기둥" → "높이150270kg"
+                // ⚠️ 중요: 기둥은 "사이즈"가 아니라 "높이" 형식이어야 함
                 const heightMatch = cleanName.match(/(\d+)x(\d+)/);
                 if (heightMatch) {
                   const height = heightMatch[2];
                   correctSpecification = weight ? `높이${height}${weight}` : `높이${height}`;
+                  console.log(`  ✅ 기둥 specification 재설정: "${correctSpecification}" (기존: "${finalSpecification}")`);
                 }
               } else if (baseName === '선반') {
-                const spec = extractHighRackSpec(opt.name);
-                if (spec) {
-                  correctSpecification = weight ? `${spec}${weight}` : spec;
+                // 선반: "45x108매트그레이선반" → "사이즈45x108270kg"
+                const sizeMatch = cleanName.match(/(\d+)x(\d+)/);
+                if (sizeMatch) {
+                  const size = sizeMatch[0];
+                  correctSpecification = weight ? `사이즈${size}${weight}` : `사이즈${size}`;
+                  console.log(`  ✅ 선반 specification 재설정: "${correctSpecification}" (기존: "${finalSpecification}")`);
+                } else {
+                  // extractHighRackSpec 사용
+                  const spec = extractHighRackSpec(opt.name);
+                  if (spec) {
+                    correctSpecification = weight ? `${spec}${weight}` : spec;
+                  }
                 }
               }
             }
