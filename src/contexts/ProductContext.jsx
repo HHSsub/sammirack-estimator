@@ -10,7 +10,8 @@ import {
   loadExtraOptionsPrices,
   // ✅ Phase 2 추가
   mapExtraToBaseInventoryPart,
-  mapExtraToBasePartId
+  mapExtraToBasePartId,
+  EXTRA_TO_BASE_INVENTORY_MAPPING
 } from '../utils/unifiedPriceManager';
 import { inventoryService } from '../services/InventoryService';
 
@@ -878,7 +879,19 @@ const makeExtraOptionBOM = () => {
           }
           
           // ✅ 1. cleanName 먼저 생성 (specification 생성에 필요)
-          const cleanName = (opt.name || '').replace(/\s*\(.*\)\s*/g, '').trim();
+          // ⚠️ 중요: 하이랙의 경우 "45x108오렌지선반" → "45x108선반"으로 변환 (색상 제거)
+          // 중량랙의 경우 "45x95"만 남기기
+          let cleanName = (opt.name || '').replace(/\s*\(.*\)\s*/g, '').trim();
+          
+          // 하이랙: 색상 관련 텍스트 제거
+          if (selectedType === '하이랙') {
+            cleanName = cleanName
+              .replace(/오렌지/g, '')
+              .replace(/매트그레이/g, '')
+              .replace(/메트그레이/g, '')
+              .replace(/블루/g, '')
+              .trim();
+          }
           
           // ✅ 2. 카테고리명에서 무게 정보 추출
           const weight = extractWeightFromCategory(categoryName);
@@ -1122,6 +1135,11 @@ const makeExtraOptionBOM = () => {
           const mappedInventoryPartIds = mapExtraToBaseInventoryPart(extraOptionId);
           console.log(`  🔍 매핑 테이블 확인 결과: "${extraOptionId}" → "${mappedInventoryPartIds}" (타입: ${Array.isArray(mappedInventoryPartIds) ? '배열' : typeof mappedInventoryPartIds})`);
           
+          // ⚠️ 중요: mapExtraToBaseInventoryPart가 매핑이 없으면 extraOptionId를 그대로 반환하므로
+          // 매핑이 성공했는지 확인하려면 EXTRA_TO_BASE_INVENTORY_MAPPING에서 직접 확인해야 함
+          const isMapped = EXTRA_TO_BASE_INVENTORY_MAPPING[extraOptionId] !== undefined;
+          console.log(`  🔍 매핑 테이블 존재 여부: "${extraOptionId}" → ${isMapped ? '매핑 있음' : '매핑 없음'}`);
+          
           if (Array.isArray(mappedInventoryPartIds)) {
             // ✅ 병합 옵션 - 각각 추가
             console.log(`  🔀 병합 옵션 분리: ${mappedInventoryPartIds.length}개 부품`);
@@ -1221,7 +1239,7 @@ const makeExtraOptionBOM = () => {
               
               console.log(`    ✅ 부품 ${index + 1} 추가: partId="${partIdForPrice}", inventoryPartId="${finalInventoryPartId}" (${effectivePrice}원)`);
             });
-          } else if (mappedInventoryPartIds !== extraOptionId) {
+          } else if (isMapped && mappedInventoryPartIds !== extraOptionId) {
             // ✅ 단일 매핑 - 기본 원자재로 교체
             console.log(`  🔗 매핑됨: "${extraOptionId}" → "${mappedInventoryPartIds}"`);
             
@@ -1384,6 +1402,7 @@ const makeExtraOptionBOM = () => {
             } else if (selectedType === '중량랙' && baseName === '선반') {
               // 중량랙 선반: "45x155" → "w1500xd450"
               // ⚠️ 중요: 중량랙은 매핑 테이블에 있어야 하므로 여기 도달하면 안 됨
+              // 하지만 매핑이 실패한 경우를 대비해 specification 변환 시도
               const sizeMatch = cleanName.match(/(\d+)x(\d+)/);
               if (sizeMatch) {
                 const convertedSize = convertWeightRackSize(sizeMatch[0]);
@@ -1394,6 +1413,8 @@ const makeExtraOptionBOM = () => {
                   console.log(`  ⚠️ 경고: 중량랙 사이즈 변환 실패: "${sizeMatch[0]}"`);
                 }
               }
+              // ⚠️ 중요: baseName을 "선반"으로 확실히 설정
+              baseName = '선반';
             }
             
             // ⚠️ 중요: 하이랙의 경우 colorWeight가 올바르게 설정되어 있어야 함
@@ -1424,9 +1445,16 @@ const makeExtraOptionBOM = () => {
             // ⚠️ 중요: 하이랙의 경우 generateInventoryPartId가 colorWeight를 받아서 정확한 형식으로 생성
             // 예: name="기둥", specification="높이150270kg", colorWeight="메트그레이(볼트식)270kg"
             // → "하이랙-기둥메트그레이(볼트식)270kg-높이150270kg"
+            // ⚠️ 중요: 중량랙의 경우 baseName이 "45x95" 같은 형식일 수 있으므로 "선반"으로 변환
+            let finalBaseName = baseName;
+            if (selectedType === '중량랙' && baseName.match(/^\d+x\d+$/)) {
+              finalBaseName = '선반';
+              console.log(`  ✅ 중량랙 baseName 변환: "${baseName}" → "${finalBaseName}"`);
+            }
+            
             const originalInventoryPartId = generateInventoryPartId({
               rackType: selectedType,
-              name: baseName, // ⚠️ 중요: 기본 부품명만 사용 ("기둥", "선반", "로드빔")
+              name: finalBaseName, // ⚠️ 중요: 기본 부품명만 사용 ("기둥", "선반", "로드빔")
               specification: correctSpecification || finalSpecification || '',
               colorWeight: finalColorWeight || '' // ⚠️ 중요: 색상 정보 포함 (하이랙만)
             });
