@@ -370,6 +370,13 @@ const PurchaseOrderForm = () => {
     }
     
     const storageKey = `purchase_${itemId}`;
+    
+    // ✅ cart에서 extraOptions 추출 (문서 저장 시 포함)
+    const cartWithExtraOptions = cart.map(item => ({
+      ...item,
+      extraOptions: item.extraOptions || []
+    }));
+    
     const newOrder = {
       ...formData,
       id: itemId,
@@ -386,6 +393,8 @@ const PurchaseOrderForm = () => {
       unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
       totalPrice: formData.totalAmount,
       updatedAt: new Date().toISOString(),
+      // ✅ extraOptions 저장 (문서 로드 시 복원용)
+      cart: cartWithExtraOptions,
       ...(isEditMode ? {} : { createdAt: new Date().toISOString() })
     };
     
@@ -768,6 +777,7 @@ const checkInventoryAvailability = async (cartItems) => {
         let inventoryPartId;
         if (bomItem.inventoryPartId) {
           inventoryPartId = bomItem.inventoryPartId;
+          console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
         } else {
           // 기존 로직 (하위 호환성)
           inventoryPartId = generateInventoryPartId({
@@ -776,12 +786,18 @@ const checkInventoryAvailability = async (cartItems) => {
             specification: bomItem.specification || '',
             colorWeight: bomItem.colorWeight || ''
           });
+          console.log(`  🔑 generateInventoryPartId로 생성: "${inventoryPartId}"`);
         }
         
         const requiredQty = Number(bomItem.quantity) || 0;
         const currentStock = Number(serverInventory[inventoryPartId]) || 0;
         
+        console.log(`  📊 서버 재고: ${currentStock}개`);
+        console.log(`  📈 필요 수량: ${requiredQty}개`);
+        
         if (requiredQty > 0 && currentStock < requiredQty) {
+          const shortage = requiredQty - currentStock;
+          console.log(`  ⚠️ 재고 부족: ${currentStock} → ${requiredQty} (부족: ${shortage}개)`);
           warnings.push({
             partId: inventoryPartId,
             name: bomItem.name,
@@ -789,8 +805,10 @@ const checkInventoryAvailability = async (cartItems) => {
             rackType: bomItem.rackType || '',
             required: requiredQty,
             available: currentStock,
-            shortage: requiredQty - currentStock
+            shortage: shortage
           });
+        } else {
+          console.log(`  ✅ 재고 충분: ${currentStock} >= ${requiredQty}`);
         }
       });
     });
