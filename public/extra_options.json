@@ -48,8 +48,8 @@
         "name": "80x108(블루선반+오렌지빔)", 
         "price": 81000, 
         "bom": [
-          { "name": "80x108 블루선반", "qty": 1 },
-          { "name": "80x108 오렌지빔", "qty": 1 }
+          { "name": "80x108 블루선반", "qty": 1, "rackType": "하이랙", "specification": "사이즈 80x108 600kg", "colorWeight": "블루(볼트식) 600kg" },
+          { "name": "80x108 오렌지빔", "qty": 1, "rackType": "하이랙", "specification": "사이즈 80x108 600kg", "colorWeight": "오렌지(볼트식) 600kg" }
         ] 
       },
       { 
@@ -57,8 +57,8 @@
         "name": "80x150(블루선반+오렌지빔)", 
         "price": 122000, 
         "bom": [
-          { "name": "80x150 블루선반", "qty": 1 },
-          { "name": "80x150 오렌지빔", "qty": 1 }
+          { "name": "80x150 블루선반", "qty": 1, "rackType": "하이랙", "specification": "사이즈 80x150 600kg", "colorWeight": "블루(볼트식) 600kg" },
+          { "name": "80x150 오렌지빔", "qty": 1, "rackType": "하이랙", "specification": "사이즈 80x150 600kg", "colorWeight": "오렌지(볼트식) 600kg" }
         ] 
       },
       { 
@@ -66,8 +66,8 @@
         "name": "80x200(블루선반+오렌지빔)", 
         "price": 158000, 
         "bom": [
-          { "name": "80x200 블루선반", "qty": 1 },
-          { "name": "80x200 오렌지빔", "qty": 1 }
+          { "name": "80x200 블루선반", "qty": 1, "rackType": "하이랙", "specification": "사이즈 80x200 600kg", "colorWeight": "블루(볼트식) 600kg" },
+          { "name": "80x200 오렌지빔", "qty": 1, "rackType": "하이랙", "specification": "사이즈 80x200 600kg", "colorWeight": "오렌지(볼트식) 600kg" }
         ] 
       }
     ]
