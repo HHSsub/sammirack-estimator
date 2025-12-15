@@ -985,8 +985,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     try {
       const updatedItem = {
         ...item,
-        memo: newMemo,
-        updatedAt: new Date().toISOString()
+        memo: newMemo
+        // ✅ updatedAt 제거 - 메모는 문서 수정 시간에 영향 안 줌
       };
       
       const success = await saveDocumentSync(updatedItem);
@@ -1004,8 +1004,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         }
       }
     } catch (error) {
-      console.error('Error updating memo:', error);
-      alert('메모 업데이트에 실패했습니다.');
+      console.error('메모 업데이트 실패:', error);
     }
   };
 
@@ -1336,8 +1335,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                 <input
                   type="text"
                   maxLength="15"
-                  value={item.memo || ''}
-                  onChange={(e) => {
+                  defaultValue={item.memo || ''}
+                  onBlur={(e) => {
                     e.stopPropagation();
                     updateMemo(item, e.target.value);
                   }}
@@ -1353,7 +1352,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   }}
                   placeholder="메모..."
                 />
-              </div>
+              </div>>
               <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
                 <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
                   ✏️
