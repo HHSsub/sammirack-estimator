@@ -24,6 +24,7 @@ import { generatePartId } from '../utils/unifiedPriceManager';
  * - ✅ 서버 동기화 (GitHub Gist)
  * - ✅ 삭제된 문서 목록 보기 및 복구
  * - ✅ 컬럼별 정렬 기능
+ * - ✅ 메모 기능 (상태 대체)
  */
 const HistoryPage = () => {
   const navigate = useNavigate();
@@ -32,11 +33,10 @@ const HistoryPage = () => {
   const [filteredItems, setFilteredItems] = useState([]);
   // State for filters
   const [filters, setFilters] = useState({
-    documentType: 'all', // 'all', 'estimate', 'purchase', 'delivery'
+    documentType: 'all',
     documentNumber: '',
     dateFrom: '',
-    dateTo: '',
-    status: 'all', // 'all', 'pending', 'completed', 'cancelled' (or Korean equivalents)
+    dateTo: ''
   });
   // State for selected item
   const [selectedItem, setSelectedItem] = useState(null);
@@ -173,9 +173,9 @@ const HistoryPage = () => {
           aValue = a.totalPrice || 0;
           bValue = b.totalPrice || 0;
           break;
-        case 'status':
-          aValue = a.status || '';
-          bValue = b.status || '';
+        case 'memo':
+          aValue = a.memo || '';
+          bValue = b.memo || '';
           break;
         default:
           aValue = new Date(a.updatedAt || a.date || 0).getTime();
@@ -234,11 +234,6 @@ const HistoryPage = () => {
       });
     }
     
-    // Filter by status
-    if (filters.status !== 'all') {
-      filtered = filtered.filter(item => item.status === filters.status);
-    }
-    
     setFilteredItems(filtered);
   };
 
@@ -261,8 +256,7 @@ const HistoryPage = () => {
       documentType: 'all',
       documentNumber: '',
       dateFrom: '',
-      dateTo: '',
-      status: 'all'
+      dateTo: ''
     });
   };
 
@@ -549,7 +543,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         notes: item.notes,
         topMemo: item.topMemo,
         date: item.date,
-        status: item.status
+        memo: item.memo || ''
       }
     };
     
@@ -983,41 +977,21 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   };
 
   /**
-   * Get status badge CSS class
+   * ✅ Update memo (서버 동기화)
    */
-  const getStatusClass = (status) => {
-    switch (status) {
-      case '진행 중':
-      case '처리 중':
-        return 'status-processing';
-      case '완료':
-        return 'status-completed';
-      case '취소':
-        return 'status-cancelled';
-      default:
-        return 'status-pending';
-    }
-  };
-
-  /**
-   * ✅ Update item status (서버 동기화)
-   */
-  const updateStatus = async (item, newStatus) => {
+  const updateMemo = async (item, newMemo) => {
     if (!item || !item.id || !item.type) return;
     
     try {
-      // Update item
       const updatedItem = {
         ...item,
-        status: newStatus,
+        memo: newMemo,
         updatedAt: new Date().toISOString()
       };
       
-      // ✅ 서버 동기화 저장
       const success = await saveDocumentSync(updatedItem);
       
       if (success) {
-        // Update state
         setHistoryItems(prev => prev.map(i => {
           if (i.id === item.id && i.type === item.type) {
             return updatedItem;
@@ -1030,8 +1004,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         }
       }
     } catch (error) {
-      console.error('Error updating status:', error);
-      alert('상태 업데이트에 실패했습니다.');
+      console.error('Error updating memo:', error);
+      alert('메모 업데이트에 실패했습니다.');
     }
   };
 
@@ -1083,10 +1057,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       <div className="item-details">
         <div className="details-header">
           <h2>
-            {isEstimate ? '견적서' : selectedItem.type === 'purchase' ? '청구서' : '거래명세서'} 상세정보 
-            <span className={`status-badge ${getStatusClass(selectedItem.status)}`}>
-              {selectedItem.status || '진행 중'}
-            </span>
+            {isEstimate ? '견적서' : selectedItem.type === 'purchase' ? '청구서' : '거래명세서'} 상세정보
           </h2>
           <button className="back-button" onClick={() => setView('list')}>목록으로</button>
         </div>
@@ -1115,14 +1086,12 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                 <strong>연락처:</strong>
                 <span>{selectedItem.contactInfo}</span>
               </div>
-              {/* ✅ 생성자 정보 표시 */}
               {selectedItem.createdBy && (
                 <div className="details-item">
                   <strong>생성자:</strong>
                   <span className="creator-info">{selectedItem.createdBy}</span>
                 </div>
               )}
-              {/* ✅ 동기화 시간 표시 */}
               {selectedItem.syncedAt && (
                 <div className="details-item">
                   <strong>마지막 동기화:</strong>
@@ -1133,6 +1102,12 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                 <div className="details-item">
                   <strong>관련 거래번호:</strong>
                   <span>{selectedItem.estimateNumber}</span>
+                </div>
+              )}
+              {selectedItem.memo && (
+                <div className="details-item">
+                  <strong>메모:</strong>
+                  <span style={{color: '#ff6600', fontWeight: 'bold'}}>{selectedItem.memo}</span>
                 </div>
               )}
             </div>
@@ -1190,36 +1165,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               </div>
             </div>
           )}
-          
-          <div className="details-section">
-            <h3>상태 관리</h3>
-            <div className="status-buttons">
-              <button 
-                className={`status-button ${selectedItem.status === '진행 중' ? 'active' : ''}`}
-                onClick={() => updateStatus(selectedItem, '진행 중')}
-              >
-                진행 중
-              </button>
-              <button 
-                className={`status-button ${selectedItem.status === '처리 중' ? 'active' : ''}`}
-                onClick={() => updateStatus(selectedItem, '처리 중')}
-              >
-                처리 중
-              </button>
-              <button 
-                className={`status-button ${selectedItem.status === '완료' ? 'active' : ''}`}
-                onClick={() => updateStatus(selectedItem, '완료')}
-              >
-                완료
-              </button>
-              <button 
-                className={`status-button ${selectedItem.status === '취소' ? 'active' : ''}`}
-                onClick={() => updateStatus(selectedItem, '취소')}
-              >
-                취소
-              </button>
-            </div>
-          </div>
           
           <div className="details-section">
             <h3>문서 작업</h3>
@@ -1349,8 +1294,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           <div className="header-cell price sortable" onClick={() => handleSort('price')}>
             금액{renderSortIcon('price')}
           </div>
-          <div className="header-cell status sortable" onClick={() => handleSort('status')}>
-            상태{renderSortIcon('status')}
+          <div className="header-cell memo sortable" onClick={() => handleSort('memo')}>
+            메모{renderSortIcon('memo')}
           </div>
           <div className="header-cell actions">작업</div>
         </div>
@@ -1387,10 +1332,27 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               <div className="item-cell price">
                 {item.totalPrice?.toLocaleString()}원
               </div>
-              <div className="item-cell status">
-                <span className={`status-badge ${getStatusClass(item.status)}`}>
-                  {item.status || '진행 중'}
-                </span>
+              <div className="item-cell memo">
+                <input
+                  type="text"
+                  maxLength="15"
+                  value={item.memo || ''}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    updateMemo(item, e.target.value);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    width: '100%',
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#ff6600',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                    padding: '2px'
+                  }}
+                  placeholder="메모..."
+                />
               </div>
               <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
                 <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
@@ -1428,7 +1390,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         <>
           <div className="page-header">
             <h2>문서 관리</h2>
-            {/* ✅ 동기화 상태 표시 */}
             <div className="sync-status">
               {lastSyncTime && (
                 <span className="last-sync">
@@ -1452,21 +1413,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               gap: '12px',
               alignItems: 'end'
             }}>
-              <div className="filter-group">
-                <label>문서 유형:</label>
-                <select 
-                  name="documentType" 
-                  value={filters.documentType} 
-                  onChange={handleFilterChange}
-                  style={{width: '100%'}}
-                >
-                  <option value="all">전체</option>
-                  <option value="estimate">견적서</option>
-                  <option value="purchase">청구서</option>
-                  <option value="delivery">거래명세서</option>
-                </select>
-              </div>
-              
+
               <div className="filter-group">
                 <label>거래번호:</label>
                 <input
@@ -1501,22 +1448,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                 </div>
               </div>
               
-              <div className="filter-group">
-                <label>상태:</label>
-                <select 
-                  name="status" 
-                  value={filters.status} 
-                  onChange={handleFilterChange}
-                  style={{width: '100%'}}
-                >
-                  <option value="all">전체</option>
-                  <option value="진행 중">진행 중</option>
-                  <option value="처리 중">처리 중</option>
-                  <option value="완료">완료</option>
-                  <option value="취소">취소</option>
-                </select>
-              </div>
-              
               <button 
                 className="reset-filters" 
                 onClick={resetFilters}
@@ -1537,7 +1468,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
             <button onClick={() => navigate('/purchase-order/new')}>
               새 청구서 작성
             </button>
-            {/* ✅ 삭제된 문서 보기 버튼 */}
             <button 
               className="deleted-docs-button"
               onClick={() => {
@@ -1555,7 +1485,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       
       {view === 'details' && renderItemDetails()}
       
-      {/* ✅ 삭제된 문서 목록 뷰 */}
       {view === 'deleted' && renderDeletedItemsList()}
     </div>
   );
