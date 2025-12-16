@@ -12,76 +12,88 @@ export const convertDOMToPDFBase64 = async (element) => {
     @media screen {
       .no-print,
       .item-controls,
+      .item-controls *,
       button.add-item-btn,
-      button.add-material-btn {
+      button.add-material-btn,
+      .add-item-btn,
+      .add-material-btn {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
         height: 0 !important;
+        width: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
       }
       
       .purchase-order-form-container,
       .estimate-form-container,
       .delivery-note-form-container {
-        transform: scale(0.82) !important;
+        transform: scale(0.88) !important;
         transform-origin: top center !important;
         max-width: 100% !important;
         width: 100% !important;
-        padding: 4mm 10mm 4mm !important;
+        padding: 6mm 8mm 6mm !important;
         margin: 0 auto !important;
         background: #fff !important;
         min-height: auto !important;
         box-sizing: border-box;
-        font-size: 10px !important;
-        line-height: 1.3 !important;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
       }
       
       .form-header h1 { 
-        font-size: 20px !important;
+        font-size: 22px !important;
         font-weight: 900 !important;
-        margin-bottom: 6px !important; 
+        margin-bottom: 8px !important; 
       }
       
       .form-table {
-        font-size: 10px !important;
-        margin-bottom: 8px !important;
+        font-size: 11px !important;
+        margin-bottom: 10px !important;
       }
       
       .form-table th,
       .form-table td {
-        padding: 8px 6px !important;
-        line-height: 1.6 !important;
+        padding: 12px 8px !important;
+        line-height: 2.0 !important;
         vertical-align: middle !important;
         height: auto !important;
         overflow: visible !important;
         box-sizing: border-box !important;
         font-weight: 700 !important;
-        font-size: 11px !important;
+        font-size: 12px !important;
+      }
+
+      .info-table td {
+        padding: 10px 8px !important;
+        line-height: 1.8 !important;
+        white-space: pre-line !important;
       }
 
       .info-table input,
       .info-table textarea {
-        font-size: 11px !important;
-        padding: 6px 6px !important;
+        font-size: 12px !important;
+        padding: 8px 6px !important;
         font-weight: 600 !important;
-        line-height: 1.6 !important;
-        min-height: 28px !important;
+        line-height: 1.8 !important;
+        min-height: 32px !important;
         white-space: pre-line !important;
         word-break: keep-all !important;
       }
       
       .info-table input[type="text"] {
-        min-height: 28px !important;
+        min-height: 32px !important;
         font-weight: 700 !important;
       }
       
       .estimate-memo {
-        min-height: 70px !important;
-        padding: 8px 5px !important;
-        font-size: 12px !important;
+        min-height: 75px !important;
+        padding: 10px 6px !important;
+        font-size: 13px !important;
         font-weight: 600 !important;
       }
 
@@ -90,25 +102,25 @@ export const convertDOMToPDFBase64 = async (element) => {
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        font-size: 11px !important;
-        padding: 6px 6px !important;
-        line-height: 1.6 !important;
+        font-size: 12px !important;
+        padding: 8px 6px !important;
+        line-height: 1.8 !important;
         height: auto !important;
-        min-height: 26px !important;
+        min-height: 30px !important;
         font-weight: 600 !important;
         white-space: pre-line !important;
         word-break: keep-all !important;
       }
       
       .total-table {
-        width: 220px !important;
-        margin-bottom: 6px !important;
+        width: 240px !important;
+        margin-bottom: 8px !important;
       }
       
       .form-company {
-        margin-top: 10px !important;
-        padding-top: 5px !important;
-        font-size: 13px !important;
+        margin-top: 12px !important;
+        padding-top: 6px !important;
+        font-size: 14px !important;
         font-weight: 700 !important;
       }
       
@@ -123,12 +135,12 @@ export const convertDOMToPDFBase64 = async (element) => {
         table-layout: fixed !important; 
         width: 100% !important; 
       }
-      .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 5% !important; }
-      .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 41.5% !important; }
-      .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 11% !important; }
-      .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 5.5% !important; }
-      .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 12% !important; }
-      .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 11% !important; }
+      .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 4% !important; }
+      .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 38% !important; }
+      .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 10% !important; }
+      .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 8% !important; }
+      .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 13% !important; }
+      .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 13% !important; }
       .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 11% !important; }
       .order-table th:nth-child(8), .order-table td:nth-child(8) { width: 3% !important; }
       
@@ -137,18 +149,20 @@ export const convertDOMToPDFBase64 = async (element) => {
         width: 100% !important; 
       }
       .bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 5% !important; }
-      .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 38% !important; }
-      .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 38% !important; }
-      .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; }
+      .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 36% !important; }
+      .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 36% !important; }
+      .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 12% !important; }
       .bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 0% !important; display: none !important; }
       .bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 0% !important; display: none !important; }
-      .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 9% !important; }
+      .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 11% !important; }
       .bom-table th:nth-child(8), .bom-table td:nth-child(8) { width: 0% !important; }
       
       .order-table th, .order-table td,
       .bom-table th, .bom-table td {
         word-break: break-word !important;
         font-weight: 700 !important;
+        padding: 10px 6px !important;
+        line-height: 1.8 !important;
       }
       
       .rep-cell {
@@ -160,8 +174,8 @@ export const convertDOMToPDFBase64 = async (element) => {
         position: absolute !important;
         top: -15px !important;
         right: -30px !important;
-        width: 75px !important;
-        height: 75px !important;
+        width: 80px !important;
+        height: 80px !important;
         z-index: 999 !important;
         opacity: 0.8 !important;
       }
@@ -184,7 +198,7 @@ export const convertDOMToPDFBase64 = async (element) => {
     });
 
     document.head.appendChild(printStyleElement);
-    await new Promise(resolve => setTimeout(resolve, 400));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const canvas = await html2canvas(element, {
       scale: 2,
@@ -259,15 +273,6 @@ export const base64ToBlobURL = (base64) => {
   const blob = new Blob([bytes], { type: 'application/pdf' });
   return URL.createObjectURL(blob);
 };
-
-/**
- * Vercel 팩스 서버로 팩스 전송
- * @param {string} pdfBase64 - PDF Base64 문자열
- * @param {string} faxNumber - 팩스 번호
- * @param {string} companyName - 상호명 (선택)
- * @param {string} receiverName - 수신자명 (선택)
- * @returns {Promise<Object>} 전송 결과
- */
 
 export const sendFax = async (pdfBase64, faxNumber, companyName, receiverName) => {
   try {
