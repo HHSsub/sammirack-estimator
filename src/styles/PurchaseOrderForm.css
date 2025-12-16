@@ -179,10 +179,7 @@ img[alt="도장"] {
   display: block !important;
   visibility: visible !important;
 }
-
 .item-controls.no-print {
-  display: block !important;
-  visibility: visible !important;
 }
 
 .add-item-btn,
