@@ -22,24 +22,36 @@ export const convertDOMToPDFBase64 = async (element) => {
     /* ✅ 프린트 스타일을 화면에 강제 적용 */
     @media screen {
       /* no-print 요소 숨김 */
-      .no-print {
+      .no-print,
+      .item-controls,
+      .item-controls.no-print,
+      button.add-item-btn,
+      button.add-material-btn,
+      .add-item-btn,
+      .add-material-btn {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
       
       /* 프린트 스타일을 화면에 적용 */
       .purchase-order-form-container,
-      .estimate-form-container {
-        transform: scale(0.95) !important;
+      .estimate-form-container,
+      .delivery-note-form-container {
+        transform: scale(0.87) !important;
         transform-origin: top center !important;
         max-width: 100% !important;
         width: 100% !important;
-        padding: 6mm 10mm 6mm !important;
+        padding: 5mm 8mm 4mm !important;
         margin: 0 auto !important;
         background: #fff !important;
         min-height: auto !important;
         box-sizing: border-box;
-        font-size: 12px !important;
-        line-height: 1.25 !important;
+        font-size: 11px !important;
+        line-height: 1.2 !important;
       }
       
       .form-header h1 { 
@@ -106,9 +118,9 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       
       .form-company {
-        margin-top: 20px !important;
-        padding-top: 10px !important;
-        font-size: 15px !important;
+        margin-top: 12px !important;
+        padding-top: 6px !important;
+        font-size: 14px !important;
         font-weight: 700 !important;
       }
       
@@ -240,7 +252,7 @@ export const convertDOMToPDFBase64 = async (element) => {
     const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    if (imgHeight <= pageHeight + 5) {
+    if (imgHeight <= pageHeight + 15) {
       pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
     } else {
       let heightLeft = imgHeight;
@@ -249,7 +261,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft > 5) {
+      while (heightLeft > 15) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
