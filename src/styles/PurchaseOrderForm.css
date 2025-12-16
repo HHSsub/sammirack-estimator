@@ -20,21 +20,6 @@
 .memo-narrow { max-width: 100%; }
 
 .excel-btn { white-space: nowrap; }
-
-/* ✅ 팩스 PDF 캡처 전용: 버튼/조작 UI 전부 숨김 */
-.fax-capture .no-print,
-.fax-capture .item-controls,
-.fax-capture .item-controls *,
-.fax-capture button.add-item-btn,
-.fax-capture button.add-material-btn,
-.fax-capture .add-item-btn,
-.fax-capture .add-material-btn,
-.fax-capture .remove-btn {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
 img[alt="도장"] {
   max-width: 240px;
   max-height: 240px;
