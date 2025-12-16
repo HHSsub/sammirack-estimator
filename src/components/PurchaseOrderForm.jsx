@@ -993,8 +993,7 @@ const checkInventoryAvailability = async (cartItems) => {
         </tbody>
       </table>
 
-      {!(showFaxModal || showSettingsModal) && (
-        <div className="item-controls no-print" style={{marginBottom:18}}>
+        <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
           <button type="button" onClick={addMaterial} className="add-item-btn">+ 자재 추가</button>
         </div>
       )}
