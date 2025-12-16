@@ -946,11 +946,11 @@ const checkInventoryAvailability = async (cartItems) => {
             </tr>
             <tr>
               <td className="label">TEL</td>
-              <td>{displaySettings.tel}</td>
+              <td style={{ whiteSpace: 'pre-line' }}>{displaySettings.tel}</td>
             </tr>
             <tr>
               <td className="label">홈페이지</td>
-              <td>{displaySettings.website}</td>
+              <td>{displaySettings.website || displaySettings.homepage}</td>
             </tr>
             <tr>
               <td className="label">FAX</td>
