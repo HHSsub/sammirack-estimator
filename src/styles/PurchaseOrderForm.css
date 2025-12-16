@@ -196,10 +196,7 @@ img[alt="도장"] {
   pointer-events: auto !important;
   position: relative !important;
   z-index: 99999999 !important;
-  display: inline-block !important;
   touch-action: manipulation !important;
-  visibility: visible !important;
-  opacity: 1 !important;
 }
 .add-item-btn:hover,
 .add-material-btn:hover { background: #218838; }
