@@ -17,7 +17,7 @@ const PROVIDER = {
   ceo: '박이삭',
   address: '경기도 광명시 원노온사로 39, 철제 스틸하우스 1',
   homepage: 'http://www.ssmake.com',
-  tel: '010-9548-9578  010-4311-7733',
+  tel: '010-9548-9578\n010-4311-7733',
   fax: '(02)2611-4595',
   stampImage: `${import.meta.env.BASE_URL}images/도장.png`
 };
