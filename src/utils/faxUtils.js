@@ -56,6 +56,9 @@ export const convertDOMToPDFBase64 = async (element) => {
         padding: 8px 4px !important;  /* 4px → 8px */
         line-height: 1.7 !important;  /* 1.2 → 1.7 */
         vertical-align: middle !important;  /* 추가 */
+        min-height: 36px !important;  /* ✅ 추가 - 최소 높이 확보 */
+        height: auto !important;  /* ✅ 추가 - 자동 높이 조절 */
+        overflow: visible !important;  /* ✅ 추가 - 글자 잘림 방지 */
       }
 
       /* ✅ info-table (상단 회사정보) 특별 처리 */
