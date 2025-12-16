@@ -9,6 +9,28 @@
   min-height: 100vh;
 }
 
+/* =====================================================
+   FAX CAPTURE 전용 – table cell 구조 리셋 (핵심)
+   ===================================================== */
+.fax-capture .form-table th,
+.fax-capture .form-table td,
+.fax-capture .order-table th,
+.fax-capture .order-table td,
+.fax-capture .bom-table th,
+.fax-capture .bom-table td {
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+
+  line-height: normal !important;
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+
+  box-sizing: content-box !important;
+  overflow: visible !important;
+}
+
+
 .estimate-memo {
   min-height: 28px;
   font-size: 19px;
