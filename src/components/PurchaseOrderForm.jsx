@@ -590,26 +590,26 @@ const handleFaxPreview = async () => {
 const proceedWithFaxPreview = async () => {
   try {
     const docElement = document.querySelector('.purchase-order-form-container');
-    if (!docElement) {
-      alert('문서 영역을 찾을 수 없습니다.');
-      return;
-    }
+    if (!docElement) { alert('문서 영역을 찾을 수 없습니다.'); return; }
 
-    alert('PDF 생성 중입니다. 잠시만 기다려주세요...');
+    // ✅ 캡처 모드 ON
+    docElement.classList.add('fax-capture');
 
     const base64 = await convertDOMToPDFBase64(docElement);
+
     setPdfBase64(base64);
-
-    const blobURL = base64ToBlobURL(base64);
-    setPdfBlobURL(blobURL);
-
+    setPdfBlobURL(base64ToBlobURL(base64));
     setShowFaxModal(true);
-  } catch (error) {
-    console.error('❌ PDF 생성 오류:', error);
-    alert(`PDF 생성에 실패했습니다.\n오류: ${error.message}`);
+  } catch (e) {
+    console.error(e);
+    alert(`PDF 생성에 실패했습니다.\n오류: ${e.message}`);
+  } finally {
+    // ✅ 캡처 모드 OFF
+    const el = document.querySelector('.purchase-order-form-container');
+    el?.classList.remove('fax-capture');
   }
 };
- 
+  
 // ✅ handleSendFax는 이제 재고 체크 없이 바로 전송만 수행
 const handleSendFax = async (faxNumber) => {
   if (!pdfBase64) {
