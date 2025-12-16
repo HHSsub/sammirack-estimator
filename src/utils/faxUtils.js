@@ -14,7 +14,11 @@ export const convertDOMToPDFBase64 = async (element) => {
 
   // ✅ 1단계: 인쇄 시 숨겨야 할 요소들 선택
   const hiddenElements = element.querySelectorAll('.no-print');
-  const originalDisplayValues = [];
+  const itemControls = element.querySelectorAll('.item-controls');
+  const addButtons = element.querySelectorAll('.add-item-btn, .add-material-btn');
+  
+  const elementsToRemove = [...hiddenElements, ...itemControls, ...addButtons];
+  const removedElements = [];
 
   // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일
   const printStyleElement = document.createElement('style');
@@ -220,19 +224,16 @@ export const convertDOMToPDFBase64 = async (element) => {
   `;
 
   try {
-    // ✅ 2단계: 모든 no-print 요소와 버튼들을 강제로 숨김
-    hiddenElements.forEach((el, index) => {
-      originalDisplayValues[index] = el.style.cssText;
-      el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;';
-    });
-
-    // ✅ 추가: item-controls와 버튼들 직접 숨김
-    const itemControls = element.querySelectorAll('.item-controls');
-    const addButtons = element.querySelectorAll('.add-item-btn, .add-material-btn');
-    const allButtonsToHide = [...itemControls, ...addButtons];
-    
-    allButtonsToHide.forEach(el => {
-      el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;';
+    // ✅ 2단계: 요소들을 DOM에서 완전히 제거
+    elementsToRemove.forEach((el) => {
+      if (el && el.parentNode) {
+        removedElements.push({
+          element: el,
+          parent: el.parentNode,
+          nextSibling: el.nextSibling
+        });
+        el.parentNode.removeChild(el);
+      }
     });
 
     // ✅ 3단계: 프린트 스타일 적용
@@ -296,18 +297,15 @@ export const convertDOMToPDFBase64 = async (element) => {
       printStyleElement.parentNode.removeChild(printStyleElement);
     }
 
-    // ✅ 8단계: 숨긴 요소들 복원
-    hiddenElements.forEach((el, index) => {
-      el.style.cssText = originalDisplayValues[index];
-    });
-    
-    // ✅ 추가: item-controls와 버튼들 복원
-    const itemControls = element.querySelectorAll('.item-controls');
-    const addButtons = element.querySelectorAll('.add-item-btn, .add-material-btn');
-    const allButtonsToRestore = [...itemControls, ...addButtons];
-    
-    allButtonsToRestore.forEach(el => {
-      el.style.cssText = '';
+    // ✅ 8단계: 제거했던 요소들 복원
+    removedElements.forEach(({ element, parent, nextSibling }) => {
+      if (parent) {
+        if (nextSibling) {
+          parent.insertBefore(element, nextSibling);
+        } else {
+          parent.appendChild(element);
+        }
+      }
     });
   }
 };
