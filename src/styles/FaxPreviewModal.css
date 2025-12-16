@@ -173,6 +173,37 @@
   transform: none;
 }
 
+/* =========================================================
+   [ADD] 팩스 미리보기 시 원본 화면 완전 차단 (중요)
+   ========================================================= */
+
+/* overlay 아래에 있는 모든 DOM 클릭/시각 차단 */
+.fax-preview-modal-overlay {
+  pointer-events: auto !important;
+}
+
+/* 모달이 열려 있을 때, body 하위 원본 페이지 완전 가림 */
+body:has(.fax-preview-modal-overlay) > *:not(.fax-preview-modal-overlay) {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* iframe 뒤로 underlying DOM 비침 방지 */
+.fax-preview-content {
+  background: #ffffff !important;
+}
+
+/* iframe 자체 배경 보강 */
+.fax-preview-iframe {
+  background-color: #ffffff !important;
+}
+
+/* 혹시 모를 z-index 충돌 차단 */
+.fax-preview-modal-overlay {
+  z-index: 2147483647 !important; /* JS max int 수준 */
+}
+
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .fax-preview-modal-container {
