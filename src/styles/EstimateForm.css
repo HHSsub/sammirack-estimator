@@ -179,10 +179,7 @@ button.add-item-btn {
   pointer-events: auto !important;
   position: relative !important;
   z-index: 99999999 !important;
-  display: inline-block !important;
   touch-action: manipulation !important;
-  visibility: visible !important;  /* ✅ 추가 */
-  opacity: 1 !important;  /* ✅ 추가 */
 }
 
 button.add-item-btn:hover {
