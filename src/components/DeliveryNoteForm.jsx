@@ -609,7 +609,7 @@ const handleSendFax = async (faxNumber) => {
       </table>
 
       {!(showFaxModal || showSettingsModal) && (
-        <div className="item-controls no-print" style={{marginBottom:18}}>
+        <div className="item-controls no-print" style={{ marginBottom: 18, display: showFaxModal ? 'none' : 'block' }}>
           <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
         </div>
       )}
