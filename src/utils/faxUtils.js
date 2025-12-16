@@ -7,37 +7,6 @@ import html2canvas from 'html2canvas';
  * @param {HTMLElement} element - 변환할 DOM 요소
  * @returns {Promise<string>} PDF Base64 문자열
  */
-// faxUtils.js 상단 또는 convertDOMToPDFBase64 내부
-const replaceInputsForCapture = (root) => {
-  const replaced = [];
-
-  root.querySelectorAll('input, textarea').forEach(el => {
-    const value = el.value ?? '';
-    const span = document.createElement('span');
-
-    span.textContent = value || ' ';
-    span.style.whiteSpace = 'pre-wrap';
-    span.style.display = 'block';
-    span.style.font = window.getComputedStyle(el).font;
-    span.style.padding = window.getComputedStyle(el).padding;
-    span.style.lineHeight = window.getComputedStyle(el).lineHeight;
-    span.style.minHeight = window.getComputedStyle(el).height;
-    span.style.boxSizing = 'border-box';
-
-    el.style.display = 'none';
-    el.parentNode.insertBefore(span, el.nextSibling);
-
-    replaced.push({ input: el, span });
-  });
-
-  return () => {
-    replaced.forEach(({ input, span }) => {
-      span.remove();
-      input.style.display = '';
-    });
-  };
-};
-
 export const convertDOMToPDFBase64 = async (element) => {
   if (!element) {
     throw new Error('DOM 요소를 찾을 수 없습니다.');
@@ -203,9 +172,6 @@ export const convertDOMToPDFBase64 = async (element) => {
   `;
 
   try {
-    // ✅ [B-1] FAX 캡처용 input/textarea 치환
-    const restoreInputs = replaceInputsForCapture(element);
-    
     // ✅ 2단계: no-print 요소 숨김
     hiddenElements.forEach((el, index) => {
       originalDisplayValues[index] = el.style.display;
@@ -239,9 +205,6 @@ export const convertDOMToPDFBase64 = async (element) => {
         el.classList.contains('item-controls') ||
         el.classList.contains('remove-btn')
     });
-
-    // ✅ [C-1] input/textarea 원복 (캡처 직후)
-    restoreInputs();
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
