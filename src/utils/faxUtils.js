@@ -27,7 +27,8 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       
       /* 프린트 스타일을 화면에 적용 */
-      .purchase-order-form-container {
+      .purchase-order-form-container,
+      .estimate-form-container {
         transform: scale(0.90) !important;
         transform-origin: top left !important;
         max-width: 100% !important;
@@ -42,7 +43,8 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       
       .form-header h1 { 
-        font-size: 20px !important; 
+        font-size: 22px !important;
+        font-weight: 900 !important;
         margin-bottom: 6px !important; 
       }
       
@@ -66,21 +68,23 @@ export const convertDOMToPDFBase64 = async (element) => {
       /* ✅ info-table (상단 회사정보) 특별 처리 */
       .info-table input,
       .info-table textarea {
-        font-size: 13px !important;  /* 더 크게 */
-        padding: 5px 4px !important;
-        font-weight: 500 !important;
+        font-size: 14px !important;
+        padding: 6px 5px !important;
+        font-weight: 600 !important;
       }
-  
+      
       /* ✅ 거래번호 input 크기 증가 */
       .info-table input[type="text"] {
-        min-height: 28px !important;
+        min-height: 30px !important;
+        font-weight: 700 !important;
       }
       
       /* ✅ 메모 textarea 높이 증가 */
       .estimate-memo {
-        min-height: 70px !important;
-        padding: 8px 4px !important;
-        font-size: 13px !important;
+        min-height: 75px !important;
+        padding: 10px 5px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
       }
 
       input, textarea {
@@ -88,11 +92,12 @@ export const convertDOMToPDFBase64 = async (element) => {
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        font-size: 13px !important;  /* 11px → 13px */
-        padding: 6px 4px !important;  /* 2px → 6px */
-        line-height: 1.5 !important;  /* 추가 */
-        height: auto !important;  /* 추가 */
-        min-height: 25px !important;  /* 추가 */
+        font-size: 14px !important;
+        padding: 8px 5px !important;
+        line-height: 1.6 !important;
+        height: auto !important;
+        min-height: 28px !important;
+        font-weight: 600 !important;
       }
       
       .total-table {
@@ -103,7 +108,8 @@ export const convertDOMToPDFBase64 = async (element) => {
       .form-company {
         margin-top: 20px !important;
         padding-top: 10px !important;
-        font-size: 14px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
       }
       
       .order-table th:last-child,
@@ -174,6 +180,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       .order-table th, .order-table td,
       .bom-table th, .bom-table td {
         word-break: break-word !important;
+        font-weight: 700 !important;
       }
       
       /* 도장 이미지 */
