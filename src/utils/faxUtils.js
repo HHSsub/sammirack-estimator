@@ -214,17 +214,26 @@ export const convertDOMToPDFBase64 = async (element) => {
   `;
 
   try {
-    // ✅ 2단계: 모든 no-print 요소를 임시로 숨김
+    // ✅ 2단계: 모든 no-print 요소와 버튼들을 강제로 숨김
     hiddenElements.forEach((el, index) => {
-      originalDisplayValues[index] = el.style.display;
-      el.style.display = 'none';
+      originalDisplayValues[index] = el.style.cssText;
+      el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;';
+    });
+
+    // ✅ 추가: item-controls와 버튼들 직접 숨김
+    const itemControls = element.querySelectorAll('.item-controls');
+    const addButtons = element.querySelectorAll('.add-item-btn, .add-material-btn');
+    const allButtonsToHide = [...itemControls, ...addButtons];
+    
+    allButtonsToHide.forEach(el => {
+      el.style.cssText = 'display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important;';
     });
 
     // ✅ 3단계: 프린트 스타일 적용
     document.head.appendChild(printStyleElement);
 
     // ✅ 4단계: 스타일 적용을 위해 잠시 대기
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // ✅ 5단계: html2canvas로 DOM을 이미지로 변환
     const canvas = await html2canvas(element, {
@@ -252,7 +261,7 @@ export const convertDOMToPDFBase64 = async (element) => {
     const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    if (imgHeight <= pageHeight + 15) {
+    if (imgHeight <= pageHeight + 20) {
       pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
     } else {
       let heightLeft = imgHeight;
@@ -261,7 +270,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      while (heightLeft > 15) {
+      while (heightLeft > 20) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
@@ -283,7 +292,16 @@ export const convertDOMToPDFBase64 = async (element) => {
 
     // ✅ 8단계: 숨긴 요소들 복원
     hiddenElements.forEach((el, index) => {
-      el.style.display = originalDisplayValues[index];
+      el.style.cssText = originalDisplayValues[index];
+    });
+    
+    // ✅ 추가: item-controls와 버튼들 복원
+    const itemControls = element.querySelectorAll('.item-controls');
+    const addButtons = element.querySelectorAll('.add-item-btn, .add-material-btn');
+    const allButtonsToRestore = [...itemControls, ...addButtons];
+    
+    allButtonsToRestore.forEach(el => {
+      el.style.cssText = '';
     });
   }
 };
