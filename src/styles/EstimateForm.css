@@ -164,8 +164,6 @@
 }
 
 .item-controls.no-print {
-  display: block !important;  /* ✅ 추가 */
-  visibility: visible !important;  /* ✅ 추가 */
 }
 
 button.add-item-btn {
