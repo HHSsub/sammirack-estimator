@@ -2,108 +2,86 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-/**
- * DOM 요소를 PDF로 변환하고 Base64 문자열 반환
- * @param {HTMLElement} element - 변환할 DOM 요소
- * @returns {Promise<string>} PDF Base64 문자열
- */
 export const convertDOMToPDFBase64 = async (element) => {
   if (!element) {
     throw new Error('DOM 요소를 찾을 수 없습니다.');
   }
 
-  // ✅ 1단계: 인쇄 시 숨겨야 할 요소들 선택
-  const hiddenElements = element.querySelectorAll('.no-print');
-  const itemControls = element.querySelectorAll('.item-controls');
-  const addButtons = element.querySelectorAll('.add-item-btn, .add-material-btn');
-  
-  const elementsToRemove = [...hiddenElements, ...itemControls, ...addButtons];
-  const removedElements = [];
-
-  // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일
   const printStyleElement = document.createElement('style');
   printStyleElement.textContent = `
-    /* ✅ 프린트 스타일을 화면에 강제 적용 */
     @media screen {
-      /* no-print 요소 숨김 */
       .no-print,
       .item-controls,
-      .item-controls.no-print,
       button.add-item-btn,
-      button.add-material-btn,
-      .add-item-btn,
-      .add-material-btn {
+      button.add-material-btn {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
         height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
+        overflow: hidden !important;
       }
       
-      /* 프린트 스타일을 화면에 적용 */
       .purchase-order-form-container,
       .estimate-form-container,
       .delivery-note-form-container {
-        transform: scale(0.87) !important;
+        transform: scale(0.82) !important;
         transform-origin: top center !important;
         max-width: 100% !important;
         width: 100% !important;
-        padding: 5mm 8mm 4mm !important;
+        padding: 4mm 10mm 4mm !important;
         margin: 0 auto !important;
         background: #fff !important;
         min-height: auto !important;
         box-sizing: border-box;
-        font-size: 11px !important;
-        line-height: 1.2 !important;
+        font-size: 10px !important;
+        line-height: 1.3 !important;
       }
       
       .form-header h1 { 
-        font-size: 22px !important;
+        font-size: 20px !important;
         font-weight: 900 !important;
         margin-bottom: 6px !important; 
       }
       
       .form-table {
-        font-size: 11px !important;
-        margin-bottom: 10px !important;
+        font-size: 10px !important;
+        margin-bottom: 8px !important;
       }
       
       .form-table th,
       .form-table td {
-        padding: 10px 8px !important;
-        line-height: 1.8 !important;
+        padding: 8px 6px !important;
+        line-height: 1.6 !important;
         vertical-align: middle !important;
         height: auto !important;
         overflow: visible !important;
         box-sizing: border-box !important;
         font-weight: 700 !important;
-        font-size: 12px !important;
+        font-size: 11px !important;
       }
 
-      /* ✅ info-table (상단 회사정보) 특별 처리 */
       .info-table input,
       .info-table textarea {
-        font-size: 13px !important;
-        padding: 8px 8px !important;
+        font-size: 11px !important;
+        padding: 6px 6px !important;
         font-weight: 600 !important;
-        line-height: 1.8 !important;
-        min-height: 32px !important;
-        white-space: pre-wrap !important;
+        line-height: 1.6 !important;
+        min-height: 28px !important;
+        white-space: pre-line !important;
         word-break: keep-all !important;
       }
       
-      /* ✅ 거래번호 input 크기 증가 */
       .info-table input[type="text"] {
-        min-height: 30px !important;
+        min-height: 28px !important;
         font-weight: 700 !important;
       }
       
-      /* ✅ 메모 textarea 높이 증가 */
       .estimate-memo {
-        min-height: 75px !important;
-        padding: 10px 5px !important;
-        font-size: 14px !important;
+        min-height: 70px !important;
+        padding: 8px 5px !important;
+        font-size: 12px !important;
         font-weight: 600 !important;
       }
 
@@ -112,25 +90,25 @@ export const convertDOMToPDFBase64 = async (element) => {
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        font-size: 13px !important;
-        padding: 8px 8px !important;
-        line-height: 1.8 !important;
+        font-size: 11px !important;
+        padding: 6px 6px !important;
+        line-height: 1.6 !important;
         height: auto !important;
-        min-height: 30px !important;
+        min-height: 26px !important;
         font-weight: 600 !important;
-        white-space: pre-wrap !important;
+        white-space: pre-line !important;
         word-break: keep-all !important;
       }
       
       .total-table {
-        width: 240px !important;
-        margin-bottom: 8px !important;
+        width: 220px !important;
+        margin-bottom: 6px !important;
       }
       
       .form-company {
-        margin-top: 12px !important;
-        padding-top: 6px !important;
-        font-size: 14px !important;
+        margin-top: 10px !important;
+        padding-top: 5px !important;
+        font-size: 13px !important;
         font-weight: 700 !important;
       }
       
@@ -141,7 +119,6 @@ export const convertDOMToPDFBase64 = async (element) => {
         display: none !important; 
       }
       
-      /* 품목 목록 프린트 비율 */
       .order-table { 
         table-layout: fixed !important; 
         width: 100% !important; 
@@ -149,29 +126,12 @@ export const convertDOMToPDFBase64 = async (element) => {
       .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 5% !important; }
       .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 41.5% !important; }
       .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 11% !important; }
-      .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 5.5% !important; min-width: 12px !important; white-space: nowrap !important; }
-      .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 12% !important; min-width: 70px !important; }
-      .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 11% !important; min-width: 60px !important; }
-      .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 11% !important; min-width: 60px !important; }
-      .order-table th:nth-child(8), .order-table td:nth-child(8) { width: 3% !important; min-width: 28px !important; }
+      .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 5.5% !important; }
+      .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 12% !important; }
+      .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 11% !important; }
+      .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 11% !important; }
+      .order-table th:nth-child(8), .order-table td:nth-child(8) { width: 3% !important; }
       
-      .order-table th:nth-child(5),
-      .order-table th:nth-child(6),
-      .order-table th:nth-child(7),
-      .order-table td:nth-child(5),
-      .order-table td:nth-child(6),
-      .order-table td:nth-child(7) {
-        white-space: nowrap !important;
-        font-feature-settings: 'tnum' 1;
-        text-align: right !important;
-        padding: 2px 6px !important;
-        letter-spacing: 0 !important;
-      }
-      .order-table th:nth-child(5) { 
-        text-align: center !important; 
-      }
-      
-      /* BOM 프린트 비율 */
       .bom-table { 
         table-layout: fixed !important; 
         width: 100% !important; 
@@ -179,25 +139,11 @@ export const convertDOMToPDFBase64 = async (element) => {
       .bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 5% !important; }
       .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 38% !important; }
       .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 38% !important; }
-      .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; min-width: 70px !important; }
+      .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; }
       .bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 0% !important; display: none !important; }
       .bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 0% !important; display: none !important; }
-      .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 9% !important; min-width: 55px !important; }
+      .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 9% !important; }
       .bom-table th:nth-child(8), .bom-table td:nth-child(8) { width: 0% !important; }
-      
-      .bom-table th:nth-child(4),
-      .bom-table th:nth-child(5),
-      .bom-table th:nth-child(6),
-      .bom-table th:nth-child(7),
-      .bom-table td:nth-child(4),
-      .bom-table td:nth-child(5),
-      .bom-table td:nth-child(6),
-      .bom-table td:nth-child(7) {
-        white-space: nowrap !important;
-        font-feature-settings: 'tnum' 1;
-        text-align: right !important;
-        padding: 2px 6px !important;
-      }
       
       .order-table th, .order-table td,
       .bom-table th, .bom-table td {
@@ -205,7 +151,6 @@ export const convertDOMToPDFBase64 = async (element) => {
         font-weight: 700 !important;
       }
       
-      /* 도장 이미지 */
       .rep-cell {
         position: relative !important;
         overflow: visible !important;
@@ -215,17 +160,19 @@ export const convertDOMToPDFBase64 = async (element) => {
         position: absolute !important;
         top: -15px !important;
         right: -30px !important;
-        width: 80px !important;
-        height: 80px !important;
+        width: 75px !important;
+        height: 75px !important;
         z-index: 999 !important;
         opacity: 0.8 !important;
       }
     }
   `;
 
+  const hiddenElements = element.querySelectorAll('.no-print, .item-controls, button.add-item-btn, button.add-material-btn');
+  const removedElements = [];
+
   try {
-    // ✅ 2단계: 요소들을 DOM에서 완전히 제거
-    elementsToRemove.forEach((el) => {
+    hiddenElements.forEach((el) => {
       if (el && el.parentNode) {
         removedElements.push({
           element: el,
@@ -236,28 +183,20 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
     });
 
-    // ✅ 3단계: 프린트 스타일 적용
     document.head.appendChild(printStyleElement);
+    await new Promise(resolve => setTimeout(resolve, 400));
 
-    // ✅ 4단계: 스타일 적용을 위해 잠시 대기
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // ✅ 5단계: html2canvas로 DOM을 이미지로 변환
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
       windowWidth: 1200,
-      windowHeight: element.scrollHeight,
-      ignoreElements: (element) => {
-        return element.classList.contains('no-print');
-      }
+      windowHeight: element.scrollHeight
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     
-    // ✅ 6단계: A4 크기로 PDF 생성
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -292,12 +231,10 @@ export const convertDOMToPDFBase64 = async (element) => {
     console.error('❌ PDF 변환 오류:', error);
     throw new Error('PDF 변환에 실패했습니다.');
   } finally {
-    // ✅ 7단계: 임시 스타일 제거
     if (printStyleElement.parentNode) {
       printStyleElement.parentNode.removeChild(printStyleElement);
     }
 
-    // ✅ 8단계: 제거했던 요소들 복원
     removedElements.forEach(({ element, parent, nextSibling }) => {
       if (parent) {
         if (nextSibling) {
@@ -310,11 +247,6 @@ export const convertDOMToPDFBase64 = async (element) => {
   }
 };
 
-/**
- * PDF Base64를 Blob URL로 변환 (미리보기용)
- * @param {string} base64 - PDF Base64 문자열
- * @returns {string} Blob URL
- */
 export const base64ToBlobURL = (base64) => {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -336,6 +268,7 @@ export const base64ToBlobURL = (base64) => {
  * @param {string} receiverName - 수신자명 (선택)
  * @returns {Promise<Object>} 전송 결과
  */
+
 export const sendFax = async (pdfBase64, faxNumber, companyName, receiverName) => {
   try {
     const response = await fetch('https://fax-server-git-main-knowgrams-projects.vercel.app/api/send-fax', {
@@ -363,4 +296,3 @@ export const sendFax = async (pdfBase64, faxNumber, companyName, receiverName) =
     throw error;
   }
 };
-
