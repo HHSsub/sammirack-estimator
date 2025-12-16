@@ -12,104 +12,70 @@ export const convertDOMToPDFBase64 = async (element) => {
     throw new Error('DOM 요소를 찾을 수 없습니다.');
   }
 
+  // ✅ 1단계: 인쇄 시 숨겨야 할 요소들 선택
+  const hiddenElements = element.querySelectorAll('.no-print');
+  const originalDisplayValues = [];
+
   // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일
   const printStyleElement = document.createElement('style');
   printStyleElement.textContent = `
     /* ✅ 프린트 스타일을 화면에 강제 적용 */
     @media screen {
       /* no-print 요소 숨김 */
-      .no-print,
-      .item-controls,
-      .item-controls *,
-      button.add-item-btn,
-      button.add-material-btn,
-      .add-item-btn,
-      .add-material-btn {
+      .no-print {
         display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        height: 0 !important;
-        width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-        position: absolute !important;
-        left: -9999px !important;
       }
       
       /* 프린트 스타일을 화면에 적용 */
-      .purchase-order-form-container,
-      .estimate-form-container,
-      .delivery-note-form-container {
-        transform: scale(0.75) !important;
-        transform-origin: top center !important;
+      .purchase-order-form-container {
+        transform: scale(0.90) !important;
+        transform-origin: top left !important;
         max-width: 100% !important;
         width: 100% !important;
-        padding: 8mm 12mm 8mm !important;
-        margin: 0 auto !important;
+        padding: 8mm 8mm 6mm !important;
+        margin: 0 !important;
         background: #fff !important;
         min-height: auto !important;
         box-sizing: border-box;
-        font-size: 13px !important;
-        line-height: 1.6 !important;
+        font-size: 12px !important;
+        line-height: 1.25 !important;
       }
       
       .form-header h1 { 
-        font-size: 26px !important;
-        font-weight: 900 !important;
-        margin-bottom: 12px !important; 
+        font-size: 20px !important; 
+        margin-bottom: 6px !important; 
       }
       
       .form-table {
-        font-size: 13px !important;
-        margin-bottom: 14px !important;
+        font-size: 11px !important;
+        margin-bottom: 10px !important;
       }
       
       .form-table th,
       .form-table td {
-        padding: 18px 12px !important;
-        line-height: 2.8 !important;
-        vertical-align: middle !important;
-        height: auto !important;
-        overflow: visible !important;
-        box-sizing: border-box !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
+        padding: 8px 4px !important;  /* 4px → 8px */
+        line-height: 1.7 !important;  /* 1.2 → 1.7 */
+        vertical-align: middle !important;  /* 추가 */
       }
 
       /* ✅ info-table (상단 회사정보) 특별 처리 */
-      .info-table td {
-        padding: 15px 12px !important;
-        line-height: 2.5 !important;
-        white-space: pre-line !important;
-        word-break: keep-all !important;
-        overflow: visible !important;
-        min-height: 50px !important;
-      }
-
       .info-table input,
       .info-table textarea {
-        font-size: 14px !important;
-        padding: 12px 10px !important;
-        font-weight: 600 !important;
-        line-height: 2.2 !important;
-        min-height: 45px !important;
-        white-space: pre-line !important;
-        word-break: keep-all !important;
+        font-size: 13px !important;  /* 더 크게 */
+        padding: 5px 4px !important;
+        font-weight: 500 !important;
       }
-      
+  
       /* ✅ 거래번호 input 크기 증가 */
       .info-table input[type="text"] {
-        min-height: 45px !important;
-        font-weight: 700 !important;
+        min-height: 28px !important;
       }
       
       /* ✅ 메모 textarea 높이 증가 */
       .estimate-memo {
-        min-height: 90px !important;
-        padding: 14px 10px !important;
-        font-size: 15px !important;
-        font-weight: 600 !important;
+        min-height: 70px !important;
+        padding: 8px 4px !important;
+        font-size: 13px !important;
       }
 
       input, textarea {
@@ -117,26 +83,22 @@ export const convertDOMToPDFBase64 = async (element) => {
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        font-size: 14px !important;
-        padding: 12px 10px !important;
-        line-height: 2.2 !important;
-        height: auto !important;
-        min-height: 40px !important;
-        font-weight: 600 !important;
-        white-space: pre-line !important;
-        word-break: keep-all !important;
+        font-size: 13px !important;  /* 11px → 13px */
+        padding: 6px 4px !important;  /* 2px → 6px */
+        line-height: 1.5 !important;  /* 추가 */
+        height: auto !important;  /* 추가 */
+        min-height: 25px !important;  /* 추가 */
       }
       
       .total-table {
-        width: 260px !important;
-        margin-bottom: 10px !important;
+        width: 240px !important;
+        margin-bottom: 8px !important;
       }
       
       .form-company {
-        margin-top: 15px !important;
-        padding-top: 8px !important;
-        font-size: 16px !important;
-        font-weight: 700 !important;
+        margin-top: 20px !important;
+        padding-top: 10px !important;
+        font-size: 14px !important;
       }
       
       .order-table th:last-child,
@@ -151,14 +113,14 @@ export const convertDOMToPDFBase64 = async (element) => {
         table-layout: fixed !important; 
         width: 100% !important; 
       }
-      .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 4% !important; }
-      .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 35% !important; }
-      .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 10% !important; }
-      .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 9% !important; }
-      .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 14% !important; }
-      .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 14% !important; }
-      .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 11% !important; }
-      .order-table th:nth-child(8), .order-table td:nth-child(8) { width: 3% !important; }
+      .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 5% !important; }
+      .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 41.5% !important; }
+      .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 11% !important; }
+      .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 5.5% !important; min-width: 12px !important; white-space: nowrap !important; }
+      .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 12% !important; min-width: 70px !important; }
+      .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 11% !important; min-width: 60px !important; }
+      .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 11% !important; min-width: 60px !important; }
+      .order-table th:nth-child(8), .order-table td:nth-child(8) { width: 3% !important; min-width: 28px !important; }
       
       .order-table th:nth-child(5),
       .order-table th:nth-child(6),
@@ -182,12 +144,12 @@ export const convertDOMToPDFBase64 = async (element) => {
         width: 100% !important; 
       }
       .bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 5% !important; }
-      .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 34% !important; }
-      .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 34% !important; }
-      .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 13% !important; }
+      .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 38% !important; }
+      .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 38% !important; }
+      .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; min-width: 70px !important; }
       .bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 0% !important; display: none !important; }
       .bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 0% !important; display: none !important; }
-      .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 14% !important; }
+      .bom-table th:nth-child(7), .bom-table td:nth-child(7) { width: 9% !important; min-width: 55px !important; }
       .bom-table th:nth-child(8), .bom-table td:nth-child(8) { width: 0% !important; }
       
       .bom-table th:nth-child(4),
@@ -207,9 +169,6 @@ export const convertDOMToPDFBase64 = async (element) => {
       .order-table th, .order-table td,
       .bom-table th, .bom-table td {
         word-break: break-word !important;
-        font-weight: 700 !important;
-        padding: 15px 10px !important;
-        line-height: 2.5 !important;
       }
       
       /* 도장 이미지 */
@@ -222,35 +181,26 @@ export const convertDOMToPDFBase64 = async (element) => {
         position: absolute !important;
         top: -15px !important;
         right: -30px !important;
-        width: 85px !important;
-        height: 85px !important;
+        width: 80px !important;
+        height: 80px !important;
         z-index: 999 !important;
         opacity: 0.8 !important;
       }
     }
   `;
 
-  const hiddenElements = element.querySelectorAll('.no-print, .item-controls, button.add-item-btn, button.add-material-btn, .add-item-btn, .add-material-btn');
-  const removedElements = [];
-
   try {
-    // ✅ 2단계: 요소들을 DOM에서 완전히 제거
-    hiddenElements.forEach((el) => {
-      if (el && el.parentNode) {
-        removedElements.push({
-          element: el,
-          parent: el.parentNode,
-          nextSibling: el.nextSibling
-        });
-        el.parentNode.removeChild(el);
-      }
+    // ✅ 2단계: 모든 no-print 요소를 임시로 숨김
+    hiddenElements.forEach((el, index) => {
+      originalDisplayValues[index] = el.style.display;
+      el.style.display = 'none';
     });
 
     // ✅ 3단계: 프린트 스타일 적용
     document.head.appendChild(printStyleElement);
 
     // ✅ 4단계: 스타일 적용을 위해 잠시 대기
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     // ✅ 5단계: html2canvas로 DOM을 이미지로 변환
     const canvas = await html2canvas(element, {
@@ -259,7 +209,10 @@ export const convertDOMToPDFBase64 = async (element) => {
       logging: false,
       backgroundColor: '#ffffff',
       windowWidth: 1200,
-      windowHeight: element.scrollHeight
+      windowHeight: element.scrollHeight,
+      ignoreElements: (element) => {
+        return element.classList.contains('no-print');
+      }
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
@@ -274,22 +227,17 @@ export const convertDOMToPDFBase64 = async (element) => {
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
 
-    if (imgHeight <= pageHeight + 20) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-    } else {
-      let heightLeft = imgHeight;
-      let position = 0;
-      
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-
-      while (heightLeft > 20) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
     }
 
     const pdfBase64 = pdf.output('datauristring').split(',')[1];
@@ -304,15 +252,9 @@ export const convertDOMToPDFBase64 = async (element) => {
       printStyleElement.parentNode.removeChild(printStyleElement);
     }
 
-    // ✅ 8단계: 제거했던 요소들 복원
-    removedElements.forEach(({ element, parent, nextSibling }) => {
-      if (parent) {
-        if (nextSibling) {
-          parent.insertBefore(element, nextSibling);
-        } else {
-          parent.appendChild(element);
-        }
-      }
+    // ✅ 8단계: 숨긴 요소들 복원
+    hiddenElements.forEach((el, index) => {
+      el.style.display = originalDisplayValues[index];
     });
   }
 };
@@ -335,14 +277,14 @@ export const base64ToBlobURL = (base64) => {
   return URL.createObjectURL(blob);
 };
 
-// /**
-//  * Vercel 팩스 서버로 팩스 전송
-//  * @param {string} pdfBase64 - PDF Base64 문자열
-//  * @param {string} faxNumber - 팩스 번호
-//  * @param {string} companyName - 상호명 (선택)
-//  * @param {string} receiverName - 수신자명 (선택)
-//  * @returns {Promise<Object>} 전송 결과
-//  */
+/**
+ * Vercel 팩스 서버로 팩스 전송
+ * @param {string} pdfBase64 - PDF Base64 문자열
+ * @param {string} faxNumber - 팩스 번호
+ * @param {string} companyName - 상호명 (선택)
+ * @param {string} receiverName - 수신자명 (선택)
+ * @returns {Promise<Object>} 전송 결과
+ */
 export const sendFax = async (pdfBase64, faxNumber, companyName, receiverName) => {
   try {
     const response = await fetch('https://fax-server-git-main-knowgrams-projects.vercel.app/api/send-fax', {
@@ -370,3 +312,4 @@ export const sendFax = async (pdfBase64, faxNumber, companyName, receiverName) =
     throw error;
   }
 };
+
