@@ -82,10 +82,14 @@ export const convertDOMToPDFBase64 = async (element) => {
       .order-table td,
       .bom-table th,
       .bom-table td {
-        padding-top: 8px !important;
-        padding-bottom: 10px !important;
-        line-height: 1.45 !important;
-        vertical-align: middle !important;
+        line-height: 1.6 !important;   /* 기존 1.45 덮어쓰기 */
+        padding-top: 10px !important;
+        padding-bottom: 12px !important;
+      }
+      
+      /* bold glyph 여유 공간 확보 */
+      input, textarea, td, th {
+        letter-spacing: 0.02em !important;
       }
 
       /* info-table */
