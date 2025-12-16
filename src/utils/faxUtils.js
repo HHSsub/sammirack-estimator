@@ -23,16 +23,19 @@ export const convertDOMToPDFBase64 = async (element) => {
   const originalDisplayValues = [];
   const forcedOriginalDisplayValues = [];
 
-  // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일
+  // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일 (FAX 전용)
   const printStyleElement = document.createElement('style');
   printStyleElement.textContent = `
     /* =================================================
        FAX CAPTURE STYLE (html2canvas 전용)
+       - 화면/프리뷰와 완전히 분리
        ================================================= */
 
     @media screen {
 
-      /* --- 무조건 숨김 UI --- */
+      /* -------------------------------------------------
+         1. 캡처 시 무조건 숨겨야 하는 UI
+         ------------------------------------------------- */
       .no-print,
       .add-item-btn,
       .add-material-btn,
@@ -43,12 +46,16 @@ export const convertDOMToPDFBase64 = async (element) => {
         pointer-events: none !important;
       }
 
-      /* --- 모든 텍스트 굵게 --- */
+      /* -------------------------------------------------
+         2. 팩스 가독성: 전체 Bold 유지
+         ------------------------------------------------- */
       * {
         font-weight: 700 !important;
       }
 
-      /* --- 컨테이너 공통 --- */
+      /* -------------------------------------------------
+         3. 컨테이너 공통 (문서별 공통 처리)
+         ------------------------------------------------- */
       .purchase-order-form-container,
       .estimate-form-container,
       .delivery-note-form-container {
@@ -65,60 +72,88 @@ export const convertDOMToPDFBase64 = async (element) => {
         line-height: 1.35 !important;
       }
 
+      /* -------------------------------------------------
+         4. 제목
+         ------------------------------------------------- */
       .form-header h1 { 
         font-size: 20px !important; 
         margin-bottom: 6px !important; 
       }
 
-      .form-table {
-        font-size: 11px !important;
-        margin-bottom: 10px !important;
-      }
-
-      /* --- 🔴 글자 하단 잘림 방지 핵심 --- */
+      /* -------------------------------------------------
+         5. 테이블 공통
+         - 🔴 글자 상·하 잘림 완전 차단
+         ------------------------------------------------- */
       .form-table th,
       .form-table td,
       .order-table th,
       .order-table td,
       .bom-table th,
       .bom-table td {
-        line-height: 1.6 !important;   /* 기존 1.45 덮어쓰기 */
+        line-height: 1.65 !important;          /* html2canvas 안전값 */
         padding-top: 10px !important;
         padding-bottom: 12px !important;
-      }
-      
-      /* bold glyph 여유 공간 확보 */
-      input, textarea, td, th {
-        letter-spacing: 0.02em !important;
+        vertical-align: middle !important;
+        overflow: visible !important;
       }
 
-      /* info-table */
+      /* -------------------------------------------------
+         6. 숫자/전화번호/팩스번호 붙어보임 방지
+         ------------------------------------------------- */
+      td,
+      th,
+      input,
+      textarea {
+        letter-spacing: 0.04em !important;
+        font-feature-settings: "tnum" 1, "lnum" 1 !important;
+        white-space: pre-wrap !important;
+      }
+
+      /* -------------------------------------------------
+         7. URL / 도메인 점(.) 사라짐 방지
+         ------------------------------------------------- */
+      .info-table td,
+      .info-table input {
+        letter-spacing: 0.06em !important;
+        word-spacing: 0.15em !important;
+      }
+
+      /* -------------------------------------------------
+         8. info-table 입력 필드
+         ------------------------------------------------- */
       .info-table input,
       .info-table textarea {
         font-size: 13px !important;
-        padding: 5px 4px !important;
+        padding: 6px 6px !important;
         font-weight: 700 !important;
       }
 
+      /* -------------------------------------------------
+         9. 메모 영역
+         ------------------------------------------------- */
       .estimate-memo {
         min-height: 70px !important;
-        padding: 8px 4px !important;
+        padding: 10px 6px !important;
         font-size: 13px !important;
+        line-height: 1.6 !important;
       }
 
-      input, textarea {
+      /* -------------------------------------------------
+         10. input / textarea 공통
+         ------------------------------------------------- */
+      input,
+      textarea {
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        font-size: 13px !important;
-        padding: 6px 4px !important;
-        line-height: 1.45 !important;
         height: auto !important;
-        min-height: 25px !important;
+        min-height: 26px !important;
       }
 
-      /* 도장 */
+      /* -------------------------------------------------
+         11. 도장
+         ------------------------------------------------- */
       .rep-cell {
         position: relative !important;
         overflow: visible !important;
@@ -131,7 +166,7 @@ export const convertDOMToPDFBase64 = async (element) => {
         width: 80px !important;
         height: 80px !important;
         z-index: 999 !important;
-        opacity: 0.8 !important;
+        opacity: 0.85 !important;
       }
     }
   `;
@@ -153,11 +188,11 @@ export const convertDOMToPDFBase64 = async (element) => {
     document.head.appendChild(printStyleElement);
 
     // ✅ 4단계: 스타일 적용 대기
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // ✅ 5단계: html2canvas
     const canvas = await html2canvas(element, {
-      scale: 3, // 🔴 글자 하단 잘림 방지 핵심
+      scale: 3,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
@@ -183,6 +218,7 @@ export const convertDOMToPDFBase64 = async (element) => {
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
     let heightLeft = imgHeight;
     let position = 0;
 
