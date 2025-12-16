@@ -29,7 +29,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       /* 프린트 스타일을 화면에 적용 */
       .purchase-order-form-container {
         transform: scale(0.90) !important;
-        transform-origin: top left !important;
+        transform-origin: top center !important;
         max-width: 100% !important;
         width: 100% !important;
         padding: 8mm 8mm 6mm !important;
