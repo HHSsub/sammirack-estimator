@@ -1711,35 +1711,34 @@ const makeExtraOptionBOM = () => {
           .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("철판")))
           .filter(c=>!(selectedType==="파렛트랙 철판형"&&c.name.includes("타이빔")))
           .map(c=>{
-            let nm=normalizePartName(c.name);
-            let spec="";
-            
-            // ✅ 부품명에서 모든 괄호와 내용 제거
-            let calculatedQuantity = (Number(c.quantity) || 0) * q; // 기본 수량
-            
-            if(nm.includes("기둥")){ nm="기둥"; spec=`${ht}`; }
-            else if(nm.includes("로드빔")){ nm="로드빔"; spec=String(w); }
-            else if(nm.includes("타이빔")){ 
-              nm="타이빔"; 
-              spec=String(d); 
-              // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
-              const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
-              calculatedQuantity = tieBeamPerLevel * lvl * q;
-            }
-            else if(nm.includes("선반")){ nm="선반"; spec=`사이즈 W${w}xD${d}`; }
-            else if(nm.includes("안전좌")) return null;
-            else if(nm.includes("안전핀")){ nm="안전핀"; spec=""; }
-            else if(nm.includes("받침")){
-              nm=nm.includes("상")?"받침(상)":"받침(하)"; spec=`D${d}`;
-            } else spec=c.specification??"";
-            
-            return {
-              rackType:selectedType,size:sz,name:nm,specification:spec,note:c.note??"",
-              quantity:calculatedQuantity,  // ✅ 재계산된 수량 사용
-              unitPrice:Number(c.unit_price)||0,
-              totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*calculatedQuantity  // ✅ calculatedQuantity 사용
-            };
-          }).filter(Boolean);
+                      let nm=normalizePartName(c.name);
+                      let spec="";
+                      let calculatedQuantity = (Number(c.quantity)||0)*q; // 기본 수량
+                      
+                      // ✅ 부품명에서 모든 괄호와 내용 제거
+                      if(nm.includes("기둥")){ nm="기둥"; spec=`${ht}`; }
+                      else if(nm.includes("로드빔")){ nm="로드빔"; spec=String(w); }
+                      else if(nm.includes("타이빔")){ 
+                        nm="타이빔"; 
+                        spec=String(d); 
+                        // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
+                        const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
+                        calculatedQuantity = tieBeamPerLevel * lvl * q;
+                      }
+                      else if(nm.includes("선반")){ nm="선반"; spec=`사이즈 W${w}xD${d}`; }
+                      else if(nm.includes("안전좌")) return null;
+                      else if(nm.includes("안전핀")){ nm="안전핀"; spec=""; }
+                      else if(nm.includes("받침")){
+                        nm=nm.includes("상")?"받침(상)":"받침(하)"; spec=`D${d}`;
+                      } else spec=c.specification??"";
+                      
+                      return {
+                        rackType:selectedType,size:sz,name:nm,specification:spec,note:c.note??"",
+                        quantity:calculatedQuantity,  // ✅ 재계산된 수량 사용
+                        unitPrice:Number(c.unit_price)||0,
+                        totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*calculatedQuantity
+                      };
+                    }).filter(Boolean);
         if(selectedType==="파렛트랙 철판형"){
           if(!base.some(p=>p.name==="선반")){
             const shelfPerLevel=calcPalletIronShelfPerLevel(sz);
