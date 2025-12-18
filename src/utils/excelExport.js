@@ -196,7 +196,7 @@ function buildTop(ws, type, { date, companyName, contact, documentNumber } = {})
   ws.getCell('G8').alignment = alignCenter;
   
   ws.mergeCells('H8:J8'); 
-  ws.getCell('H8').value = '경기도 광명시 철도공원로 39, 킴스 스틸하우스 1';
+  ws.getCell('H8').value = '경기도 광명시 원노온사로 39, 철제 스틸하우스 1';
   ws.getCell('H8').alignment = alignCenter;
 
   ws.getCell('G9').value = 'TEL';
