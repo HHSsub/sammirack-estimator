@@ -1570,8 +1570,20 @@ const makeExtraOptionBOM = () => {
         { rackType: selectedType, size: sz, name: "기둥", specification: `${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         ...(selectedType === "파렛트랙 철판형" ? [] : [
-          { rackType: selectedType, size: sz, name: "타이빔", specification: tieSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
-        ]),
+                  { 
+                    rackType: selectedType, 
+                    size: sz, 
+                    name: "타이빔", 
+                    specification: tieSpec, 
+                    // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
+                    quantity: (() => {
+                      const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
+                      return tieBeamPerLevel * lvl * qty;
+                    })(), 
+                    unitPrice: 0, 
+                    totalPrice: 0 
+                  },
+                ]),
         { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * 2 * qty, unitPrice: 0, totalPrice: 0 },
       ];
       
