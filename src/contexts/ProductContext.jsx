@@ -1577,7 +1577,7 @@ const makeExtraOptionBOM = () => {
                     specification: tieSpec, 
                     // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
                     quantity: (() => {
-                      const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
+                      const tieBeamPerLevel = (w === 1390) ? 2 : (w === 2590 || w === 2790) ? 4 : 2;
                       return tieBeamPerLevel * lvl * qty;
                     })(), 
                     unitPrice: 0, 
@@ -1722,7 +1722,7 @@ const makeExtraOptionBOM = () => {
                         nm="타이빔"; 
                         spec=String(d); 
                         // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
-                        const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
+                        const tieBeamPerLevel = (w === 1390) ? 2 : (w === 2590 || w === 2790) ? 4 : 2;
                         calculatedQuantity = tieBeamPerLevel * lvl * q;
                       }
                       else if(nm.includes("선반")){ nm="선반"; spec=`사이즈 W${w}xD${d}`; }
