@@ -1872,12 +1872,12 @@ const makeExtraOptionBOM = () => {
         bom:calculateCurrentBOM(),
         displayName:[
           selectedType,
-          selectedType === "파렛트랙" ? selectedOptions.weight || "" : "",
           selectedOptions.formType,
           selectedOptions.size,
           selectedOptions.height,
           selectedOptions.level,
-          selectedOptions.color||""
+          selectedOptions.color||"",
+          selectedType === "파렛트랙" ? selectedOptions.weight || "" : "",
         ].filter(Boolean).join(" "),
       }]);
   };
