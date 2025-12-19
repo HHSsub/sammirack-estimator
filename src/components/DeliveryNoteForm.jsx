@@ -451,57 +451,6 @@ const handleSendFax = async (faxNumber) => {
   }
 };
 
-    const handleCreatePurchase = () => {
-    if (!formData.documentNumber.trim()) {
-      alert('거래번호를 먼저 입력해주세요.');
-      documentNumberInputRef.current?.focus();
-      return;
-    }
-    
-    // 현재 formData를 청구서로 전달
-    navigate('/purchase-order/new', {
-      state: {
-        cart: [],
-        totalBom: formData.materials || [],
-        customItems: formData.items || [],
-        customMaterials: [],
-        editingDocumentData: {
-          documentNumber: formData.documentNumber,
-          companyName: formData.companyName,
-          bizNumber: formData.bizNumber,
-          date: formData.date,
-          notes: formData.notes,
-          topMemo: formData.topMemo
-        }
-      }
-    });
-  };
-
-  const handleCreateDelivery = () => {
-    if (!formData.documentNumber.trim()) {
-      alert('거래번호를 먼저 입력해주세요.');
-      documentNumberInputRef.current?.focus();
-      return;
-    }
-    
-    // 현재 formData를 거래명세서로 전달
-    navigate('/delivery-note/new', {
-      state: {
-        cart: [],
-        totalBom: formData.materials || [],
-        customItems: formData.items || [],
-        customMaterials: [],
-        editingDocumentData: {
-          documentNumber: formData.documentNumber,
-          companyName: formData.companyName,
-          bizNumber: formData.bizNumber,
-          date: formData.date,
-          notes: formData.notes,
-          topMemo: formData.topMemo
-        }
-      }
-    });
-  };
 
   const handleCloseFaxModal = () => {
     setShowFaxModal(false);
