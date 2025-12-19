@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHelper';
 import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
@@ -25,6 +25,7 @@ const PROVIDER = {
 const PurchaseOrderForm = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const isEditMode = !!id;
 
   const documentNumberInputRef = useRef(null);
@@ -735,6 +736,57 @@ const proceedWithFax = async (faxNumber) => {
   }
 };
 
+    const handleCreatePurchase = () => {
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호를 먼저 입력해주세요.');
+      documentNumberInputRef.current?.focus();
+      return;
+    }
+    
+    // 현재 formData를 청구서로 전달
+    navigate('/purchase-order/new', {
+      state: {
+        cart: [],
+        totalBom: formData.materials || [],
+        customItems: formData.items || [],
+        customMaterials: [],
+        editingDocumentData: {
+          documentNumber: formData.documentNumber,
+          companyName: formData.companyName,
+          bizNumber: formData.bizNumber,
+          date: formData.date,
+          notes: formData.notes,
+          topMemo: formData.topMemo
+        }
+      }
+    });
+  };
+
+  const handleCreateDelivery = () => {
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호를 먼저 입력해주세요.');
+      documentNumberInputRef.current?.focus();
+      return;
+    }
+    
+    // 현재 formData를 거래명세서로 전달
+    navigate('/delivery-note/new', {
+      state: {
+        cart: [],
+        totalBom: formData.materials || [],
+        customItems: formData.items || [],
+        customMaterials: [],
+        editingDocumentData: {
+          documentNumber: formData.documentNumber,
+          companyName: formData.companyName,
+          bizNumber: formData.bizNumber,
+          date: formData.date,
+          notes: formData.notes,
+          topMemo: formData.topMemo
+        }
+      }
+    });
+  };
   const handleCloseFaxModal = () => {
     setShowFaxModal(false);
     if (pdfBlobURL) {
@@ -1074,7 +1126,6 @@ const checkInventoryAvailability = async (cartItems) => {
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
-
       <div className="form-company">({PROVIDER.companyName})</div>
       {/* ✅ FAX 미리보기 모달 추가 */}
       {showFaxModal && (
