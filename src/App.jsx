@@ -263,8 +263,9 @@ return (
                     cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
                     totalBom: totalBomForDisplay,
                     // ✅ 편집 모드 데이터 전달
-                    ...(isEditMode && editingData.editingDocumentType === 'estimate' ? {
+                    ...(isEditMode ? {
                       customItems: editingData.customItems || [],
+                      customMaterials: editingData.customMaterials || [],
                       editingDocumentId: editingData.editingDocumentId,
                       editingDocumentData: editingData.editingDocumentData || {}
                     } : {})
