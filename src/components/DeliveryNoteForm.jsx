@@ -743,8 +743,6 @@ const handleSendFax = async (faxNumber) => {
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
-        <button type="button" onClick={handleCreatePurchase} className="convert-btn" style={{background:'#ff9800'}}>📋 청구서 작성</button>
-        <button type="button" onClick={handleCreateDelivery} className="convert-btn" style={{background:'#9c27b0'}}>📄 거래명세서 작성</button>
       </div>
 
       <div className="form-company">({PROVIDER.companyName})</div>
