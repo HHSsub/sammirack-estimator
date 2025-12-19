@@ -42,6 +42,7 @@ const EstimateForm = () => {
     cart = [], 
     totalBom = [],
     customItems = [],
+    customMaterials = [],      // ✅ 추가!!!
     editingDocumentId = null,
     editingDocumentData = {}
   } = cartData;
