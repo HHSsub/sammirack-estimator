@@ -153,6 +153,40 @@ const EstimateForm = () => {
       });
             
       // ✅ customMaterials를 items 형식으로 변환
+      // ✅ cart에서 extraOptions 추출 및 quantity 합산
+      const extraOptionsMap = new Map();
+      cart.forEach(item => {
+        if (item.extraOptions && Array.isArray(item.extraOptions)) {
+          item.extraOptions.forEach(opt => {
+            const key = `${opt.id}-${opt.name}`;
+            if (extraOptionsMap.has(key)) {
+              const existing = extraOptionsMap.get(key);
+              extraOptionsMap.set(key, {
+                ...existing,
+                quantity: existing.quantity + 1
+              });
+            } else {
+              extraOptionsMap.set(key, {
+                name: opt.name,
+                price: opt.price || 0,
+                quantity: 1
+              });
+            }
+          });
+        }
+      });
+      
+      // ✅ extraOptions를 items 형식으로 변환
+      const extraOptionItems = Array.from(extraOptionsMap.values()).map(opt => ({
+        name: `[추가옵션] ${opt.name}`,
+        unit: '개',
+        quantity: opt.quantity,
+        unitPrice: opt.price,
+        totalPrice: opt.price * opt.quantity,
+        note: '기타추가옵션'
+      }));
+      
+      // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)
       const customMaterialItems = customMaterials.map(mat => ({
         name: `[추가옵션] ${mat.name || ''}`,
         unit: '개',
@@ -162,7 +196,7 @@ const EstimateForm = () => {
         note: '기타추가옵션'
       }));
       
-      const allItems = [...cartItems, ...customItems, ...customMaterialItems];
+      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
       
       const bomMaterials = (totalBom || []).map(m => ({
         name: m.name,
