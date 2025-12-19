@@ -149,8 +149,18 @@ const EstimateForm = () => {
           note: ''
         };
       });
+            
+      // ✅ customMaterials를 items 형식으로 변환
+      const customMaterialItems = customMaterials.map(mat => ({
+        name: mat.name || '',
+        unit: '개',
+        quantity: 1,
+        unitPrice: mat.price || 0,
+        totalPrice: mat.price || 0,
+        note: '기타추가옵션'
+      }));
       
-      const allItems = [...cartItems, ...customItems];
+      const allItems = [...cartItems, ...customItems, ...customMaterialItems];
       
       const bomMaterials = (totalBom || []).map(m => ({
         name: m.name,
