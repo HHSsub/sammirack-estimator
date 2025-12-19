@@ -179,7 +179,7 @@ const EstimateForm = () => {
         materials: bomMaterials
       }));
     }
-  }, [cart, totalBom, customItems, isEditMode]);
+  }, [cart, totalBom, customItems, customMaterials, isEditMode]);
 
   // ✅ 합계 계산
   useEffect(() => {
