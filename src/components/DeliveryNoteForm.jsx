@@ -133,7 +133,17 @@ const DeliveryNoteForm = () => {
         };
       });
       
-      const allItems = [...cartItems, ...customItems];
+      // ✅ customMaterials를 items 형식으로 변환
+      const customMaterialItems = customMaterials.map(mat => ({
+        name: mat.name || '',
+        unit: '개',
+        quantity: 1,
+        unitPrice: mat.price || 0,
+        totalPrice: mat.price || 0,
+        note: '기타추가옵션'
+      }));
+      
+      const allItems = [...cartItems, ...customItems, ...customMaterialItems];
 
       // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출
       console.log('🔍 totalBom:', totalBom);
