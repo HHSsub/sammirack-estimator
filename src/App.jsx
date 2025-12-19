@@ -280,8 +280,8 @@ return (
                     cart, 
                     cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
                     totalBom: totalBomForDisplay,
-                    // ✅ 편집 모드 데이터 전달
-                    ...(isEditMode && editingData.editingDocumentType === 'delivery' ? {
+                    // ✅ 편집 모드 데이터 전달 (조건문 제거)
+                    ...(isEditMode ? {
                       customItems: editingData.customItems || [],
                       customMaterials: editingData.customMaterials || [],
                       editingDocumentId: editingData.editingDocumentId,
@@ -298,8 +298,8 @@ return (
                     cart, 
                     cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
                     totalBom: totalBomForDisplay,
-                    // ✅ 편집 모드 데이터 전달
-                    ...(isEditMode && editingData.editingDocumentType === 'purchase' ? {
+                    // ✅ 편집 모드 데이터 전달 (조건문 제거)
+                    ...(isEditMode ? {
                       customItems: editingData.customItems || [],
                       customMaterials: editingData.customMaterials || [],
                       editingDocumentId: editingData.editingDocumentId,
