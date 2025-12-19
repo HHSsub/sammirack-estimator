@@ -136,48 +136,43 @@ const DeliveryNoteForm = () => {
       });
       
       // ✅ customMaterials를 items 형식으로 변환
-      // ✅ cart에서 extraOptions 추출 및 quantity 합산
-      const extraOptionsMap = new Map();
+      // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
+      const extraOptionItems = [];
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
           item.extraOptions.forEach(opt => {
-            const key = `${opt.id}-${opt.name}`;
-            if (extraOptionsMap.has(key)) {
-              const existing = extraOptionsMap.get(key);
-              extraOptionsMap.set(key, {
-                ...existing,
-                quantity: existing.quantity + 1
-              });
-            } else {
-              extraOptionsMap.set(key, {
-                name: opt.name,
-                price: opt.price || 0,
-                quantity: 1
+            if (opt && opt.name) {
+              extraOptionItems.push({
+                name: `[추가옵션] ${opt.name}`,
+                unit: '개',
+                quantity: 1,
+                unitPrice: opt.price || 0,
+                totalPrice: opt.price || 0,
+                note: '기타추가옵션'
               });
             }
           });
         }
       });
       
-      // ✅ extraOptions를 items 형식으로 변환
-      const extraOptionItems = Array.from(extraOptionsMap.values()).map(opt => ({
-        name: `[추가옵션] ${opt.name}`,
-        unit: '개',
-        quantity: opt.quantity,
-        unitPrice: opt.price,
-        totalPrice: opt.price * opt.quantity,
-        note: '기타추가옵션'
-      }));
-      
       // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)
-      const customMaterialItems = customMaterials.map(mat => ({
-        name: `[추가옵션] ${mat.name || ''}`,
-        unit: '개',
-        quantity: 1,
-        unitPrice: mat.price || 0,
-        totalPrice: mat.price || 0,
-        note: '기타추가옵션'
-      }));
+      const customMaterialItems = [];
+      cart.forEach(item => {
+        if (item.customMaterials && Array.isArray(item.customMaterials)) {
+          item.customMaterials.forEach(mat => {
+            if (mat && mat.name) {
+              customMaterialItems.push({
+                name: `[추가옵션] ${mat.name}`,
+                unit: '개',
+                quantity: 1,
+                unitPrice: mat.price || 0,
+                totalPrice: mat.price || 0,
+                note: '기타추가옵션'
+              });
+            }
+          });
+        }
+      });
       
       const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
 
