@@ -425,58 +425,6 @@ const EstimateForm = () => {
     }
   };
 
-    const handleCreatePurchase = () => {
-      if (!formData.documentNumber.trim()) {
-        alert('거래번호를 먼저 입력해주세요.');
-        documentNumberInputRef.current?.focus();
-        return;
-      }
-      
-      // 현재 formData를 청구서로 전달
-      navigate('/purchase-order/new', {
-        state: {
-          cart: [],
-          totalBom: formData.materials || [],
-          customItems: formData.items || [],
-          customMaterials: [],
-          editingDocumentData: {
-            documentNumber: formData.documentNumber,
-            companyName: formData.companyName,
-            bizNumber: formData.bizNumber,
-            date: formData.date,
-            notes: formData.notes,
-            topMemo: formData.topMemo
-          }
-        }
-      });
-    };
-  
-    const handleCreateDelivery = () => {
-      if (!formData.documentNumber.trim()) {
-        alert('거래번호를 먼저 입력해주세요.');
-        documentNumberInputRef.current?.focus();
-        return;
-      }
-      
-      // 현재 formData를 거래명세서로 전달
-      navigate('/delivery-note/new', {
-        state: {
-          cart: [],
-          totalBom: formData.materials || [],
-          customItems: formData.items || [],
-          customMaterials: [],
-          editingDocumentData: {
-            documentNumber: formData.documentNumber,
-            companyName: formData.companyName,
-            bizNumber: formData.bizNumber,
-            date: formData.date,
-            notes: formData.notes,
-            topMemo: formData.topMemo
-          }
-        }
-      });
-    };
-  
 
   const handleCloseFaxModal = () => {
     setShowFaxModal(false);
@@ -697,8 +645,6 @@ const EstimateForm = () => {
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
-        <button type="button" onClick={handleCreatePurchase} className="convert-btn" style={{background:'#ff9800'}}>📋 청구서 작성</button>
-        <button type="button" onClick={handleCreateDelivery} className="convert-btn" style={{background:'#9c27b0'}}>📄 거래명세서 작성</button>
       </div>
 
       <div className="form-company">({PROVIDER.companyName})</div>
