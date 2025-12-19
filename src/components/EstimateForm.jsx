@@ -154,7 +154,7 @@ const EstimateForm = () => {
             
       // ✅ customMaterials를 items 형식으로 변환
       const customMaterialItems = customMaterials.map(mat => ({
-        name: mat.name || '',
+        name: `[추가옵션] ${mat.name || ''}`,
         unit: '개',
         quantity: 1,
         unitPrice: mat.price || 0,
@@ -174,10 +174,12 @@ const EstimateForm = () => {
         note: m.note || ''
       }));
       
+      const allMaterials = [...bomMaterials, ...customMaterials];
+      
       setFormData(prev => ({ 
         ...prev, 
         items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
-        materials: bomMaterials
+        materials: allMaterials
       }));
     }
   }, [cart, totalBom, customItems, customMaterials, isEditMode]);
