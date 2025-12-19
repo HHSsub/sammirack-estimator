@@ -740,7 +740,7 @@ const handleSendFax = async (faxNumber) => {
 
       <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
         <button type="button" onClick={handleSave} className="save-btn">저장하기</button>
-        <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
+        <button type="button" onClick={exportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
