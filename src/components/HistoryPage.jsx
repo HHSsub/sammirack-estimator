@@ -50,6 +50,9 @@ const HistoryPage = () => {
   // ✅ 정렬 상태
   const [sortColumn, setSortColumn] = useState('updatedAt'); // 기본: 최종수정일
   const [sortDirection, setSortDirection] = useState('desc'); // 기본: 내림차순
+  // ✅ 메모 모달 state
+  const [memoModalItem, setMemoModalItem] = useState(null);
+  const [memoModalValue, setMemoModalValue] = useState('');
 
   // Load history on component mount
   useEffect(() => {
@@ -81,10 +84,18 @@ const HistoryPage = () => {
       // ✅ 서버 동기화된 문서에서 로드 (삭제되지 않은 것만)
       const syncedDocuments = loadAllDocuments(false);
       
-      setHistoryItems(syncedDocuments);
+      // ✅ topMemo를 memo로 복사 (memo가 비어있을 때만)
+      const documentsWithMemo = syncedDocuments.map(doc => {
+        if (!doc.memo && doc.topMemo) {
+          return { ...doc, memo: doc.topMemo };
+        }
+        return doc;
+      });
+      
+      setHistoryItems(documentsWithMemo);
       setLastSyncTime(new Date());
       
-      console.log(`📄 문서 로드 완료: ${syncedDocuments.length}개`);
+      console.log(`📄 문서 로드 완료: ${documentsWithMemo.length}개`);
     } catch (error) {
       console.error('Error loading history:', error);
     }
@@ -1331,28 +1342,30 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               <div className="item-cell price">
                 {item.totalPrice?.toLocaleString()}원
               </div>
-              <div className="item-cell memo">
-                <input
-                  type="text"
-                  maxLength="15"
-                  defaultValue={item.memo || ''}
-                  onBlur={(e) => {
-                    e.stopPropagation();
-                    updateMemo(item, e.target.value);
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    background: 'transparent',
-                    color: '#ff6600',
-                    fontWeight: 'bold',
-                    fontSize: '13px',
-                    padding: '2px'
-                  }}
-                  placeholder="메모..."
-                />
-              </div>>
+              <div 
+                className="item-cell memo" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMemoModalItem(item);
+                  setMemoModalValue(item.memo || '');
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <div style={{
+                  width: '100%',
+                  color: '#ff6600',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  padding: '2px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {item.memo && item.memo.length > 15 
+                    ? `${item.memo.substring(0, 15)}...` 
+                    : (item.memo || '메모...')}
+                </div>
+              </div>
               <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
                 <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
                   ✏️
@@ -1481,10 +1494,93 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           {renderItemsList()}
         </>
       )}
-      
       {view === 'details' && renderItemDetails()}
-      
       {view === 'deleted' && renderDeletedItemsList()}
+      {/* ✅ 메모 모달 */}
+      {memoModalItem && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}
+          onClick={() => setMemoModalItem(null)}
+        >
+          <div 
+            style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              maxWidth: '500px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0 }}>메모 편집</h3>
+            <textarea
+              value={memoModalValue}
+              onChange={(e) => setMemoModalValue(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '150px',
+                padding: '12px',
+                fontSize: '14px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                resize: 'vertical',
+                boxSizing: 'border-box'
+              }}
+              placeholder="메모를 입력하세요..."
+            />
+            <div style={{ 
+              marginTop: '16px', 
+              display: 'flex', 
+              gap: '8px', 
+              justifyContent: 'flex-end' 
+            }}>
+              <button 
+                onClick={() => setMemoModalItem(null)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                취소
+              </button>
+              <button 
+                onClick={async () => {
+                  await updateMemo(memoModalItem, memoModalValue);
+                  setMemoModalItem(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 };
