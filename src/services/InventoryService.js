@@ -27,22 +27,18 @@ class InventoryService {
     }
     
     try {
-      // Gist API를 사용하여 데이터를 가져옵니다.
-      const response = await axios.get(GIST_URL);
+      // ✅ raw URL 직접 사용 (1MB 제한 없음)
+      const response = await fetch('https://gist.githubusercontent.com/HHSsub/5f9bbee69fda5cad68fa0ced4b657f3c/raw/inventory.json');
       
-      const file = response.data.files[INVENTORY_FILE_NAME];
-      if (!file) {
-        console.error(`Gist 파일 ${INVENTORY_FILE_NAME}을 찾을 수 없습니다.`);
-        // 파일이 없으면 초기 재고 데이터로 빈 객체를 반환합니다.
-        return {}; 
+      if (!response.ok) {
+        throw new Error(`Gist fetch failed: ${response.status}`);
       }
       
-      // 파일 내용을 파싱하여 재고 데이터를 반환합니다.
-      const content = file.content;
-      return JSON.parse(content);
+      // ✅ 직접 JSON 파싱
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Gist에서 재고 데이터 로드 실패:', error);
-      // 실패 시 빈 객체 반환 또는 에러 throw
       return {};
     }
   }
