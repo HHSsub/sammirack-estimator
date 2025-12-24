@@ -267,7 +267,7 @@ class RealtimeAdminSync {
   }
 
   // GitHub Gist에서 데이터 로드 (읽기 전용 - 로컬에 저장)
-  async loadFromServer() {
+    async loadFromServer() {
     if (!this.GIST_ID || !this.GITHUB_TOKEN) {
       console.error('❌ GitHub 설정이 누락되었습니다.');
       throw new Error('GitHub 설정 오류: GIST_ID 또는 TOKEN이 없습니다.');
@@ -276,72 +276,65 @@ class RealtimeAdminSync {
     try {
       console.log('🔄 GitHub 서버에서 데이터 로드 중...');
       
-      const response = await fetch(`${this.API_BASE}/${this.GIST_ID}`, {
-        headers: this.getHeaders()
-      });
+      // ✅ raw URL 직접 사용 (1MB 제한 없음)
+      const RAW_BASE = `https://gist.githubusercontent.com/HHSsub/${this.GIST_ID}/raw`;
+      
+      // ✅ 모든 파일을 raw URL로 병렬 로드
+      const [inventoryRes, adminPricesRes, priceHistoryRes, activityLogRes, documentsRes] = await Promise.all([
+        fetch(`${RAW_BASE}/inventory.json`).catch(() => ({ ok: false })),
+        fetch(`${RAW_BASE}/admin_prices.json`).catch(() => ({ ok: false })),
+        fetch(`${RAW_BASE}/price_history.json`).catch(() => ({ ok: false })),
+        fetch(`${RAW_BASE}/activity_log.json`).catch(() => ({ ok: false })),
+        fetch(`${RAW_BASE}/documents.json`).catch(() => ({ ok: false }))
+      ]);
   
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 401) {
-          throw new Error(`GitHub API 인증 실패 (401)`);
-        } else if (response.status === 404) {
-          throw new Error(`Gist를 찾을 수 없음 (404)`);
-        } else if (response.status === 403) {
-          throw new Error(`Rate Limit 또는 접근 거부 (403)`);
-        } else {
-          throw new Error(`GitHub API 오류 (${response.status})`);
-        }
+      // 재고 데이터 로드
+      if (inventoryRes.ok) {
+        const inventoryData = await inventoryRes.json();
+        localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
+        this.broadcastUpdate('inventory-updated', inventoryData);
       }
   
-      const gist = await response.json();
-      
-      if (gist.files) {
-        // 재고 데이터 로드
-        if (gist.files['inventory.json']) {
-          const inventoryData = JSON.parse(gist.files['inventory.json'].content);
-          localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
-          this.broadcastUpdate('inventory-updated', inventoryData);
-        }
+      // 단가 데이터 로드
+      if (adminPricesRes.ok) {
+        const serverPrices = await adminPricesRes.json();
+        const localPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
+        
+        // 단가도 누적 병합 (최신 타임스탬프 우선)
+        const mergedPrices = this.mergeByTimestamp(serverPrices, localPrices);
+        localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(mergedPrices));
+        this.broadcastUpdate('prices-updated', mergedPrices);
+      }
   
-        // 단가 데이터 로드
-        if (gist.files['admin_prices.json']) {
-          const serverPrices = JSON.parse(gist.files['admin_prices.json'].content);
-          const localPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
-          
-          // 단가도 누적 병합 (최신 타임스탬프 우선)
-          const mergedPrices = this.mergeByTimestamp(serverPrices, localPrices);
-          localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(mergedPrices));
-          this.broadcastUpdate('prices-updated', mergedPrices);
-        }
+      // 가격 히스토리 로드
+      if (priceHistoryRes.ok) {
+        const historyData = await priceHistoryRes.json();
+        localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(historyData));
+      }
   
-        if (gist.files['price_history.json']) {
-          const historyData = JSON.parse(gist.files['price_history.json'].content);
-          localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(historyData));
-        }
-  
-        if (gist.files['activity_log.json']) {
-          const activityData = JSON.parse(gist.files['activity_log.json'].content);
-          localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
-        }
+      // 활동 로그 로드
+      if (activityLogRes.ok) {
+        const activityData = await activityLogRes.json();
+        localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
+      }
 
-        // ✅ 문서 데이터 로드 (서버 → 로컬 동기화)
-        if (gist.files['documents.json']) {
-          try {
-            const serverDocuments = JSON.parse(gist.files['documents.json'].content);
-            const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
-            
-            // 서버 문서를 로컬에 누적 (서버가 기준)
-            const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
-            localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
-            
-            // 레거시 키에도 동기화 (기존 코드 호환)
-            this.syncToLegacyKeys(mergedDocuments);
-            
-            this.broadcastUpdate('documents-updated', mergedDocuments);
-            console.log(`📄 서버 문서 로드 완료: ${Object.keys(mergedDocuments).length}개`);
-          } catch (e) {
-            console.error('문서 파싱 실패:', e);
-          }
+      // ✅ 문서 데이터 로드 (서버 → 로컬 동기화)
+      if (documentsRes.ok) {
+        try {
+          const serverDocuments = await documentsRes.json();
+          const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+          
+          // 서버 문서를 로컬에 누적 (서버가 기준)
+          const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
+          localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
+          
+          // 레거시 키에도 동기화 (기존 코드 호환)
+          this.syncToLegacyKeys(mergedDocuments);
+          
+          this.broadcastUpdate('documents-updated', mergedDocuments);
+          console.log(`📄 서버 문서 로드 완료: ${Object.keys(mergedDocuments).length}개`);
+        } catch (e) {
+          console.error('문서 파싱 실패:', e);
         }
       }
   
