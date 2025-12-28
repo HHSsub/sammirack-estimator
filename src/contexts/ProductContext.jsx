@@ -156,7 +156,12 @@ const ensureSpecification = (row, ctx = {}) => {
     }
     // ✅ 기둥
     else if (/^기둥$/.test(nm) && height) {
-      row.specification = `${height}`;
+      // ⚠️ 하이랙만 사이즈 포함
+      if (row.rackType === "하이랙" && size) {
+        row.specification = `사이즈 ${size} 높이 ${height}`;
+      } else {
+        row.specification = `${height}`;
+      }
     }
     // ✅ 로드빔
     else if (/^로드빔$/.test(nm)) {
@@ -193,7 +198,11 @@ const ensureSpecification = (row, ctx = {}) => {
     }
     // ✅ 하이랙
     else if (/기둥\(/.test(nm) && height && row.rackType === "하이랙") {
-      row.specification = `높이 ${height}${weightOnly ? ` ${weightOnly}` : ""}`;
+      if (size) {
+        row.specification = `사이즈 ${size} 높이 ${height}${weightOnly ? ` ${weightOnly}` : ""}`;
+      } else {
+        row.specification = `높이 ${height}${weightOnly ? ` ${weightOnly}` : ""}`;
+      }
     } else if (/로드빔\(/.test(nm) && row.rackType === "하이랙") {
       const m = nm.match(/\((\d+)\)/);
       if (m) row.specification = `${m[1]}${weightOnly ? ` ${weightOnly}` : ""}`;
