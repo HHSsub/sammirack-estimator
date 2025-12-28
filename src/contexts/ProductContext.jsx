@@ -158,7 +158,7 @@ const ensureSpecification = (row, ctx = {}) => {
     else if (/^기둥$/.test(nm) && height) {
       // ⚠️ 하이랙만 사이즈 포함
       if (row.rackType === "하이랙" && size) {
-        row.specification = `사이즈 ${size} 높이 ${height}`;
+        row.specification = `사이즈 ${size} 높이 ${height}${weightOnly ? ` ${weightOnly}` : ""}`;
       } else {
         row.specification = `${height}`;
       }
