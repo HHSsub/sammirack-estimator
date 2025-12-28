@@ -1646,7 +1646,7 @@ const makeExtraOptionBOM = () => {
         {
           rackType: selectedType,
           name: "기둥",
-          specification: `높이 ${heightValue}${weightOnly ? ` ${weightOnly}` : ""}`,
+          specification: "", // ✅ 빈 문자열로 초기화 - ensureSpecification에서 처리
           colorWeight: color, // ✅ 핵심: 원본 색상 저장
           quantity: pillarQty,
           unitPrice: 0,
