@@ -65,15 +65,15 @@ const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFF
 // 컬럼 너비(요청 반영: E,F 더 넓게)
 const columnWidths = [
   { width: 5 },  // A: NO
-  { width: 20 }, // B: 품명/부품명 (축소)
-  { width: 11 }, // C: 단위
-  { width: 9 },  // D: 거래번호 라벨 (신규)
-  { width: 12 }, // E: 거래번호 값 (신규)
-  { width: 8 },  // F: 수량 (기존 D)
-  { width: 18 }, // G: 단가 (기존 E)
-  { width: 18 }, // H: 공급가/금액 (기존 F)
-  { width: 15 }, // I: 비고 (기존 G)
-  { width: 15 }, // J: 비고 확장 (기존 H)
+  { width: 52 }, // B: 품명/부품명 (20 → 50) ✅ 수정
+  { width: 8 },  // C: 단위 (11 → 8) ✅ 수정
+  { width: 9 },  // D: 거래번호 라벨 (유지)
+  { width: 12 }, // E: 거래번호 값 (유지)
+  { width: 6 },  // F: 수량 (8 → 6) ✅ 수정
+  { width: 17 }, // G: 단가 (18 → 17) ✅ 수정
+  { width: 17 }, // H: 공급가/금액 (18 → 17) ✅ 수정
+  { width: 10 }, // I: 비고 (15 → 10) ✅ 수정
+  { width: 10 }, // J: 비고 확장 (15 → 10) ✅ 수정
 ];
 
 // 보더/정렬/폰트 일괄 적용
@@ -250,6 +250,7 @@ function buildEstimate(ws, items = [], totals, notes) {
     ws.getCell(`A${r}`).value = i + 1;
     ws.mergeCells(`B${r}:D${r}`);
     ws.getCell(`B${r}`).value = item.name || '';
+    ws.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' }; // ✅ 추가
     ws.getCell(`E${r}`).value = item.unit || '';
     ws.getCell(`F${r}`).value = item.quantity ?? '';
     ws.getCell(`G${r}`).value = item.unitPrice ?? '';
@@ -348,6 +349,7 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     ws.getCell(`A${r}`).value = i + 1;
     ws.mergeCells(`B${r}:D${r}`);
     ws.getCell(`B${r}`).value = it.name || '';
+    ws.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' }; // ✅ 추가
     ws.getCell(`E${r}`).value = it.unit || '';
     ws.getCell(`F${r}`).value = it.quantity ?? '';
     ws.getCell(`G${r}`).value = it.unitPrice ?? '';
@@ -429,6 +431,7 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     ws.getCell(`A${r}`).value = i + 1;
     ws.mergeCells(`B${r}:E${r}`);
     ws.getCell(`B${r}`).value = m.name || '';
+    ws.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' }; // ✅ 추가
     ws.getCell(`F${r}`).value = m.quantity ?? '';
     ws.mergeCells(`G${r}:J${r}`);
     ws.getCell(`G${r}`).value = m.note || '';
