@@ -1368,17 +1368,17 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               </div>
               <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
                 <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
-                  ✏️
+                  편집
                 </button>
                 <button title="인쇄" onClick={(e) => { e.stopPropagation(); printItem(item); }}>
-                  🖨️
+                  인쇄
                 </button>
                 {item.type === 'estimate' && (
                   <button 
                     title="청구서 생성" 
                     onClick={(e) => { e.stopPropagation(); convertToPurchase(item); }}
                   >
-                    📋
+                    청구서생성
                   </button>
                 )}
                 <button 
@@ -1386,7 +1386,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   className="delete-icon"
                   onClick={(e) => { e.stopPropagation(); deleteItem(item); }}
                 >
-                  🗑️
+                  삭제
                 </button>
               </div>
             </div>
