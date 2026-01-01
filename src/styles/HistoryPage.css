@@ -1,6 +1,6 @@
 /* HistoryPage Styles */
 .history-page {
-  max-width: 100%;  /* ✅ 1200px → 100% 전체 너비 사용 */
+  max-width: 100%;
   width: 100%;
   margin: 0 auto;
   padding: 20px;
@@ -112,8 +112,8 @@
 .history-list {
   border: 1px solid #ddd;
   border-radius: 8px;
-  overflow: hidden;
-  width: 100%;  /* ✅ 전체 너비 사용 */
+  overflow-x: auto;
+  width: 100%;
 }
 
 .list-header {
@@ -121,10 +121,11 @@
   background-color: #f5f5f5;
   border-bottom: 2px solid #ddd;
   font-weight: bold;
+  min-width: 1400px;
 }
 
 .header-cell {
-  padding: 12px;
+  padding: 12px 8px;
   text-align: left;
 }
 
@@ -133,6 +134,7 @@
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background-color 0.2s;
+  min-width: 1400px;
 }
 
 .list-item:last-child {
@@ -144,63 +146,62 @@
 }
 
 .item-cell {
-  padding: 12px;
+  padding: 12px 8px;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ✅ Column widths - 작업 컬럼 대폭 확대 */
+/* ✅ Column widths - 균형 조정 */
 .document-type {
-  width: 5%;
-  min-width: 60px;
+  width: 70px;
+  min-width: 70px;
+  flex-shrink: 0;
 }
 
 .document-id {
-  width: 10%;
-  min-width: 100px;
+  width: 140px;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .date {
-  width: 8%;
-  min-width: 90px;
+  width: 100px;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .updated-date {
-  width: 10%;
-  min-width: 130px;
-}
-
-.customer {
-  width: 10%;
-  min-width: 80px;
+  width: 140px;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .product {
-  width: 10%;
-  min-width: 100px;
+  width: 140px;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .price {
-  width: 8%;
-  min-width: 90px;
+  width: 100px;
+  min-width: 100px;
+  flex-shrink: 0;
 }
 
 .memo {
-  width: 12%;
-  min-width: 130px;
-}
-
-.status {
-  width: 8%;
-  min-width: 80px;
+  width: 140px;
+  min-width: 140px;
+  flex-shrink: 0;
 }
 
 .actions {
-  width: 19%;  /* ✅ 13% → 19% 대폭 확대 */
-  min-width: 280px;  /* ✅ 110px → 280px 대폭 확대 */
-  text-align: center !important;
+  width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
+  text-align: left !important;
+  padding-left: 8px !important;
 }
 
 /* Status badges */
@@ -232,18 +233,19 @@
   color: #721c24;
 }
 
-/* ✅ Action buttons in list - 굵게 + 작은 글씨 + 패딩 조정 */
+/* ✅ Action buttons in list */
 .actions button {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 11px;  /* ✅ 16px → 11px 작게 */
-  margin: 0 2px;
-  padding: 4px 6px;  /* ✅ 2px 5px → 4px 6px */
+  font-size: 11px;
+  margin: 0 3px;
+  padding: 4px 7px;
   border-radius: 3px;
   transition: background-color 0.2s;
-  font-weight: bold;  /* ✅ 굵게 */
-  white-space: nowrap;  /* ✅ 줄바꿈 방지 */
+  font-weight: bold;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .actions button:hover {
@@ -448,11 +450,7 @@
   }
 }
 
-/* ============================================
-   ✅ 추가 스타일 - 기존 HistoryPage.css 파일 끝에 추가
-   ============================================ */
-
-/* 페이지 헤더 - 제목과 동기화 상태 */
+/* 페이지 헤더 */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -466,7 +464,7 @@
   margin: 0;
 }
 
-/* 동기화 상태 영역 */
+/* 동기화 상태 */
 .sync-status {
   display: flex;
   align-items: center;
@@ -513,7 +511,6 @@
   color: #666;
 }
 
-/* 생성자 정보 스타일 (상세 페이지) */
 .creator-info {
   font-family: monospace;
   background-color: #f5f5f5;
@@ -522,7 +519,7 @@
   font-size: 13px;
 }
 
-/* 삭제된 문서 보기 버튼 */
+/* 삭제된 문서 */
 .deleted-docs-button {
   background-color: #ff9800 !important;
   color: white !important;
@@ -532,7 +529,6 @@
   background-color: #f57c00 !important;
 }
 
-/* 삭제된 문서 섹션 */
 .deleted-items-section {
   padding: 20px 0;
 }
@@ -551,7 +547,6 @@
   color: #ff5722;
 }
 
-/* 삭제된 항목 스타일 */
 .list-item.deleted-item {
   background-color: #fff8f5;
   border-left: 3px solid #ff5722;
@@ -561,7 +556,6 @@
   background-color: #ffebe5;
 }
 
-/* ✅ 복구 버튼 - 굵게 */
 .restore-button {
   background-color: #4CAF50 !important;
   color: white !important;
@@ -569,28 +563,26 @@
   border-radius: 4px !important;
   font-size: 12px !important;
   margin-right: 5px !important;
-  font-weight: bold !important;  /* ✅ 굵게 */
+  font-weight: bold !important;
 }
 
 .restore-button:hover {
   background-color: #45a049 !important;
 }
 
-/* ✅ 영구 삭제 버튼 - 굵게 */
 .permanent-delete-button {
   background-color: #d32f2f !important;
   color: white !important;
   padding: 4px 10px !important;
   border-radius: 4px !important;
   font-size: 12px !important;
-  font-weight: bold !important;  /* ✅ 굵게 */
+  font-weight: bold !important;
 }
 
 .permanent-delete-button:hover {
   background-color: #b71c1c !important;
 }
 
-/* ✅ 정렬 가능한 헤더 */
 .header-cell.sortable {
   cursor: pointer;
   user-select: none;
@@ -601,22 +593,12 @@
   background-color: #dee2e6;
 }
 
-/* ✅ 최종 수정 컬럼 너비 조정 */
 .header-cell.updated-date,
-.item-cell.updated-date {
-  width: 140px;
-  min-width: 140px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .item-cell.updated-date {
   font-size: 12px;
   color: #666;
 }
 
-/* 반응형 조정 */
 @media (max-width: 1200px) {
   .header-cell.creator,
   .item-cell.creator {
