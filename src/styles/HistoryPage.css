@@ -112,7 +112,7 @@
 .history-list {
   border: 1px solid #ddd;
   border-radius: 8px;
-  overflow-x: auto;
+  overflow: hidden;
   width: 100%;
 }
 
@@ -121,11 +121,10 @@
   background-color: #f5f5f5;
   border-bottom: 2px solid #ddd;
   font-weight: bold;
-  min-width: 1400px;
 }
 
 .header-cell {
-  padding: 12px 8px;
+  padding: 12px 6px;
   text-align: left;
 }
 
@@ -134,7 +133,6 @@
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background-color 0.2s;
-  min-width: 1400px;
 }
 
 .list-item:last-child {
@@ -146,62 +144,59 @@
 }
 
 .item-cell {
-  padding: 12px 8px;
+  padding: 12px 6px;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ✅ Column widths - 균형 조정 */
+/* ✅ Column widths - 퍼센트 기반 균형 조정 */
 .document-type {
-  width: 70px;
-  min-width: 70px;
-  flex-shrink: 0;
+  width: 5%;
+  min-width: 50px;
 }
 
 .document-id {
-  width: 140px;
-  min-width: 140px;
-  flex-shrink: 0;
+  width: 10%;
+  min-width: 90px;
 }
 
 .date {
-  width: 100px;
-  min-width: 100px;
-  flex-shrink: 0;
+  width: 8%;
+  min-width: 80px;
 }
 
 .updated-date {
-  width: 140px;
-  min-width: 140px;
-  flex-shrink: 0;
+  width: 11%;
+  min-width: 100px;
 }
 
 .product {
-  width: 140px;
-  min-width: 140px;
-  flex-shrink: 0;
+  width: 11%;
+  min-width: 90px;
 }
 
 .price {
-  width: 100px;
-  min-width: 100px;
-  flex-shrink: 0;
+  width: 8%;
+  min-width: 80px;
 }
 
 .memo {
-  width: 140px;
-  min-width: 140px;
-  flex-shrink: 0;
+  width: 18%;
+  min-width: 120px;
 }
 
 .actions {
-  width: 300px;
-  min-width: 300px;
-  flex-shrink: 0;
+  width: 17%;
+  min-width: 200px;
   text-align: left !important;
   padding-left: 8px !important;
+}
+
+.status {
+  width: 7%;
+  min-width: 70px;
 }
 
 /* Status badges */
@@ -239,8 +234,8 @@
   border: none;
   cursor: pointer;
   font-size: 11px;
-  margin: 0 3px;
-  padding: 4px 7px;
+  margin: 0 2px;
+  padding: 4px 6px;
   border-radius: 3px;
   transition: background-color 0.2s;
   font-weight: bold;
