@@ -15,6 +15,7 @@ import PrintPage from './components/PrintPage';
 import Login from './components/Login';
 import PasswordChange from './components/PasswordChange';
 import ShortageInventoryManager from './components/ShortageInventoryManager';
+import UpdateHistory from './components/UpdateHistory';  // ✅ 추가
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -83,8 +84,9 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <UpdateHistory />
       <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
-      
+       
       {showPasswordChange && (
         <PasswordChange 
           currentUser={currentUser}
