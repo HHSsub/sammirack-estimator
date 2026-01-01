@@ -1,0 +1,112 @@
+/* src/styles/UpdateHistory.css */
+
+.update-history-container {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 1200px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.update-history-header {
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.update-history-header h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.update-description {
+  margin: 0;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.update-history-list {
+  min-height: 100px;
+}
+
+.update-history-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.update-item {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #e9ecef;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.update-item:last-child {
+  border-bottom: none;
+}
+
+.update-date {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #007bff;
+  font-size: 14px;
+  min-width: 100px;
+  padding: 4px 10px;
+  background: #e7f3ff;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.update-content {
+  flex: 1;
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+  padding-top: 4px;
+}
+
+.no-updates {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+.update-history-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e9ecef;
+}
+
+.update-history-footer p {
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .update-history-container {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .update-item {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .update-date {
+    min-width: auto;
+    width: fit-content;
+  }
+}
