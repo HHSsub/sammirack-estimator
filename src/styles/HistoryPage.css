@@ -238,6 +238,7 @@
   padding: 2px 5px;
   border-radius: 3px;
   transition: background-color 0.2s;
+  font-weight: bold;  /* ✅ 추가 */
 }
 
 .actions button:hover {
@@ -563,6 +564,7 @@
   border-radius: 4px !important;
   font-size: 12px !important;
   margin-right: 5px !important;
+  font-weight: bold !important;  /* ✅ 추가 */
 }
 
 .restore-button:hover {
@@ -576,6 +578,7 @@
   padding: 4px 10px !important;
   border-radius: 4px !important;
   font-size: 12px !important;
+  font-weight: bold !important;  /* ✅ 추가 */
 }
 
 .permanent-delete-button:hover {
