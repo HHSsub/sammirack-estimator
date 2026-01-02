@@ -426,45 +426,47 @@ export const ProductProvider=({children})=>{
       next.version = ["구형", "신형"];
   
       // 2️⃣ version 선택되면 weight 리스트 구성
-      const version = selectedOptions.version || "구형"; // 기존 데이터 호환: 없으면 "구형"
-      const versionBlock = bd[version] || {};
-      const weightKeys = Object.keys(versionBlock || {}); // ['2t','3t']
-      next.weight = weightKeys;
+      if (selectedOptions.version) {
+        const version = selectedOptions.version;
+        const versionBlock = bd[version] || {};
+        const weightKeys = Object.keys(versionBlock || {}); // ['2t','3t']
+        next.weight = weightKeys;
   
-      // 3️⃣ weight 선택되면 size 리스트 구성
-      if (selectedOptions.weight) {
-        const weightBlock = versionBlock[selectedOptions.weight] || {};
-        const sizesFromData = Object.keys(weightBlock || {});
-        const extraSizes = EXTRA_OPTIONS["파렛트랙"]?.size || [];
-        next.size = sortSizes([...sizesFromData, ...extraSizes]);
-      }
+        // 3️⃣ weight 선택되면 size 리스트 구성
+        if (selectedOptions.weight) {
+          const weightBlock = versionBlock[selectedOptions.weight] || {};
+          const sizesFromData = Object.keys(weightBlock || {});
+          const extraSizes = EXTRA_OPTIONS["파렛트랙"]?.size || [];
+          next.size = sortSizes([...sizesFromData, ...extraSizes]);
   
-      // 4️⃣ size 선택되면 height 구성
-      if (selectedOptions.weight && selectedOptions.size) {
-        const heightsFromData = Object.keys(
-          versionBlock[selectedOptions.weight]?.[selectedOptions.size] || {}
-        );
-        next.height = sortHeights([
-          ...heightsFromData,
-          ...(EXTRA_OPTIONS["파렛트랙"]?.height || [])
-        ]);
-      }
+          // 4️⃣ size 선택되면 height 구성
+          if (selectedOptions.size) {
+            const heightsFromData = Object.keys(
+              versionBlock[selectedOptions.weight]?.[selectedOptions.size] || {}
+            );
+            next.height = sortHeights([
+              ...heightsFromData,
+              ...(EXTRA_OPTIONS["파렛트랙"]?.height || [])
+            ]);
   
-      // 5️⃣ height 선택되면 level 구성
-      if (selectedOptions.weight && selectedOptions.size && selectedOptions.height) {
-        const levelsFromData = Object.keys(
-          versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height] || {}
-        );
-        next.level = sortLevels(levelsFromData.length ? levelsFromData : ["L1","L2","L3","L4","L5","L6"]);
-      }
+            // 5️⃣ height 선택되면 level 구성
+            if (selectedOptions.height) {
+              const levelsFromData = Object.keys(
+                versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height] || {}
+              );
+              next.level = sortLevels(levelsFromData.length ? levelsFromData : ["L1","L2","L3","L4","L5","L6"]);
   
-      // 6️⃣ level 선택되면 formType 구성
-      if (
-        selectedOptions.weight && selectedOptions.size &&
-        selectedOptions.height && selectedOptions.level
-      ) {
-        const fm = versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
-        next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
+              // 6️⃣ level 선택되면 formType 구성
+              if (selectedOptions.level) {
+                const fm = versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
+                next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
+              }
+            }
+          }
+        }
+      } else {
+        // version이 선택되지 않았으면 weight는 빈 배열
+        next.weight = [];
       }
   
       setAvailableOptions(next);
