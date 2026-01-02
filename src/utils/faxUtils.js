@@ -97,6 +97,20 @@ export const convertDOMToPDFBase64 = async (element) => {
         overflow: visible !important;
       }
 
+      /* ✅ 간격 최소화 (footer안잘리기위함) */
+      .total-table {
+        margin-bottom: 5px !important;
+      }
+      
+      .form-table {
+        margin-bottom: 10px !important;
+      }
+      
+      .order-table,
+      .bom-table {
+        margin-bottom: 8px !important;
+      }
+
       /* -------------------------------------------------
          6. 숫자/전화번호/팩스번호 붙어보임 방지
          ------------------------------------------------- */
@@ -137,10 +151,10 @@ export const convertDOMToPDFBase64 = async (element) => {
          9. 메모 영역
          ------------------------------------------------- */
       .estimate-memo {
-        min-height: 70px !important;
+        min-height: 50px !important;
         padding: 10px 6px !important;
         font-size: 18px !important;
-        line-height: 1.6 !important;
+        line-height: 1.5 !important;
       }
 
       /* -------------------------------------------------
@@ -169,9 +183,12 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
 
       /* ✅ footer(회사명) 페이지 넘김 방지 */
+      /* ✅ footer 강력 방지 */
       .form-company {
         page-break-inside: avoid !important;
         page-break-before: avoid !important;
+        margin-top: 5px !important;
+        padding-top: 0 !important;
       }
 
       /* -------------------------------------------------
