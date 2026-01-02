@@ -586,7 +586,24 @@ useEffect(() => {
 
     // 랙타입 필터링
     if (selectedRackType) {
-      result = result.filter(material => material.rackType === selectedRackType);
+      if (selectedRackType === '파렛트랙') {
+        // 파렛트랙 구형만 (partId가 "파렛트랙-"으로 시작하고 "파렛트랙신형-"이 아닌 것)
+        result = result.filter(material => {
+          const partId = material.partId || '';
+          return material.rackType === '파렛트랙' && 
+                 partId.startsWith('파렛트랙-') && 
+                 !partId.startsWith('파렛트랙신형-');
+        });
+      } else if (selectedRackType === '파렛트랙신형') {
+        // 파렛트랙 신형만 (partId가 "파렛트랙신형-"으로 시작하는 것)
+        result = result.filter(material => {
+          const partId = material.partId || '';
+          return partId.startsWith('파렛트랙신형-');
+        });
+      } else {
+        // 기타 랙타입은 기존 로직
+        result = result.filter(material => material.rackType === selectedRackType);
+      }
     }
 
     // ✅ CSV partId 그대로 사용
@@ -795,6 +812,37 @@ useEffect(() => {
 
   // 랙타입 목록 생성
   const uniqueRackTypes = [...new Set(allMaterials.map(m => m.rackType).filter(Boolean))];
+  
+  // ✅ 파렛트랙신형을 별도 랙타입으로 추가 (partId 기반)
+  const hasPalletRackNew = allMaterials.some(m => {
+    const partId = m.partId || '';
+    return partId.startsWith('파렛트랙신형-');
+  });
+  
+  // ✅ 랙타입 목록 정렬 및 파렛트랙신형 추가
+  const sortedRackTypes = [...uniqueRackTypes].sort((a, b) => {
+    // 파렛트랙 관련 순서: 파렛트랙 → 파렛트랙신형 → 파렛트랙 철판형
+    const order = ['경량랙', '중량랙', '파렛트랙', '파렛트랙신형', '파렛트랙 철판형', '하이랙', '스텐랙'];
+    const aIndex = order.indexOf(a);
+    const bIndex = order.indexOf(b);
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    return a.localeCompare(b);
+  });
+  
+  // 파렛트랙신형이 있으면 목록에 추가 (이미 있으면 중복 제거)
+  const finalRackTypes = hasPalletRackNew && !sortedRackTypes.includes('파렛트랙신형')
+    ? [...sortedRackTypes, '파렛트랙신형'].sort((a, b) => {
+        const order = ['경량랙', '중량랙', '파렛트랙', '파렛트랙신형', '파렛트랙 철판형', '하이랙', '스텐랙'];
+        const aIndex = order.indexOf(a);
+        const bIndex = order.indexOf(b);
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        return a.localeCompare(b);
+      })
+    : sortedRackTypes;
 
   // ✅ 수정: 재고 수량 가져오기
   const getInventoryQuantity = (material) => {
@@ -883,7 +931,7 @@ useEffect(() => {
             className="filter-select"
           >
             <option value="">모든 랙타입</option>
-            {uniqueRackTypes.map(type => (
+            {finalRackTypes.map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
@@ -912,7 +960,7 @@ useEffect(() => {
           >
             전체
           </button>
-          {uniqueRackTypes.map(type => (
+          {finalRackTypes.map(type => (
             <button
               key={type}
               onClick={() => setSelectedRackType(type)}
