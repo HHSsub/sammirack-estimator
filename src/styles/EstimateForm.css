@@ -21,14 +21,15 @@
 .fax-capture .bom-table th,
 .fax-capture .bom-table td {
   height: auto !important;
-  min-height: unset !important;
+  min-height: 50px !important;  /* ✅ 최소 높이 */
   max-height: none !important;
 
-  line-height: normal !important;
+  line-height: 1.8 !important;  /* ✅ 줄간격 */
   padding-top: 14px !important;
   padding-bottom: 14px !important;
 
-  box-sizing: content-box !important;
+  box-sizing: border-box !important;  /* ✅ 수정 */
+  white-space: normal !important;  /* ✅ 줄바꿈 허용 */
   overflow: visible !important;
 }
 
