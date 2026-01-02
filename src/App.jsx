@@ -84,7 +84,6 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
-      <UpdateHistory />
       <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
        
       {showPasswordChange && (
@@ -322,6 +321,7 @@ return (
           selectedRackOption={getCurrentRackOptionName()}
         />
       )}
+      <UpdateHistory />
     </div>
   );
 };
