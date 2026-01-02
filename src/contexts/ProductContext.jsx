@@ -1209,7 +1209,7 @@ const makeExtraOptionBOM = () => {
                   }
                   
                   partIdForPrice = generatePartId({ 
-                    rackType: selectedType,
+                    rackType: selectedType, 
                     version: version, // ✅ 파렛트랙만 version 정보 포함
                     name: partNameForPrice, 
                     specification: finalSpecification || '' 
@@ -1314,7 +1314,7 @@ const makeExtraOptionBOM = () => {
                   
                   console.log(`  ⚠️ generatePartId 호출: name="${partNameForPrice}", spec="${finalSpecification}"`);
                   partIdForPrice = generatePartId({ 
-                    rackType: selectedType,
+                    rackType: selectedType, 
                     version: version, // ✅ 파렛트랙만 version 정보 포함
                     name: partNameForPrice, 
                     specification: finalSpecification || '' 
@@ -1464,7 +1464,7 @@ const makeExtraOptionBOM = () => {
             
             // 가격용 ID 생성 (색상 제거)
             const partIdForPrice = generatePartId({ 
-              rackType: selectedType,
+              rackType: selectedType, 
               version: version, // ✅ 파렛트랙만 version 정보 포함
               name: baseName, 
               specification: correctSpecification || finalSpecification || '' 
@@ -1609,7 +1609,7 @@ const makeExtraOptionBOM = () => {
         { rackType: selectedType, version: version, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         ...(selectedType === "파렛트랙 철판형" ? [] : [
                   { 
-                    rackType: selectedType,
+                    rackType: selectedType, 
                     version: version, // ✅ 파렛트랙만 version 정보 포함
                     size: sz, 
                     name: "타이빔", 
