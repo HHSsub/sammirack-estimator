@@ -10,6 +10,7 @@ import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
+import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -43,6 +44,10 @@ const PurchaseOrderForm = () => {
   const [showFaxModal, setShowFaxModal] = useState(false);
   const [pdfBlobURL, setPdfBlobURL] = useState(null);
   const [pdfBase64, setPdfBase64] = useState(null);
+  
+  // ✅ 토스트 알림 state 추가
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const saveButtonRef = useRef(null);
 
   const cartData = location.state || {};
   const { 
@@ -375,7 +380,12 @@ const PurchaseOrderForm = () => {
 
   const handleSave = async () => {
     if (!formData.documentNumber.trim()) {
-      alert('거래번호(문서번호)를 입력해주세요.');
+      // 거래번호 입력 요청은 토스트로 표시
+      setToast({ 
+        show: true, 
+        message: '거래번호(문서번호)를 입력해주세요.', 
+        type: 'error' 
+      });
       documentNumberInputRef.current?.focus();
       return;
     }
@@ -445,12 +455,21 @@ const PurchaseOrderForm = () => {
     const success = await saveDocumentSync(newOrder);
     
     if (success) {
-      alert(isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.');
+      // ✅ 토스트 알림으로 변경
+      setToast({ 
+        show: true, 
+        message: isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.', 
+        type: 'success' 
+      });
       
       // ✅ 문서 업데이트 이벤트 발생
       window.dispatchEvent(new Event('documentsupdated'));
     } else {
-      alert('저장 중 오류가 발생했습니다.');
+      setToast({ 
+        show: true, 
+        message: '저장 중 오류가 발생했습니다.', 
+        type: 'error' 
+      });
     }
   };
 
@@ -1150,11 +1169,28 @@ const checkInventoryAvailability = async (cartItems) => {
       </div>
 
       <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
-        <button type="button" onClick={handleSave} className="save-btn">저장하기</button>
+        <button 
+          type="button" 
+          onClick={handleSave} 
+          className="save-btn"
+          ref={saveButtonRef}
+        >
+          저장하기
+        </button>
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
+      
+      {/* ✅ 토스트 알림 */}
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        anchorElement={saveButtonRef.current}
+        duration={2000}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
       <div className="form-company">({PROVIDER.companyName})</div>
       {/* ✅ FAX 미리보기 모달 추가 */}
       {showFaxModal && (

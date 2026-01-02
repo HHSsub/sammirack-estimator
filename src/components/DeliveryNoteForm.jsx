@@ -9,6 +9,7 @@ import { saveDocumentSync } from '../utils/realtimeAdminSync';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
+import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -36,6 +37,10 @@ const DeliveryNoteForm = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   // ✅ 현재 전역 설정
   const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
+  
+  // ✅ 토스트 알림 state 추가
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const saveButtonRef = useRef(null);
 
   const cartData = location.state || {};
   const { 
@@ -311,7 +316,11 @@ const DeliveryNoteForm = () => {
 
 const handleSave = async () => {
     if(!formData.documentNumber.trim()){
-      alert('거래번호(문서번호)를 입력하세요.');
+      setToast({ 
+        show: true, 
+        message: '거래번호(문서번호)를 입력하세요.', 
+        type: 'error' 
+      });
       documentNumberInputRef.current?.focus();
       return;
     }
@@ -375,10 +384,18 @@ const handleSave = async () => {
     const success = await saveDocumentSync(newDoc);
     
     if (success) {
-      alert(isEditMode?'문서가 수정되었습니다.':'문서가 저장되었습니다.');
+      setToast({ 
+        show: true, 
+        message: isEditMode ? '문서가 수정되었습니다.' : '문서가 저장되었습니다.', 
+        type: 'success' 
+      });
       window.dispatchEvent(new Event('documentsupdated'));
     } else {
-      alert('저장 중 오류가 발생했습니다.');
+      setToast({ 
+        show: true, 
+        message: '저장 중 오류가 발생했습니다.', 
+        type: 'error' 
+      });
     }
   };
 
@@ -717,8 +734,25 @@ const handleSendFax = async (faxNumber) => {
       </div>
 
       <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
-        <button type="button" onClick={handleSave} className="save-btn">저장하기</button>
+        <button 
+          type="button" 
+          onClick={handleSave} 
+          className="save-btn"
+          ref={saveButtonRef}
+        >
+          저장하기
+        </button>
         <button type="button" onClick={exportToExcel} className="excel-btn">엑셀로 저장하기</button>
+        
+        {/* ✅ 토스트 알림 */}
+        <ToastNotification
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          anchorElement={saveButtonRef.current}
+          duration={2000}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
