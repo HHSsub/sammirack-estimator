@@ -29,7 +29,12 @@ export const generatePartId = (item) => {
     return 'unknown-part';
   }
   
-  const { rackType = '', name = '', specification = '' } = item;
+  let { rackType = '', name = '', specification = '', version = '' } = item;
+  
+  // ✅ 파렛트랙 전용: version이 "신형"이면 rackType 변경
+  if (rackType === '파렛트랙' && version === '신형') {
+    rackType = '파렛트랙신형';
+  }
   
   // 부품명 처리
   let cleanName = String(name)
@@ -66,7 +71,13 @@ export const generateInventoryPartId = (item) => {
     console.warn('generateInventoryPartId: item이 undefined입니다');
     return 'unknown-part-inv';
   }
-  const { rackType = '', name = '', specification = '', colorWeight = '' } = item;
+  let { rackType = '', name = '', specification = '', colorWeight = '', version = '' } = item;
+  
+  // ✅ 파렛트랙 전용: version이 "신형"이면 rackType 변경
+  if (rackType === '파렛트랙' && version === '신형') {
+    rackType = '파렛트랙신형';
+  }
+  
   // ✅ 하이랙 전용: colorWeight가 있으면 부품명에 색상 포함
   let cleanName = String(name)
     .replace(/[()]/g, '')

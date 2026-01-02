@@ -259,7 +259,7 @@ export default function OptionSelector() {
      selectedOptions.size && selectedOptions.height && 
      selectedOptions.level && selectedOptions.formType) ||
     (selectedType === '파렛트랙' && 
-     selectedOptions.weight && selectedOptions.size && 
+     selectedOptions.version && selectedOptions.weight && selectedOptions.size && 
      selectedOptions.height && selectedOptions.level && 
      selectedOptions.formType) ||
     (selectedType === '하이랙' && 
@@ -312,16 +312,18 @@ export default function OptionSelector() {
         )}
         {selectedType === '파렛트랙' && (
           <>
-            {renderOptionSelect('weight', '무게', true)}
-            {renderOptionSelect('size', '규격', !!selectedOptions.weight)}
+            {renderOptionSelect('version', '버전', true)}
+            {renderOptionSelect('weight', '무게', !!selectedOptions.version)}
+            {renderOptionSelect('size', '규격', !!selectedOptions.version && !!selectedOptions.weight)}
             {renderOptionSelect(
               'height',
               '높이',
-              !!selectedOptions.weight && !!selectedOptions.size
+              !!selectedOptions.version && !!selectedOptions.weight && !!selectedOptions.size
             )}
             {renderOptionSelect(
               'level',
               '단수',
+              !!selectedOptions.version &&
               !!selectedOptions.weight &&
               !!selectedOptions.size &&
               !!selectedOptions.height
@@ -331,6 +333,7 @@ export default function OptionSelector() {
               ? renderOptionSelect(
                 'formType',
                 '형식',
+                !!selectedOptions.version &&
                 !!selectedOptions.weight &&
                 !!selectedOptions.size &&
                 !!selectedOptions.height &&
@@ -342,6 +345,7 @@ export default function OptionSelector() {
                   <select
                     disabled={
                       !(
+                        selectedOptions.version &&
                         selectedOptions.weight &&
                         selectedOptions.size &&
                         selectedOptions.height &&

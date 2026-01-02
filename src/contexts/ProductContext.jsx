@@ -415,29 +415,34 @@ export const ProductProvider=({children})=>{
     if(!selectedType){ setAvailableOptions({}); return; }
     
     // ======================
-    // ✅ 파렛트랙만 weight → size → height → level → formType 순서로
+    // ✅ 파렛트랙만 version → weight → size → height → level → formType 순서로
     // ======================
     
     if (selectedType === "파렛트랙") {
       const bd = bomData["파렛트랙"] || {};
-      const next = { weight: [], size: [], height: [], level: [], formType: [] };
+      const next = { version: [], weight: [], size: [], height: [], level: [], formType: [] };
   
-      // 1️⃣ weight 리스트 구성
-      const weightKeys = Object.keys(bd || {}); // ['2t','3t']
+      // 1️⃣ version 리스트 구성
+      next.version = ["구형", "신형"];
+  
+      // 2️⃣ version 선택되면 weight 리스트 구성
+      const version = selectedOptions.version || "구형"; // 기존 데이터 호환: 없으면 "구형"
+      const versionBlock = bd[version] || {};
+      const weightKeys = Object.keys(versionBlock || {}); // ['2t','3t']
       next.weight = weightKeys;
   
-      // 2️⃣ weight 선택되면 size 리스트 구성
+      // 3️⃣ weight 선택되면 size 리스트 구성
       if (selectedOptions.weight) {
-        const weightBlock = bd[selectedOptions.weight] || {};
+        const weightBlock = versionBlock[selectedOptions.weight] || {};
         const sizesFromData = Object.keys(weightBlock || {});
         const extraSizes = EXTRA_OPTIONS["파렛트랙"]?.size || [];
         next.size = sortSizes([...sizesFromData, ...extraSizes]);
       }
   
-      // 3️⃣ size 선택되면 height 구성
+      // 4️⃣ size 선택되면 height 구성
       if (selectedOptions.weight && selectedOptions.size) {
         const heightsFromData = Object.keys(
-          bd[selectedOptions.weight]?.[selectedOptions.size] || {}
+          versionBlock[selectedOptions.weight]?.[selectedOptions.size] || {}
         );
         next.height = sortHeights([
           ...heightsFromData,
@@ -445,20 +450,20 @@ export const ProductProvider=({children})=>{
         ]);
       }
   
-      // 4️⃣ height 선택되면 level 구성
+      // 5️⃣ height 선택되면 level 구성
       if (selectedOptions.weight && selectedOptions.size && selectedOptions.height) {
         const levelsFromData = Object.keys(
-          bd[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height] || {}
+          versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height] || {}
         );
         next.level = sortLevels(levelsFromData.length ? levelsFromData : ["L1","L2","L3","L4","L5","L6"]);
       }
   
-      // 5️⃣ level 선택되면 formType 구성
+      // 6️⃣ level 선택되면 formType 구성
       if (
         selectedOptions.weight && selectedOptions.size &&
         selectedOptions.height && selectedOptions.level
       ) {
-        const fm = bd[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
+        const fm = versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
         next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
       }
   
@@ -762,6 +767,9 @@ const makeExtraOptionBOM = () => {
   const extraOptionsPrices = loadExtraOptionsPrices();
   const q = Number(quantity) || 1;
   
+  // ✅ 파렛트랙만 version 정보 추출
+  const version = selectedType === "파렛트랙" ? (selectedOptions.version || "구형") : undefined;
+  
   if (!extraOptionsSel || extraOptionsSel.length === 0) {
     return extraBOM;
   }
@@ -844,6 +852,7 @@ const makeExtraOptionBOM = () => {
               // BOM 항목의 inventoryPartId 생성
               const bomInventoryPartId = generateInventoryPartId({
                 rackType: bomRackType,
+                version: bomRackType === "파렛트랙" ? version : undefined, // ✅ 파렛트랙만 version 정보 포함
                 name: bomName,
                 specification: bomSpec,
                 colorWeight: bomColorWeight
@@ -852,6 +861,7 @@ const makeExtraOptionBOM = () => {
               // 단가관리용 partId 생성
               const bomPartId = generatePartId({
                 rackType: bomRackType,
+                version: bomRackType === "파렛트랙" ? version : undefined, // ✅ 파렛트랙만 version 정보 포함
                 name: bomName,
                 specification: bomSpec
               });
@@ -869,6 +879,7 @@ const makeExtraOptionBOM = () => {
               
               extraBOM.push({
                 rackType: bomRackType,
+                version: bomRackType === "파렛트랙" ? version : undefined, // ✅ 파렛트랙만 version 정보 포함
                 size: selectedOptions.size || "",
                 name: bomName,
                 partId: bomPartId, // 단가관리용
@@ -1035,6 +1046,7 @@ const makeExtraOptionBOM = () => {
                   // 단가관리용 partId (색상 제거) - 추가상품4와 동일
                   const directPartId = generatePartId({
                     rackType: selectedType,
+                    version: version, // ✅ 파렛트랙만 version 정보 포함
                     name: '선반',
                     specification: finalSpecification
                   });
@@ -1050,6 +1062,7 @@ const makeExtraOptionBOM = () => {
                   
                   extraBOM.push({
                     rackType: selectedType,
+                    version: version, // ✅ 파렛트랙만 version 정보 포함
                     size: selectedOptions.size || "",
                     name: opt.name,
                     partId: directPartId, // 단가관리용 (추가상품4와 동일)
@@ -1076,6 +1089,7 @@ const makeExtraOptionBOM = () => {
                     // 단가관리용 partId (색상 제거) - 추가상품4와 동일
                     const directPartId = generatePartId({
                       rackType: selectedType,
+                      version: version, // ✅ 파렛트랙만 version 정보 포함
                       name: '기둥',
                       specification: finalSpecification
                     });
@@ -1091,6 +1105,7 @@ const makeExtraOptionBOM = () => {
                     
                     extraBOM.push({
                       rackType: selectedType,
+                      version: version, // ✅ 파렛트랙만 version 정보 포함
                       size: selectedOptions.size || "",
                       name: opt.name,
                       partId: directPartId, // 단가관리용 (추가상품4와 동일)
@@ -1194,7 +1209,8 @@ const makeExtraOptionBOM = () => {
                   }
                   
                   partIdForPrice = generatePartId({ 
-                    rackType: selectedType, 
+                    rackType: selectedType,
+                    version: version, // ✅ 파렛트랙만 version 정보 포함
                     name: partNameForPrice, 
                     specification: finalSpecification || '' 
                   });
@@ -1234,6 +1250,7 @@ const makeExtraOptionBOM = () => {
               
               extraBOM.push({
                 rackType: selectedType,
+                version: version, // ✅ 파렛트랙만 version 정보 포함
                 size: selectedOptions.size || "",
                 name: opt.name,
                 partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
@@ -1297,7 +1314,8 @@ const makeExtraOptionBOM = () => {
                   
                   console.log(`  ⚠️ generatePartId 호출: name="${partNameForPrice}", spec="${finalSpecification}"`);
                   partIdForPrice = generatePartId({ 
-                    rackType: selectedType, 
+                    rackType: selectedType,
+                    version: version, // ✅ 파렛트랙만 version 정보 포함
                     name: partNameForPrice, 
                     specification: finalSpecification || '' 
                   });
@@ -1338,6 +1356,7 @@ const makeExtraOptionBOM = () => {
             
             extraBOM.push({
               rackType: selectedType,
+              version: version, // ✅ 파렛트랙만 version 정보 포함
               size: selectedOptions.size || "",
               name: opt.name,
               partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
@@ -1445,7 +1464,8 @@ const makeExtraOptionBOM = () => {
             
             // 가격용 ID 생성 (색상 제거)
             const partIdForPrice = generatePartId({ 
-              rackType: selectedType, 
+              rackType: selectedType,
+              version: version, // ✅ 파렛트랙만 version 정보 포함
               name: baseName, 
               specification: correctSpecification || finalSpecification || '' 
             });
@@ -1463,6 +1483,7 @@ const makeExtraOptionBOM = () => {
             
             const originalInventoryPartId = generateInventoryPartId({
               rackType: selectedType,
+              version: version, // ✅ 파렛트랙만 version 정보 포함
               name: finalBaseName, // ⚠️ 중요: 기본 부품명만 사용 ("기둥", "선반", "로드빔")
               specification: correctSpecification || finalSpecification || '',
               colorWeight: finalColorWeight || '' // ⚠️ 중요: 색상 정보 포함 (하이랙만)
@@ -1484,6 +1505,7 @@ const makeExtraOptionBOM = () => {
             
             extraBOM.push({
               rackType: selectedType,
+              version: version, // ✅ 파렛트랙만 version 정보 포함
               size: selectedOptions.size || "",
               name: opt.name,
               partId: partIdForPrice, // 단가관리용
@@ -1509,11 +1531,15 @@ const makeExtraOptionBOM = () => {
   const appendCommonHardwareIfMissing = (base, qty) => {
     const names = new Set(base.map(b => normalizePartName(b.name)));
     
+    // ✅ 파렛트랙만 version 정보 추출
+    const version = selectedType === "파렛트랙" ? (selectedOptions.version || "구형") : undefined;
+    
     const pushIfAbsent = (name, quantity, specification = '') => {
       const normalized = normalizePartName(name);
       if (!names.has(normalized)) {
         base.push({
           rackType: selectedType,
+          version: version, // ✅ 파렛트랙만 version 정보 포함
           size: selectedOptions.size || "",
           name,
           specification: specification, // ✅ 여기가 핵심!
@@ -1525,7 +1551,7 @@ const makeExtraOptionBOM = () => {
         names.add(normalized);
         
         // ✅ 디버깅 로그 추가
-        console.log(`➕ 하드웨어 추가: ${name}, spec="${specification}", partId=${generateInventoryPartId({rackType: selectedType, name, specification})}`);
+        console.log(`➕ 하드웨어 추가: ${name}, spec="${specification}", partId=${generateInventoryPartId({rackType: selectedType, version: version, name, specification})}`);
       }
     };
     
@@ -1575,12 +1601,16 @@ const makeExtraOptionBOM = () => {
       const tieSpec = d != null ? String(d) : "";
       const loadSpec = w != null ? String(w) : "";
       
+      // ✅ 파렛트랙만 version 정보 추출
+      const version = selectedType === "파렛트랙" ? (selectedOptions.version || "구형") : undefined;
+      
       const base = [
-        { rackType: selectedType, size: sz, name: "기둥", specification: `${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, version: version, size: sz, name: "기둥", specification: `${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, version: version, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
         ...(selectedType === "파렛트랙 철판형" ? [] : [
                   { 
-                    rackType: selectedType, 
+                    rackType: selectedType,
+                    version: version, // ✅ 파렛트랙만 version 정보 포함
                     size: sz, 
                     name: "타이빔", 
                     specification: tieSpec, 
@@ -1593,14 +1623,20 @@ const makeExtraOptionBOM = () => {
                     totalPrice: 0 
                   },
                 ]),
-        { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * 2 * qty, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, version: version, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * 2 * qty, unitPrice: 0, totalPrice: 0 },
       ];
       
       if (selectedType === "파렛트랙 철판형") {
         const shelfPerLevel = calcPalletIronShelfPerLevel(sz);
         base.push({
-          rackType: selectedType, size: sz, name: "선반",
-          specification: `사이즈 ${sz}`, quantity: shelfPerLevel * lvl * qty, unitPrice: 0, totalPrice: 0
+          rackType: selectedType,
+          version: undefined, // 파렛트랙 철판형은 version 없음
+          size: sz,
+          name: "선반",
+          specification: `사이즈 ${sz}`,
+          quantity: shelfPerLevel * lvl * qty,
+          unitPrice: 0,
+          totalPrice: 0
         });
       }
       
@@ -1707,7 +1743,11 @@ const makeExtraOptionBOM = () => {
     // 파렛트랙 / 파렛트랙 철판형
     // ========================================
     if(selectedType==="파렛트랙"||selectedType==="파렛트랙 철판형"){
-      const rec=bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
+      // ✅ 파렛트랙만 version 처리 (파렛트랙 철판형은 version 없음)
+      const version = selectedType === "파렛트랙" ? (selectedOptions.version || "구형") : undefined;
+      const rec = selectedType === "파렛트랙" 
+        ? bomData[selectedType]?.[version]?.[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType]
+        : bomData[selectedType]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]?.[selectedOptions.formType];
       if(rec?.components){
         const q=Number(quantity)||1;
         const sz=selectedOptions.size||"";
@@ -1742,7 +1782,12 @@ const makeExtraOptionBOM = () => {
                       } else spec=c.specification??"";
                       
                       return {
-                        rackType:selectedType,size:sz,name:nm,specification:spec,note:c.note??"",
+                        rackType:selectedType,
+                        version: version, // ✅ 파렛트랙만 version 정보 포함
+                        size:sz,
+                        name:nm,
+                        specification:spec,
+                        note:c.note??"",
                         quantity:calculatedQuantity,  // ✅ 재계산된 수량 사용
                         unitPrice:Number(c.unit_price)||0,
                         totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*calculatedQuantity
@@ -1752,16 +1797,28 @@ const makeExtraOptionBOM = () => {
           if(!base.some(p=>p.name==="선반")){
             const shelfPerLevel=calcPalletIronShelfPerLevel(sz);
             base.push({
-              rackType:selectedType,size:sz,name:"선반",
-              specification:`사이즈 ${sz}`,quantity:shelfPerLevel*lvl*q,
-              unitPrice:0,totalPrice:0
+              rackType:selectedType,
+              version: undefined, // 파렛트랙 철판형은 version 없음
+              size:sz,
+              name:"선반",
+              specification:`사이즈 ${sz}`,
+              quantity:shelfPerLevel*lvl*q,
+              unitPrice:0,
+              totalPrice:0
             });
           }
         }
         if(!base.some(b=>b.name==="안전핀")){
           base.push({
-            rackType:selectedType,size:sz,name:"안전핀",specification:"",
-            note:"",quantity:2*lvl*2*q,unitPrice:0,totalPrice:0
+            rackType:selectedType,
+            version: version, // ✅ 파렛트랙만 version 정보 포함
+            size:sz,
+            name:"안전핀",
+            specification:"",
+            note:"",
+            quantity:2*lvl*2*q,
+            unitPrice:0,
+            totalPrice:0
           });
         }
         appendCommonHardwareIfMissing(base,q);
@@ -1881,6 +1938,7 @@ const makeExtraOptionBOM = () => {
         bom:calculateCurrentBOM(),
         displayName:[
           selectedType,
+          selectedType === "파렛트랙" ? selectedOptions.version || "구형" : "", // ✅ 파렛트랙만 version 포함
           selectedOptions.formType,
           selectedOptions.size,
           selectedOptions.height,
