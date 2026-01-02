@@ -65,22 +65,22 @@
 .fax-capture .order-table td:nth-child(1) { width: 5% !important; }
 
 .fax-capture .order-table th:nth-child(2),
-.fax-capture .order-table td:nth-child(2) { width: 41.5% !important; }
+.fax-capture .order-table td:nth-child(2) { width: 50.5% !important; }
 
 .fax-capture .order-table th:nth-child(3),
-.fax-capture .order-table td:nth-child(3) { width: 11% !important; }
+.fax-capture .order-table td:nth-child(3) { width: 6% !important; }
 
 .fax-capture .order-table th:nth-child(4),
 .fax-capture .order-table td:nth-child(4) { width: 5.5% !important; }
 
 .fax-capture .order-table th:nth-child(5),
-.fax-capture .order-table td:nth-child(5) { width: 12% !important; }
+.fax-capture .order-table td:nth-child(5) { width: 10% !important; }
 
 .fax-capture .order-table th:nth-child(6),
 .fax-capture .order-table td:nth-child(6) { width: 11% !important; }
 
 .fax-capture .order-table th:nth-child(7),
-.fax-capture .order-table td:nth-child(7) { width: 11% !important; }
+.fax-capture .order-table td:nth-child(7) { width: 9% !important; }
 
 .fax-capture .order-table th:nth-child(8),
 .fax-capture .order-table td:nth-child(8) { width: 3% !important; }
@@ -659,12 +659,12 @@ button.add-material-btn {
   /* ==== 품목 목록 프린트 비율 ==== */
   .order-table { table-layout: fixed !important; width: 100% !important; }
   .order-table th:nth-child(1), .order-table td:nth-child(1) { width: 5% !important; }
-  .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 41.5% !important; }
-  .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 11% !important; }
+  .order-table th:nth-child(2), .order-table td:nth-child(2) { width: 50.5% !important; }
+  .order-table th:nth-child(3), .order-table td:nth-child(3) { width: 6% !important; }
   .order-table th:nth-child(4), .order-table td:nth-child(4) { width: 5.5% !important; min-width: 12px !important; white-space: nowrap !important; }
-  .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 12% !important; min-width: 70px !important; }
+  .order-table th:nth-child(5), .order-table td:nth-child(5) { width: 10% !important; min-width: 70px !important; }
   .order-table th:nth-child(6), .order-table td:nth-child(6) { width: 11% !important; min-width: 60px !important; }
-  .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 11% !important; min-width: 60px !important; }
+  .order-table th:nth-child(7), .order-table td:nth-child(7) { width: 9% !important; min-width: 60px !important; }
   .order-table th:nth-child(8), .order-table td:nth-child(8) { width: 3% !important; min-width: 28px !important; }
 
   .order-table th:nth-child(5),
