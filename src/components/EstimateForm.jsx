@@ -666,7 +666,7 @@ const EstimateForm = () => {
         <textarea
           value={formData.notes}
           onChange={e=>updateFormData('notes', e.target.value)}
-          placeholder="기타 사항을 입력하세요"
+          placeholder="기타 사항"
           rows={4}
         />
       </div>
