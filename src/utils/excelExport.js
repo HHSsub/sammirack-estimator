@@ -65,15 +65,15 @@ const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFF
 // 컬럼 너비(요청 반영: E,F 더 넓게)
 const columnWidths = [
   { width: 5 },  // A: NO
-  { width: 52 }, // B: 품명/부품명 (20 → 50) ✅ 수정
-  { width: 8 },  // C: 단위 (11 → 8) ✅ 수정
-  { width: 9 },  // D: 거래번호 라벨 (유지)
+  { width: 60 }, // B: 품명/부품명 (20 → 50) ✅ 수정
+  { width: 6 },  // C: 단위 (11 → 6) ✅ 수정
+  { width: 8 },  // D: 거래번호 라벨 (9->8) ✅ 수정
   { width: 12 }, // E: 거래번호 값 (유지)
   { width: 6 },  // F: 수량 (8 → 6) ✅ 수정
   { width: 17 }, // G: 단가 (18 → 17) ✅ 수정
   { width: 17 }, // H: 공급가/금액 (18 → 17) ✅ 수정
   { width: 10 }, // I: 비고 (15 → 10) ✅ 수정
-  { width: 10 }, // J: 비고 확장 (15 → 10) ✅ 수정
+  { width: 5 }, // J: 비고 확장 (15 → 5) ✅ 수정
 ];
 
 // 보더/정렬/폰트 일괄 적용
