@@ -478,7 +478,7 @@ useEffect(() => {
         loadAdminPricesData()
       ]);
       
-      setSyncStatus('✅ 전세계 동기화 완료');
+      setSyncStatus('✅ 동기화 완료');
       setLastSyncTime(new Date());
       console.log('✅ 전체 데이터 로드 완료');
     } catch (error) {
@@ -543,7 +543,7 @@ useEffect(() => {
           [partId]: newQty
         }));
         
-        setSyncStatus('✅ 전세계 동기화됨');
+        setSyncStatus('✅ 동기화됨');
         setLastSyncTime(new Date());
       } else {
         setSyncStatus('❌ 저장 실패');
