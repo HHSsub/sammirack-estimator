@@ -92,7 +92,7 @@
 .fax-capture .order-table td:nth-child(5),
 .fax-capture .order-table td:nth-child(6),
 .fax-capture .order-table td:nth-child(7) {
-  text-align: right !important;
+  text-align: left !important;
   font-size: 19px !important;
 }
 
@@ -302,7 +302,7 @@ img[alt="도장"] {
   font-size: 13px;
   box-sizing: border-box;
 }
-.order-table input[type=number] { text-align: right; }
+.order-table input[type=number] { text-align: left; }
 
 /* 작성 화면 BOM 비율 (작성시 그대로) */
 .bom-table { table-layout: fixed; width: 100%; }
@@ -324,7 +324,7 @@ img[alt="도장"] {
   font-size: 13px;
   box-sizing: border-box;
 }
-.bom-table input[type=number] { text-align: right; }
+.bom-table input[type=number] { text-align: left; }
 
 .remove-btn {
   background: #dc3545;
@@ -382,7 +382,7 @@ img[alt="도장"] {
   background: #f8f9fa;
 }
 .total-table td:last-child {
-  text-align: right;
+  text-align: left;
   font-weight: bold;
   padding-right: 15px;
 }
@@ -675,7 +675,7 @@ button.add-material-btn {
   .order-table td:nth-child(7) {
     white-space: nowrap !important;
     font-feature-settings: 'tnum' 1;
-    text-align: right !important;
+    text-align: left !important;
     padding: 2px 6px !important;
     letter-spacing: 0 !important;
   }
@@ -716,7 +716,7 @@ button.add-material-btn {
   .bom-table td:nth-child(7) {
     white-space: nowrap !important;
     font-feature-settings: 'tnum' 1;
-    text-align: right !important;
+    text-align: left !important;
     padding: 2px 6px !important;
   }
   
