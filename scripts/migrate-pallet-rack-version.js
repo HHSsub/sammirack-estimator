@@ -1,47 +1,77 @@
 // 파렛트랙 version 마이그레이션 스크립트
-// 구형 파렛트랙의 관리자 단가와 재고 정보를 신형으로 복사
+// 구형 파렛트랙 데이터를 신형으로 복사
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-console.log('📦 파렛트랙 version 마이그레이션 시작...');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// 1. 관리자 단가 정보 복사 (localStorage)
-console.log('\n1. 관리자 단가 정보 마이그레이션');
-console.log('   ⚠️  이 스크립트는 브라우저에서 실행되어야 합니다.');
-console.log('   브라우저 콘솔에서 다음 코드를 실행하세요:');
-console.log(`
-// 관리자 단가 마이그레이션
-const stored = localStorage.getItem('admin_edit_prices') || '{}';
-const priceData = JSON.parse(stored);
-const newPriceData = { ...priceData };
+const bomDataPath = path.join(__dirname, '..', 'public', 'bom_data_weight_added.json');
+const backupPath = path.join(__dirname, '..', 'public', 'bom_data_weight_added.json.backup');
 
-// 구형 partId를 신형 partId로 변환하여 복사
-Object.keys(priceData).forEach(oldPartId => {
-  if (oldPartId.startsWith('파렛트랙-')) {
-    const newPartId = oldPartId.replace('파렛트랙-', '파렛트랙신형-');
-    if (!newPriceData[newPartId]) {
-      newPriceData[newPartId] = { ...priceData[oldPartId] };
-      console.log(\`✅ 복사: \${oldPartId} → \${newPartId}\`);
+console.log('📦 파렛트랙 신형 데이터 채우기 시작...');
+
+// 백업 생성
+console.log('1. 백업 생성 중...');
+if (fs.existsSync(bomDataPath)) {
+  fs.copyFileSync(bomDataPath, backupPath);
+  console.log(`✅ 백업 완료: ${backupPath}`);
+} else {
+  console.log('⚠️ 원본 파일을 찾을 수 없습니다.');
+  process.exit(1);
+}
+
+// 데이터 로드
+console.log('2. 데이터 로드 중...');
+const bomData = JSON.parse(fs.readFileSync(bomDataPath, 'utf8'));
+
+if (!bomData['파렛트랙']) {
+  console.log('⚠️ 파렛트랙 데이터를 찾을 수 없습니다.');
+  process.exit(1);
+}
+
+const palletRackData = bomData['파렛트랙'];
+
+if (!palletRackData['구형']) {
+  console.log('⚠️ 구형 데이터를 찾을 수 없습니다.');
+  process.exit(1);
+}
+
+// 구형 데이터를 깊은 복사하여 신형 데이터로 설정
+console.log('3. 구형 데이터를 신형으로 복사 중...');
+
+// 깊은 복사 함수
+function deepCopy(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  if (obj instanceof Array) {
+    return obj.map(item => deepCopy(item));
+  }
+  
+  const copy = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      copy[key] = deepCopy(obj[key]);
     }
   }
-});
+  return copy;
+}
 
-localStorage.setItem('admin_edit_prices', JSON.stringify(newPriceData));
-console.log('✅ 관리자 단가 마이그레이션 완료');
-`);
+// 구형 데이터를 신형으로 복사
+palletRackData['신형'] = deepCopy(palletRackData['구형']);
 
-// 2. 재고 정보 복사 (Gist)
-console.log('\n2. 재고 정보 마이그레이션');
-console.log('   ⚠️  재고 정보는 Gist API를 통해 업데이트해야 합니다.');
-console.log('   InventoryService.js의 updateInventory 함수를 사용하거나');
-console.log('   Gist에서 직접 inventory.json을 수정하세요.');
-console.log(`
-// 재고 정보 마이그레이션 (Gist API 사용)
-// 구형 partId를 신형 partId로 변환하여 복사
-// 예: "파렛트랙-기둥-h4500" → "파렛트랙신형-기둥-h4500"
-`);
+console.log('✅ 신형 데이터 복사 완료');
+console.log(`   - 구형: ${Object.keys(palletRackData['구형']).length}개 weight 레벨`);
+console.log(`   - 신형: ${Object.keys(palletRackData['신형']).length}개 weight 레벨`);
 
-console.log('\n✅ 마이그레이션 가이드 완료');
-console.log('   실제 마이그레이션은 브라우저 콘솔과 Gist API를 통해 수행하세요.');
+// 변경된 데이터 저장
+console.log('4. 변경된 데이터 저장 중...');
+fs.writeFileSync(bomDataPath, JSON.stringify(bomData, null, 2), 'utf8');
 
+console.log('\n✅ 파렛트랙 신형 데이터 채우기 완료!');
+console.log(`   파일: ${bomDataPath}`);
+console.log(`   백업: ${backupPath}`);
