@@ -652,7 +652,7 @@ useEffect(() => {
     }
 
     setFilteredMaterials(result);
-  }, [allMaterials, searchTerm, selectedRackType, showOnlyInUse, sortConfig, inventory]);
+  }, [allMaterials, searchTerm, selectedRackType, showOnlyInUse, showOnlyOutOfStock, sortConfig, inventory]);
 
   // 정렬 처리
   const handleSort = (field) => {
@@ -985,7 +985,10 @@ useEffect(() => {
             <input
               type="checkbox"
               checked={showOnlyInUse}
-              onChange={(e) => setShowOnlyInUse(e.target.checked)}
+              onChange={(e) => {
+                setShowOnlyInUse(e.target.checked);
+                if (e.target.checked) setShowOnlyOutOfStock(false);
+              }}
             />
             재고가 있는 부품만 보기
           </label>
