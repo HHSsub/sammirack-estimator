@@ -56,21 +56,21 @@ export const convertDOMToPDFBase64 = async (element) => {
       /* -------------------------------------------------
          3. 컨테이너 공통 (문서별 공통 처리)
          ------------------------------------------------- */
-      .purchase-order-form-container,
-      .estimate-form-container,
-      .delivery-note-form-container {
-        transform: scale(0.90) !important;
-        transform-origin: top center !important;
-        max-width: 100% !important;
-        width: 100% !important;
-        padding: 8mm 8mm 6mm !important;
-        margin: 0 !important;
-        background: #fff !important;
-        min-height: auto !important;
-        box-sizing: border-box;
-        font-size: 12px !important;
-        line-height: 1.35 !important;
-      }
+        .purchase-order-form-container,
+        .estimate-form-container,
+        .delivery-note-form-container {
+          transform: scale(0.88) !important;      /* ✅ 0.90 → 0.88 */
+          transform-origin: top center !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          padding: 6mm 8mm 4mm !important;        /* ✅ 8mm 8mm 6mm → 6mm 8mm 4mm */
+          margin: 0 !important;
+          background: #fff !important;
+          min-height: auto !important;
+          box-sizing: border-box;
+          font-size: 12px !important;
+          line-height: 1.35 !important;
+        }
 
       /* -------------------------------------------------
          4. 제목
@@ -149,6 +149,7 @@ export const convertDOMToPDFBase64 = async (element) => {
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
+        font-size: 18px !important;  /* ✅ 추가 */
       }
       
       textarea {
@@ -159,6 +160,13 @@ export const convertDOMToPDFBase64 = async (element) => {
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
+        font-size: 18px !important;  /* ✅ 추가 */
+      }
+
+      /* ✅ footer(회사명) 페이지 넘김 방지 */
+      .form-company {
+        page-break-inside: avoid !important;
+        page-break-before: avoid !important;
       }
 
       /* -------------------------------------------------
