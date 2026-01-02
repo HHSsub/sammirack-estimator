@@ -141,14 +141,24 @@ export const convertDOMToPDFBase64 = async (element) => {
       /* -------------------------------------------------
          10. input / textarea 공통
          ------------------------------------------------- */
-      input,
-      textarea {
+      input {
+        height: 40px !important;        /* ✅ */
+        padding: 8px 6px !important;
+        line-height: 1.6 !important;
         border: none !important;
         background: transparent !important;
         box-shadow: none !important;
         outline: none !important;
-        height: auto !important;
-        min-height: 26px !important;
+      }
+      
+      textarea {
+        min-height: 70px !important;    /* ✅ */
+        padding: 8px 6px !important;
+        line-height: 1.6 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: none !important;
       }
 
       /* -------------------------------------------------
