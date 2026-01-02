@@ -11,6 +11,7 @@ import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils';
 import FaxPreviewModal from './FaxPreviewModal';
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
+import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 
 // ✅ PROVIDER는 고정 (도장 이미지 포함)
 const PROVIDER = {
@@ -39,6 +40,13 @@ const EstimateForm = () => {
   // ✅ 토스트 알림 state 추가
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const saveButtonRef = useRef(null);
+  
+  // ✅ 확인 다이얼로그 state 추가
+  const [confirmDialog, setConfirmDialog] = useState({ 
+    show: false, 
+    message: '', 
+    onConfirm: null 
+  });
 
   const documentNumberInputRef = useRef(null);
   const cartInitializedRef = useRef(false);
@@ -303,19 +311,26 @@ const EstimateForm = () => {
     } else {
       existingDoc = findDocumentByNumber(formData.documentNumber, 'estimate');
       if (existingDoc) {
-        const confirmOverwrite = window.confirm(
-          `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
-        );
-        if (confirmOverwrite) {
-          itemId = existingDoc.id;
-        } else {
-          return;
-        }
+        // 동일 거래번호 발견 -> 덮어쓰기 확인 다이얼로그 표시
+        setConfirmDialog({
+          show: true,
+          message: `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n기존 문서를 덮어쓰시겠습니까?`,
+          onConfirm: () => {
+            proceedWithSave(existingDoc.id, existingDoc);
+          }
+        });
+        return; // 확인 다이얼로그에서 처리
       } else {
         itemId = Date.now();
       }
     }
     
+    // 저장 로직 실행
+    await proceedWithSave(itemId, existingDoc);
+  };
+  
+  // ✅ 저장 로직 분리
+  const proceedWithSave = async (itemId, existingDoc) => {
     const storageKey = `estimate_${itemId}`;
     
     // ✅ 현재 문서 양식 설정 (도장 제외)
@@ -710,6 +725,20 @@ const EstimateForm = () => {
         anchorElement={saveButtonRef.current}
         duration={2000}
         onClose={() => setToast({ ...toast, show: false })}
+      />
+      
+      {/* ✅ 확인 다이얼로그 */}
+      <ConfirmDialog
+        show={confirmDialog.show}
+        message={confirmDialog.message}
+        anchorElement={saveButtonRef.current}
+        onConfirm={() => {
+          if (confirmDialog.onConfirm) {
+            confirmDialog.onConfirm();
+          }
+          setConfirmDialog({ ...confirmDialog, show: false });
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, show: false })}
       />
 
       <div className="form-company">({PROVIDER.companyName})</div>

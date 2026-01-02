@@ -10,6 +10,7 @@ import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
+import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -41,6 +42,13 @@ const DeliveryNoteForm = () => {
   // ✅ 토스트 알림 state 추가
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const saveButtonRef = useRef(null);
+  
+  // ✅ 확인 다이얼로그 state 추가
+  const [confirmDialog, setConfirmDialog] = useState({ 
+    show: false, 
+    message: '', 
+    onConfirm: null 
+  });
 
   const cartData = location.state || {};
   const { 
@@ -336,18 +344,26 @@ const handleSave = async () => {
     } else {
       existingDoc = findDocumentByNumber(formData.documentNumber, 'delivery');
       if (existingDoc) {
-        const confirmOverwrite = window.confirm(
-          `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n덮어쓰시겠습니까?`
-        );
-        if (confirmOverwrite) {
-          itemId = existingDoc.id;
-        } else {
-          return;
-        }
+        // 동일 거래번호 발견 -> 덮어쓰기 확인 다이얼로그 표시
+        setConfirmDialog({
+          show: true,
+          message: `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n기존 문서를 덮어쓰시겠습니까?`,
+          onConfirm: () => {
+            proceedWithSave(existingDoc.id, existingDoc);
+          }
+        });
+        return; // 확인 다이얼로그에서 처리
       } else {
         itemId = Date.now();
       }
     }
+    
+    // 저장 로직 실행
+    await proceedWithSave(itemId, existingDoc);
+  };
+  
+  // ✅ 저장 로직 분리
+  const proceedWithSave = async (itemId, existingDoc) => {
     const storageKey=`delivery_${itemId}`;
     
     // ✅ cart에서 extraOptions 추출 (문서 저장 시 포함)
@@ -752,6 +768,20 @@ const handleSendFax = async (faxNumber) => {
           anchorElement={saveButtonRef.current}
           duration={2000}
           onClose={() => setToast({ ...toast, show: false })}
+        />
+        
+        {/* ✅ 확인 다이얼로그 */}
+        <ConfirmDialog
+          show={confirmDialog.show}
+          message={confirmDialog.message}
+          anchorElement={saveButtonRef.current}
+          onConfirm={() => {
+            if (confirmDialog.onConfirm) {
+              confirmDialog.onConfirm();
+            }
+            setConfirmDialog({ ...confirmDialog, show: false });
+          }}
+          onCancel={() => setConfirmDialog({ ...confirmDialog, show: false })}
         />
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
