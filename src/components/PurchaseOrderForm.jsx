@@ -1005,7 +1005,7 @@ const checkInventoryAvailability = async (cartItems) => {
                   type="text"
                   value={formData.companyName}
                   onChange={e=>updateFormData('companyName', e.target.value)}
-                  placeholder="상호명 입력"
+                  placeholder="" /* 상호명 입력 placeholder 제거 */
                 />
               </td>
               <td className="label">대표자</td>
