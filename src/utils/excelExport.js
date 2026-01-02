@@ -412,7 +412,8 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   // 원자재 헤더 A25:J25
   // 원자재 헤더 A25:J25 (단가/금액 제거, 부품명 확대)
   ws.getCell('A25').value = 'NO';
-  ws.mergeCells('B25:E25'); ws.getCell('B25').value = '부품명';
+  ws.mergeCells('B25:D25'); ws.getCell('B25').value = '부품명';
+  ws.getCell('E25').value = '규격';
   ws.getCell('F25').value = '수량';
   ws.mergeCells('G25:J25'); ws.getCell('G25').value = '비고';
 
@@ -429,7 +430,8 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     const r = 26 + i;
     const m = materials[i] || {};
     ws.getCell(`A${r}`).value = i + 1;
-    ws.mergeCells(`B${r}:E${r}`);
+    ws.mergeCells(`B${r}:D${r}`);
+    ws.getCell(`E${r}`).value = m.specification ?? '';
     ws.getCell(`B${r}`).value = m.name || '';
     ws.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' }; // ✅ 추가
     ws.getCell(`F${r}`).value = m.quantity ?? '';
