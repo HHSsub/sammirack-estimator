@@ -12,107 +12,57 @@
 }
 
 /* =====================================================
-   ✅ FAX CAPTURE = @media print 완전 동일
+   ✅ FAX CAPTURE - EstimateForm 전용
    ===================================================== */
 
-/* ✅ 인쇄와 동일한 기본 설정 */
+/* ✅ 컨테이너 */
 .estimate-form-container.fax-capture {
+  transform: scale(0.90) !important;
+  transform-origin: top left !important;
   max-width: 100% !important;
   width: 100% !important;
   padding: 8mm 8mm 6mm !important;
-  margin: 0 !important;
   background: #fff !important;
-  min-height: auto !important;
-  box-sizing: border-box;
   font-size: 20px !important;
-  line-height: 1.5 !important;
-  transform: scale(0.90) !important;
-  transform-origin: top left !important;
 }
 
-/* ✅ 도장 이미지 */
-.fax-capture .rep-cell {
-  position: relative !important;
-  overflow: visible !important;
-}
-
-.fax-capture .stamp-inline {
-  position: absolute !important;
-  top: -15px !important;
-  right: -30px !important;
-  width: 80px !important;
-  height: 80px !important;
-  z-index: 999 !important;
-  opacity: 0.8 !important;
-}
-
-/* ✅ 헤더 */
-.fax-capture .form-header h1 {
-  font-size: 24px !important;
-  margin-bottom: 8px !important;
-}
-
-/* ✅ 테이블 기본 */
-.fax-capture .form-table {
-  font-size: 18px !important;
-  margin-bottom: 10px !important;
-}
-
-.fax-capture .form-table .label {
-  font-weight: 700 !important;
-  font-size: 18px !important;
-}
-
-.fax-capture .form-table th,
-.fax-capture .form-table td {
-  padding: 5px 4px !important;
-  line-height: 1.3 !important;
+/* ✅ 모든 테이블 셀 - 최소 설정 */
+.fax-capture th,
+.fax-capture td {
+  padding: 8px 6px !important;
+  line-height: 2.0 !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: keep-all !important;
 }
 
 /* ✅ input, textarea */
 .fax-capture input,
 .fax-capture textarea {
+  padding: 6px 5px !important;
+  line-height: 2.0 !important;
+  font-size: 18px !important;
   border: none !important;
   background: transparent !important;
-  box-shadow: none !important;
-  outline: none !important;
-  font-size: 18px !important;
-  padding: 3px 3px !important;
+  box-sizing: border-box !important;
 }
 
-/* ✅ 합계 테이블 */
-.fax-capture .total-table {
-  width: 240px !important;
-  margin-bottom: 8px !important;
-  page-break-inside: avoid !important;
-}
-
-/* ✅ 회사명 */
-.fax-capture .form-company {
-  margin-top: 20px !important;
-  padding-top: 10px !important;
-  font-size: 14px !important;
-}
-
-/* ✅ 품목 테이블 */
-.fax-capture .quote-table {
-  table-layout: fixed !important;
-  width: 100% !important;
-  page-break-inside: auto !important;
-}
-
+/* ✅ 견적서 품목 테이블 */
 .fax-capture .quote-table th,
 .fax-capture .quote-table td {
   font-size: 21px !important;
-  padding: 6px 5px !important;
-  line-height: 1.5 !important;
+  line-height: 2.0 !important;
+  padding: 8px 6px !important;
 }
 
-.fax-capture .quote-table th {
-  font-weight: 700 !important;
+/* ✅ 견적서 품목 테이블 컬럼 비율 */
+.fax-capture .quote-table {
+  table-layout: fixed !important;
+  width: 100% !important;
 }
 
-/* ✅ 품목 테이블 컬럼 비율 */
 .fax-capture .quote-table th:nth-child(1),
 .fax-capture .quote-table td:nth-child(1) { width: 5% !important; }
 
@@ -123,19 +73,19 @@
 .fax-capture .quote-table td:nth-child(3) { width: 13% !important; }
 
 .fax-capture .quote-table th:nth-child(4),
-.fax-capture .quote-table td:nth-child(4) { width: 4.5% !important; min-width: 12px !important; white-space: nowrap !important; }
+.fax-capture .quote-table td:nth-child(4) { width: 4.5% !important; }
 
 .fax-capture .quote-table th:nth-child(5),
-.fax-capture .quote-table td:nth-child(5) { width: 13% !important; min-width: 70px !important; }
+.fax-capture .quote-table td:nth-child(5) { width: 13% !important; }
 
 .fax-capture .quote-table th:nth-child(6),
-.fax-capture .quote-table td:nth-child(6) { width: 10.5% !important; min-width: 60px !important; }
+.fax-capture .quote-table td:nth-child(6) { width: 10.5% !important; }
 
 .fax-capture .quote-table th:nth-child(7),
-.fax-capture .quote-table td:nth-child(7) { width: 10.5% !important; min-width: 60px !important; }
+.fax-capture .quote-table td:nth-child(7) { width: 10.5% !important; }
 
 .fax-capture .quote-table th:nth-child(8),
-.fax-capture .quote-table td:nth-child(8) { width: 3% !important; min-width: 28px !important; }
+.fax-capture .quote-table td:nth-child(8) { width: 3% !important; }
 
 /* ✅ 숫자 컬럼 정렬 */
 .fax-capture .quote-table th:nth-child(5),
@@ -144,29 +94,58 @@
 .fax-capture .quote-table td:nth-child(5),
 .fax-capture .quote-table td:nth-child(6),
 .fax-capture .quote-table td:nth-child(7) {
-  white-space: nowrap !important;
-  font-feature-settings: 'tnum' 1;
   text-align: right !important;
-  padding: 4px 8px !important;
-  letter-spacing: 0 !important;
-  font-size: 13px !important;
+  font-size: 19px !important;
 }
 
-.fax-capture .quote-table th:nth-child(5) {
-  text-align: center !important;
-}
-
+.fax-capture .quote-table th:nth-child(5),
 .fax-capture .quote-table th:nth-child(6),
 .fax-capture .quote-table th:nth-child(7) {
   text-align: center !important;
 }
 
-/* ✅ 페이지 넘김 제어 */
-.fax-capture .quote-table tbody tr {
+/* ✅ 폼 테이블 */
+.fax-capture .form-table {
+  font-size: 18px !important;
+}
+
+.fax-capture .form-table .label {
+  font-weight: 700 !important;
+  font-size: 18px !important;
+}
+
+/* ✅ 헤더 */
+.fax-capture .form-header h1 {
+  font-size: 24px !important;
+  margin-bottom: 8px !important;
+}
+
+/* ✅ 합계 테이블 */
+.fax-capture .total-table {
+  width: 240px !important;
+  margin-bottom: 8px !important;
+}
+
+/* ✅ 도장 */
+.fax-capture .stamp-inline {
+  position: absolute !important;
+  top: -15px !important;
+  right: -30px !important;
+  width: 80px !important;
+  height: 80px !important;
+  opacity: 0.8 !important;
+}
+
+/* ✅ 페이지 넘김 */
+.fax-capture .total-table {
   page-break-inside: avoid !important;
 }
 
 .fax-capture .form-table.info-table {
+  page-break-inside: avoid !important;
+}
+
+.fax-capture .quote-table tbody tr {
   page-break-inside: avoid !important;
 }
 
