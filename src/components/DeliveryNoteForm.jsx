@@ -563,17 +563,17 @@ const handleSendFax = async (faxNumber) => {
                   onChange={e=>updateFormData('bizNumber',e.target.value)}
                 />
               </td>
-              <td className="label">회사명</td>
+              <td className="label">상호명</td>
               <td>{displaySettings.companyName}</td>
             </tr>
             <tr>
-              <td className="label">회사명</td>
+              <td className="label">상호명</td>
               <td>
                 <input
                   type="text"
                   value={formData.companyName}
                   onChange={e=>updateFormData('companyName',e.target.value)}
-                  placeholder="회사명 입력"
+                  placeholder="" /* 상호명 placeholder제거 (인쇄에 미포함되도록) */ 
                 />
               </td>
               <td className="label">대표자</td>
