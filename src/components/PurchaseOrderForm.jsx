@@ -1119,7 +1119,7 @@ const checkInventoryAvailability = async (cartItems) => {
               <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
               <td style={{display:'none'}}><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
               <td style={{display:'none'}} className="right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="비고" /></td>
+              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="" /></td>
               <td className="no-print">
                 <button type="button" onClick={()=>removeMaterial(idx)} className="remove-btn">삭제</button>
               </td>
@@ -1144,7 +1144,7 @@ const checkInventoryAvailability = async (cartItems) => {
         <textarea
           value={formData.notes}
           onChange={e=>updateFormData('notes', e.target.value)}
-          placeholder="기타 사항을 입력하세요"
+          placeholder="기타 사항"
           rows={4}
         />
       </div>
