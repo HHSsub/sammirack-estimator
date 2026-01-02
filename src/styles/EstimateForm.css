@@ -12,25 +12,66 @@
 }
 
 /* =====================================================
-   FAX CAPTURE 전용 – table cell 구조 리셋 (핵심)
+   ✅ FAX CAPTURE - 모든 텍스트 잘림 완전 제거 (최우선)
    ===================================================== */
-.fax-capture .form-table th,
-.fax-capture .form-table td,
-.fax-capture .order-table th,
-.fax-capture .order-table td,
-.fax-capture .bom-table th,
-.fax-capture .bom-table td {
+
+/* ✅ 모든 테이블 셀 - 높이 제한 완전 제거 */
+.fax-capture table,
+.fax-capture .form-table,
+.fax-capture .info-table,
+.fax-capture .quote-table,
+.fax-capture th,
+.fax-capture td {
   height: auto !important;
-  min-height: 40px !important;  /* ✅ 최소 높이 */
+  min-height: 60px !important;
   max-height: none !important;
-
-  line-height: 1.8 !important;  /* ✅ 줄간격 */
-  padding-top: 14px !important;
-  padding-bottom: 14px !important;
-
-  box-sizing: border-box !important;  /* ✅ 수정 */
-  white-space: normal !important;  /* ✅ 줄바꿈 허용 */
+  
+  line-height: 2.0 !important;
+  padding: 15px 10px !important;
+  
+  box-sizing: border-box !important;
   overflow: visible !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  word-break: keep-all !important;
+  
+  vertical-align: middle !important;
+}
+
+/* ✅ 모든 input, textarea - 높이 자동 조절 */
+.fax-capture input,
+.fax-capture textarea,
+.fax-capture .estimate-memo {
+  height: auto !important;
+  min-height: 50px !important;
+  max-height: none !important;
+  
+  line-height: 2.0 !important;
+  padding: 12px 10px !important;
+  
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  
+  border: none !important;
+  background: transparent !important;
+  font-size: inherit !important;
+}
+
+/* ✅ 품목명 셀 - 더 넉넉하게 */
+.fax-capture .quote-table td:nth-child(2) {
+  min-height: 80px !important;
+  padding: 20px 12px !important;
+  line-height: 2.2 !important;
+}
+
+/* ✅ 라벨 셀도 충분한 높이 */
+.fax-capture .label,
+.fax-capture .form-table .label {
+  min-height: 60px !important;
+  padding: 15px 10px !important;
+  line-height: 2.0 !important;
 }
 
 .memo-narrow { max-width: 100%; }
