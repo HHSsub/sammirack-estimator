@@ -446,7 +446,7 @@ export default function OptionSelector() {
             type="number"
             placeholder="0"
             value={customPrice > 0 ? customPrice : ''}
-            onChange={e => setCustomPrice(Number(e.target.value) || 0)}
+            onChange={e => setCustomPrice(Number(e.target.value) || -1)}
             onFocus={(e) => e.target.select()}
           />
         </div>
