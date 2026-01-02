@@ -15,7 +15,6 @@
 
   /* 왼쪽을 100px만큼 밀어서, 그만큼 떨어진 공간의 중앙에 컨텐츠가 오게 함 */
   padding-left: 100px; 
-  /* box-sizing: border-box; /* padding이 전체 크기에 포함되도록 설정 */ */
 }
 
 .fax-preview-modal-container {
