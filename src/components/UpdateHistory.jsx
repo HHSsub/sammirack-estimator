@@ -1,5 +1,5 @@
 // src/components/UpdateHistory.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import '../styles/UpdateHistory.css';
 
 /**
@@ -21,6 +21,37 @@ const UpdateHistory = () => {
     // 새로운 업데이트는 여기에 추가하세요
   ];
 
+  // 페이지네이션 설정
+  const itemsPerPage = 10; // 한 페이지에 보여줄 항목 수
+  const [currentPage, setCurrentPage] = useState(0); // 기본값: 최신 페이지 (0)
+  
+  // 총 페이지 수 계산
+  const totalPages = Math.ceil(updates.length / itemsPerPage);
+  
+  // 현재 페이지에 표시할 업데이트 항목 계산
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUpdates = updates.slice(startIndex, endIndex);
+  
+  // 이전 페이지로 이동
+  const goToPreviousPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // 다음 페이지로 이동
+  const goToNextPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  // 첫 페이지(최신)인지 확인
+  const isFirstPage = currentPage === 0;
+  // 마지막 페이지(과거)인지 확인
+  const isLastPage = currentPage === totalPages - 1;
+
   return (
     <div className="update-history-container">
       <div className="update-history-header">
@@ -37,14 +68,42 @@ const UpdateHistory = () => {
             <p>업데이트 이력이 없습니다.</p>
           </div>
         ) : (
-          <ul>
-            {updates.map((update, index) => (
-              <li key={index} className="update-item">
-                <span className="update-date">{update.date}</span>
-                <span className="update-content">{update.content}</span>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul>
+              {currentUpdates.map((update, index) => (
+                <li key={startIndex + index} className="update-item">
+                  <span className="update-date">{update.date}</span>
+                  <span className="update-content">{update.content}</span>
+                </li>
+              ))}
+            </ul>
+            
+            {/* 페이지네이션 컨트롤 */}
+            {totalPages > 1 && (
+              <div className="update-history-pagination">
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={isLastPage}
+                  className="pagination-btn pagination-btn-left"
+                  title="과거 이력 보기 (←)"
+                >
+                  &lt;
+                </button>
+                <span className="pagination-info">
+                  {totalPages - currentPage} / {totalPages} 페이지
+                  {currentPage === 0 && ' (최신)'}
+                </span>
+                <button
+                  onClick={goToNextPage}
+                  disabled={isFirstPage}
+                  className="pagination-btn pagination-btn-right"
+                  title="최신 이력 보기 (→)"
+                >
+                  &gt;
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       
