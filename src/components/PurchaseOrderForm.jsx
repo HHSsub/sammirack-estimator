@@ -1113,7 +1113,7 @@ const checkInventoryAvailability = async (cartItems) => {
                   type="text"
                   value={m.specification}
                   onChange={e=>updateMaterial(idx,'specification',e.target.value)}
-                  placeholder="규격"
+                  placeholder=""
                 />
               </td>
               <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
