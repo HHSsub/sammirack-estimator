@@ -123,8 +123,13 @@ export const convertDOMToPDFBase64 = async (element) => {
          ------------------------------------------------- */
       .info-table input,
       .info-table textarea {
-        font-size: 13px !important;
-        padding: 6px 6px !important;
+        font-size: 18px !important;  /* ✅ 13px → 18px */
+        padding: 8px 6px !important; /* ✅ 6px → 8px */
+        font-weight: 700 !important;
+      }
+      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 */
+      .form-table .label {
+        font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
       }
 
@@ -134,7 +139,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       .estimate-memo {
         min-height: 70px !important;
         padding: 10px 6px !important;
-        font-size: 13px !important;
+        font-size: 18px !important;
         line-height: 1.6 !important;
       }
 
