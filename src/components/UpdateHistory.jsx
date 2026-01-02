@@ -15,7 +15,8 @@ import '../styles/UpdateHistory.css';
 const UpdateHistory = () => {
   // 업데이트 이력 배열 (최신순 정렬)
   const updates = [
-    { date: '2025-01-01', content: '시스템 초기 버전 배포' },
+    { date: '2024-12-28', content: '하이랙 기둥 규격기반 분리기준 추가, 하이랙 기둥 재고 및 단가 ID추가,사업자 주소 정정' },
+    { date: '2025-01-01', content: '문서 관리 페이지 이모지 대신 텍스트로' },
     // 새로운 업데이트는 여기에 추가하세요
   ];
 
@@ -47,7 +48,7 @@ const UpdateHistory = () => {
       </div>
       
       <div className="update-history-footer">
-        <p>💡 건의사항이나 버그 발견 시 관리자에게 연락 바랍니다.</p>
+        <p>💡 건의사항이나 버그 발견 시 관리자에게 연락 바랍니다. (Tel : 010-6317-4543) </p>
       </div>
     </div>
   );
