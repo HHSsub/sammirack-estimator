@@ -22,10 +22,8 @@ const ConfirmDialog = ({
 
   useEffect(() => {
     if (show && anchorElement) {
-      // 버튼의 위치를 기준으로 다이얼로그 위치 계산
+      // 버튼의 위치를 기준으로 다이얼로그 위치 계산 (viewport 기준)
       const rect = anchorElement.getBoundingClientRect();
-      const scrollY = window.scrollY || window.pageYOffset;
-      const scrollX = window.scrollX || window.pageXOffset;
       
       // 다이얼로그 크기 추정
       const dialogWidth = 280;
@@ -35,22 +33,23 @@ const ConfirmDialog = ({
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       
-      let top = rect.bottom + scrollY + 10; // 버튼 아래 10px
-      let left = rect.left + scrollX + (rect.width / 2) - (dialogWidth / 2); // 버튼 중앙 기준
+      // 버튼 바로 아래 10px, 버튼 중앙 기준 정렬
+      let top = rect.bottom + 10;
+      let left = rect.left + (rect.width / 2) - (dialogWidth / 2);
       
       // 화면 오른쪽 경계 체크
-      if (left + dialogWidth > scrollX + viewportWidth) {
-        left = scrollX + viewportWidth - dialogWidth - 10;
+      if (left + dialogWidth > viewportWidth) {
+        left = viewportWidth - dialogWidth - 10;
       }
       
       // 화면 왼쪽 경계 체크
-      if (left < scrollX) {
-        left = scrollX + 10;
+      if (left < 10) {
+        left = 10;
       }
       
       // 화면 하단 경계 체크 - 버튼 위에 표시
-      if (top + dialogHeight > scrollY + viewportHeight) {
-        top = rect.top + scrollY - dialogHeight - 10; // 버튼 위에 표시
+      if (top + dialogHeight > viewportHeight) {
+        top = rect.top - dialogHeight - 10;
       }
       
       setPosition({ top, left });
@@ -89,7 +88,7 @@ const ConfirmDialog = ({
       <div
         className={`confirm-dialog ${visible ? 'confirm-visible' : ''}`}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: `${position.top}px`,
           left: `${position.left}px`,
           zIndex: 10001
