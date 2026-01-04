@@ -713,7 +713,7 @@ const handleSendFax = async (faxNumber) => {
                   type="text"
                   value={m.specification}
                   onChange={e=>upMat(idx,'specification',e.target.value)}
-                  placeholder="규격"
+                  placeholder=""
                 />
               </td>
               <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
@@ -744,7 +744,7 @@ const handleSendFax = async (faxNumber) => {
         <textarea
           value={formData.notes}
           onChange={e=>updateFormData('notes', e.target.value)}
-          placeholder="기타 사항을 입력하세요"
+          placeholder="기타 사항"
           rows={4}
         />
       </div>
