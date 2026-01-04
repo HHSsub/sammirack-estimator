@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/FaxPreviewModal.css';
 
 const FaxPreviewModal = ({ pdfBlobURL, onClose, onSendFax }) => {
-  const [faxNumber, setFaxNumber] = useState('');
+  const [faxNumber, setFaxNumber] = useState('02-2612-4598');
   const [isSending, setIsSending] = useState(false);
 
   // 모달 열릴 때 스크롤 방지
