@@ -64,22 +64,22 @@
 }
 
 .fax-capture .quote-table th:nth-child(1),
-.fax-capture .quote-table td:nth-child(1) { width: 5% !important; }
+.fax-capture .quote-table td:nth-child(1) { width: 4% !important; }
 
 .fax-capture .quote-table th:nth-child(2),
-.fax-capture .quote-table td:nth-child(2) { width: 51.5% !important; }
+.fax-capture .quote-table td:nth-child(2) { width: 49.5% !important; }
 
 .fax-capture .quote-table th:nth-child(3),
 .fax-capture .quote-table td:nth-child(3) { width: 6% !important; }
 
 .fax-capture .quote-table th:nth-child(4),
-.fax-capture .quote-table td:nth-child(4) { width: 4.5% !important; }
+.fax-capture .quote-table td:nth-child(4) { width: 5.5% !important; }
 
 .fax-capture .quote-table th:nth-child(5),
-.fax-capture .quote-table td:nth-child(5) { width: 10.5% !important; }
+.fax-capture .quote-table td:nth-child(5) { width: 11.5% !important; }
 
 .fax-capture .quote-table th:nth-child(6),
-.fax-capture .quote-table td:nth-child(6) { width: 10.5% !important; }
+.fax-capture .quote-table td:nth-child(6) { width: 11.5% !important; }
 
 .fax-capture .quote-table th:nth-child(7),
 .fax-capture .quote-table td:nth-child(7) { width: 9% !important; }
@@ -496,12 +496,12 @@ button.remove-btn:disabled {
     font-weight: 700 !important;
   }
 
-  .quote-table th:nth-child(1), .quote-table td:nth-child(1) { width:5% !important; }
-  .quote-table th:nth-child(2), .quote-table td:nth-child(2) { width:51.5% !important; }
+  .quote-table th:nth-child(1), .quote-table td:nth-child(1) { width:4% !important; }
+  .quote-table th:nth-child(2), .quote-table td:nth-child(2) { width:49.5% !important; }
   .quote-table th:nth-child(3), .quote-table td:nth-child(3) { width:8% !important; }
-  .quote-table th:nth-child(4), .quote-table td:nth-child(4) { width:4.5% !important; min-width:12px !important; white-space:nowrap !important; }
-  .quote-table th:nth-child(5), .quote-table td:nth-child(5) { width:10% !important; min-width:70px !important; }
-  .quote-table th:nth-child(6), .quote-table td:nth-child(6) { width:9% !important; min-width:60px !important; }
+  .quote-table th:nth-child(4), .quote-table td:nth-child(4) { width:5.5% !important; min-width:12px !important; white-space:nowrap !important; }
+  .quote-table th:nth-child(5), .quote-table td:nth-child(5) { width:11% !important; min-width:70px !important; }
+  .quote-table th:nth-child(6), .quote-table td:nth-child(6) { width:10% !important; min-width:60px !important; }
   .quote-table th:nth-child(7), .quote-table td:nth-child(7) { width:9% !important; min-width:60px !important; }
   .quote-table th:nth-child(8), .quote-table td:nth-child(8) { width:3% !important; min-width:28px !important; }
 
