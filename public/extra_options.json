@@ -228,20 +228,78 @@
   },
     "파렛트랙 철판형": {
     "추가상품1 (로드빔1460 1단추가(철판2포함))": [
-      { "id": "p1-loadbeam-1460", "name": "로드빔1460 1단추가(철판2포함)", "price": 58000, "bom": [{ "name": "로드빔1460", "qty": 1 }] }
+      { 
+        "id": "p1-loadbeam-1460", 
+        "name": "로드빔1460 1단추가(철판2포함)", 
+        "price": 58000, 
+        "bom": [
+          { "name": "로드빔", "qty": 2, "rackType": "파렛트랙 철판형", "specification": "1390" },
+          { "name": "철판형로드빔", "qty": 2, "rackType": "파렛트랙 철판형", "specification": "1390" }
+        ] 
+      }
     ],
     "추가상품2 (로드빔2660 1단추가(철판3포함))": [
-      { "id": "p2-loadbeam-2660", "name": "로드빔2660 1단추가(철판3포함)", "price": 100000, "bom": [{ "name": "로드빔2660", "qty": 1 }] }
+      { 
+        "id": "p2-loadbeam-2660", 
+        "name": "로드빔2660 1단추가(철판3포함)", 
+        "price": 100000, 
+        "bom": [
+          { "name": "로드빔", "qty": 2, "rackType": "파렛트랙 철판형", "specification": "2590" },
+          { "name": "철판형로드빔", "qty": 3, "rackType": "파렛트랙 철판형", "specification": "2590" }
+        ] 
+      }
     ],
     "추가상품3 (로드빔+철판형 990kg 1단추가)": [
-      { "id": "p3-steel-1460", "name": "1460 (철판형 1단)", "price": 95000, "bom": [{ "name": "철판형 1460", "qty": 1 }] },
-      { "id": "p3-steel-2060", "name": "2060 (철판형 1단)", "price": 143000, "bom": [{ "name": "철판형 2060", "qty": 1 }] },
-      { "id": "p3-steel-2660", "name": "2660 (철판형 1단)", "price": 185000, "bom": [{ "name": "철판형 2660", "qty": 1 }] }
+      { 
+        "id": "p3-steel-1460", 
+        "name": "1460 (철판형 1단)", 
+        "price": 95000, 
+        "bom": [
+          { "name": "철판형로드빔", "qty": 2, "rackType": "파렛트랙 철판형", "specification": "1390" }
+        ] 
+      },
+      { 
+        "id": "p3-steel-2060", 
+        "name": "2060 (철판형 1단)", 
+        "price": 143000, 
+        "bom": [
+          { "name": "철판형로드빔", "qty": 3, "rackType": "파렛트랙 철판형", "specification": "2090" }
+        ] 
+      },
+      { 
+        "id": "p3-steel-2660", 
+        "name": "2660 (철판형 1단)", 
+        "price": 185000, 
+        "bom": [
+          { "name": "철판형로드빔", "qty": 4, "rackType": "파렛트랙 철판형", "specification": "2590" }
+        ] 
+      }
     ],
     "추가상품4 (로드빔+철판형 550kg 1단추가)": [
-      { "id": "p4-steel-1460", "name": "1460 (철판형 1단)", "price": 81000, "bom": [{ "name": "철판형 1460", "qty": 1 }] },
-      { "id": "p4-steel-2060", "name": "2060 (철판형 1단)", "price": 122000, "bom": [{ "name": "철판형 2060", "qty": 1 }] },
-      { "id": "p4-steel-2660", "name": "2660 (철판형 1단)", "price": 158000, "bom": [{ "name": "철판형 2660", "qty": 1 }] }
+      { 
+        "id": "p4-steel-1460", 
+        "name": "1460 (철판형 1단)", 
+        "price": 81000, 
+        "bom": [
+          { "name": "철판형로드빔", "qty": 2, "rackType": "파렛트랙 철판형", "specification": "1390" }
+        ] 
+      },
+      { 
+        "id": "p4-steel-2060", 
+        "name": "2060 (철판형 1단)", 
+        "price": 122000, 
+        "bom": [
+          { "name": "철판형로드빔", "qty": 3, "rackType": "파렛트랙 철판형", "specification": "2090" }
+        ] 
+      },
+      { 
+        "id": "p4-steel-2660", 
+        "name": "2660 (철판형 1단)", 
+        "price": 158000, 
+        "bom": [
+          { "name": "철판형로드빔", "qty": 4, "rackType": "파렛트랙 철판형", "specification": "2590" }
+        ] 
+      }
     ],
     "추가상품5 (합판추가)": [
       { "id": "p6-plywood-normal", "name": "1000x2440(12mm)일반합판", "price": 30000, "bom": [{ "name": "일반합판 1000x2440", "qty": 1 }] },

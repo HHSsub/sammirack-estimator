@@ -878,11 +878,13 @@ const makeExtraOptionBOM = () => {
         if (extraOptionsSel.includes(opt.id)) {
           console.log(`\n📌 기타 추가 옵션 BOM 처리: ${opt.name} (카테고리: ${categoryName})`);
           
-          // ✅ 추가상품6 및 파렛트랙/파렛트랙신형 추가상품1, 2, 3의 경우 extra_options.json의 BOM을 직접 사용
+          // ✅ 추가상품6 및 파렛트랙/파렛트랙신형/파렛트랙 철판형 추가상품1, 2, 3, 4의 경우 extra_options.json의 BOM을 직접 사용
           const isSeparatedBOM = (categoryName?.includes('추가상품6') || 
-                                   ((selectedType === '파렛트랙' || selectedType === '파렛트랙신형') && (categoryName?.includes('추가상품1') || 
-                                                                                                         categoryName?.includes('추가상품2') || 
-                                                                                                         categoryName?.includes('추가상품3')))) &&
+                                   ((selectedType === '파렛트랙' || selectedType === '파렛트랙신형' || selectedType === '파렛트랙 철판형') && 
+                                    (categoryName?.includes('추가상품1') || 
+                                     categoryName?.includes('추가상품2') || 
+                                     categoryName?.includes('추가상품3') || 
+                                     categoryName?.includes('추가상품4')))) &&
                                   opt.bom && Array.isArray(opt.bom) && opt.bom.length >= 1;
           
           if (isSeparatedBOM) {
@@ -929,7 +931,7 @@ const makeExtraOptionBOM = () => {
               // BOM 항목의 inventoryPartId 생성
               const bomInventoryPartId = generateInventoryPartId({
                 rackType: bomRackType,
-                version: bomRackType === "파렛트랙" ? version : undefined, // ✅ 파렛트랙만 version 정보 포함
+                version: (bomRackType === "파렛트랙" || bomRackType === "파렛트랙신형") ? version : undefined, // ✅ 파렛트랙/파렛트랙신형만 version 정보 포함
                 name: bomName,
                 specification: bomSpec,
                 colorWeight: bomColorWeight
@@ -938,7 +940,7 @@ const makeExtraOptionBOM = () => {
               // 단가관리용 partId 생성
               const bomPartId = generatePartId({
                 rackType: bomRackType,
-                version: bomRackType === "파렛트랙" ? version : undefined, // ✅ 파렛트랙만 version 정보 포함
+                version: (bomRackType === "파렛트랙" || bomRackType === "파렛트랙신형") ? version : undefined, // ✅ 파렛트랙/파렛트랙신형만 version 정보 포함
                 name: bomName,
                 specification: bomSpec
               });
@@ -957,7 +959,7 @@ const makeExtraOptionBOM = () => {
               
               extraBOM.push({
                 rackType: bomRackType,
-                version: bomRackType === "파렛트랙" ? version : undefined, // ✅ 파렛트랙만 version 정보 포함
+                version: (bomRackType === "파렛트랙" || bomRackType === "파렛트랙신형") ? version : undefined, // ✅ 파렛트랙/파렛트랙신형만 version 정보 포함
                 size: selectedOptions.size || "",
                 name: bomName,
                 partId: bomPartId, // 단가관리용
