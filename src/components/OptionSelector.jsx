@@ -296,7 +296,12 @@ export default function OptionSelector() {
 
         {formTypeRacks.includes(selectedType) && (
           <>
-            {renderOptionSelect('size', '규격')}
+            {/* ✅ 경량랙: 제품 유형 바로 다음에 색상 선택 */}
+            {selectedType === '경량랙' && renderOptionSelect('color', '색상', true)}
+            {selectedType === '경량랙' 
+              ? renderOptionSelect('size', '규격', !!selectedOptions.color)
+              : renderOptionSelect('size', '규격')
+            }
             {renderOptionSelect('height', '높이', !!selectedOptions.size)}
             {renderOptionSelect(
               'level',
@@ -309,15 +314,6 @@ export default function OptionSelector() {
               !!selectedOptions.size &&
               !!selectedOptions.height &&
               !!selectedOptions.level
-            )}
-            {/* ✅ 경량랙: formType 선택 후 color 선택 */}
-            {selectedType === '경량랙' && renderOptionSelect(
-              'color',
-              '색상 (필수)',
-              !!selectedOptions.size &&
-              !!selectedOptions.height &&
-              !!selectedOptions.level &&
-              !!selectedOptions.formType
             )}
           </>
         )}

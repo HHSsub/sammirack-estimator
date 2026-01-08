@@ -1127,8 +1127,8 @@ const checkInventoryAvailability = async (cartItems) => {
         <thead>
           <tr>
             <th style={{width:'50px'}}>NO</th>
-            <th style={{width:'190px'}}>부품명</th>
-            <th className="spec-col">규격</th>
+            <th style={{width:'350px'}}>부품명</th>
+            <th className="spec-col" style={{width:'150px'}}>규격</th>
             <th style={{width:'70px'}}>수량</th>
             <th style={{width:'70px', display:'none'}}>단가</th>
             <th style={{width:'90px', display:'none'}}>금액</th>

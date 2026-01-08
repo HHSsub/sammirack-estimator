@@ -27,8 +27,8 @@
 /* ✅ 모든 테이블 셀 - 최소 설정 */
 .fax-capture th,
 .fax-capture td {
-  padding: 3px 4px !important;
-  line-height: 2.0 !important;
+  padding: 5px 4px 6px 4px !important;
+  line-height: 1.4 !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
   white-space: normal !important;
@@ -39,8 +39,8 @@
 /* ✅ input, textarea */
 .fax-capture input,
 .fax-capture textarea {
-  padding: 6px 5px !important;
-  line-height: 2.0 !important;
+  padding: 4px 5px 5px 5px !important;
+  line-height: 1.4 !important;
   font-size: 20px !important;
   border: none !important;
   background: transparent !important;
@@ -51,8 +51,8 @@
 .fax-capture .order-table th,
 .fax-capture .order-table td {
   font-size: 21px !important;
-  line-height: 2.0 !important;
-  padding: 4px 3px !important;
+  line-height: 1.4 !important;
+  padding: 5px 3px 6px 3px !important;
 }
 
 /* ✅ 품목 테이블 컬럼 비율 */
@@ -104,8 +104,8 @@
 .fax-capture .bom-table th,
 .fax-capture .bom-table td {
   font-size: 21px !important;
-  line-height: 2.0 !important;
-  padding: 4px 3px !important;
+  line-height: 1.4 !important;
+  padding: 5px 3px 6px 3px !important;
 }
 
 /* ✅ BOM 테이블 컬럼 비율 */
@@ -172,6 +172,15 @@
 
 .fax-capture .form-table.info-table {
   page-break-inside: avoid !important;
+}
+
+/* ✅ fax-capture 시 상단 테이블(info-table) 모든 글자 굵게 */
+.fax-capture .info-table td,
+.fax-capture .info-table th,
+.fax-capture .info-table input,
+.fax-capture .info-table label,
+.fax-capture .info-table .label {
+  font-weight: bold !important;
 }
 
 .fax-capture .order-table tbody tr,
@@ -310,8 +319,8 @@ img[alt="도장"] {
 .bom-table td { word-break: break-word; white-space: normal; }
 /* ✅ 작성 화면: 모든 컬럼 정상 표시 (프린트 시에만 단가/금액 숨김) */
 .bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 50px !important; }     /* NO */
-.bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 190px !important; }    /* 부품명 */
-.bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: auto !important; }     /* 규격 */
+.bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 350px !important; min-width: 350px !important; }    /* 부품명 - 더 넓게 */
+.bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 150px !important; max-width: 150px !important; }     /* 규격 - 더 좁게 */
 .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 70px !important; }     /* 수량 */
 .bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 70px !important; }     /* 단가 - ✅ 화면에서 정상 표시 */
 .bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 90px !important; }     /* 금액 - ✅ 화면에서 정상 표시 */

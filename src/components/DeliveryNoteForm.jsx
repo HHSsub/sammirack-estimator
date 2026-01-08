@@ -694,8 +694,8 @@ const handleSendFax = async (faxNumber) => {
         <thead>
           <tr>
             <th style={{width:'50px'}}>NO</th>
-            <th style={{width:'190px'}}>부품명</th>
-            <th className="spec-col">규격</th>
+            <th style={{width:'350px'}}>부품명</th>
+            <th className="spec-col" style={{width:'150px'}}>규격</th>
             <th style={{width:'70px'}}>수량</th>
             <th style={{width:'70px', display:'none'}}>단가</th>
             <th style={{width:'90px', display:'none'}}>금액</th>
@@ -719,7 +719,7 @@ const handleSendFax = async (faxNumber) => {
               <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
               <td style={{display:'none'}}><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
               <td style={{display:'none'}} className="right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="비고" /></td>
+              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="" /></td>
               <td className="no-print">
                 <button type="button" onClick={()=>rmMat(idx)} className="remove-btn">삭제</button>
               </td>

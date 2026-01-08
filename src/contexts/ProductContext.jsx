@@ -480,13 +480,20 @@ export const ProductProvider=({children})=>{
     if(formTypeRacks.includes(selectedType)){
       const bd=bomData[selectedType]||{};
       const next={size:[],height:[],level:[],formType:[]};
-      // ✅ 경량랙일 때 color 옵션 추가
+      // ✅ 경량랙일 때 color 옵션을 제품 유형 선택 후 바로 표시
       if(selectedType==="경량랙"){
-        next.color=[];
+        next.color=["아이보리","블랙","실버"];
       }
-      const sizesFromData=Object.keys(bd||{});
-      const extraSizes=EXTRA_OPTIONS[selectedType]?.size||[];
-      next.size=sortSizes([...sizesFromData,...extraSizes]);
+      // ✅ 경량랙: color 선택 후 size 옵션 표시
+      if(selectedType==="경량랙" && selectedOptions.color){
+        const sizesFromData=Object.keys(bd||{});
+        const extraSizes=EXTRA_OPTIONS[selectedType]?.size||[];
+        next.size=sortSizes([...sizesFromData,...extraSizes]);
+      } else if(selectedType!=="경량랙"){
+        const sizesFromData=Object.keys(bd||{});
+        const extraSizes=EXTRA_OPTIONS[selectedType]?.size||[];
+        next.size=sortSizes([...sizesFromData,...extraSizes]);
+      }
       if(selectedOptions.size){
         const heightsFromData=Object.keys(bd[selectedOptions.size]||{});
         next.height=sortHeights([...heightsFromData,...(EXTRA_OPTIONS[selectedType]?.height||[])]);
@@ -500,10 +507,6 @@ export const ProductProvider=({children})=>{
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];
-            // ✅ 경량랙: formType 선택 후 color 옵션 표시
-            if(selectedOptions.formType){
-              next.color=["아이보리","블랙","실버"];
-            }
           }
         } else {
           const levelKeys=Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]||{})||[];
@@ -511,10 +514,6 @@ export const ProductProvider=({children})=>{
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];
-            // ✅ 경량랙: formType 선택 후 color 옵션 표시
-            if(selectedType==="경량랙" && selectedOptions.formType){
-              next.color=["아이보리","블랙","실버"];
-            }
           }
         }
       }
