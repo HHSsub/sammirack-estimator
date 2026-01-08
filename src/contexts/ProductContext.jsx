@@ -2163,29 +2163,10 @@ const makeExtraOptionBOM = () => {
         if (item.partId) {
           key = item.partId;
         } else {
-          // specification 또는 size에서 사이즈 추출
-          let spec = item.specification || '';
-          // specification이 "사이즈 43x90" 형식이면 그대로 사용
-          if (spec && spec.includes('x')) {
-            // 이미 올바른 형식
-          } else {
-            // size에서 사이즈 추출 (예: "43x90" → "사이즈 43x90")
-            const size = item.size || '';
-            if (size && size.includes('x')) {
-              spec = `사이즈 ${size}`;
-            } else if (spec) {
-              // specification에 "사이즈"만 있고 사이즈가 없으면 size 사용
-              const sizeMatch = size.match(/(\d+x\d+)/);
-              if (sizeMatch) {
-                spec = `사이즈 ${sizeMatch[1]}`;
-              }
-            }
-          }
-          // partId 생성 (WxD 모두 포함)
           const partId = generatePartId({
             rackType: item.rackType,
             name: item.name,
-            specification: spec
+            specification: item.specification || ''
           });
           key = partId;
         }
@@ -2219,29 +2200,10 @@ const makeExtraOptionBOM = () => {
             if (bomItem.partId) {
               key = bomItem.partId;
             } else {
-              // specification 또는 size에서 사이즈 추출
-              let spec = bomItem.specification || '';
-              // specification이 "사이즈 43x90" 형식이면 그대로 사용
-              if (spec && spec.includes('x')) {
-                // 이미 올바른 형식
-              } else {
-                // size에서 사이즈 추출 (예: "43x90" → "사이즈 43x90")
-                const size = bomItem.size || '';
-                if (size && size.includes('x')) {
-                  spec = `사이즈 ${size}`;
-                } else if (spec) {
-                  // specification에 "사이즈"만 있고 사이즈가 없으면 size 사용
-                  const sizeMatch = size.match(/(\d+x\d+)/);
-                  if (sizeMatch) {
-                    spec = `사이즈 ${sizeMatch[1]}`;
-                  }
-                }
-              }
-              // partId 생성 (WxD 모두 포함)
               const partId = generatePartId({
                 rackType: bomItem.rackType,
                 name: bomItem.name,
-                specification: spec
+                specification: bomItem.specification || ''
               });
               key = partId;
             }
