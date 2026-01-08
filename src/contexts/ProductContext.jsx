@@ -2135,31 +2135,47 @@ const makeExtraOptionBOM = () => {
   };
 
   // ✅ BOM 병합 유틸 (같은 partId 자동 합산)
+  // ⚠️ 중요: 스텐랙 선반은 가격/표시용 partId로 구분 (재고관리용 inventoryPartId는 W만 구분)
   function mergeDuplicateParts(bomArray) {
     const merged = {};
     for (const item of bomArray) {
-      const pid = generateInventoryPartId(item);
-      if (!merged[pid]) {
-        merged[pid] = { ...item };
+      // 스텐랙 선반의 경우 가격/표시용 partId로 구분 (WxD 모두 포함)
+      let key;
+      if (item.rackType === '스텐랙' && item.name === '선반' && item.partId) {
+        // 가격/표시용 partId 사용 (예: "스텐랙-선반-사이즈43x90")
+        key = item.partId;
       } else {
-        merged[pid].quantity += Number(item.quantity) || 0;
+        // 기타는 재고관리용 inventoryPartId 사용
+        key = generateInventoryPartId(item);
+      }
+      
+      if (!merged[key]) {
+        merged[key] = { ...item };
+      } else {
+        merged[key].quantity += Number(item.quantity) || 0;
         const unit = Number(item.unitPrice) || 0;
-        merged[pid].totalPrice = (Number(merged[pid].totalPrice) || 0) + unit * (Number(item.quantity) || 0);
+        merged[key].totalPrice = (Number(merged[key].totalPrice) || 0) + unit * (Number(item.quantity) || 0);
       }
     }
     return Object.values(merged);
   }
 
   // ✅ 수정된 cartBOMView - specification을 포함한 키로 그룹핑
+  // ⚠️ 중요: 스텐랙 선반은 가격/표시용 partId로 구분 (재고관리용 inventoryPartId는 W만 구분)
   const cartBOMView = useMemo(() => {
     const bomMap = new Map();
     cart.forEach(item => {
       if (item.bom && Array.isArray(item.bom)) {
         item.bom.forEach(bomItem => {
-          // ✅ specification을 포함한 고유 키 생성
-          // const key = `${bomItem.rackType}|${bomItem.size || ''}|${bomItem.name}|${bomItem.specification || ''}`;
-          // ✅ spec 정규화가 끝난 BOM을 가정 → partId로 그룹
-          const key = generateInventoryPartId(bomItem);
+          // 스텐랙 선반의 경우 가격/표시용 partId로 구분 (WxD 모두 포함)
+          let key;
+          if (bomItem.rackType === '스텐랙' && bomItem.name === '선반' && bomItem.partId) {
+            // 가격/표시용 partId 사용 (예: "스텐랙-선반-사이즈43x90")
+            key = bomItem.partId;
+          } else {
+            // 기타는 재고관리용 inventoryPartId 사용
+            key = generateInventoryPartId(bomItem);
+          }
           
           if (bomMap.has(key)) {
             const existing = bomMap.get(key);
