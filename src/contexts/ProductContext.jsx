@@ -878,10 +878,16 @@ const makeExtraOptionBOM = () => {
         if (extraOptionsSel.includes(opt.id)) {
           console.log(`\n📌 기타 추가 옵션 BOM 처리: ${opt.name} (카테고리: ${categoryName})`);
           
-          // ✅ 추가상품6의 경우 extra_options.json의 BOM을 직접 사용
-          if (categoryName?.includes('추가상품6') && opt.bom && Array.isArray(opt.bom) && opt.bom.length > 1) {
-            // BOM이 이미 분리되어 있음 (선반+빔)
-            console.log(`  🔀 추가상품6 BOM 분리 처리: ${opt.bom.length}개 부품`);
+          // ✅ 추가상품6 및 파렛트랙 추가상품1, 2, 3의 경우 extra_options.json의 BOM을 직접 사용
+          const isSeparatedBOM = (categoryName?.includes('추가상품6') || 
+                                   (selectedType === '파렛트랙' && (categoryName?.includes('추가상품1') || 
+                                                                    categoryName?.includes('추가상품2') || 
+                                                                    categoryName?.includes('추가상품3')))) &&
+                                  opt.bom && Array.isArray(opt.bom) && opt.bom.length >= 1;
+          
+          if (isSeparatedBOM) {
+            // BOM이 이미 분리되어 있음 (선반+빔 또는 로드빔+타이빔 또는 철판형로드빔)
+            console.log(`  🔀 ${categoryName} BOM 분리 처리: ${opt.bom.length}개 부품`);
             
             opt.bom.forEach((bomItem, bomIndex) => {
               const bomName = bomItem.name || '';
@@ -916,7 +922,8 @@ const makeExtraOptionBOM = () => {
                 ? adminPriceEntry.price 
                 : (extraOptionsPrices[opt.id]?.price || Number(opt.price) || 0) / opt.bom.length;
               
-              const totalQty = bomQty * q;
+              const optionQty = Number(opt.quantity) || 1;
+              const totalQty = bomQty * optionQty * q;
               
               extraBOM.push({
                 rackType: bomRackType,
@@ -927,7 +934,7 @@ const makeExtraOptionBOM = () => {
                 inventoryPartId: bomInventoryPartId, // 재고관리용
                 specification: bomSpec,
                 colorWeight: bomColorWeight,
-                note: `${opt.name} 분리 ${bomIndex + 1}/${opt.bom.length}`,
+                note: '기타추가옵션', // ✅ 추가옵션 표시용
                 quantity: totalQty,
                 unitPrice: effectivePrice,
                 totalPrice: effectivePrice * totalQty
@@ -936,7 +943,7 @@ const makeExtraOptionBOM = () => {
               console.log(`    ✅ 부품 ${bomIndex + 1} 추가: partId="${bomPartId}", inventoryPartId="${bomInventoryPartId}" (${effectivePrice}원)`);
             });
             
-            return; // 추가상품6은 여기서 종료
+            return; // 분리된 BOM은 여기서 종료
           }
           
           // ✅ 1. cleanName 먼저 생성 (specification 생성에 필요)

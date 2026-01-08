@@ -669,7 +669,24 @@ const handleSendFax = async (faxNumber) => {
           {formData.items.map((it, idx)=>(
             <tr key={`item-${idx}`}>
               <td>{idx+1}</td>
-              <td><input type="text" value={it.name} onChange={e=>upItem(idx,'name',e.target.value)} placeholder="품명" /></td>
+              <td>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <input type="text" value={it.name} onChange={e=>upItem(idx,'name',e.target.value)} placeholder="품명" style={{ flex: 1 }} />
+                  {it.note === '기타추가옵션' && (
+                    <span style={{ 
+                      fontSize: '10px',
+                      color: '#17a2b8',
+                      backgroundColor: '#d1ecf1',
+                      padding: '2px 4px',
+                      borderRadius: '3px',
+                      fontWeight: 'bold',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      추가옵션
+                    </span>
+                  )}
+                </div>
+              </td>
               <td><input type="text" value={it.unit} onChange={e=>upItem(idx,'unit',e.target.value)} placeholder="단위" /></td>
               <td><input type="number" value={it.quantity} onChange={e=>upItem(idx,'quantity',e.target.value)} placeholder="수량" /></td>
               <td><input type="number" value={it.unitPrice} onChange={e=>upItem(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>

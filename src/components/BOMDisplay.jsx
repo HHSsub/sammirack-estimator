@@ -221,18 +221,32 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
                             {item.rackType || '미분류'}
                           </div>
                         </div>
-                        {hasAdminPrice && (
-                          <span style={{ 
-                            fontSize: '10px',
-                            color: '#dc3545',
-                            backgroundColor: '#f8d7da',
-                            padding: '2px 4px',
-                            borderRadius: '3px',
-                            fontWeight: 'bold'
-                          }}>
-                            수정됨
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          {hasAdminPrice && (
+                            <span style={{ 
+                              fontSize: '10px',
+                              color: '#dc3545',
+                              backgroundColor: '#f8d7da',
+                              padding: '2px 4px',
+                              borderRadius: '3px',
+                              fontWeight: 'bold'
+                            }}>
+                              수정됨
+                            </span>
+                          )}
+                          {item.note === '기타추가옵션' && (
+                            <span style={{ 
+                              fontSize: '10px',
+                              color: '#17a2b8',
+                              backgroundColor: '#d1ecf1',
+                              padding: '2px 4px',
+                              borderRadius: '3px',
+                              fontWeight: 'bold'
+                            }}>
+                              추가옵션
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: '4px 6px', textAlign: 'center' }}>
