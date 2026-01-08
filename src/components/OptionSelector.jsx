@@ -257,7 +257,9 @@ export default function OptionSelector() {
   const showPrice = selectedType && (
     (formTypeRacks.includes(selectedType) && 
      selectedOptions.size && selectedOptions.height && 
-     selectedOptions.level && selectedOptions.formType) ||
+     selectedOptions.level && selectedOptions.formType &&
+     // ✅ 경량랙은 color도 필수
+     (selectedType !== '경량랙' || selectedOptions.color)) ||
     (selectedType === '파렛트랙' && 
      selectedOptions.version && selectedOptions.weight && selectedOptions.size && 
      selectedOptions.height && selectedOptions.level && 
@@ -307,6 +309,15 @@ export default function OptionSelector() {
               !!selectedOptions.size &&
               !!selectedOptions.height &&
               !!selectedOptions.level
+            )}
+            {/* ✅ 경량랙: formType 선택 후 color 선택 */}
+            {selectedType === '경량랙' && renderOptionSelect(
+              'color',
+              '색상 (필수)',
+              !!selectedOptions.size &&
+              !!selectedOptions.height &&
+              !!selectedOptions.level &&
+              !!selectedOptions.formType
             )}
           </>
         )}

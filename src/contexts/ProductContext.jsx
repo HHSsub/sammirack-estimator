@@ -111,8 +111,9 @@ const applyAdminEditPrice = (item) => {
   try {
     const stored = localStorage.getItem('admin_edit_prices') || '{}';
     const priceData = JSON.parse(stored);
-    // 수정: item에 partId를 통일된 양식으로 우선 생성 
-    const partId = generateInventoryPartId(item); // ✅ 없으면 이전 partid하고 싶으면, || item.partId  
+    // ✅ 단가 관리는 partId 사용 (색상 제거), 재고 관리는 inventoryPartId 사용
+    // item.partId가 있으면 우선 사용 (경량랙 등에서 명시적으로 생성한 경우)
+    const partId = item.partId || generatePartId(item);
     const adminPrice = priceData[partId];
     
     console.log(`🔍 부품 ${item.name} (ID: ${partId}) 관리자 단가 확인:`, adminPrice);
@@ -479,6 +480,10 @@ export const ProductProvider=({children})=>{
     if(formTypeRacks.includes(selectedType)){
       const bd=bomData[selectedType]||{};
       const next={size:[],height:[],level:[],formType:[]};
+      // ✅ 경량랙일 때 color 옵션 추가
+      if(selectedType==="경량랙"){
+        next.color=[];
+      }
       const sizesFromData=Object.keys(bd||{});
       const extraSizes=EXTRA_OPTIONS[selectedType]?.size||[];
       next.size=sortSizes([...sizesFromData,...extraSizes]);
@@ -495,6 +500,10 @@ export const ProductProvider=({children})=>{
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.["H900"]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];
+            // ✅ 경량랙: formType 선택 후 color 옵션 표시
+            if(selectedOptions.formType){
+              next.color=["아이보리","블랙","실버"];
+            }
           }
         } else {
           const levelKeys=Object.keys(bd[selectedOptions.size]?.[selectedOptions.height]||{})||[];
@@ -502,6 +511,10 @@ export const ProductProvider=({children})=>{
           if(selectedOptions.level){
             const fm=bd[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]||{};
             next.formType=Object.keys(fm).length?Object.keys(fm):["독립형","연결형"];
+            // ✅ 경량랙: formType 선택 후 color 옵션 표시
+            if(selectedType==="경량랙" && selectedOptions.formType){
+              next.color=["아이보리","블랙","실버"];
+            }
           }
         }
       }
@@ -727,23 +740,50 @@ export const ProductProvider=({children})=>{
     // const W_num = sizeMatch[1] || "";
     // const D_num = sizeMatch[2] || "";
 
+    // ✅ 경량랙: 안전핀, 안전좌가 아닌 경우에만 color 포함
+    const color = selectedOptions.color || '';
+    
     // ⚠️ 초기엔 spec 비워두고 -> 나중에 ensureSpecification으로 통일 포맷 적용
     const base = [
-      { rackType: selectedType, size: sz, name: "기둥", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "받침(상)", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "받침(하)", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "연결대", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0 },
+      { rackType: selectedType, size: sz, name: "기둥", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0, color: color },
+      { rackType: selectedType, size: sz, name: "받침(상)", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0, color: color },
+      { rackType: selectedType, size: sz, name: "받침(하)", specification: ``, quantity: (form === "연결형" ? 2 : 4) * q, unitPrice: 0, totalPrice: 0, color: color },
+      { rackType: selectedType, size: sz, name: "연결대", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0, color: color },
       // { rackType: selectedType, size: sz, name: "선반", specification: `${W_num}${D_num}`, quantity: level * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "선반",      specification: "", quantity: level * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "안전좌", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0 },
-      { rackType: selectedType, size: sz, name: "안전핀", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0 },
+      { rackType: selectedType, size: sz, name: "선반",      specification: "", quantity: level * q, unitPrice: 0, totalPrice: 0, color: color },
+      { rackType: selectedType, size: sz, name: "안전좌", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0, color: '' }, // 안전좌는 색상 없음
+      { rackType: selectedType, size: sz, name: "안전핀", specification: ``, quantity: level * q, unitPrice: 0, totalPrice: 0, color: '' }, // 안전핀은 색상 없음
     ];
   
     // const baseWithAdminPrices = base.map(applyAdminEditPrice);
     // return sortBOMByMaterialRule([...baseWithAdminPrices, ...makeExtraOptionBOM()]);
 
       // ✅ 항상 정규화 → 그 다음 관리자 단가 적용 (순서 보장)
-       const normalized = base.map(r => ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) }));
+       const normalized = base.map(r => {
+         const specRow = ensureSpecification(r, { size: sz, height: ht, ...parseWD(sz) });
+         // ✅ 경량랙: partId와 inventoryPartId 명시적 생성
+         if(selectedType === "경량랙"){
+           // 단가 관리용 partId (색상 제거)
+           const partId = generatePartId({
+             rackType: selectedType,
+             name: specRow.name,
+             specification: specRow.specification || ''
+           });
+           // 재고 관리용 inventoryPartId (색상 포함)
+           const inventoryPartId = generateInventoryPartId({
+             rackType: selectedType,
+             name: specRow.name,
+             specification: specRow.specification || '',
+             color: specRow.color || ''
+           });
+           return {
+             ...specRow,
+             partId: partId,
+             inventoryPartId: inventoryPartId
+           };
+         }
+         return specRow;
+       });
        const withAdmin = normalized.map(applyAdminEditPrice);
        
        // ✅ 사용자 정의 자재 추가 (경량랙 전용)
@@ -1888,12 +1928,42 @@ const makeExtraOptionBOM = () => {
         else if(name.includes("안전핀")){ name="안전핀"; specification=``; }
         else if(!specification && /\d/.test(name)){ specification=``; }
         
+        // ✅ 경량랙: 안전핀, 안전좌가 아닌 경우에만 color 포함
+        const shouldIncludeColor = selectedType === "경량랙" && 
+          !name.includes("안전핀") && !name.includes("안전좌");
+        const color = shouldIncludeColor ? (selectedOptions.color || '') : '';
+        
         const row={
           rackType:selectedType,size:sz,name,specification,note:c.note??"",
           quantity:(Number(c.quantity)||0)*q,
           unitPrice:Number(c.unit_price)||0,
-          totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*(Number(c.quantity)||0)*q
+          totalPrice:Number(c.total_price)>0?Number(c.total_price)*q:(Number(c.unit_price)||0)*(Number(c.quantity)||0)*q,
+          color: color // ✅ 경량랙 color 정보 추가
         };
+        
+        // ✅ 경량랙: partId와 inventoryPartId 명시적 생성
+        if(selectedType === "경량랙"){
+          const specRow = ensureSpecification(row,{size:sz,height:ht,...parseWD(sz)});
+          // 단가 관리용 partId (색상 제거)
+          const partId = generatePartId({
+            rackType: selectedType,
+            name: specRow.name,
+            specification: specRow.specification || ''
+          });
+          // 재고 관리용 inventoryPartId (색상 포함)
+          const inventoryPartId = generateInventoryPartId({
+            rackType: selectedType,
+            name: specRow.name,
+            specification: specRow.specification || '',
+            color: color
+          });
+          return {
+            ...specRow,
+            partId: partId,
+            inventoryPartId: inventoryPartId
+          };
+        }
+        
         return ensureSpecification(row,{size:sz,height:ht,...parseWD(sz)});
       });
       
@@ -1945,7 +2015,8 @@ const makeExtraOptionBOM = () => {
           selectedOptions.size,
           selectedOptions.height,
           selectedOptions.level,
-          selectedOptions.color||"",
+          // ✅ 하이랙과 경량랙 모두 color 포함 (하이랙은 첫 번째, 경량랙은 마지막)
+          (selectedType === "하이랙" || selectedType === "경량랙") ? (selectedOptions.color || "") : "",
           selectedType === "파렛트랙" ? selectedOptions.weight || "" : "",
         ].filter(Boolean).join(" "),
       }]);
@@ -2152,7 +2223,8 @@ const makeExtraOptionBOM = () => {
     extraOptionsSel,
     customMaterials,
     // 기존에 있던 항목들 (누락된 것들)
-    canAddItem: selectedType && quantity > 0,
+    canAddItem: selectedType && quantity > 0 && 
+      (selectedType !== "경량랙" || (selectedOptions.color && selectedOptions.color.trim() !== "")),
     colorLabelMap,
     // 핸들러들
     setSelectedType,
