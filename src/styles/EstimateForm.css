@@ -29,7 +29,7 @@
 /* ✅ 모든 테이블 셀 - 최소 설정 */
 .fax-capture th,
 .fax-capture td {
-  padding: 8px 6px !important;
+  padding: 3px 4px !important;
   line-height: 2.0 !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
@@ -41,7 +41,7 @@
 /* ✅ input, textarea */
 .fax-capture input,
 .fax-capture textarea {
-  padding: 6px 5px !important;
+  padding: 3px 2px !important;
   line-height: 2.0 !important;
   font-size: 18px !important;
   border: none !important;
@@ -54,7 +54,7 @@
 .fax-capture .quote-table td {
   font-size: 21px !important;
   line-height: 2.0 !important;
-  padding: 8px 6px !important;
+  padding: 4px 3px !important;
 }
 
 /* ✅ 견적서 품목 테이블 컬럼 비율 */
@@ -156,7 +156,7 @@
   min-height: 60px;
   font-size: 19px;
   line-height: 1.3;
-  padding: 6px 8px;
+  padding: 3px 4px;
   box-sizing: border-box;
   resize: vertical;
   color: #1e5cff;       /* 파란 계열 글자색 */
@@ -181,7 +181,7 @@
 .form-table th,
 .form-table td {
   border: 1px solid #333;
-  padding: 8px;
+  padding: 4px;
   text-align: center;
   vertical-align: middle;
 }
@@ -241,7 +241,7 @@
 .quote-table th,
 .quote-table td { 
   word-break: break-word !important;
-  padding: 12px 8px !important;
+  padding: 6px 4px !important;
   font-size: 15px !important;
   line-height: 1.6 !important;
 }
@@ -250,7 +250,7 @@
   width: 100% !important;
   box-sizing: border-box !important;
   font-size: 18px !important;
-  padding: 6px 8px !important;
+  padding: 3px 4px !important;
 }
 
 .total-table .label {
@@ -262,13 +262,13 @@
 .notes-section textarea {
   width:100%;
   box-sizing:border-box;
-  padding:8px;
+  padding:4px;
   font-size:14px;
   line-height:1.4;
   resize:vertical;
 }
 
-.info-table td { padding:4px 6px; }
+.info-table td { padding:2px 3px; }
 
 .form-actions {
   margin-top:20px;
@@ -277,7 +277,7 @@
   justify-content:center;
 }
 .form-actions button {
-  padding:10px 20px;
+  padding:6px 10px;
   font-size:14px;
   font-weight:600;
   cursor:pointer;
@@ -308,7 +308,7 @@ button.add-item-btn {
   background: #28a745 !important;
   color: #fff !important;
   border: none !important;
-  padding: 10px 20px !important;
+  padding: 6px 10px !important;
   border-radius: 5px !important;
   font-size: 14px !important;
   cursor: pointer !important;
@@ -514,7 +514,7 @@ button.remove-btn:disabled {
     white-space:nowrap !important;
     font-feature-settings:'tnum' 1;
     text-align:right !important;
-    padding: 4px 8px !important;
+    padding: 3px 6px !important;
     letter-spacing:0 !important;
     font-size: 13px !important;
   }
