@@ -1833,7 +1833,22 @@ const makeExtraOptionBOM = () => {
         { rackType: selectedType, name: "기둥", specification: `높이 ${heightValue}`, quantity: 4 * q, unitPrice: 0, totalPrice: 0 },
         { rackType: selectedType, name: "선반", specification: `사이즈 ${sz}`, quantity: (parseInt((selectedOptions.level || "").replace(/[^\d]/g, "")) || 0) * q, unitPrice: 0, totalPrice: 0 },
         ...makeExtraOptionBOM(),
-      ].map(r => ensureSpecification(r, { size: sz, height: heightValue, ...parseWD(sz) }));
+      ].map(r => {
+        const specRow = ensureSpecification(r, { size: sz, height: heightValue, ...parseWD(sz) });
+        // ⚠️ 중요: 스텐랙 선반은 가격/표시용 partId를 명시적으로 생성 (WxD 모두 포함)
+        if (specRow.rackType === '스텐랙' && specRow.name === '선반') {
+          const partId = generatePartId({
+            rackType: specRow.rackType,
+            name: specRow.name,
+            specification: specRow.specification || ''
+          });
+          return {
+            ...specRow,
+            partId: partId
+          };
+        }
+        return specRow;
+      });
       const listWithAdminPrices = list.map(applyAdminEditPrice);
       return sortBOMByMaterialRule(listWithAdminPrices.filter(r => !/베이스볼트/.test(r.name)));
     }
@@ -2141,9 +2156,19 @@ const makeExtraOptionBOM = () => {
     for (const item of bomArray) {
       // 스텐랙 선반의 경우 가격/표시용 partId로 구분 (WxD 모두 포함)
       let key;
-      if (item.rackType === '스텐랙' && item.name === '선반' && item.partId) {
-        // 가격/표시용 partId 사용 (예: "스텐랙-선반-사이즈43x90")
-        key = item.partId;
+      if (item.rackType === '스텐랙' && item.name === '선반') {
+        // partId가 없으면 생성 (WxD 모두 포함)
+        if (item.partId) {
+          key = item.partId;
+        } else {
+          // partId가 없으면 생성 (specification에서 WxD 추출)
+          const partId = generatePartId({
+            rackType: item.rackType,
+            name: item.name,
+            specification: item.specification || ''
+          });
+          key = partId;
+        }
       } else {
         // 기타는 재고관리용 inventoryPartId 사용
         key = generateInventoryPartId(item);
@@ -2169,9 +2194,19 @@ const makeExtraOptionBOM = () => {
         item.bom.forEach(bomItem => {
           // 스텐랙 선반의 경우 가격/표시용 partId로 구분 (WxD 모두 포함)
           let key;
-          if (bomItem.rackType === '스텐랙' && bomItem.name === '선반' && bomItem.partId) {
-            // 가격/표시용 partId 사용 (예: "스텐랙-선반-사이즈43x90")
-            key = bomItem.partId;
+          if (bomItem.rackType === '스텐랙' && bomItem.name === '선반') {
+            // partId가 없으면 생성 (WxD 모두 포함)
+            if (bomItem.partId) {
+              key = bomItem.partId;
+            } else {
+              // partId가 없으면 생성 (specification에서 WxD 추출)
+              const partId = generatePartId({
+                rackType: bomItem.rackType,
+                name: bomItem.name,
+                specification: bomItem.specification || ''
+              });
+              key = partId;
+            }
           } else {
             // 기타는 재고관리용 inventoryPartId 사용
             key = generateInventoryPartId(bomItem);
