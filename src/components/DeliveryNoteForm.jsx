@@ -565,7 +565,7 @@ const handleSendFax = async (faxNumber) => {
                       type="date"
                       value={formData.date}
                       onChange={e=>updateFormData('date',e.target.value)}
-                      style={{fontSize:'14px',fontWeight:600,padding:'6px 8px',width:'100%'}}
+                      style={{fontSize:'14px',fontWeight:600,padding:'3px 4px',width:'100%'}}
                     />
                   </div>
                   <div style={{display:'flex',flexDirection:'column',flex:'0 0 40%'}}>
@@ -579,7 +579,7 @@ const handleSendFax = async (faxNumber) => {
                         updateFormData('documentNumber',e.target.value);
                         updateFormData('orderNumber',e.target.value);
                       }}
-                      style={{padding:'6px 8px',fontSize:'18px',fontWeight:'bold',color:'#ff6600',width:'100%'}}
+                      style={{padding:'3px 4px',fontSize:'18px',fontWeight:'bold',color:'#ff6600',width:'100%'}}
                       />
                   </div>
                 </div>
