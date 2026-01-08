@@ -1410,18 +1410,40 @@ const makeExtraOptionBOM = () => {
                 }
               }
             } else {
-              // 스텐랙/중량랙: mappedInventoryPartIds가 이미 가격용 ID 형식
-              // 예: "스텐랙-기둥-높이75", "중량랙-선반-w900xd450"
-              partIdForPrice = mappedInventoryPartIds;
-              
-              // ⚠️ 중요: 중량랙/스텐랙의 경우 매핑 테이블에서 가져온 partId에서 specification 추출
-              // 예: "중량랙-선반-w900xd450" → "w900xd450"
-              if (selectedType === '중량랙' || selectedType === '스텐랙') {
+              // 스텐랙/중량랙: 재고관리용 ID와 가격관리용 ID 구분 필요
+              if (selectedType === '스텐랙') {
+                // ⚠️ 중요: 스텐랙 선반은 재고관리용(W만)과 가격관리용(WxD 모두)을 구분해야 함
+                // 재고관리용: mappedInventoryPartIds = "스텐랙-선반-50" (W만)
+                // 가격관리용: partIdForPrice = "스텐랙-선반-사이즈50x75" (WxD 모두)
+                const parts = mappedInventoryPartIds.split('-');
+                if (parts.length >= 3 && parts[1] === '선반') {
+                  // extraOptionId에서 원본 사이즈 추출 (예: "스텐랙-50x75선반-" → "50x75")
+                  const sizeMatch = extraOptionId.match(/(\d+)x(\d+)/);
+                  if (sizeMatch) {
+                    // 가격관리용 partId 생성 (WxD 모두 포함)
+                    partIdForPrice = `스텐랙-선반-사이즈${sizeMatch[1]}x${sizeMatch[2]}`;
+                    finalSpecification = `사이즈${sizeMatch[1]}x${sizeMatch[2]}`;
+                    console.log(`    ✅ 스텐랙 선반 가격용 partId 생성: "${partIdForPrice}" (재고용: "${mappedInventoryPartIds}")`);
+                  } else {
+                    // 매칭 실패 시 재고용 ID 사용 (기둥 등)
+                    partIdForPrice = mappedInventoryPartIds;
+                    finalSpecification = parts[2];
+                  }
+                } else {
+                  // 기둥 등은 재고용 ID를 그대로 사용
+                  partIdForPrice = mappedInventoryPartIds;
+                  finalSpecification = parts[2] || '';
+                }
+              } else if (selectedType === '중량랙') {
+                // 중량랙: mappedInventoryPartIds가 이미 가격용 ID 형식 (WxD 모두 포함)
+                partIdForPrice = mappedInventoryPartIds;
                 const parts = mappedInventoryPartIds.split('-');
                 if (parts.length >= 3) {
-                  finalSpecification = parts[2]; // "w900xd450" 또는 "높이75"
-                  console.log(`  ✅ 매핑 테이블에서 specification 추출: "${finalSpecification}"`);
+                  finalSpecification = parts[2]; // "w900xd450"
+                  console.log(`    ✅ 매핑 테이블에서 specification 추출: "${finalSpecification}"`);
                 }
+              } else {
+                partIdForPrice = mappedInventoryPartIds;
               }
             }
             
