@@ -489,10 +489,16 @@ useEffect(() => {
     }
   };
 
-  // ✅ 수정: 재고 수량 변경 (즉시 서버 저장)
+  // ✅ 수정: 재고 수량 변경 (즉시 서버 저장, 재고관리용 ID 사용)
   const handleInventoryChange = async (material, newQuantity) => {
-    // ✅ CSV partId 그대로 사용
-    const partId = material.partId;
+    // ✅ 재고관리용 ID 생성 (스텐랙 선반의 경우 W만 사용)
+    const inventoryPartId = generateInventoryPartId({
+      rackType: material.rackType || '',
+      name: material.name || '',
+      specification: material.specification || '',
+      colorWeight: material.colorWeight || ''
+    });
+    const partId = inventoryPartId;
     const quantity = Math.max(0, Number(newQuantity) || 0);
     
     setSyncStatus('📤 저장 중...');
@@ -533,8 +539,16 @@ useEffect(() => {
     }
   };
 
-  // ✅ 빠른 재고 조정 함수 (즉시 서버 저장)
-  const adjustInventory = async (partId, adjustment) => {
+  // ✅ 빠른 재고 조정 함수 (즉시 서버 저장, 재고관리용 ID 사용)
+  const adjustInventory = async (material, adjustment) => {
+    // ✅ 재고관리용 ID 생성
+    const inventoryPartId = generateInventoryPartId({
+      rackType: material.rackType || '',
+      name: material.name || '',
+      specification: material.specification || '',
+      colorWeight: material.colorWeight || ''
+    });
+    const partId = inventoryPartId;
     const currentQty = inventory[partId] || 0;
     const newQty = Math.max(0, currentQty + adjustment);
     
@@ -628,16 +642,49 @@ useEffect(() => {
       }
     }
 
-    // ✅ CSV partId 그대로 사용
+    // ✅ 재고관리용 ID 사용
     if (showOnlyInUse) {
       result = result.filter(material => {
-        return (inventory[material.partId] || 0) > 0;
+        const inventoryPartId = generateInventoryPartId({
+          rackType: material.rackType || '',
+          name: material.name || '',
+          specification: material.specification || '',
+          colorWeight: material.colorWeight || ''
+        });
+        return (inventory[inventoryPartId] || 0) > 0;
       });
     } else if (showOnlyOutOfStock) {
       result = result.filter(material => {
-        return (inventory[material.partId] || 0) === 0;
+        const inventoryPartId = generateInventoryPartId({
+          rackType: material.rackType || '',
+          name: material.name || '',
+          specification: material.specification || '',
+          colorWeight: material.colorWeight || ''
+        });
+        return (inventory[inventoryPartId] || 0) === 0;
       });
     }
+
+    // ✅ 스텐랙 선반 통합 필터링: 같은 재고관리용 ID를 가진 항목 중 하나만 표시
+    const seenInventoryIds = new Set();
+    result = result.filter(material => {
+      // 스텐랙 선반인 경우에만 통합 필터링 적용
+      if (material.rackType === '스텐랙' && material.name && material.name.includes('선반')) {
+        const inventoryPartId = generateInventoryPartId({
+          rackType: material.rackType || '',
+          name: material.name || '',
+          specification: material.specification || '',
+          colorWeight: material.colorWeight || ''
+        });
+        
+        // 이미 본 재고관리용 ID면 제외
+        if (seenInventoryIds.has(inventoryPartId)) {
+          return false;
+        }
+        seenInventoryIds.add(inventoryPartId);
+      }
+      return true;
+    });
 
     // 정렬
     if (sortConfig.field) {
@@ -654,9 +701,21 @@ useEffect(() => {
             bValue = b.rackType || '';
             break;
           case 'quantity':
-            // ✅ CSV partId 그대로 사용
-            aValue = inventory[a.partId] || 0;
-            bValue = inventory[b.partId] || 0;
+            // ✅ 재고관리용 ID 사용
+            const aInventoryId = generateInventoryPartId({
+              rackType: a.rackType || '',
+              name: a.name || '',
+              specification: a.specification || '',
+              colorWeight: a.colorWeight || ''
+            });
+            const bInventoryId = generateInventoryPartId({
+              rackType: b.rackType || '',
+              name: b.name || '',
+              specification: b.specification || '',
+              colorWeight: b.colorWeight || ''
+            });
+            aValue = inventory[aInventoryId] || 0;
+            bValue = inventory[bInventoryId] || 0;
             break;
           case 'price':
             aValue = getEffectivePrice(a);
@@ -684,24 +743,39 @@ useEffect(() => {
     }));
   };
 
-  // 체크박스 처리
+  // 체크박스 처리 (재고관리용 ID 사용)
   const handleSelectAll = (checked) => {
     if (checked) {
-      // ✅ CSV partId 그대로 사용
-      const allIds = new Set(filteredMaterials.map(m => m.partId));
+      // ✅ 재고관리용 ID 사용
+      const allIds = new Set(filteredMaterials.map(m => {
+        return generateInventoryPartId({
+          rackType: m.rackType || '',
+          name: m.name || '',
+          specification: m.specification || '',
+          colorWeight: m.colorWeight || ''
+        });
+      }));
       setSelectedItems(allIds);
     } else {
       setSelectedItems(new Set());
     }
   };
 
-  const handleSelectItem = (partId, checked) => {
+  const handleSelectItem = (material, checked) => {
+    // ✅ 재고관리용 ID 생성
+    const inventoryPartId = generateInventoryPartId({
+      rackType: material.rackType || '',
+      name: material.name || '',
+      specification: material.specification || '',
+      colorWeight: material.colorWeight || ''
+    });
+    
     setSelectedItems(prev => {
       const newSet = new Set(prev);
       if (checked) {
-        newSet.add(partId);
+        newSet.add(inventoryPartId);
       } else {
-        newSet.delete(partId);
+        newSet.delete(inventoryPartId);
       }
       return newSet;
     });
@@ -724,10 +798,23 @@ useEffect(() => {
       setIsLoading(true);
       setSyncStatus('📤 저장 중...');
       
-      for (const partId of selectedItems) {
+      // ✅ 일괄 작업: selectedItems에는 재고관리용 ID가 들어있음
+      for (const inventoryPartId of selectedItems) {
         if (bulkAction === 'inventory') {
           const quantity = Math.max(0, Number(bulkValue) || 0);
-          await handleInventoryChange({ partId }, quantity);
+          
+          // ✅ 재고관리용 ID를 직접 사용하여 재고 업데이트
+          const userInfo = {
+            username: currentUser?.username || 'admin',
+            role: currentUser?.role || 'admin'
+          };
+          
+          await saveInventorySync(inventoryPartId, quantity, userInfo);
+          
+          setInventory(prev => ({
+            ...prev,
+            [inventoryPartId]: quantity
+          }));
         }
       }
       
@@ -878,11 +965,18 @@ useEffect(() => {
       })
     : sortedRackTypes;
 
-  // ✅ 수정: 재고 수량 가져오기
+  // ✅ 수정: 재고 수량 가져오기 (재고관리용 ID 사용)
   const getInventoryQuantity = (material) => {
-    // ✅ CSV에서 로드한 partId를 그대로 사용
-    const partId = material.partId;
-    const stockData = inventory[partId];
+    // ✅ 스텐랙 선반의 경우 재고관리용 ID로 변환 (W만 사용)
+    // CSV의 partId는 가격관리용이므로, 재고관리용 ID로 변환 필요
+    const inventoryPartId = generateInventoryPartId({
+      rackType: material.rackType || '',
+      name: material.name || '',
+      specification: material.specification || '',
+      colorWeight: material.colorWeight || ''
+    });
+    
+    const stockData = inventory[inventoryPartId];
     
     if (typeof stockData === 'number') {
       return stockData;
@@ -1151,21 +1245,26 @@ useEffect(() => {
             </thead>
             <tbody>
               {filteredMaterials.map((material, index) => {
-                // ✅ CSV partId 그대로 사용
-                const partId = material.partId;
+                // ✅ 재고관리용 ID 생성
+                const inventoryPartId = generateInventoryPartId({
+                  rackType: material.rackType || '',
+                  name: material.name || '',
+                  specification: material.specification || '',
+                  colorWeight: material.colorWeight || ''
+                });
                 const quantity = getInventoryQuantity(material);
                 const { price, isModified } = getDisplayPrice(material);
                 const totalValue = quantity * price;
                 const isLowStock = quantity <= 5;
-                const isEditing = editingPart === partId;
+                const isEditing = editingPart === inventoryPartId;
 
                 return (
-                  <tr key={partId || index} className={isLowStock ? 'low-stock' : ''}>
+                  <tr key={material.partId || index} className={isLowStock ? 'low-stock' : ''}>
                     <td>
                       <input
                         type="checkbox"
-                        checked={selectedItems.has(partId)}
-                        onChange={(e) => handleSelectItem(partId, e.target.checked)}
+                        checked={selectedItems.has(inventoryPartId)}
+                        onChange={(e) => handleSelectItem(material, e.target.checked)}
                       />
                     </td>
                     <td>
@@ -1207,7 +1306,7 @@ useEffect(() => {
                       ) : (
                         <span
                           onClick={() => {
-                            setEditingPart(partId);
+                            setEditingPart(inventoryPartId);
                             setEditQuantity(quantity.toString());
                           }}
                           style={{
@@ -1232,7 +1331,7 @@ useEffect(() => {
                     <td>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
-                            onClick={() => adjustInventory(partId, -100)}
+                            onClick={() => adjustInventory(material, -100)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1246,7 +1345,7 @@ useEffect(() => {
                           -100
                         </button>
                         <button
-                          onClick={() => adjustInventory(partId, -50)}
+                          onClick={() => adjustInventory(material, -50)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1260,7 +1359,7 @@ useEffect(() => {
                           -50
                         </button>
                         <button
-                          onClick={() => adjustInventory(partId, -10)}
+                          onClick={() => adjustInventory(material, -10)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1274,7 +1373,7 @@ useEffect(() => {
                           -10
                         </button>
                         <button
-                          onClick={() => adjustInventory(partId, 10)}
+                          onClick={() => adjustInventory(material, 10)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1288,7 +1387,7 @@ useEffect(() => {
                           +10
                         </button>
                         <button
-                          onClick={() => adjustInventory(partId, 50)}
+                          onClick={() => adjustInventory(material, 50)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
@@ -1302,7 +1401,7 @@ useEffect(() => {
                           +50
                         </button>
                         <button
-                          onClick={() => adjustInventory(partId, 100)}
+                          onClick={() => adjustInventory(material, 100)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',
