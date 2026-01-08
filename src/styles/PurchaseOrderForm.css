@@ -27,7 +27,7 @@
 /* ✅ 모든 테이블 셀 - 최소 설정 */
 .fax-capture th,
 .fax-capture td {
-  padding: 8px 6px !important;
+  padding: 3px 4px !important;
   line-height: 2.0 !important;
   vertical-align: middle !important;
   box-sizing: border-box !important;
@@ -52,7 +52,7 @@
 .fax-capture .order-table td {
   font-size: 21px !important;
   line-height: 2.0 !important;
-  padding: 8px 6px !important;
+  padding: 4px 3px !important;
 }
 
 /* ✅ 품목 테이블 컬럼 비율 */
@@ -105,7 +105,7 @@
 .fax-capture .bom-table td {
   font-size: 21px !important;
   line-height: 2.0 !important;
-  padding: 8px 6px !important;
+  padding: 4px 3px !important;
 }
 
 /* ✅ BOM 테이블 컬럼 비율 */
@@ -183,7 +183,7 @@
   min-height: 28px;
   font-size: 19px;
   line-height: 1.3;
-  padding: 6px 8px;
+  padding: 3px 4px;
   color: #1e5cff;       /* 파란 계열 글자색 */
   font-weight: 600;     /* 글자 굵게 */
 }
@@ -223,7 +223,7 @@ img[alt="도장"] {
 .form-table th,
 .form-table td {
   border: 1px solid #333;
-  padding: 8px;
+  padding: 4px;
   text-align: center;
   vertical-align: middle;
 }
@@ -238,12 +238,12 @@ img[alt="도장"] {
 .form-table .right { text-align: right; }
 
 .info-table { margin-bottom: 30px; }
-.info-table td { padding: 8px; }
+.info-table td { padding: 4px; }
 .info-table input {
   width: 100%;
   max-width: 98%;
   box-sizing: border-box;
-  padding: 6px 8px;
+  padding: 3px 4px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 13px;
@@ -298,7 +298,7 @@ img[alt="도장"] {
 
 .order-table td input {
   width: 100%;
-  padding: 4px 6px;
+  padding: 2px 3px;
   font-size: 13px;
   box-sizing: border-box;
 }
@@ -320,7 +320,7 @@ img[alt="도장"] {
 
 .bom-table td input {
   width: 100%;
-  padding: 4px 6px;
+  padding: 2px 3px;
   font-size: 13px;
   box-sizing: border-box;
 }
@@ -330,7 +330,7 @@ img[alt="도장"] {
   background: #dc3545;
   color: #fff;
   border: none;
-  padding: 4px 8px;
+  padding: 3px 4px;
   border-radius: 3px;
   font-size: 12px;
   cursor: pointer;
@@ -356,7 +356,7 @@ img[alt="도장"] {
   background: #28a745 !important;
   color: #fff !important;
   border: none !important;
-  padding: 10px 20px !important;
+  padding: 6px 10px !important;
   border-radius: 5px !important;
   font-size: 14px !important;
   cursor: pointer !important;
@@ -461,7 +461,7 @@ img[alt="도장"] {
   .bom-table th,
   .bom-table td { padding: 4px; }
   .order-table td input,
-  .bom-table td input { padding: 4px 6px; font-size: 12px; }
+  .bom-table td input { padding: 3px 5px; font-size: 12px; }
   .form-actions { flex-direction: column; gap: 10px; }
   .item-controls { display: flex; flex-direction: column; gap: 10px; }
   .add-item-btn,
@@ -748,5 +748,5 @@ button.add-material-btn {
   transform: translateY(0);
 }
 
-.info-table td { padding: 4px 6px; }
+.info-table td { padding: 3px 5px; }
 .estimate-memo.memo-narrow { min-height: 90px; }
