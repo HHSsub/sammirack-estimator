@@ -1045,13 +1045,22 @@ const makeExtraOptionBOM = () => {
                 extraOptionId = `${selectedType}-${cleanName}-`;
               }
             } else if (categoryName?.includes('추가상품3')) {
-              // 추가상품3 (270kg 기둥추가): 하이랙-45x150기둥- 또는 하이랙-45x150메트그레이기둥-
+              // 추가상품3 (270kg 기둥추가): name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
+              // extra_options.json 형식: "45x150(블루기둥)" 또는 "45x150(메트그레이기둥)"
               const sizeMatch = cleanName.match(/(\d+)x(\d+)/);
               if (sizeMatch) {
-                if (cleanName.includes('메트그레이') || cleanName.includes('매트그레이')) {
+                // "(블루기둥)" 또는 "(메트그레이기둥)" 명시적으로 파싱
+                if (cleanName.includes('(메트그레이기둥)') || cleanName.includes('메트그레이기둥') || cleanName.includes('매트그레이기둥')) {
                   extraOptionId = `${selectedType}-${sizeMatch[0]}메트그레이기둥-`;
-                } else {
+                } else if (cleanName.includes('(블루기둥)') || cleanName.includes('블루기둥')) {
                   extraOptionId = `${selectedType}-${sizeMatch[0]}기둥-`;
+                } else {
+                  // 기존 로직 (하위 호환성)
+                  if (cleanName.includes('메트그레이') || cleanName.includes('매트그레이')) {
+                    extraOptionId = `${selectedType}-${sizeMatch[0]}메트그레이기둥-`;
+                  } else {
+                    extraOptionId = `${selectedType}-${sizeMatch[0]}기둥-`;
+                  }
                 }
               } else {
                 extraOptionId = `${selectedType}-${cleanName}-`;

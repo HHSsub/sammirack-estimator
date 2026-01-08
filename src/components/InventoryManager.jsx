@@ -101,22 +101,120 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
               // 기둥: 스텐랙-75기둥- 또는 스텐랙-75(4개 1set)-
               extraOptionId = `${rackType}-${heightMatch[1]}기둥-`;
             }
+          } else if (rackType === '하이랙') {
+            // 하이랙 기타추가옵션 extraOptionId 생성
+            // ⚠️ 중요: 추가상품3은 name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
+            // 추가상품4 (메트그레이): 하이랙-60x108선반450kg-
+            // 추가상품5 (블루+오렌지): 하이랙-60x108선반450kg- (같은 ID지만 색상 정보로 구분)
+            const sizeMatch = name.match(/(\d+)x(\d+)/);
+            const note = bomItem.note || '';
+            const colorWeight = bomItem.colorWeight || '';
+            
+            // 추가상품3 (270kg 기둥추가): name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
+            if (name.includes('(블루기둥)') || name.includes('블루기둥')) {
+              // 블루+오렌지 기둥
+              if (sizeMatch && name.includes('기둥')) {
+                extraOptionId = `${rackType}-${sizeMatch[0]}기둥-`;
+              }
+            } else if (name.includes('(메트그레이기둥)') || name.includes('메트그레이기둥') || name.includes('매트그레이기둥')) {
+              // 메트그레이 기둥
+              if (sizeMatch && name.includes('기둥')) {
+                extraOptionId = `${rackType}-${sizeMatch[0]}메트그레이기둥-`;
+              }
+            } else if (sizeMatch && (name.includes('선반') || name.includes('기둥'))) {
+              if (name.includes('450kg')) {
+                // 추가상품4/5 (450kg): 색상 정보로 구분
+                // 추가상품4는 메트그레이, 추가상품5는 블루+오렌지
+                // note나 colorWeight에서 색상 정보 확인
+                const isBlueOrange = note.includes('추가상품5') || 
+                                     note.includes('블루+오렌지') || 
+                                     note.includes('블루') && note.includes('오렌지') ||
+                                     colorWeight.includes('블루') && colorWeight.includes('오렌지') ||
+                                     name.includes('블루') && name.includes('오렌지');
+                const isMetGray = note.includes('추가상품4') || 
+                                  note.includes('메트그레이') || 
+                                  note.includes('매트그레이') ||
+                                  colorWeight.includes('메트그레이') ||
+                                  colorWeight.includes('매트그레이') ||
+                                  name.includes('메트그레이') ||
+                                  name.includes('매트그레이');
+                
+                if (name.includes('선반')) {
+                  extraOptionId = `${rackType}-${sizeMatch[0]}선반450kg-`;
+                } else if (name.includes('기둥')) {
+                  extraOptionId = `${rackType}-${sizeMatch[0]}기둥450kg-`;
+                }
+              } else if (name.includes('270kg') || name.includes('메트그레이') || name.includes('오렌지') || name.includes('매트그레이')) {
+                // 추가상품1/2 (270kg 선반): 추가상품1은 메트그레이, 추가상품2는 오렌지
+                if (name.includes('메트그레이') || name.includes('매트그레이')) {
+                  // 추가상품1 (메트그레이 선반)
+                  if (name.includes('선반') && sizeMatch) {
+                    extraOptionId = `${rackType}-${sizeMatch[0]}매트그레이선반-`;
+                  }
+                } else if (name.includes('오렌지')) {
+                  // 추가상품2 (오렌지 선반)
+                  if (name.includes('선반') && sizeMatch) {
+                    extraOptionId = `${rackType}-${sizeMatch[0]}선반-`;
+                  }
+                }
+                // 추가상품3 (270kg 기둥) - 위에서 이미 처리됨
+              } else if (name.includes('600kg') || (name.includes('블루') && name.includes('오렌지'))) {
+                // 추가상품6 (600kg 블루+오렌지)
+                if (sizeMatch && (name.includes('선반') || name.includes('빔'))) {
+                  extraOptionId = `${rackType}-${sizeMatch[0]}선반+빔-`;
+                }
+              }
+            }
           }
           
           // 3. 기타추가옵션 매핑 확인
           if (extraOptionId) {
-            const mappedId = mapExtraToBaseInventoryPart(extraOptionId);
-            if (mappedId && mappedId !== extraOptionId) {
-              inventoryPartId = mappedId;
-              console.log(`    🔗 기타추가옵션 매핑: "${extraOptionId}" → "${inventoryPartId}"`);
+            // ⚠️ 하이랙 추가상품5 (블루+오렌지 450kg)는 매핑 테이블에 없으므로 색상 정보 확인
+            const note = bomItem.note || '';
+            const colorWeight = bomItem.colorWeight || '';
+            const isBlueOrange450kg = (rackType === '하이랙' && extraOptionId.includes('450kg') && 
+                                       (note.includes('추가상품5') || 
+                                        note.includes('블루+오렌지') || 
+                                        (note.includes('블루') && note.includes('오렌지')) ||
+                                        (colorWeight.includes('블루') && colorWeight.includes('오렌지')) ||
+                                        (name.includes('블루') && name.includes('오렌지'))));
+            
+            if (isBlueOrange450kg) {
+              // 추가상품5 (블루+오렌지 450kg): 서버에 존재하는 ID 직접 생성
+              const sizeMatch = name.match(/(\d+)x(\d+)/);
+              if (sizeMatch) {
+                if (name.includes('선반')) {
+                  // 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x108450kg
+                  const directSpec = `사이즈${sizeMatch[1]}x${sizeMatch[2]}450kg`;
+                  inventoryPartId = `하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-${directSpec}`;
+                  console.log(`    🔗 추가상품5 블루+오렌지 선반 직접 생성: "${inventoryPartId}"`);
+                } else if (name.includes('기둥')) {
+                  // 하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)450kg-높이150450kg
+                  const heightMatch = name.match(/(\d+)x(\d+)/);
+                  if (heightMatch) {
+                    const directSpec = `높이${heightMatch[2]}450kg`;
+                    inventoryPartId = `하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)450kg-${directSpec}`;
+                    console.log(`    🔗 추가상품5 블루+오렌지 기둥 직접 생성: "${inventoryPartId}"`);
+                  }
+                }
+              }
             } else {
-              // 매핑 없으면 일반 생성
-              inventoryPartId = generateInventoryPartId({
-                rackType: rackType,
-                name: name,
-                specification: spec,
-                colorWeight: bomItem.colorWeight || ''
-              });
+              // 매핑 테이블 확인
+              // ⚠️ 하이랙 추가상품4 (메트그레이 450kg)는 매핑 테이블에 있음
+              // 추가상품5는 위에서 이미 처리되었으므로, 여기서는 추가상품4 또는 기타 추가상품 처리
+              const mappedId = mapExtraToBaseInventoryPart(extraOptionId);
+              if (mappedId && mappedId !== extraOptionId) {
+                inventoryPartId = mappedId;
+                console.log(`    🔗 기타추가옵션 매핑: "${extraOptionId}" → "${inventoryPartId}"`);
+              } else {
+                // 매핑 없으면 일반 생성
+                inventoryPartId = generateInventoryPartId({
+                  rackType: rackType,
+                  name: name,
+                  specification: spec,
+                  colorWeight: bomItem.colorWeight || ''
+                });
+              }
             }
           } else {
             // 일반 부품은 그대로 생성
