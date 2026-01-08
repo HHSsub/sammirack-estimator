@@ -559,14 +559,37 @@ useEffect(() => {
           [partId]: quantity
         }));
         
-        // ✅ 즉시 서버에 저장
-        try {
-          const { inventoryService } = await import('../services/InventoryService');
-          const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-          await inventoryService.updateInventory(currentInventory);
-          setSyncStatus('✅ 서버 저장 완료');
-        } catch (serverError) {
-          console.error('서버 저장 실패:', serverError);
+        // ✅ 즉시 서버에 저장 (재시도 로직 포함)
+        const { inventoryService } = await import('../services/InventoryService');
+        const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+        
+        let serverSaveSuccess = false;
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            await inventoryService.updateInventory(currentInventory);
+            serverSaveSuccess = true;
+            setSyncStatus('✅ 서버 저장 완료');
+            console.log(`✅ 서버 저장 성공 (시도 ${attempt}/${maxRetries})`);
+            break;
+          } catch (serverError) {
+            console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, serverError);
+            
+            if (attempt < maxRetries) {
+              // Exponential backoff: 1초, 2초, 4초
+              const waitTime = Math.pow(2, attempt - 1) * 1000;
+              setSyncStatus(`🔄 재시도 중... (${attempt}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+            } else {
+              // 최종 실패
+              setSyncStatus('❌ 서버 저장 실패 (재시도 초과)');
+              console.error('❌ 서버 저장 최종 실패:', serverError);
+            }
+          }
+        }
+        
+        if (!serverSaveSuccess) {
           setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
         }
         
@@ -604,14 +627,37 @@ useEffect(() => {
           [partId]: newQty
         }));
         
-        // ✅ 즉시 서버에 저장
-        try {
-          const { inventoryService } = await import('../services/InventoryService');
-          const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-          await inventoryService.updateInventory(currentInventory);
-          setSyncStatus('✅ 서버 저장 완료');
-        } catch (serverError) {
-          console.error('서버 저장 실패:', serverError);
+        // ✅ 즉시 서버에 저장 (재시도 로직 포함)
+        const { inventoryService } = await import('../services/InventoryService');
+        const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+        
+        let serverSaveSuccess = false;
+        const maxRetries = 3;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            await inventoryService.updateInventory(currentInventory);
+            serverSaveSuccess = true;
+            setSyncStatus('✅ 서버 저장 완료');
+            console.log(`✅ 서버 저장 성공 (시도 ${attempt}/${maxRetries})`);
+            break;
+          } catch (serverError) {
+            console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, serverError);
+            
+            if (attempt < maxRetries) {
+              // Exponential backoff: 1초, 2초, 4초
+              const waitTime = Math.pow(2, attempt - 1) * 1000;
+              setSyncStatus(`🔄 재시도 중... (${attempt}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+            } else {
+              // 최종 실패
+              setSyncStatus('❌ 서버 저장 실패 (재시도 초과)');
+              console.error('❌ 서버 저장 최종 실패:', serverError);
+            }
+          }
+        }
+        
+        if (!serverSaveSuccess) {
           setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
         }
         
@@ -797,14 +843,37 @@ useEffect(() => {
         }
       }
       
-      // ✅ 일괄 작업 후 즉시 서버에 저장
-      try {
-        const { inventoryService } = await import('../services/InventoryService');
-        const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-        await inventoryService.updateInventory(currentInventory);
-        setSyncStatus('✅ 서버 저장 완료');
-      } catch (serverError) {
-        console.error('서버 저장 실패:', serverError);
+      // ✅ 일괄 작업 후 즉시 서버에 저장 (재시도 로직 포함)
+      const { inventoryService } = await import('../services/InventoryService');
+      const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+      
+      let serverSaveSuccess = false;
+      const maxRetries = 3;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await inventoryService.updateInventory(currentInventory);
+          serverSaveSuccess = true;
+          setSyncStatus('✅ 서버 저장 완료');
+          console.log(`✅ 서버 저장 성공 (시도 ${attempt}/${maxRetries})`);
+          break;
+        } catch (serverError) {
+          console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, serverError);
+          
+          if (attempt < maxRetries) {
+            // Exponential backoff: 1초, 2초, 4초
+            const waitTime = Math.pow(2, attempt - 1) * 1000;
+            setSyncStatus(`🔄 재시도 중... (${attempt}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+          } else {
+            // 최종 실패
+            setSyncStatus('❌ 서버 저장 실패 (재시도 초과)');
+            console.error('❌ 서버 저장 최종 실패:', serverError);
+          }
+        }
+      }
+      
+      if (!serverSaveSuccess) {
         setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
       }
       
@@ -1137,21 +1206,45 @@ useEffect(() => {
             선택된 {selectedItems.size}개에 적용
           </button>
           
-          {/* ✅ 적용 버튼 추가 - 모든 변경사항을 서버에 저장 */}
+          {/* ✅ 적용 버튼 추가 - 모든 변경사항을 서버에 저장 (재시도 로직 포함) */}
           <button
             onClick={async () => {
               setSyncStatus('📤 서버 저장 중...');
-              try {
-                const { inventoryService } = await import('../services/InventoryService');
-                const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-                await inventoryService.updateInventory(currentInventory);
-                setSyncStatus('✅ 서버 저장 완료');
-                setLastSyncTime(new Date());
-                alert('모든 재고 변경사항이 서버에 저장되었습니다.');
-              } catch (error) {
-                console.error('서버 저장 실패:', error);
+              
+              const { inventoryService } = await import('../services/InventoryService');
+              const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+              
+              let serverSaveSuccess = false;
+              const maxRetries = 3;
+              
+              for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                  await inventoryService.updateInventory(currentInventory);
+                  serverSaveSuccess = true;
+                  setSyncStatus('✅ 서버 저장 완료');
+                  setLastSyncTime(new Date());
+                  console.log(`✅ 서버 저장 성공 (시도 ${attempt}/${maxRetries})`);
+                  alert('모든 재고 변경사항이 서버에 저장되었습니다.');
+                  break;
+                } catch (error) {
+                  console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, error);
+                  
+                  if (attempt < maxRetries) {
+                    // Exponential backoff: 1초, 2초, 4초
+                    const waitTime = Math.pow(2, attempt - 1) * 1000;
+                    setSyncStatus(`🔄 재시도 중... (${attempt}/${maxRetries})`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                  } else {
+                    // 최종 실패
+                    setSyncStatus('❌ 서버 저장 실패 (재시도 초과)');
+                    console.error('❌ 서버 저장 최종 실패:', error);
+                    alert('서버 저장 중 오류가 발생했습니다: ' + error.message + '\n재시도 횟수를 초과했습니다.');
+                  }
+                }
+              }
+              
+              if (!serverSaveSuccess) {
                 setSyncStatus('❌ 서버 저장 실패');
-                alert('서버 저장 중 오류가 발생했습니다: ' + error.message);
               }
             }}
             className="bulk-apply-btn"
