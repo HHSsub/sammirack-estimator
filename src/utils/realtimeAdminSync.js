@@ -27,10 +27,13 @@ class RealtimeAdminSync {
     this.isOnline = navigator.onLine;
     this.maxRetries = 3;
     
-    // Debounce용 변수
+    // ✅ Debounce용 변수 (Gist rate limit 고려)
+    // GitHub Gist API: 인증된 사용자 시간당 5,000 요청
+    // 초당 약 1.4 요청 안전, 409 에러 방지를 위해 최소 0.8초 간격 권장
     this.saveTimeout = null;
     this.lastSaveTime = 0;
-    this.minSaveInterval = 5000; // 5초
+    this.pendingSave = false; // 저장 대기 중인지 추적
+    this.debounceDelay = 1000; // 1초 debounce (Gist rate limit 고려)
     
     // 403 에러 추적
     this.consecutiveFailures = 0;
@@ -142,6 +145,7 @@ class RealtimeAdminSync {
   }
 
   // Debounced 저장 (10초 모았다가 한 번만)
+  // ✅ 개선된 debounce 로직 (Gist rate limit 고려)
   debouncedSave() {
     // 차단 중이면 저장 예약만 하고 종료
     const now = Date.now();
@@ -157,28 +161,33 @@ class RealtimeAdminSync {
       return;
     }
 
-    // 기존 타이머 취소
+    // 기존 타이머 취소 (새 요청이 오면 타이머 리셋)
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
     }
 
-    console.log('📥 저장 예약 (10초 후 실행)');
+    // 저장 대기 상태로 표시
+    this.pendingSave = true;
+    console.log(`📥 저장 요청 수신 (${this.debounceDelay}ms 후 일괄 처리)`);
 
-    // 10초 후 저장 실행
+    // debounceDelay 후 저장 실행 (새 요청이 오면 타이머 리셋됨)
     this.saveTimeout = setTimeout(async () => {
-      const now = Date.now();
-      const timeSinceLastSave = now - this.lastSaveTime;
-
-      // 마지막 저장 후 5초 이상 경과했는지 확인
-      if (timeSinceLastSave < this.minSaveInterval) {
-        const waitTime = this.minSaveInterval - timeSinceLastSave;
-        console.log(`⏳ 너무 빠른 저장 요청. ${Math.ceil(waitTime/1000)}초 후 재시도`);
-        setTimeout(() => this.executeSave(), waitTime);
+      // 마지막 저장 후 최소 간격 확인 (Gist rate limit 방지)
+      const timeSinceLastSave = Date.now() - this.lastSaveTime;
+      const minInterval = 800; // 최소 0.8초 간격 (Gist rate limit 고려)
+      
+      if (timeSinceLastSave < minInterval) {
+        const waitTime = minInterval - timeSinceLastSave;
+        console.log(`⏳ Rate limit 방지: ${Math.ceil(waitTime)}ms 추가 대기`);
+        this.saveTimeout = setTimeout(() => this.executeSave(), waitTime);
         return;
       }
 
       await this.executeSave();
-    }, 10000);
+      this.pendingSave = false;
+      this.saveTimeout = null;
+    }, this.debounceDelay);
   }
 
   // 실제 저장 실행 (Exponential Backoff 강화)

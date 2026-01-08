@@ -7,7 +7,8 @@ import {
   generateInventoryPartId,  // ✅ 추가
   generateRackOptionId,
   loadAdminPrices,
-  getEffectivePrice
+  getEffectivePrice,
+  mapExtraToBaseInventoryPart  // ✅ 기타추가옵션 매핑
 } from '../utils/unifiedPriceManager';
 import { 
   saveInventorySync, 
@@ -74,13 +75,59 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
       console.log(`  📦 BOM 항목 수: ${item.bom.length}`);
       
       item.bom.forEach((bomItem, bomIndex) => {
-        // ✅ 재고용 Part ID 사용 (색상 포함)
-        const inventoryPartId = generateInventoryPartId({
-          rackType: bomItem.rackType || '',
-          name: bomItem.name || '',
-          specification: bomItem.specification || '',
-          colorWeight: bomItem.colorWeight || ''
-        });
+        // ✅ 재고용 Part ID 생성 (기타추가옵션 매핑 고려)
+        let inventoryPartId;
+        
+        // 1. BOM 아이템에 이미 inventoryPartId가 있으면 우선 사용
+        if (bomItem.inventoryPartId) {
+          inventoryPartId = bomItem.inventoryPartId;
+          console.log(`    🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
+        } else {
+          // 2. 기타추가옵션인지 확인 (스텐랙의 경우)
+          const rackType = bomItem.rackType || '';
+          const name = bomItem.name || '';
+          const spec = bomItem.specification || '';
+          
+          // 스텐랙 기타추가옵션 extraOptionId 생성
+          let extraOptionId = null;
+          if (rackType === '스텐랙') {
+            const sizeMatch = name.match(/(\d+)x(\d+)/);
+            // 기둥: "75(4개 1set)", "120(4개 1set)" 등
+            const heightMatch = name.match(/^(\d+)/);
+            if (sizeMatch) {
+              // 선반: 스텐랙-50x120선반-
+              extraOptionId = `${rackType}-${sizeMatch[0]}선반-`;
+            } else if (heightMatch && (name.includes('기둥') || name.includes('set') || name.includes('('))) {
+              // 기둥: 스텐랙-75기둥- 또는 스텐랙-75(4개 1set)-
+              extraOptionId = `${rackType}-${heightMatch[1]}기둥-`;
+            }
+          }
+          
+          // 3. 기타추가옵션 매핑 확인
+          if (extraOptionId) {
+            const mappedId = mapExtraToBaseInventoryPart(extraOptionId);
+            if (mappedId && mappedId !== extraOptionId) {
+              inventoryPartId = mappedId;
+              console.log(`    🔗 기타추가옵션 매핑: "${extraOptionId}" → "${inventoryPartId}"`);
+            } else {
+              // 매핑 없으면 일반 생성
+              inventoryPartId = generateInventoryPartId({
+                rackType: rackType,
+                name: name,
+                specification: spec,
+                colorWeight: bomItem.colorWeight || ''
+              });
+            }
+          } else {
+            // 일반 부품은 그대로 생성
+            inventoryPartId = generateInventoryPartId({
+              rackType: rackType,
+              name: name,
+              specification: spec,
+              colorWeight: bomItem.colorWeight || ''
+            });
+          }
+        }
         
         const requiredQty = Number(bomItem.quantity) || 0;
         const currentStock = Number(serverInventory[inventoryPartId]) || 0;
