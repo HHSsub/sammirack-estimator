@@ -916,10 +916,11 @@ const makeExtraOptionBOM = () => {
                   bomColorWeight = '블루(기둥)+오렌지(가로대)(볼트식)600kg';
                 } else if (bomName.includes('빔') || bomName.includes('로드빔')) {
                   bomName = '로드빔';
-                  // specification에서 숫자만 추출 (예: "사이즈 80x108 600kg" → "108600kg")
-                  const rodBeamMatch = bomSpec.match(/사이즈\s*(\d+)x\d+\s*(\d+kg)/i);
+                  // specification에서 깊이(depth)와 무게 추출 (예: "사이즈 80x108 600kg" → "108600kg")
+                  // ⚠️ 중요: 로드빔은 깊이(depth, 두 번째 숫자)를 사용해야 함
+                  const rodBeamMatch = bomSpec.match(/사이즈\s*\d+x(\d+)\s*(\d+kg)/i);
                   if (rodBeamMatch) {
-                    bomSpec = `${rodBeamMatch[1]}${rodBeamMatch[2]}`;
+                    bomSpec = `${rodBeamMatch[1]}${rodBeamMatch[2]}`; // 깊이 + 무게
                   }
                   // ⚠️ 중요: 추가상품6 로드빔은 블루+오렌지 색상
                   bomColorWeight = '블루(기둥.선반)+오렌지(빔)600kg';
@@ -1202,9 +1203,10 @@ const makeExtraOptionBOM = () => {
               // 추가상품5 (450kg 블루+오렌지 기둥 및 선반추가)
               // ⚠️ 중요: 추가상품5는 매핑 테이블에 없으므로 서버에 존재하는 블루+오렌지 ID 직접 사용
               // 서버 ID 형식: 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x108450kg
-              const sizeMatch = cleanName.match(/(\d+)x(\d+)/);
+              const sizeMatch = cleanName.match(/(\d+)x(\d+)/) || opt.name.match(/(\d+)x(\d+)/);
               if (sizeMatch) {
-                if (cleanName.includes('선반')) {
+                // opt.name에서 직접 "선반" 또는 "기둥" 확인 (cleanName은 괄호 제거로 인해 정보 손실 가능)
+                if (opt.name.includes('선반') || cleanName.includes('선반')) {
                   // 서버에 존재하는 ID 직접 생성 (generateInventoryPartId 사용하지 않고 문자열 조합)
                   finalSpecification = `사이즈${sizeMatch[1]}x${sizeMatch[2]}450kg`;
                   finalColorWeight = '블루(기둥)+오렌지(가로대)(볼트식)450kg';
@@ -1245,9 +1247,9 @@ const makeExtraOptionBOM = () => {
                   
                   console.log(`    ✅ 추가상품5 블루+오렌지 선반: partId="${directPartId}", inventoryPartId="${directInventoryPartId}" (${effectivePrice}원)`);
                   return; // 여기서 종료
-                } else if (cleanName.includes('기둥')) {
+                } else if (opt.name.includes('기둥') || cleanName.includes('기둥')) {
                   // 서버에 존재하는 ID 직접 생성
-                  const heightMatch = cleanName.match(/(\d+)x(\d+)/);
+                  const heightMatch = cleanName.match(/(\d+)x(\d+)/) || opt.name.match(/(\d+)x(\d+)/);
                   if (heightMatch) {
                     finalSpecification = `높이${heightMatch[2]}450kg`;
                     finalColorWeight = '블루(기둥)+오렌지(가로대)(볼트식)450kg';
