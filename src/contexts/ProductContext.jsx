@@ -2161,11 +2161,20 @@ const makeExtraOptionBOM = () => {
         if (item.partId) {
           key = item.partId;
         } else {
-          // partId가 없으면 생성 (specification에서 WxD 추출)
+          // specification이 없거나 잘못된 경우 size에서 추출
+          let spec = item.specification || '';
+          if (!spec || !spec.includes('x')) {
+            // size에서 사이즈 추출 (예: "43x90" → "사이즈 43x90")
+            const size = item.size || '';
+            if (size && size.includes('x')) {
+              spec = `사이즈 ${size}`;
+            }
+          }
+          // partId 생성 (WxD 모두 포함)
           const partId = generatePartId({
             rackType: item.rackType,
             name: item.name,
-            specification: item.specification || ''
+            specification: spec
           });
           key = partId;
         }
@@ -2199,11 +2208,20 @@ const makeExtraOptionBOM = () => {
             if (bomItem.partId) {
               key = bomItem.partId;
             } else {
-              // partId가 없으면 생성 (specification에서 WxD 추출)
+              // specification이 없거나 잘못된 경우 size에서 추출
+              let spec = bomItem.specification || '';
+              if (!spec || !spec.includes('x')) {
+                // size에서 사이즈 추출 (예: "43x90" → "사이즈 43x90")
+                const size = bomItem.size || '';
+                if (size && size.includes('x')) {
+                  spec = `사이즈 ${size}`;
+                }
+              }
+              // partId 생성 (WxD 모두 포함)
               const partId = generatePartId({
                 rackType: bomItem.rackType,
                 name: bomItem.name,
-                specification: bomItem.specification || ''
+                specification: spec
               });
               key = partId;
             }
