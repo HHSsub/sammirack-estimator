@@ -278,7 +278,7 @@ const InventoryManager = ({ currentUser }) => {
   
   // 일괄 작업 관련
   const [selectedItems, setSelectedItems] = useState(new Set());
-  const [bulkAction, setBulkAction] = useState('');
+  const [bulkAction, setBulkAction] = useState('inventory'); // ✅ 기본값을 'inventory'로 설정
   const [bulkValue, setBulkValue] = useState('');
 
   // 관리자가 아닌 경우 접근 차단
@@ -489,7 +489,7 @@ useEffect(() => {
     }
   };
 
-  // ✅ 수정: 재고 수량 변경 (실시간 동기화)
+  // ✅ 수정: 재고 수량 변경 (즉시 서버 저장)
   const handleInventoryChange = async (material, newQuantity) => {
     // ✅ CSV partId 그대로 사용
     const partId = material.partId;
@@ -503,6 +503,7 @@ useEffect(() => {
         role: currentUser?.role || 'admin'
       };
   
+      // ✅ 로컬스토리지에 먼저 저장
       const success = await saveInventorySync(partId, quantity, userInfo);
       
       if (success) {
@@ -511,7 +512,17 @@ useEffect(() => {
           [partId]: quantity
         }));
         
-        setSyncStatus('✅ 모든 PC 동기화됨');
+        // ✅ 즉시 서버에 저장
+        try {
+          const { inventoryService } = await import('../services/InventoryService');
+          const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+          await inventoryService.updateInventory(currentInventory);
+          setSyncStatus('✅ 서버 저장 완료');
+        } catch (serverError) {
+          console.error('서버 저장 실패:', serverError);
+          setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
+        }
+        
         setLastSyncTime(new Date());
       } else {
         setSyncStatus('❌ 저장 실패');
@@ -522,7 +533,7 @@ useEffect(() => {
     }
   };
 
-  // ✅ 빠른 재고 조정 함수 (복원)
+  // ✅ 빠른 재고 조정 함수 (즉시 서버 저장)
   const adjustInventory = async (partId, adjustment) => {
     const currentQty = inventory[partId] || 0;
     const newQty = Math.max(0, currentQty + adjustment);
@@ -535,6 +546,7 @@ useEffect(() => {
         role: currentUser?.role || 'admin'
       };
 
+      // ✅ 로컬스토리지에 먼저 저장
       const success = await saveInventorySync(partId, newQty, userInfo);
       
       if (success) {
@@ -543,7 +555,17 @@ useEffect(() => {
           [partId]: newQty
         }));
         
-        setSyncStatus('✅ 동기화됨');
+        // ✅ 즉시 서버에 저장
+        try {
+          const { inventoryService } = await import('../services/InventoryService');
+          const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+          await inventoryService.updateInventory(currentInventory);
+          setSyncStatus('✅ 서버 저장 완료');
+        } catch (serverError) {
+          console.error('서버 저장 실패:', serverError);
+          setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
+        }
+        
         setLastSyncTime(new Date());
       } else {
         setSyncStatus('❌ 저장 실패');
@@ -685,7 +707,7 @@ useEffect(() => {
     });
   };
 
-  // 일괄 작업 처리
+  // 일괄 작업 처리 (즉시 서버 저장)
   const handleBulkAction = async () => {
     if (!bulkAction || selectedItems.size === 0) {
       alert('작업을 선택하고 항목을 체크해주세요.');
@@ -700,6 +722,7 @@ useEffect(() => {
 
     try {
       setIsLoading(true);
+      setSyncStatus('📤 저장 중...');
       
       for (const partId of selectedItems) {
         if (bulkAction === 'inventory') {
@@ -708,14 +731,25 @@ useEffect(() => {
         }
       }
       
+      // ✅ 일괄 작업 후 즉시 서버에 저장
+      try {
+        const { inventoryService } = await import('../services/InventoryService');
+        const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+        await inventoryService.updateInventory(currentInventory);
+        setSyncStatus('✅ 서버 저장 완료');
+      } catch (serverError) {
+        console.error('서버 저장 실패:', serverError);
+        setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
+      }
+      
       alert(`${selectedCount}개 항목의 ${bulkAction === 'inventory' ? '재고' : '단가'}가 업데이트되었습니다.`);
       setSelectedItems(new Set());
-      setBulkAction('');
-      setBulkValue('');
+      setBulkValue(''); // ✅ bulkAction은 유지 (기본값이므로)
       
     } catch (error) {
       console.error('일괄 작업 실패:', error);
       alert('일괄 작업 중 오류가 발생했습니다.');
+      setSyncStatus('❌ 오류');
     } finally {
       setIsLoading(false);
     }
@@ -1018,19 +1052,16 @@ useEffect(() => {
             onChange={(e) => setBulkAction(e.target.value)}
             className="bulk-action-select"
           >
-            <option value="">일괄 작업 선택</option>
             <option value="inventory">재고 수량 설정</option>
           </select>
           
-          {bulkAction && (
-            <input
-              type="number"
-              value={bulkValue}
-              onChange={(e) => setBulkValue(e.target.value)}
-              placeholder="설정할 값"
-              className="bulk-value-input"
-            />
-          )}
+          <input
+            type="number"
+            value={bulkValue}
+            onChange={(e) => setBulkValue(e.target.value)}
+            placeholder="설정할 값"
+            className="bulk-value-input"
+          />
           
           <button
             onClick={handleBulkAction}
@@ -1038,6 +1069,33 @@ useEffect(() => {
             className="bulk-apply-btn"
           >
             선택된 {selectedItems.size}개에 적용
+          </button>
+          
+          {/* ✅ 적용 버튼 추가 - 모든 변경사항을 서버에 저장 */}
+          <button
+            onClick={async () => {
+              setSyncStatus('📤 서버 저장 중...');
+              try {
+                const { inventoryService } = await import('../services/InventoryService');
+                const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+                await inventoryService.updateInventory(currentInventory);
+                setSyncStatus('✅ 서버 저장 완료');
+                setLastSyncTime(new Date());
+                alert('모든 재고 변경사항이 서버에 저장되었습니다.');
+              } catch (error) {
+                console.error('서버 저장 실패:', error);
+                setSyncStatus('❌ 서버 저장 실패');
+                alert('서버 저장 중 오류가 발생했습니다: ' + error.message);
+              }
+            }}
+            className="bulk-apply-btn"
+            style={{ 
+              backgroundColor: '#007bff', 
+              marginLeft: '10px',
+              fontWeight: 'bold'
+            }}
+          >
+            적용
           </button>
         </div>
       </div>
