@@ -356,7 +356,7 @@ img[alt="도장"] {
   background: #28a745 !important;
   color: #fff !important;
   border: none !important;
-  padding: 6px 10px !important;
+  padding: 10px 16px !important;
   border-radius: 5px !important;
   font-size: 14px !important;
   cursor: pointer !important;
@@ -502,7 +502,7 @@ button.add-material-btn {
   background: #28a745 !important;
   color: #fff !important;
   border: none !important;
-  padding: 10px 20px !important;
+  padding: 10px 16px !important;
   border-radius: 5px !important;
   font-size: 14px !important;
   cursor: pointer !important;
