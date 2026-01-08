@@ -1831,12 +1831,13 @@ const makeExtraOptionBOM = () => {
       
       const list = [
         { rackType: selectedType, name: "기둥", specification: `높이 ${heightValue}`, quantity: 4 * q, unitPrice: 0, totalPrice: 0 },
-        { rackType: selectedType, name: "선반", specification: `사이즈 ${sz}`, quantity: (parseInt((selectedOptions.level || "").replace(/[^\d]/g, "")) || 0) * q, unitPrice: 0, totalPrice: 0 },
+        { rackType: selectedType, size: sz, name: "선반", specification: `사이즈 ${sz}`, quantity: (parseInt((selectedOptions.level || "").replace(/[^\d]/g, "")) || 0) * q, unitPrice: 0, totalPrice: 0 },
         ...makeExtraOptionBOM(),
       ].map(r => {
         const specRow = ensureSpecification(r, { size: sz, height: heightValue, ...parseWD(sz) });
         // ⚠️ 중요: 스텐랙 선반은 가격/표시용 partId를 명시적으로 생성 (WxD 모두 포함)
         if (specRow.rackType === '스텐랙' && specRow.name === '선반') {
+          // size 속성 보장 (cartBOMView에서 키 생성 시 필요)
           const partId = generatePartId({
             rackType: specRow.rackType,
             name: specRow.name,
@@ -1844,6 +1845,7 @@ const makeExtraOptionBOM = () => {
           });
           return {
             ...specRow,
+            size: specRow.size || sz, // size 속성 보장
             partId: partId
           };
         }
@@ -2161,13 +2163,22 @@ const makeExtraOptionBOM = () => {
         if (item.partId) {
           key = item.partId;
         } else {
-          // specification이 없거나 잘못된 경우 size에서 추출
+          // specification 또는 size에서 사이즈 추출
           let spec = item.specification || '';
-          if (!spec || !spec.includes('x')) {
+          // specification이 "사이즈 43x90" 형식이면 그대로 사용
+          if (spec && spec.includes('x')) {
+            // 이미 올바른 형식
+          } else {
             // size에서 사이즈 추출 (예: "43x90" → "사이즈 43x90")
             const size = item.size || '';
             if (size && size.includes('x')) {
               spec = `사이즈 ${size}`;
+            } else if (spec) {
+              // specification에 "사이즈"만 있고 사이즈가 없으면 size 사용
+              const sizeMatch = size.match(/(\d+x\d+)/);
+              if (sizeMatch) {
+                spec = `사이즈 ${sizeMatch[1]}`;
+              }
             }
           }
           // partId 생성 (WxD 모두 포함)
@@ -2208,13 +2219,22 @@ const makeExtraOptionBOM = () => {
             if (bomItem.partId) {
               key = bomItem.partId;
             } else {
-              // specification이 없거나 잘못된 경우 size에서 추출
+              // specification 또는 size에서 사이즈 추출
               let spec = bomItem.specification || '';
-              if (!spec || !spec.includes('x')) {
+              // specification이 "사이즈 43x90" 형식이면 그대로 사용
+              if (spec && spec.includes('x')) {
+                // 이미 올바른 형식
+              } else {
                 // size에서 사이즈 추출 (예: "43x90" → "사이즈 43x90")
                 const size = bomItem.size || '';
                 if (size && size.includes('x')) {
                   spec = `사이즈 ${size}`;
+                } else if (spec) {
+                  // specification에 "사이즈"만 있고 사이즈가 없으면 size 사용
+                  const sizeMatch = size.match(/(\d+x\d+)/);
+                  if (sizeMatch) {
+                    spec = `사이즈 ${sizeMatch[1]}`;
+                  }
                 }
               }
               // partId 생성 (WxD 모두 포함)
