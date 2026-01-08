@@ -964,7 +964,7 @@ const checkInventoryAvailability = async (cartItems) => {
             position: 'fixed',
             top: '10px',
             left: '10px',
-            padding: '10px 18px',
+            padding: '6px 10px',
             backgroundColor: '#6c757d',
             color: 'white',
             border: 'none',
