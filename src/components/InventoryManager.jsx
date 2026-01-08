@@ -1111,6 +1111,14 @@ useEffect(() => {
       })
     : sortedRackTypes;
 
+  // ✅ 재고관리 탭에서만 표시용 랙타입 이름 변환 (파렛트랙 → 파렛트랙구형)
+  const getDisplayRackTypeName = (rackType) => {
+    if (rackType === '파렛트랙') {
+      return '파렛트랙구형';
+    }
+    return rackType;
+  };
+
   // ✅ 수정: 재고 수량 가져오기 (CSV partId 그대로 사용)
   const getInventoryQuantity = (material) => {
     // ✅ CSV partId를 그대로 사용 (inventory.json의 키와 일치)
@@ -1199,7 +1207,7 @@ useEffect(() => {
           >
             <option value="">모든 랙타입</option>
             {finalRackTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
+              <option key={type} value={type}>{getDisplayRackTypeName(type)}</option>
             ))}
           </select>
         </div>
@@ -1242,7 +1250,7 @@ useEffect(() => {
                 fontWeight: selectedRackType === type ? 'bold' : 'normal'
               }}
             >
-              {type}
+              {getDisplayRackTypeName(type)}
             </button>
           ))}
         </div>
