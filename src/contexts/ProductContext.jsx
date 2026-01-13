@@ -2213,7 +2213,7 @@ const makeExtraOptionBOM = () => {
               // 하이랙 기둥: W×급으로 그룹핑
               const match = modifiedSpec.match(/사이즈\s+(\d+)x\d+\s+(높이\s+\d+\s+\d+kg)/);
               if (match) {
-                modifiedSpec = `사이즈 ${match[1]}x급 ${match[2]}`;
+                modifiedSpec = `사이즈 ${match[1]}x ${match[2]}`;
               }
               key = generateInventoryPartId({ ...bomItem, specification: modifiedSpec });
             } else {
