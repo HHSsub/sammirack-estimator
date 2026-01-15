@@ -197,11 +197,6 @@ export const convertDOMToPDFBase64 = async (element) => {
         box-sizing: border-box !important;
       }
       
-      /* ✅ info-table 전체 너비 확장 */
-      .info-table {
-        width: 100% !important;
-        table-layout: auto !important;  /* 자동 레이아웃으로 공간 활용 */
-      }
 
       /* -------------------------------------------------
          9. 메모 영역
