@@ -230,7 +230,7 @@ const PurchaseOrderForm = () => {
                 quantity: 1,
                 unitPrice: optPrice,
                 totalPrice: optPrice,
-                note: '기타추가옵션'
+                note: '추가옵션'
               });
             }
           });
@@ -249,7 +249,7 @@ const PurchaseOrderForm = () => {
                 quantity: 1,
                 unitPrice: mat.price || 0,
                 totalPrice: mat.price || 0,
-                note: '기타추가옵션'
+                note: '추가옵션'
               });
             }
           });
@@ -1141,7 +1141,7 @@ const checkInventoryAvailability = async (cartItems) => {
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <input type="text" value={it.name} onChange={e=>updateItem(idx,'name',e.target.value)} placeholder="품명" style={{ flex: 1 }} />
-                  {it.note === '기타추가옵션' && (
+                  {it.note === '추가옵션' && (
                     <span style={{ 
                       fontSize: '10px',
                       color: '#17a2b8',
