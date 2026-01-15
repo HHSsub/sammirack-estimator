@@ -135,6 +135,43 @@ export const generateHighRackDisplayNameFromCleanName = (cleanName, colorWeight)
 };
 
 /**
+ * 하이랙 원자재명세서 부품명 생성 (baseName과 finalColorWeight 기반 - ProductContext.jsx에서 사용)
+ * @param {string} baseName - 기본 부품명 (예: "기둥", "선반", "로드빔")
+ * @param {string} finalColorWeight - colorWeight 문자열 (예: "메트그레이(볼트식)270kg")
+ * @returns {string} 표시명 (예: "메트그레이 기둥", "블루 기둥", "오렌지 선반")
+ */
+export const generateHighRackDisplayNameFromBaseName = (baseName, finalColorWeight) => {
+  // 하이랙: 색상 정보를 포함하여 "메트그레이 기둥", "블루 기둥", "오렌지 선반" 형식으로 생성
+  if (baseName) {
+    // colorWeight에서 색상 추출
+    let colorText = '';
+    if (finalColorWeight) {
+      if (finalColorWeight.includes('메트그레이') || finalColorWeight.includes('매트그레이')) {
+        colorText = '메트그레이';
+      } else if (finalColorWeight.includes('블루') && finalColorWeight.includes('오렌지')) {
+        // 블루+오렌지 조합인 경우 부품 종류에 따라 색상 결정
+        if (baseName === '기둥') {
+          colorText = '블루';
+        } else if (baseName === '선반' || baseName === '로드빔') {
+          colorText = '오렌지';
+        }
+      } else if (finalColorWeight.includes('블루')) {
+        colorText = '블루';
+      } else if (finalColorWeight.includes('오렌지')) {
+        colorText = '오렌지';
+      }
+    }
+    
+    if (colorText) {
+      return `${colorText} ${baseName}`;
+    } else {
+      return baseName;
+    }
+  }
+  return '';
+};
+
+/**
  * BOM 표시명 생성 (통합 함수)
  * @param {string} rackType - 랙 타입 ("스텐랙", "하이랙" 등)
  * @param {Object} opt - 추가옵션 객체

@@ -12,7 +12,7 @@ import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
-import { getExtraOptionDisplayInfo } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
+import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -224,8 +224,16 @@ const DeliveryNoteForm = () => {
             ? adminPrice
             : (Number(m.unitPrice) || 0);
           const quantity = Number(m.quantity) || 0;
+          
+          // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
+          let displayName = m.name;
+          if (m.rackType === '하이랙' && m.colorWeight) {
+            const partName = extractPartNameFromCleanName(m.name) || m.name;
+            displayName = generateHighRackDisplayName(partName, m.colorWeight);
+          }
+          
           return {
-            name: m.name,
+            name: displayName,
             rackType: m.rackType,
             specification: m.specification || '',
             quantity,
@@ -248,8 +256,15 @@ const DeliveryNoteForm = () => {
               const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
               const quantity = Number(bomItem.quantity) || 0;
               
+              // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
+              let displayName = bomItem.name;
+              if (bomItem.rackType === '하이랙' && bomItem.colorWeight) {
+                const partName = extractPartNameFromCleanName(bomItem.name) || bomItem.name;
+                displayName = generateHighRackDisplayName(partName, bomItem.colorWeight);
+              }
+              
               bomMaterials.push({
-                name: bomItem.name,
+                name: displayName,
                 rackType: bomItem.rackType,
                 specification: bomItem.specification || '',
                 quantity,

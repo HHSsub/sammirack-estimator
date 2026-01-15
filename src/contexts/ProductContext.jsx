@@ -18,7 +18,9 @@ import {
   generateBOMDisplayName,
   removeColorFromPartName,
   getExtraOptionDisplayInfo,
-  generateHighRackDisplayName
+  generateHighRackDisplayName,
+  generateHighRackDisplayNameFromBaseName,
+  extractPartNameFromCleanName
 } from '../utils/bomDisplayNameUtils';
 
 const ProductContext = createContext();
@@ -1643,32 +1645,7 @@ const makeExtraOptionBOM = () => {
               }
             } else if (selectedType === '하이랙') {
               // 하이랙: 색상 정보를 포함하여 "메트그레이 기둥", "블루 기둥", "오렌지 선반" 형식으로 생성
-              if (baseName) {
-                // colorWeight에서 색상 추출
-                let colorText = '';
-                if (finalColorWeight) {
-                  if (finalColorWeight.includes('메트그레이') || finalColorWeight.includes('매트그레이')) {
-                    colorText = '메트그레이';
-                  } else if (finalColorWeight.includes('블루') && finalColorWeight.includes('오렌지')) {
-                    // 블루+오렌지 조합인 경우 부품 종류에 따라 색상 결정
-                    if (baseName === '기둥') {
-                      colorText = '블루';
-                    } else if (baseName === '선반' || baseName === '로드빔') {
-                      colorText = '오렌지';
-                    }
-                  } else if (finalColorWeight.includes('블루')) {
-                    colorText = '블루';
-                  } else if (finalColorWeight.includes('오렌지')) {
-                    colorText = '오렌지';
-                  }
-                }
-                
-                if (colorText) {
-                  bomDisplayName = `${colorText} ${baseName}`;
-                } else {
-                  bomDisplayName = baseName;
-                }
-              }
+              bomDisplayName = generateHighRackDisplayNameFromBaseName(baseName, finalColorWeight);
             }
             
             extraBOM.push({
@@ -1875,7 +1852,15 @@ const makeExtraOptionBOM = () => {
           totalPrice: 0
         },
         ...makeExtraOptionBOM(),
-      ].map(r => ensureSpecification(r, { size, height: heightValue, ...parseWD(size), weight: weightOnly }));
+      ].map(r => {
+        const specRow = ensureSpecification(r, { size, height: heightValue, ...parseWD(size), weight: weightOnly });
+        // ✅ 하이랙 부품의 경우 name에 색상 정보 포함
+        if (specRow.rackType === '하이랙' && specRow.colorWeight) {
+          const partName = specRow.name;
+          specRow.name = generateHighRackDisplayName(partName, specRow.colorWeight);
+        }
+        return specRow;
+      });
       const listWithAdminPrices = list.map(applyAdminEditPrice);
       return sortBOMByMaterialRule(listWithAdminPrices.filter(r => !/베이스볼트/.test(r.name)));
     }

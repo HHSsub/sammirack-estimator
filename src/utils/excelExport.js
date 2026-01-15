@@ -2,6 +2,7 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { deductInventoryOnPrint, showInventoryResult } from '../components/InventoryManager.jsx';
+import { generateHighRackDisplayName, extractPartNameFromCleanName } from './bomDisplayNameUtils';
 
 /** ---------------------------
  *  공통 유틸
@@ -429,10 +430,18 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   for (let i = 0; i < matRows; i++) {
     const r = 26 + i;
     const m = materials[i] || {};
+    
+    // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
+    let displayName = m.name || '';
+    if (m.rackType === '하이랙' && m.colorWeight) {
+      const partName = extractPartNameFromCleanName(m.name) || m.name;
+      displayName = generateHighRackDisplayName(partName, m.colorWeight);
+    }
+    
     ws.getCell(`A${r}`).value = i + 1;
     ws.mergeCells(`B${r}:D${r}`);
     ws.getCell(`E${r}`).value = m.specification ?? '';
-    ws.getCell(`B${r}`).value = m.name || '';
+    ws.getCell(`B${r}`).value = displayName;
     ws.getCell(`B${r}`).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' }; // ✅ 추가
     ws.getCell(`F${r}`).value = m.quantity ?? '';
     ws.mergeCells(`G${r}:J${r}`);

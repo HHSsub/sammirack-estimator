@@ -13,7 +13,7 @@ import FaxPreviewModal from './FaxPreviewModal';
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
-import { getExtraOptionDisplayInfo } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
+import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 
 // ✅ PROVIDER는 고정 (도장 이미지 포함)
 const PROVIDER = {
@@ -226,15 +226,24 @@ const EstimateForm = () => {
       
       const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
       
-      const bomMaterials = (totalBom || []).map(m => ({
-        name: m.name,
-        rackType: m.rackType,
-        specification: m.specification || '',
-        quantity: Number(m.quantity) || 0,
-        unitPrice: Number(m.unitPrice) || 0,
-        totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
-        note: m.note || ''
-      }));
+      const bomMaterials = (totalBom || []).map(m => {
+        // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
+        let displayName = m.name;
+        if (m.rackType === '하이랙' && m.colorWeight) {
+          const partName = extractPartNameFromCleanName(m.name) || m.name;
+          displayName = generateHighRackDisplayName(partName, m.colorWeight);
+        }
+        
+        return {
+          name: displayName,
+          rackType: m.rackType,
+          specification: m.specification || '',
+          quantity: Number(m.quantity) || 0,
+          unitPrice: Number(m.unitPrice) || 0,
+          totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
+          note: m.note || ''
+        };
+      });
       
       const allMaterials = [...bomMaterials, ...customMaterials];
       
