@@ -22,6 +22,7 @@ export const convertDOMToPDFBase64 = async (element) => {
 
   const originalDisplayValues = [];
   const forcedOriginalDisplayValues = [];
+  const originalTextareaHeights = [];
 
   // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일 (FAX 전용)
   const printStyleElement = document.createElement('style');
@@ -158,6 +159,8 @@ export const convertDOMToPDFBase64 = async (element) => {
         white-space: pre-wrap !important;
         word-wrap: break-word !important;
         overflow-wrap: break-word !important;
+        overflow: visible !important;  /* 내용이 잘리지 않도록 */
+        height: auto !important;  /* 내용에 맞게 자동 높이 조정 */
       }
 
       /* -------------------------------------------------
@@ -183,6 +186,7 @@ export const convertDOMToPDFBase64 = async (element) => {
         box-shadow: none !important;
         outline: none !important;
         font-size: 18px !important;  /* ✅ 추가 */
+        overflow: visible !important;  /* 내용이 잘리지 않도록 */
       }
 
       /* ✅ footer(회사명) 페이지 넘김 방지 */
@@ -225,6 +229,17 @@ export const convertDOMToPDFBase64 = async (element) => {
     forcedHiddenElements.forEach((el, index) => {
       forcedOriginalDisplayValues[index] = el.style.display;
       el.style.display = 'none';
+    });
+
+    // ✅ 2-2단계: 메모 textarea 높이 자동 조정 (내용에 맞게)
+    const memoTextareas = element.querySelectorAll('textarea.estimate-memo');
+    memoTextareas.forEach((textarea, index) => {
+      originalTextareaHeights[index] = textarea.style.height;
+      // scrollHeight를 읽어서 높이 설정 (내용 전체가 보이도록)
+      textarea.style.height = 'auto';
+      textarea.style.overflow = 'visible';
+      const scrollHeight = textarea.scrollHeight;
+      textarea.style.height = `${scrollHeight}px`;
     });
 
     // ✅ 3단계: 스타일 적용
@@ -292,6 +307,15 @@ export const convertDOMToPDFBase64 = async (element) => {
     });
     forcedHiddenElements.forEach((el, index) => {
       el.style.display = forcedOriginalDisplayValues[index];
+    });
+
+    // ✅ 9단계: 메모 textarea 높이 원래대로 복원
+    const memoTextareas = element.querySelectorAll('textarea.estimate-memo');
+    memoTextareas.forEach((textarea, index) => {
+      if (originalTextareaHeights[index] !== undefined) {
+        textarea.style.height = originalTextareaHeights[index];
+        textarea.style.overflow = '';
+      }
     });
   }
 };
