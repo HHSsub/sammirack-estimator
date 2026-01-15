@@ -170,19 +170,19 @@ export const convertDOMToPDFBase64 = async (element) => {
       
       /* ✅ info-table 칼럼 너비 고정 (A4 내 보장, 좌우 균형) */
       .info-table tr td:nth-child(1) {
-        width: 10% !important;  /* 좌측 라벨 */
+        width: 15% !important;  /* 좌측 라벨 (사업자등록번호 한 줄 표시) */
       }
       
       .info-table tr td:nth-child(2) {
-        width: 28% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보) */
+        width: 25% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보) */
       }
       
       .info-table tr td:nth-child(3) {
-        width: 12% !important;  /* 우측 라벨 */
+        width: 8% !important;  /* 우측 라벨 (축소) */
       }
       
       .info-table tr td:nth-child(4) {
-        width: 50% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
+        width: 52% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
         text-overflow: ellipsis !important;  /* 잘림 표시 */
