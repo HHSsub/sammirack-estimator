@@ -65,7 +65,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;
-          padding: 7mm 7mm 4mm !important;        /* 좌우 여백 동일하게 조정 */
+          padding: 4mm 4mm 4mm !important;        /* 좌우 여백 최소화 */
           margin: 0 !important;
           background: #fff !important;
           min-height: auto !important;
@@ -147,6 +147,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       .form-table .label {
         font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
+        white-space: nowrap !important;  /* 한 줄로 유지 */
       }
 
       /* -------------------------------------------------
