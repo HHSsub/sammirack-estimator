@@ -164,47 +164,28 @@ export const convertDOMToPDFBase64 = async (element) => {
       .info-table {
         width: 100% !important;
         max-width: 100% !important;
-        table-layout: auto !important;  /* 자동 레이아웃으로 컨텐츠 공간 확보 */
+        table-layout: fixed !important;  /* 고정 레이아웃으로 A4 내 보장 */
         box-sizing: border-box !important;
       }
       
-      /* ✅ 좌측 라벨 칼럼 너비 최소화 */
-      .info-table tr td.label:first-child,
-      .info-table tr td.label:nth-child(1) {
-        width: auto !important;
-        min-width: 80px !important;
-        max-width: 100px !important;  /* 라벨 너비 최소화 */
+      /* ✅ info-table 칼럼 너비 고정 (A4 내 보장) */
+      .info-table tr td:nth-child(1) {
+        width: 12% !important;  /* 좌측 라벨 */
       }
       
-      /* ✅ 좌측 정보 칼럼 너비 확대 */
-      .info-table tr td.label + td:not(.label) {
-        width: auto !important;
-        min-width: 150px !important;  /* 컨텐츠 공간 확보 */
+      .info-table tr td:nth-child(2) {
+        width: 20% !important;  /* 좌측 정보 */
       }
       
-      /* ✅ 우측 라벨 칼럼 너비 최소화 */
-      .info-table tr td.label + td + td.label {
-        width: auto !important;
-        min-width: 80px !important;
-        max-width: 100px !important;  /* 라벨 너비 최소화 */
+      .info-table tr td:nth-child(3) {
+        width: 12% !important;  /* 우측 라벨 */
       }
       
-      /* ✅ 우측 정보 칼럼 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, A4 내 보장 */
-      .info-table tr td.label + td + td + td:not(.label),
-      .info-table tr td:nth-child(4):not(.label) {
-        width: auto !important;
-        max-width: 35% !important;  /* A4 내 보장 */
+      .info-table tr td:nth-child(4) {
+        width: 56% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
         text-overflow: ellipsis !important;  /* 잘림 표시 */
-        box-sizing: border-box !important;
-      }
-      
-      /* ✅ info-table A4 벗어남 방지 */
-      .info-table {
-        max-width: 100% !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
       }
       
       /* ✅ 모든 테이블 너비 확장 (A4 내 보장) */
@@ -232,22 +213,24 @@ export const convertDOMToPDFBase64 = async (element) => {
         width: 30% !important;  /* 부품명 */
       }
       
+      .bom-table th:nth-child(2),
+      .bom-table td:nth-child(2) {
+        width: 32% !important;  /* 부품명 (가장 긴 내용) */
+      }
+      
       .bom-table th:nth-child(3),
       .bom-table td:nth-child(3) {
-        width: 50% !important;  /* 규격 칼럼 확대 */
-        min-width: 50% !important;
+        width: 38% !important;  /* 규격 칼럼 - 경미하게 증가 (원래 30%에서 8% 증가) */
       }
       
       .bom-table th:nth-child(4),
       .bom-table td:nth-child(4) {
-        width: 8% !important;  /* 수량 칼럼 축소 */
-        min-width: 8% !important;
+        width: 10% !important;  /* 수량 칼럼 - 경미하게 축소 */
       }
       
       .bom-table th:nth-child(7),
       .bom-table td:nth-child(7) {
-        width: 7% !important;  /* 비고 칼럼 축소 */
-        min-width: 7% !important;
+        width: 10% !important;  /* 비고 칼럼 - 경미하게 축소 */
       }
       
 
