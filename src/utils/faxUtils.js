@@ -168,13 +168,13 @@ export const convertDOMToPDFBase64 = async (element) => {
         box-sizing: border-box !important;
       }
       
-      /* ✅ info-table 칼럼 너비 고정 (A4 내 보장) */
+      /* ✅ info-table 칼럼 너비 고정 (A4 내 보장, 좌우 균형) */
       .info-table tr td:nth-child(1) {
-        width: 12% !important;  /* 좌측 라벨 */
+        width: 10% !important;  /* 좌측 라벨 */
       }
       
       .info-table tr td:nth-child(2) {
-        width: 20% !important;  /* 좌측 정보 */
+        width: 28% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보) */
       }
       
       .info-table tr td:nth-child(3) {
@@ -182,7 +182,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       
       .info-table tr td:nth-child(4) {
-        width: 56% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
+        width: 50% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
         text-overflow: ellipsis !important;  /* 잘림 표시 */
@@ -210,17 +210,15 @@ export const convertDOMToPDFBase64 = async (element) => {
       
       .bom-table th:nth-child(2),
       .bom-table td:nth-child(2) {
-        width: 30% !important;  /* 부품명 */
-      }
-      
-      .bom-table th:nth-child(2),
-      .bom-table td:nth-child(2) {
-        width: 32% !important;  /* 부품명 (가장 긴 내용) */
+        width: 45% !important;  /* 부품명 (가장 긴 내용) */
       }
       
       .bom-table th:nth-child(3),
       .bom-table td:nth-child(3) {
-        width: 38% !important;  /* 규격 칼럼 - 경미하게 증가 (원래 30%에서 8% 증가) */
+        width: 30% !important;  /* 규격 칼럼 - 경미하게 증가 */
+        word-break: break-word !important;  /* 잘림 방지 */
+        white-space: normal !important;  /* 줄바꿈 허용 */
+        overflow: hidden !important;  /* A4 벗어남 방지 */
       }
       
       .bom-table th:nth-child(4),
