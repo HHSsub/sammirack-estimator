@@ -65,13 +65,14 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 2mm 2mm 4mm !important;        /* 좌우 패딩으로 A4 내 보장 */
+          padding: 2mm 2mm 4mm !important;        /* 좌우 패딩 동일하게 */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
-          box-sizing: border-box;
+          box-sizing: border-box !important;
           font-size: 12px !important;
           line-height: 1.35 !important;
+          overflow: hidden !important;  /* A4 벗어남 방지 */
         }
 
       /* -------------------------------------------------
@@ -153,33 +154,47 @@ export const convertDOMToPDFBase64 = async (element) => {
       
       /* ✅ 소재지 주소 한 줄로 표시 (글자 크기 약간 축소, 잘림 방지) */
       .info-table td:not(.label) {
-        font-size: 17px !important;  /* 18px에서 1px 축소 */
+        font-size: 16.5px !important;  /* 18px에서 1px 축소 */
       }
       
-      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시 */
-      .info-table tr td.label + td + td + td:not(.label),
-      .info-table tr td:nth-child(4):not(.label) {
-        white-space: nowrap !important;  /* 한 줄로 유지 */
-        overflow: visible !important;
-      }
-      
-      /* ✅ 좌측 정보 칼럼 너비 축소하여 우측 공간 확보 (A4 내 보장) */
-      .info-table tr td.label + td:not(.label) {
-        max-width: 150px !important;  /* 좌측 칼럼 너비 제한 */
-      }
-      
-      /* ✅ info-table 전체 너비 확장 */
+      /* ✅ info-table 전체 너비 제한 (A4 내 보장) */
       .info-table {
         width: 100% !important;
-        table-layout: auto !important;  /* 자동 레이아웃으로 공간 활용 */
+        max-width: 100% !important;
+        table-layout: fixed !important;  /* 고정 레이아웃으로 A4 내 보장 */
+        box-sizing: border-box !important;
       }
       
-      /* ✅ 모든 테이블 너비 확장 */
+      /* ✅ 좌측 정보 칼럼 너비 축소하여 우측 공간 확보 */
+      .info-table tr td.label + td:not(.label) {
+        width: 25% !important;  /* 좌측 정보 칼럼 너비 제한 */
+        max-width: 25% !important;
+      }
+      
+      /* ✅ 우측 라벨 칼럼 */
+      .info-table tr td.label + td + td.label {
+        width: 20% !important;
+        max-width: 20% !important;
+      }
+      
+      /* ✅ 우측 정보 칼럼 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, A4 내 보장 */
+      .info-table tr td.label + td + td + td:not(.label),
+      .info-table tr td:nth-child(4):not(.label) {
+        width: 30% !important;  /* 너비 제한으로 A4 내 보장 */
+        max-width: 30% !important;
+        white-space: nowrap !important;  /* 한 줄로 유지 */
+        overflow: hidden !important;  /* A4 벗어남 방지 */
+        text-overflow: ellipsis !important;  /* 잘림 표시 */
+        box-sizing: border-box !important;
+      }
+      
+      /* ✅ 모든 테이블 너비 확장 (A4 내 보장) */
       .form-table,
       .order-table,
       .bom-table {
         width: 100% !important;
         max-width: 100% !important;
+        box-sizing: border-box !important;
       }
       
       /* ✅ info-table 전체 너비 확장 */
