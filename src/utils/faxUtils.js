@@ -65,7 +65,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 2mm 2mm 4mm 2mm !important;        /* 좌우 패딩 동일 (좌우 균형) */        /* 좌우 패딩 조정: 좌측 3mm, 우측 1mm (좌우 균형) */
+          padding: 4mm 2mm 4mm 2mm !important;        /* 상단 여백 추가 (약 20px) + 좌우 패딩 동일 */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
@@ -187,8 +187,8 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       
       .info-table tr td:nth-child(2) {
-        width: 38% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보 - 13글자 표시) */
-        min-width: 38% !important;
+        width: 37% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보 - 소재지 공간 확보를 위해 1% 감소) */
+        min-width: 37% !important;
       }
       
       .info-table tr td:nth-child(3) {
@@ -200,7 +200,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       
       .info-table tr td:nth-child(4) {
-        width: 36% !important;  /* 우측 정보 (소재지 등) - 좌측 공간 확보를 위해 축소 */
+        width: 37% !important;  /* 우측 정보 (소재지 등) - 소재지 "1" 숫자 표시를 위해 1% 증가 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
         text-overflow: ellipsis !important;  /* 잘림 표시 */
