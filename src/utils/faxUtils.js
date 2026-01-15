@@ -24,6 +24,8 @@ export const convertDOMToPDFBase64 = async (element) => {
   const forcedOriginalDisplayValues = [];
   const originalTextareaHeights = [];
   const textareaReplacements = []; // textarea를 div로 변환한 것들 저장
+  let containers = []; // 컨테이너 요소들
+  const originalPaddingTops = []; // 원본 padding-top 값들
 
   // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일 (FAX 전용)
   const printStyleElement = document.createElement('style');
@@ -65,7 +67,10 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 11mm 2mm 4mm 2mm !important;        /* 상단 여백 추가 (11mm) + 좌우 패딩 동일 */
+          padding-top: 11mm !important;  /* 상단 여백 추가 */
+          padding-right: 2mm !important;
+          padding-bottom: 4mm !important;
+          padding-left: 2mm !important;
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
@@ -456,6 +461,15 @@ export const convertDOMToPDFBase64 = async (element) => {
     // ✅ 3단계: 스타일 적용
     document.head.appendChild(printStyleElement);
 
+    // ✅ 3-1단계: 컨테이너에 직접 상단 패딩 적용 (CSS 우선순위 문제 우회)
+    containers = Array.from(element.querySelectorAll(
+      '.purchase-order-form-container.fax-capture, .estimate-form-container.fax-capture, .delivery-note-form-container.fax-capture'
+    ));
+    containers.forEach((container, index) => {
+      originalPaddingTops[index] = container.style.paddingTop;
+      container.style.paddingTop = '11mm';  // 상단 여백 직접 적용
+    });
+
     // ✅ 4단계: 스타일 적용 대기 및 div 높이 계산 대기
     await new Promise(resolve => setTimeout(resolve, 300));
     
@@ -615,6 +629,15 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
       textarea.style.display = '';
     });
+
+    // ✅ 10단계: 컨테이너 padding-top 복원
+    if (typeof containers !== 'undefined' && containers.length > 0) {
+      containers.forEach((container, index) => {
+        if (originalPaddingTops[index] !== undefined) {
+          container.style.paddingTop = originalPaddingTops[index];
+        }
+      });
+    }
   }
 };
 

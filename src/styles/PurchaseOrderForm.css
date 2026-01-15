@@ -19,7 +19,7 @@
   transform-origin: top center !important;  /* 중앙 기준 - 좌우 균형 */
   max-width: 100% !important;
   width: 100% !important;
-  padding: 11mm 2mm 4mm 2mm !important;  /* 상단 여백 추가 (11mm) + 좌우 패딩 동일 */
+  padding: 8mm 8mm 6mm !important;
   background: #fff !important;
   font-size: 15px !important;
 }
