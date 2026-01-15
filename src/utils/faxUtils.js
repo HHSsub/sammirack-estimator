@@ -58,14 +58,14 @@ export const convertDOMToPDFBase64 = async (element) => {
       /* -------------------------------------------------
          3. 컨테이너 공통 (문서별 공통 처리)
          ------------------------------------------------- */
-        .purchase-order-form-container,
-        .estimate-form-container,
-        .delivery-note-form-container {
+        .purchase-order-form-container.fax-capture,
+        .estimate-form-container.fax-capture,
+        .delivery-note-form-container.fax-capture {
           transform: scale(0.88) !important;      /* ✅ 0.90 → 0.88 */
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 10mm 2mm 4mm 2mm !important;        /* 상단 여백 추가 (약 6mm 추가) + 좌우 패딩 동일 */
+          padding: 11mm 2mm 4mm 2mm !important;        /* 상단 여백 추가 (11mm) + 좌우 패딩 동일 */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
