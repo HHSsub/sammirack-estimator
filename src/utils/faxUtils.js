@@ -147,7 +147,6 @@ export const convertDOMToPDFBase64 = async (element) => {
       .form-table .label {
         font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
-        white-space: nowrap !important;  /* 한 줄로 유지 */
       }
 
       /* -------------------------------------------------
