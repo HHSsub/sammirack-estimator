@@ -65,7 +65,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 2mm 2mm 4mm !important;        /* 좌우 패딩 동일하게 */
+          padding: 2mm 1mm 4mm 3mm !important;        /* 좌우 패딩 조정: 좌측 3mm, 우측 1mm (좌우 균형) */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
@@ -289,11 +289,12 @@ export const convertDOMToPDFBase64 = async (element) => {
         position: relative !important;
         overflow: visible !important;
         z-index: 1 !important;
+        padding-top: 20px !important;  /* 도장 이미지가 위에서 잘리지 않도록 상단 패딩 추가 */
       }
 
       .stamp-inline {
         position: absolute !important;
-        top: -15px !important;
+        top: -10px !important;  /* 위로 올라가되 잘리지 않도록 조정 */
         right: -30px !important;
         width: 80px !important;
         height: 80px !important;
@@ -307,6 +308,12 @@ export const convertDOMToPDFBase64 = async (element) => {
       img[alt="도장"] {
         z-index: 99999 !important;
         position: absolute !important;
+      }
+      
+      /* ✅ info-table-stamp-wrapper도 도장 이미지가 잘리지 않도록 */
+      .info-table-stamp-wrapper {
+        overflow: visible !important;
+        position: relative !important;
       }
     }
   `;
