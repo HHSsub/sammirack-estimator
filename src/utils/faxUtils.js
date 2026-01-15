@@ -65,7 +65,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 4mm 2mm 4mm 2mm !important;        /* 상단 여백 추가 (약 20px) + 좌우 패딩 동일 */
+          padding: 10mm 2mm 4mm 2mm !important;        /* 상단 여백 추가 (약 6mm 추가) + 좌우 패딩 동일 */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
