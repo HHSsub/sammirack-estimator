@@ -14,6 +14,12 @@ import {
   EXTRA_TO_BASE_INVENTORY_MAPPING
 } from '../utils/unifiedPriceManager';
 import { inventoryService } from '../services/InventoryService';
+import {
+  generateBOMDisplayName,
+  removeColorFromPartName,
+  getExtraOptionDisplayInfo,
+  generateHighRackDisplayName
+} from '../utils/bomDisplayNameUtils';
 
 const ProductContext = createContext();
 
@@ -913,11 +919,16 @@ const makeExtraOptionBOM = () => {
     const optionQty = Number(opt.quantity) || 1;
     const totalQty = optionQty * q;
     
+    // ✅ 부품명 생성 (원자재명세서 표시용) - 유틸 함수 사용
+    const bomDisplayName = selectedType === '하이랙' 
+      ? generateHighRackDisplayName(partName, colorWeight)
+      : opt.name;
+    
     return {
       rackType: selectedType,
       version: version,
       size: selectedOptions.size || "",
-      name: opt.name,
+      name: bomDisplayName, // ✅ 부품명 (하이랙: "메트그레이 기둥" 등)
       partId: partId,
       inventoryPartId: inventoryPartId,
       specification: specification,
@@ -976,7 +987,7 @@ const makeExtraOptionBOM = () => {
               let bomColorWeight = bomItem.colorWeight || '';
               
               // ✅ 하이랙 추가상품6의 경우: bomName에서 기본 부품명 추출
-              // 예: "80x108 블루선반" → "선반", "80x108 오렌지빔" → "로드빔"
+              // 예: "80x108 블루선반" → "오렌지 선반", "80x108 오렌지빔" → "오렌지 로드빔"
               if (selectedType === '하이랙' && categoryName?.includes('추가상품6')) {
                 // specification에서 사이즈 추출
                 const sizeMatch = bomSpec.match(/사이즈\s*(\d+x\d+)\s*(\d+kg)/i);
@@ -984,15 +995,15 @@ const makeExtraOptionBOM = () => {
                   bomSpec = `사이즈${sizeMatch[1]}${sizeMatch[2]}`;
                 }
                 
-                // name에서 기본 부품명 추출
+                // name에서 기본 부품명 추출 및 색상 정보 포함
                 if (bomName.includes('선반')) {
-                  bomName = '선반';
+                  bomName = '오렌지 선반'; // ✅ 색상 정보 포함
                   // ⚠️ 중요: 추가상품6은 블루+오렌지 색상이므로 올바른 colorWeight 설정
                   // extra_options.json의 colorWeight가 "블루(볼트식) 600kg" 형식이지만,
                   // 실제 서버 ID는 "블루(기둥)+오렌지(가로대)(볼트식)600kg" 형식이어야 함
                   bomColorWeight = '블루(기둥)+오렌지(가로대)(볼트식)600kg';
                 } else if (bomName.includes('빔') || bomName.includes('로드빔')) {
-                  bomName = '로드빔';
+                  bomName = '오렌지 로드빔'; // ✅ 색상 정보 포함
                   // specification에서 깊이(depth)와 무게 추출 (예: "사이즈 80x108 600kg" → "108600kg")
                   // ⚠️ 중요: 로드빔은 깊이(depth, 두 번째 숫자)를 사용해야 함
                   const rodBeamMatch = bomSpec.match(/사이즈\s*\d+x(\d+)\s*(\d+kg)/i);
@@ -1002,22 +1013,33 @@ const makeExtraOptionBOM = () => {
                   // ⚠️ 중요: 추가상품6 로드빔은 블루+오렌지 색상
                   bomColorWeight = '블루(기둥.선반)+오렌지(빔)600kg';
                 }
+              } else if (selectedType === '하이랙') {
+                // ✅ 하이랙 일반: bomName에 색상 정보 포함 - 유틸 함수 사용
+                bomName = generateHighRackDisplayName(bomName, bomColorWeight);
               }
               
-              // BOM 항목의 inventoryPartId 생성
+              // BOM 항목의 inventoryPartId 생성 (색상 제거된 부품명 사용)
+              // ⚠️ 중요: bomName은 이미 색상 정보가 포함된 표시용 이름이므로,
+              // inventoryPartId 생성 시에는 색상을 제거한 기본 부품명만 사용
+              const bomNameForInventory = removeColorFromPartName(bomName);
+              
               const bomInventoryPartId = generateInventoryPartId({
                 rackType: bomRackType,
                 version: (bomRackType === "파렛트랙" || bomRackType === "파렛트랙신형") ? version : undefined, // ✅ 파렛트랙/파렛트랙신형만 version 정보 포함
-                name: bomName,
+                name: bomNameForInventory,
                 specification: bomSpec,
                 colorWeight: bomColorWeight
               });
               
-              // 단가관리용 partId 생성
+              // 단가관리용 partId 생성 (색상 제거된 부품명 사용)
+              // ⚠️ 중요: bomName은 이미 색상 정보가 포함된 표시용 이름이므로,
+              // partId 생성 시에는 색상을 제거한 기본 부품명만 사용
+              const bomNameForPartId = removeColorFromPartName(bomName);
+              
               const bomPartId = generatePartId({
                 rackType: bomRackType,
                 version: (bomRackType === "파렛트랙" || bomRackType === "파렛트랙신형") ? version : undefined, // ✅ 파렛트랙/파렛트랙신형만 version 정보 포함
-                name: bomName,
+                name: bomNameForPartId,
                 specification: bomSpec
               });
               
@@ -1241,6 +1263,9 @@ const makeExtraOptionBOM = () => {
             // 하이랙: mapExtraToBasePartId로 가격용 ID 생성 (색상 제거)
             let partIdForPrice;
             
+            // ✅ 부품명 생성 (원자재명세서 표시용) - 유틸 함수 사용
+            const bomDisplayName = generateBOMDisplayName(selectedType, opt, cleanName, finalColorWeight);
+            
             if (selectedType === '하이랙') {
               // 하이랙: mapExtraToBasePartId 사용
               const mappedPartIdForPrice = mapExtraToBasePartId(extraOptionId);
@@ -1332,7 +1357,7 @@ const makeExtraOptionBOM = () => {
                 rackType: selectedType,
                 version: version, // ✅ 파렛트랙만 version 정보 포함
                 size: selectedOptions.size || "",
-                name: opt.name,
+                name: bomDisplayName, // ✅ 부품명 (스텐랙: "50x90 선반", 하이랙: "메트그레이 기둥" 등)
                 partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
                 inventoryPartId: finalInventoryPartId, // 재고관리용 (색상 포함, 서버에 있는 ID)
                 specification: finalSpecification, // ⚠️ 중요: 매핑 테이블에서 추출한 specification 사용
@@ -1343,7 +1368,7 @@ const makeExtraOptionBOM = () => {
                 totalPrice: effectivePrice * totalQty
               });
               
-              console.log(`    ✅ 부품 ${index + 1} 추가: partId="${partIdForPrice}", inventoryPartId="${finalInventoryPartId}" (${effectivePrice}원)`);
+              console.log(`    ✅ 부품 ${index + 1} 추가: name="${bomDisplayName}", partId="${partIdForPrice}", inventoryPartId="${finalInventoryPartId}" (${effectivePrice}원)`);
             });
           } else if (isMapped && mappedInventoryPartIds !== extraOptionId) {
             // ✅ 단일 매핑 - 기본 원자재로 교체
@@ -1449,11 +1474,14 @@ const makeExtraOptionBOM = () => {
             const optionQty = Number(opt.quantity) || 1;
             const totalQty = optionQty * q;
             
+            // ✅ 부품명 생성 (원자재명세서 표시용) - 유틸 함수 사용
+            const bomDisplayName = generateBOMDisplayName(selectedType, opt, cleanName, finalColorWeight);
+            
             extraBOM.push({
               rackType: selectedType,
               version: version, // ✅ 파렛트랙만 version 정보 포함
               size: selectedOptions.size || "",
-              name: opt.name,
+              name: bomDisplayName, // ✅ 부품명 (스텐랙: "50x90 선반", 하이랙: "메트그레이 기둥" 등)
               partId: partIdForPrice, // 단가관리용 (색상 제거, 동일 가격)
               inventoryPartId: finalInventoryPartId, // 재고관리용 (색상 포함, 서버에 있는 ID)
               specification: finalSpecification, // ⚠️ 중요: 매핑 테이블에서 추출한 specification 사용
@@ -1464,7 +1492,7 @@ const makeExtraOptionBOM = () => {
               totalPrice: effectivePrice * totalQty
             });
             
-            console.log(`    ✅ 기본 원자재로 추가: partId="${partIdForPrice}", inventoryPartId="${finalInventoryPartId}" (${effectivePrice}원)`);
+            console.log(`    ✅ 기본 원자재로 추가: name="${bomDisplayName}", partId="${partIdForPrice}", inventoryPartId="${finalInventoryPartId}" (${effectivePrice}원)`);
           } else {
             // ✅ 매핑 없음 - 별도 부품 (중량바퀴, 합판 등) 또는 매핑 테이블에 없는 하이랙 추가 옵션
             // ⚠️ 중요: 매핑 테이블에 없는 경우는 매우 드뭅니다. 대부분의 추가 옵션은 매핑 테이블에 있습니다.
@@ -1598,11 +1626,56 @@ const makeExtraOptionBOM = () => {
             const optionQty = Number(opt.quantity) || 1;
             const totalQty = optionQty * q;
             
+            // ✅ 부품명 생성 (원자재명세서 표시용)
+            let bomDisplayName = opt.name;
+            if (selectedType === '스텐랙') {
+              // 스텐랙: opt.name이 "50x90"만 있을 때 "50x90 선반" 형식으로 생성
+              if (opt.bom && opt.bom.length > 0 && opt.bom[0].name) {
+                // bom에 정확한 이름이 있으면 사용
+                bomDisplayName = opt.bom[0].name;
+              } else if (opt.name && !opt.name.includes('선반') && !opt.name.includes('기둥')) {
+                // opt.name이 숫자만 있으면 부품 종류 추가
+                if (opt.name.match(/\d+x\d+/)) {
+                  bomDisplayName = `${opt.name} 선반`;
+                } else if (opt.name.match(/^\d+$/)) {
+                  bomDisplayName = `${opt.name} 기둥`;
+                }
+              }
+            } else if (selectedType === '하이랙') {
+              // 하이랙: 색상 정보를 포함하여 "메트그레이 기둥", "블루 기둥", "오렌지 선반" 형식으로 생성
+              if (baseName) {
+                // colorWeight에서 색상 추출
+                let colorText = '';
+                if (finalColorWeight) {
+                  if (finalColorWeight.includes('메트그레이') || finalColorWeight.includes('매트그레이')) {
+                    colorText = '메트그레이';
+                  } else if (finalColorWeight.includes('블루') && finalColorWeight.includes('오렌지')) {
+                    // 블루+오렌지 조합인 경우 부품 종류에 따라 색상 결정
+                    if (baseName === '기둥') {
+                      colorText = '블루';
+                    } else if (baseName === '선반' || baseName === '로드빔') {
+                      colorText = '오렌지';
+                    }
+                  } else if (finalColorWeight.includes('블루')) {
+                    colorText = '블루';
+                  } else if (finalColorWeight.includes('오렌지')) {
+                    colorText = '오렌지';
+                  }
+                }
+                
+                if (colorText) {
+                  bomDisplayName = `${colorText} ${baseName}`;
+                } else {
+                  bomDisplayName = baseName;
+                }
+              }
+            }
+            
             extraBOM.push({
               rackType: selectedType,
               version: version, // ✅ 파렛트랙만 version 정보 포함
               size: selectedOptions.size || "",
-              name: opt.name,
+              name: bomDisplayName, // ✅ 부품명 (스텐랙: "50x90 선반", 하이랙: "메트그레이 기둥" 등)
               partId: partIdForPrice, // 단가관리용
               inventoryPartId: originalInventoryPartId, // 재고관리용
               specification: correctSpecification || finalSpecification,
@@ -1613,7 +1686,7 @@ const makeExtraOptionBOM = () => {
               totalPrice: effectivePrice * totalQty
             });
             
-            console.log(`    ✅ 별도 부품으로 추가: partId="${partIdForPrice}", inventoryPartId="${originalInventoryPartId}" (${effectivePrice}원)`);
+            console.log(`    ✅ 별도 부품으로 추가: name="${bomDisplayName}", partId="${partIdForPrice}", inventoryPartId="${originalInventoryPartId}" (${effectivePrice}원)`);
           }
         }
       });

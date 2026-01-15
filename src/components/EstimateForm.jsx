@@ -12,6 +12,8 @@ import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUti
 import FaxPreviewModal from './FaxPreviewModal';
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
+import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
+import { getExtraOptionDisplayInfo } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 
 // ✅ PROVIDER는 고정 (도장 이미지 포함)
 const PROVIDER = {
@@ -168,16 +170,32 @@ const EstimateForm = () => {
       // ✅ customMaterials를 items 형식으로 변환
       // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
       const extraOptionItems = [];
+      const { extraProducts } = useProducts();
+      
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
-          item.extraOptions.forEach(opt => {
-            if (opt && opt.name) {
+          item.extraOptions.forEach(optId => {
+            // optId가 ID인 경우 extraProducts에서 이름 찾기 - 유틸 함수 사용
+            const displayInfo = getExtraOptionDisplayInfo(item.type, optId, extraProducts);
+            
+            // opt가 객체인 경우 (하위 호환성)
+            let optName = '';
+            let optPrice = 0;
+            if (displayInfo) {
+              optName = displayInfo.name;
+              optPrice = displayInfo.price;
+            } else if (optId && typeof optId === 'object' && optId.name) {
+              optName = optId.name;
+              optPrice = optId.price || 0;
+            }
+            
+            if (optName) {
               extraOptionItems.push({
-                name: `[추가옵션] ${opt.name}`,
+                name: `[추가옵션] ${optName}`,
                 unit: '개',
                 quantity: 1,
-                unitPrice: opt.price || 0,
-                totalPrice: opt.price || 0,
+                unitPrice: optPrice,
+                totalPrice: optPrice,
                 note: '기타추가옵션'
               });
             }
