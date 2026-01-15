@@ -156,13 +156,12 @@ export const convertDOMToPDFBase64 = async (element) => {
         font-size: 17px !important;  /* 18px에서 1px 축소 */
       }
       
-      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) - 잘림 방지 */
+      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, 공간 확장 */
       .info-table tr td.label + td + td + td:not(.label),
       .info-table tr td:nth-child(4):not(.label) {
-        white-space: normal !important;  /* nowrap 제거 - 줄바꿈 허용하되 최대한 한 줄 유지 */
-        word-break: keep-all !important;  /* 단어 단위로 줄바꿈 */
+        white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: visible !important;
-        padding-right: 8px !important;  /* 우측 패딩 추가로 잘림 방지 */
+        min-width: 250px !important;  /* 최소 너비 확보로 잘림 방지 */
       }
       
       /* ✅ info-table 전체 너비 확장 */
