@@ -159,7 +159,7 @@
   padding: 3px 4px;
   box-sizing: border-box;
   resize: vertical;
-  color: #1e5cff;       /* 파란 계열 글자색 */
+  color: #000000;       /* 검정색 */
   font-weight: 600;     /* 글자 굵게 */
 }
 
@@ -266,7 +266,7 @@
   font-size:18px;
   line-height:1.4;
   resize:vertical;
-  color:#ff6600;
+  color:#000000;
   font-weight:600;
 }
 

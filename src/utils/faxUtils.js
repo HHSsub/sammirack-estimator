@@ -63,7 +63,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;
-          padding: 6mm 8mm 4mm !important;        /* ✅ 8mm 8mm 6mm → 6mm 8mm 4mm */
+          padding: 7mm 7mm 4mm !important;        /* 좌우 여백 동일하게 조정 */
           margin: 0 !important;
           background: #fff !important;
           min-height: auto !important;
@@ -155,6 +155,9 @@ export const convertDOMToPDFBase64 = async (element) => {
         padding: 10px 6px !important;
         font-size: 18px !important;
         line-height: 1.5 !important;
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
       }
 
       /* -------------------------------------------------

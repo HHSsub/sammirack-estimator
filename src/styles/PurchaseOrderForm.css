@@ -193,7 +193,7 @@
   font-size: 18.5px; /* 0.5px 감소 */
   line-height: 1.3;
   padding: 3px 4px;
-  color: #1e5cff;       /* 파란 계열 글자색 */
+  color: #000000;       /* 검정색 */
   font-weight: 600;     /* 글자 굵게 */
 }
 .memo-narrow { max-width: 100%; }
@@ -412,7 +412,7 @@ img[alt="도장"] {
   font-family: inherit;
   resize: vertical;
   box-sizing: border-box;
-  color: #ff6600;
+  color: #000000;
   font-weight: 600;
 }
 
