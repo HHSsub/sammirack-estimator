@@ -1081,7 +1081,13 @@ const makeExtraOptionBOM = () => {
           // ✅ 1. cleanName 먼저 생성 (specification 생성에 필요)
           // ⚠️ 중요: 하이랙의 경우 "45x108오렌지선반" → "45x108선반"으로 변환 (색상 제거)
           // 중량랙의 경우 "45x95"만 남기기
+          // ⚠️ 추가상품3의 경우 "(블루기둥)" 또는 "(메트그레이기둥)" 형식이므로 괄호 제거 전에 정보 추출 필요
           let cleanName = (opt.name || '').replace(/\s*\(.*\)\s*/g, '').trim();
+          
+          // ✅ 추가상품3: 괄호 제거 전에 opt.name에서 기둥 정보 확인
+          const isPillarFromName = opt.name?.includes('기둥') || false;
+          const isMetallicPillar = opt.name?.includes('(메트그레이기둥)') || opt.name?.includes('메트그레이기둥') || opt.name?.includes('매트그레이기둥') || false;
+          const isBluePillar = opt.name?.includes('(블루기둥)') || opt.name?.includes('블루기둥') || false;
           
           // 하이랙: 색상 관련 텍스트 제거
           if (selectedType === '하이랙') {
@@ -1091,6 +1097,11 @@ const makeExtraOptionBOM = () => {
               .replace(/메트그레이/g, '')
               .replace(/블루/g, '')
               .trim();
+            
+            // ✅ 추가상품3: cleanName에 기둥 정보가 없으면 opt.name에서 확인한 정보 추가
+            if (isPillarFromName && !cleanName.includes('기둥')) {
+              cleanName = cleanName + '기둥';
+            }
           }
           
           // ✅ 2. 카테고리명에서 무게 정보 추출
@@ -1108,12 +1119,22 @@ const makeExtraOptionBOM = () => {
           if (selectedType === '하이랙') {
             // 하이랙: 색상과 무게 정보 설정
             // ⚠️ 중요: specification에는 무게를 한 번만 포함해야 함
-            if (color) {
-              finalColorWeight = weight ? `${color}${weight}` : color;
+            // ✅ 추가상품3: opt.name에서 직접 색상 추출 (괄호 형식 지원)
+            let extractedColor = color;
+            if (!extractedColor && (isMetallicPillar || isBluePillar)) {
+              if (isMetallicPillar) {
+                extractedColor = '메트그레이(볼트식)';
+              } else if (isBluePillar) {
+                extractedColor = '블루(기둥)+오렌지(가로대)(볼트식)';
+              }
+            }
+            
+            if (extractedColor) {
+              finalColorWeight = weight ? `${extractedColor}${weight}` : extractedColor;
             }
             
             // ⚠️ 중요: 기둥과 선반을 구분하여 specification 생성
-            if (cleanName.includes('기둥')) {
+            if (cleanName.includes('기둥') || isPillarFromName) {
               // 기둥: 높이 정보 추출 (예: "45x150" → "높이150")
               const heightMatch = cleanName.match(/(\d+)x(\d+)/);
               if (heightMatch) {

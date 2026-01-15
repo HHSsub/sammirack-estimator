@@ -87,12 +87,28 @@ export const generateInventoryPartId = (item) => {
   }
   
   // ✅ 하이랙 전용: colorWeight가 있으면 부품명에 색상 포함
+  // ⚠️ 중요: name에 이미 색상 정보가 포함되어 있으면 제거 후 colorWeight 추가
   let cleanName = String(name)
     .replace(/[()]/g, '')
     .replace(/\s+/g, '')
     .replace(/\*/g, 'x');
+  
   // ✅ 하이랙이고 colorWeight가 있으면 색상 추가
   if (rackType === '하이랙' && colorWeight) {
+    // ⚠️ 중요: name에서 부품명만 추출 (기둥, 선반, 로드빔)
+    // 예: "블루 기둥" → "기둥", "메트그레이 선반" → "선반", "오렌지 로드빔" → "로드빔"
+    // 예: "45x150메트그레이기둥" → "기둥", "60x108오렌지선반" → "선반"
+    const partNameMatch = cleanName.match(/(기둥|선반|로드빔|빔)/i);
+    if (partNameMatch) {
+      // 부품명만 사용 (색상, 숫자, 사이즈 정보 모두 제거)
+      cleanName = partNameMatch[1].toLowerCase();
+    } else {
+      // 부품명을 찾을 수 없으면 색상 정보만 제거
+      cleanName = cleanName
+        .replace(/^(메트그레이|매트그레이|블루|오렌지)/i, '')
+        .replace(/(메트그레이|매트그레이|블루|오렌지)/gi, '');
+    }
+    
     const cleanColor = String(colorWeight)
       .replace(/\s+/g, '')
       .toLowerCase();
