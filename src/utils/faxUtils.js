@@ -305,37 +305,75 @@ export const convertDOMToPDFBase64 = async (element) => {
       }
 
       /* -------------------------------------------------
-         11. 도장
+         11. 도장 - 모든 요소 위에 표시, 위에서 잘림 방지
          ------------------------------------------------- */
+      /* ✅ 도장 이미지의 모든 부모 요소 overflow visible */
+      .info-table-stamp-wrapper,
+      .info-table-stamp-wrapper table,
+      .info-table-stamp-wrapper tbody,
+      .info-table-stamp-wrapper tr,
+      .info-table-stamp-wrapper td {
+        overflow: visible !important;
+      }
+      
       .rep-cell {
         position: relative !important;
         overflow: visible !important;
         z-index: 1 !important;
-        padding-top: 20px !important;  /* 도장 이미지가 위에서 잘리지 않도록 상단 패딩 추가 */
+        padding-top: 30px !important;  /* 도장 이미지가 위에서 잘리지 않도록 상단 패딩 충분히 */
+        padding-bottom: 10px !important;
+      }
+      
+      .ceo-inline {
+        position: relative !important;
+        overflow: visible !important;
+        z-index: 1 !important;
       }
 
       .stamp-inline {
-        position: absolute !important;
-        top: -10px !important;  /* 위로 올라가되 잘리지 않도록 조정 */
-        right: -30px !important;
+        position: fixed !important;  /* fixed로 변경하여 모든 요소 위에 표시 */
+        top: auto !important;
+        bottom: auto !important;
+        right: auto !important;
+        left: auto !important;
         width: 80px !important;
         height: 80px !important;
-        z-index: 99999 !important;  /* 최상단으로 설정 */
+        z-index: 999999 !important;  /* 최상단으로 설정 */
         opacity: 0.85 !important;
         pointer-events: none !important;  /* 클릭 방해 방지 */
+        transform: none !important;  /* transform 제거 */
+      }
+      
+      /* ✅ 도장 이미지를 rep-cell 기준으로 절대 배치 (위로 올라가도록) */
+      .rep-cell .stamp-inline {
+        position: absolute !important;  /* absolute로 다시 설정 */
+        top: -25px !important;  /* 위로 충분히 올라가도록 */
+        right: -30px !important;
+        transform: none !important;
+        z-index: 999999 !important;
       }
       
       /* ✅ 도장 이미지가 모든 요소 위에 표시되도록 */
       .stamp-inline,
       img[alt="도장"] {
-        z-index: 99999 !important;
+        z-index: 999999 !important;
         position: absolute !important;
       }
       
-      /* ✅ info-table-stamp-wrapper도 도장 이미지가 잘리지 않도록 */
-      .info-table-stamp-wrapper {
+      /* ✅ info-table과 form-table도 도장 이미지가 잘리지 않도록 */
+      .info-table,
+      .form-table {
         overflow: visible !important;
-        position: relative !important;
+      }
+      
+      .info-table tr,
+      .form-table tr {
+        overflow: visible !important;
+      }
+      
+      .info-table td,
+      .form-table td {
+        overflow: visible !important;
       }
     }
   `;
