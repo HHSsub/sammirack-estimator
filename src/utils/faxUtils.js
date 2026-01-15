@@ -23,6 +23,7 @@ export const convertDOMToPDFBase64 = async (element) => {
   const originalDisplayValues = [];
   const forcedOriginalDisplayValues = [];
   const originalTextareaHeights = [];
+  const textareaReplacements = []; // textarea를 div로 변환한 것들 저장
 
   // ✅ 프린트 미디어 쿼리를 적용하기 위한 임시 스타일 (FAX 전용)
   const printStyleElement = document.createElement('style');
@@ -231,22 +232,62 @@ export const convertDOMToPDFBase64 = async (element) => {
       el.style.display = 'none';
     });
 
-    // ✅ 2-2단계: 메모 textarea 높이 자동 조정 (내용에 맞게)
+    // ✅ 2-2단계: 메모 textarea를 div로 임시 변환 (html2canvas가 제대로 캡처하도록)
     const memoTextareas = element.querySelectorAll('textarea.estimate-memo');
-    memoTextareas.forEach((textarea, index) => {
-      originalTextareaHeights[index] = textarea.style.height;
-      // scrollHeight를 읽어서 높이 설정 (내용 전체가 보이도록)
-      textarea.style.height = 'auto';
-      textarea.style.overflow = 'visible';
-      const scrollHeight = textarea.scrollHeight;
-      textarea.style.height = `${scrollHeight}px`;
+    memoTextareas.forEach((textarea) => {
+      // textarea의 모든 스타일과 속성 복사
+      const computedStyle = window.getComputedStyle(textarea);
+      const textareaValue = textarea.value || '';
+      
+      // div 생성
+      const div = document.createElement('div');
+      div.className = textarea.className;
+      div.textContent = textareaValue; // 줄바꿈이 포함된 텍스트
+      
+      // 모든 스타일 복사
+      div.style.cssText = textarea.style.cssText;
+      div.style.width = computedStyle.width;
+      div.style.height = 'auto'; // 내용에 맞게 자동 높이
+      div.style.minHeight = computedStyle.minHeight;
+      div.style.padding = computedStyle.padding;
+      div.style.fontSize = computedStyle.fontSize;
+      div.style.fontFamily = computedStyle.fontFamily;
+      div.style.fontWeight = computedStyle.fontWeight;
+      div.style.lineHeight = computedStyle.lineHeight;
+      div.style.whiteSpace = 'pre-wrap'; // 줄바꿈 유지
+      div.style.wordWrap = 'break-word';
+      div.style.overflowWrap = 'break-word';
+      div.style.overflow = 'visible';
+      div.style.border = computedStyle.border;
+      div.style.backgroundColor = computedStyle.backgroundColor;
+      div.style.color = computedStyle.color;
+      div.style.boxSizing = 'border-box';
+      div.style.display = 'block';
+      
+      // textarea를 숨기고 div로 교체
+      textarea.style.display = 'none';
+      textarea.parentNode.insertBefore(div, textarea);
+      
+      // 나중에 복원하기 위해 저장
+      textareaReplacements.push({ textarea, div });
     });
 
     // ✅ 3단계: 스타일 적용
     document.head.appendChild(printStyleElement);
 
-    // ✅ 4단계: 스타일 적용 대기
+    // ✅ 4단계: 스타일 적용 대기 및 div 높이 계산 대기
     await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // ✅ 4-1단계: div 높이 재계산 (렌더링 후)
+    textareaReplacements.forEach(({ div }) => {
+      // 강제로 리플로우 발생시켜 높이 계산
+      div.style.height = 'auto';
+      const scrollHeight = div.scrollHeight;
+      div.style.height = `${scrollHeight}px`;
+    });
+    
+    // div 높이 계산 대기
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     // ✅ 5단계: html2canvas
     const canvas = await html2canvas(element, {
@@ -309,13 +350,12 @@ export const convertDOMToPDFBase64 = async (element) => {
       el.style.display = forcedOriginalDisplayValues[index];
     });
 
-    // ✅ 9단계: 메모 textarea 높이 원래대로 복원
-    const memoTextareas = element.querySelectorAll('textarea.estimate-memo');
-    memoTextareas.forEach((textarea, index) => {
-      if (originalTextareaHeights[index] !== undefined) {
-        textarea.style.height = originalTextareaHeights[index];
-        textarea.style.overflow = '';
+    // ✅ 9단계: 메모 textarea div 변환 복원
+    textareaReplacements.forEach(({ textarea, div }) => {
+      if (div.parentNode) {
+        div.parentNode.removeChild(div);
       }
+      textarea.style.display = '';
     });
   }
 };
