@@ -121,7 +121,7 @@
 .fax-capture .bom-table td:nth-child(2) { width: 50% !important; }
 
 .fax-capture .bom-table th:nth-child(3),
-.fax-capture .bom-table td:nth-child(3) { width: 22% !important; }
+.fax-capture .bom-table td:nth-child(3) { width: 35% !important; }  /* 규격 칼럼 넓히기 */
 
 .fax-capture .bom-table th:nth-child(4),
 .fax-capture .bom-table td:nth-child(4) { width: 10% !important; }
@@ -709,7 +709,7 @@ button.add-material-btn {
   .bom-table { table-layout: fixed !important; width: 100% !important; }
   .bom-table th:nth-child(1), .bom-table td:nth-child(1) { width: 4% !important; }
   .bom-table th:nth-child(2), .bom-table td:nth-child(2) { width: 50% !important; }  /* 30% → 38% */
-  .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 22% !important; }  /* 26% → 38% */
+  .bom-table th:nth-child(3), .bom-table td:nth-child(3) { width: 35% !important; }  /* 규격 칼럼 넓히기 */
   .bom-table th:nth-child(4), .bom-table td:nth-child(4) { width: 10% !important; min-width: 70px !important; }  /* 8% → 10% */
   .bom-table th:nth-child(5), .bom-table td:nth-child(5) { width: 0% !important; display: none !important; }  /* 숨김 */
   .bom-table th:nth-child(6), .bom-table td:nth-child(6) { width: 0% !important; display: none !important; }  /* 숨김 */

@@ -168,21 +168,32 @@ export const convertDOMToPDFBase64 = async (element) => {
         box-sizing: border-box !important;
       }
       
-      /* ✅ info-table 칼럼 너비 고정 (A4 내 보장, 좌우 균형) */
+      /* ✅ info-table 칼럼 너비 고정 (A4 내 보장, 좌우 대칭) */
+      .info-table tr td.label {
+        width: 12% !important;  /* 좌우 라벨 동일한 너비 (대칭) */
+        min-width: 12% !important;
+        max-width: 12% !important;
+        white-space: nowrap !important;  /* 라벨 한 줄 유지 */
+      }
+      
       .info-table tr td:nth-child(1) {
-        width: 15% !important;  /* 좌측 라벨 (사업자등록번호 한 줄 표시) */
+        width: 12% !important;  /* 좌측 라벨 (사업자등록번호 한 줄 표시) */
+        min-width: 12% !important;
+        max-width: 12% !important;
       }
       
       .info-table tr td:nth-child(2) {
-        width: 25% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보) */
+        width: 26% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보) */
       }
       
       .info-table tr td:nth-child(3) {
-        width: 8% !important;  /* 우측 라벨 (축소) */
+        width: 12% !important;  /* 우측 라벨 (좌측과 동일 - 대칭) */
+        min-width: 12% !important;
+        max-width: 12% !important;
       }
       
       .info-table tr td:nth-child(4) {
-        width: 52% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
+        width: 50% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
         text-overflow: ellipsis !important;  /* 잘림 표시 */
@@ -210,15 +221,26 @@ export const convertDOMToPDFBase64 = async (element) => {
       
       .bom-table th:nth-child(2),
       .bom-table td:nth-child(2) {
-        width: 45% !important;  /* 부품명 (가장 긴 내용) */
+        width: 40% !important;  /* 부품명 (가장 긴 내용, 규격보다 길게) */
       }
       
       .bom-table th:nth-child(3),
       .bom-table td:nth-child(3) {
-        width: 30% !important;  /* 규격 칼럼 - 경미하게 증가 */
+        width: 35% !important;  /* 규격 칼럼 - 넓히기 (kg 글자 잘림 방지) */
+        min-width: 35% !important;
         word-break: break-word !important;  /* 잘림 방지 */
         white-space: normal !important;  /* 줄바꿈 허용 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
+      }
+      
+      .bom-table th:nth-child(4),
+      .bom-table td:nth-child(4) {
+        width: 10% !important;  /* 수량 */
+      }
+      
+      .bom-table th:nth-child(7),
+      .bom-table td:nth-child(7) {
+        width: 10% !important;  /* 비고 */
       }
       
       .bom-table th:nth-child(4),
