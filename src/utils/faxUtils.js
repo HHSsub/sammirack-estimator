@@ -64,8 +64,8 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform: scale(0.88) !important;      /* ✅ 0.90 → 0.88 */
           transform-origin: top center !important;
           max-width: 100% !important;
-          width: calc(100% - 4px) !important;  /* 좌우로 2px씩 더 공간 활용 */
-          padding: 2mm 0mm 4mm !important;        /* 좌우 패딩 제거 (테이블이 직접 공간 사용) */
+          width: 100% !important;  /* A4 영역 내 보장 */
+          padding: 2mm 2mm 4mm !important;        /* 좌우 패딩으로 A4 내 보장 */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
@@ -156,12 +156,16 @@ export const convertDOMToPDFBase64 = async (element) => {
         font-size: 17px !important;  /* 18px에서 1px 축소 */
       }
       
-      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, 공간 확장 */
+      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시 */
       .info-table tr td.label + td + td + td:not(.label),
       .info-table tr td:nth-child(4):not(.label) {
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: visible !important;
-        min-width: 250px !important;  /* 최소 너비 확보로 잘림 방지 */
+      }
+      
+      /* ✅ 좌측 정보 칼럼 너비 축소하여 우측 공간 확보 (A4 내 보장) */
+      .info-table tr td.label + td:not(.label) {
+        max-width: 150px !important;  /* 좌측 칼럼 너비 제한 */
       }
       
       /* ✅ info-table 전체 너비 확장 */
