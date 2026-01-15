@@ -1284,23 +1284,16 @@ const makeExtraOptionBOM = () => {
             } else {
               // 스텐랙/중량랙: 재고관리용 ID와 가격관리용 ID 구분 필요
               if (selectedType === '스텐랙') {
-                // ⚠️ 중요: 스텐랙 선반은 재고관리용(W만)과 가격관리용(WxD 모두)을 구분해야 함
-                // 재고관리용: mappedInventoryPartId = "스텐랙-선반-50" (W만)
+                // ✅ 스텐랙 선반: 재고관리용과 가격관리용 모두 WxD 구분 (변경됨)
+                // 재고관리용: mappedInventoryPartId = "스텐랙-선반-사이즈50x75" (WxD 모두)
                 // 가격관리용: partIdForPrice = "스텐랙-선반-사이즈50x75" (WxD 모두)
                 const parts = mappedInventoryPartId.split('-');
                 if (parts.length >= 3 && parts[1] === '선반') {
-                  // extraOptionId에서 원본 사이즈 추출 (예: "스텐랙-50x75선반-" → "50x75")
-                  const sizeMatch = extraOptionId.match(/(\d+)x(\d+)/);
-                  if (sizeMatch) {
-                    // 가격관리용 partId 생성 (WxD 모두 포함)
-                    partIdForPrice = `스텐랙-선반-사이즈${sizeMatch[1]}x${sizeMatch[2]}`;
-                    finalSpecification = `사이즈${sizeMatch[1]}x${sizeMatch[2]}`;
-                    console.log(`    ✅ 스텐랙 선반 가격용 partId 생성: "${partIdForPrice}" (재고용: "${mappedInventoryPartId}")`);
-                  } else {
-                    // 매칭 실패 시 재고용 ID 사용 (기둥 등)
-                    partIdForPrice = mappedInventoryPartId;
-                    finalSpecification = parts[2];
-                  }
+                  // 매핑 테이블에서 이미 WxD 모두 포함된 ID를 받아오므로 그대로 사용
+                  partIdForPrice = mappedInventoryPartId;
+                  // specification 추출 (예: "스텐랙-선반-사이즈50x75" → "사이즈50x75")
+                  finalSpecification = parts[2] || '';
+                  console.log(`    ✅ 스텐랙 선반 재고/가격용 ID 동일: "${partIdForPrice}"`);
                 } else {
                   // 기둥 등은 재고용 ID를 그대로 사용
                   partIdForPrice = mappedInventoryPartId;
@@ -1412,23 +1405,16 @@ const makeExtraOptionBOM = () => {
             } else {
               // 스텐랙/중량랙: 재고관리용 ID와 가격관리용 ID 구분 필요
               if (selectedType === '스텐랙') {
-                // ⚠️ 중요: 스텐랙 선반은 재고관리용(W만)과 가격관리용(WxD 모두)을 구분해야 함
-                // 재고관리용: mappedInventoryPartIds = "스텐랙-선반-50" (W만)
+                // ✅ 스텐랙 선반: 재고관리용과 가격관리용 모두 WxD 구분 (변경됨)
+                // 재고관리용: mappedInventoryPartIds = "스텐랙-선반-사이즈50x75" (WxD 모두)
                 // 가격관리용: partIdForPrice = "스텐랙-선반-사이즈50x75" (WxD 모두)
                 const parts = mappedInventoryPartIds.split('-');
                 if (parts.length >= 3 && parts[1] === '선반') {
-                  // extraOptionId에서 원본 사이즈 추출 (예: "스텐랙-50x75선반-" → "50x75")
-                  const sizeMatch = extraOptionId.match(/(\d+)x(\d+)/);
-                  if (sizeMatch) {
-                    // 가격관리용 partId 생성 (WxD 모두 포함)
-                    partIdForPrice = `스텐랙-선반-사이즈${sizeMatch[1]}x${sizeMatch[2]}`;
-                    finalSpecification = `사이즈${sizeMatch[1]}x${sizeMatch[2]}`;
-                    console.log(`    ✅ 스텐랙 선반 가격용 partId 생성: "${partIdForPrice}" (재고용: "${mappedInventoryPartIds}")`);
-                  } else {
-                    // 매칭 실패 시 재고용 ID 사용 (기둥 등)
-                    partIdForPrice = mappedInventoryPartIds;
-                    finalSpecification = parts[2];
-                  }
+                  // 매핑 테이블에서 이미 WxD 모두 포함된 ID를 받아오므로 그대로 사용
+                  partIdForPrice = mappedInventoryPartIds;
+                  // specification 추출 (예: "스텐랙-선반-사이즈50x75" → "사이즈50x75")
+                  finalSpecification = parts[2] || '';
+                  console.log(`    ✅ 스텐랙 선반 재고/가격용 ID 동일: "${partIdForPrice}"`);
                 } else {
                   // 기둥 등은 재고용 ID를 그대로 사용
                   partIdForPrice = mappedInventoryPartIds;
