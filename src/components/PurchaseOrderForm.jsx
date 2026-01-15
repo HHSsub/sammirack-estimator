@@ -32,6 +32,9 @@ const PurchaseOrderForm = () => {
   const navigate = useNavigate();
   const isEditMode = !!id;
 
+  // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
+  const { extraProducts } = useProducts();
+
   const documentNumberInputRef = useRef(null);
   const adminPricesRef = useRef({}); // 최신 관리자 단가 캐시
   const cartInitializedRef = useRef(false);  // ← 추가
@@ -202,7 +205,6 @@ const PurchaseOrderForm = () => {
       // ✅ customMaterials를 items 형식으로 변환
       // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
       const extraOptionItems = [];
-      const { extraProducts } = useProducts();
       
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {

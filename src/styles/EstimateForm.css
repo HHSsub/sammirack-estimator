@@ -303,10 +303,6 @@
   visibility: visible !important;  /* ✅ 추가 */
 }
 
-.item-controls.no-print {
-  /* no-print 클래스는 @media print에서 처리됨 */
-}
-
 button.add-item-btn {
   background: #28a745 !important;
   color: #fff !important;

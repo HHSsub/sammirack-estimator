@@ -33,6 +33,9 @@ const EstimateForm = () => {
   const navigate = useNavigate();
   const isEditMode = !!id;
 
+  // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
+  const { extraProducts } = useProducts();
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showFaxModal, setShowFaxModal] = useState(false);
@@ -170,7 +173,6 @@ const EstimateForm = () => {
       // ✅ customMaterials를 items 형식으로 변환
       // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
       const extraOptionItems = [];
-      const { extraProducts } = useProducts();
       
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
