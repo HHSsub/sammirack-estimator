@@ -64,9 +64,9 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform: scale(0.88) !important;      /* ✅ 0.90 → 0.88 */
           transform-origin: top center !important;
           max-width: 100% !important;
-          width: 100% !important;
-          padding: 2mm 2mm 4mm !important;        /* 좌우 여백 최소화 (A4 영역 내 보장) */
-          margin: 0 !important;
+          width: calc(100% - 4px) !important;  /* 좌우로 2px씩 더 공간 활용 */
+          padding: 2mm 0mm 4mm !important;        /* 좌우 패딩 제거 (테이블이 직접 공간 사용) */
+          margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
           box-sizing: border-box;
@@ -95,6 +95,8 @@ export const convertDOMToPDFBase64 = async (element) => {
         line-height: 1.65 !important;          /* html2canvas 안전값 */
         padding-top: 10px !important;
         padding-bottom: 12px !important;
+        padding-left: 4px !important;  /* 좌측 패딩 */
+        padding-right: 4px !important;  /* 우측 패딩 */
         vertical-align: middle !important;
         overflow: visible !important;
       }
@@ -149,16 +151,38 @@ export const convertDOMToPDFBase64 = async (element) => {
         font-weight: 700 !important;
       }
       
-      /* ✅ 소재지 주소 한 줄로 표시 (글자 크기 약간 축소) */
+      /* ✅ 소재지 주소 한 줄로 표시 (글자 크기 약간 축소, 잘림 방지) */
       .info-table td:not(.label) {
         font-size: 17px !important;  /* 18px에서 1px 축소 */
       }
       
-      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) 한 줄로 표시 */
+      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) - 잘림 방지 */
       .info-table tr td.label + td + td + td:not(.label),
       .info-table tr td:nth-child(4):not(.label) {
-        white-space: nowrap !important;
+        white-space: normal !important;  /* nowrap 제거 - 줄바꿈 허용하되 최대한 한 줄 유지 */
+        word-break: keep-all !important;  /* 단어 단위로 줄바꿈 */
         overflow: visible !important;
+        padding-right: 8px !important;  /* 우측 패딩 추가로 잘림 방지 */
+      }
+      
+      /* ✅ info-table 전체 너비 확장 */
+      .info-table {
+        width: 100% !important;
+        table-layout: auto !important;  /* 자동 레이아웃으로 공간 활용 */
+      }
+      
+      /* ✅ 모든 테이블 너비 확장 */
+      .form-table,
+      .order-table,
+      .bom-table {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      
+      /* ✅ info-table 전체 너비 확장 */
+      .info-table {
+        width: 100% !important;
+        table-layout: auto !important;  /* 자동 레이아웃으로 공간 활용 */
       }
 
       /* -------------------------------------------------
