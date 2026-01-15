@@ -189,13 +189,21 @@ export const convertDOMToPDFBase64 = async (element) => {
         max-width: 100px !important;  /* 라벨 너비 최소화 */
       }
       
-      /* ✅ 우측 정보 칼럼 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, 공간 확보 */
+      /* ✅ 우측 정보 칼럼 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, A4 내 보장 */
       .info-table tr td.label + td + td + td:not(.label),
       .info-table tr td:nth-child(4):not(.label) {
         width: auto !important;
-        min-width: 200px !important;  /* 컨텐츠 공간 확보 */
+        max-width: 35% !important;  /* A4 내 보장 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
-        overflow: visible !important;  /* 잘림 방지 */
+        overflow: hidden !important;  /* A4 벗어남 방지 */
+        text-overflow: ellipsis !important;  /* 잘림 표시 */
+        box-sizing: border-box !important;
+      }
+      
+      /* ✅ info-table A4 벗어남 방지 */
+      .info-table {
+        max-width: 100% !important;
+        overflow: hidden !important;
         box-sizing: border-box !important;
       }
       
@@ -206,6 +214,40 @@ export const convertDOMToPDFBase64 = async (element) => {
         width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;  /* A4 벗어남 방지 */
+      }
+      
+      /* ✅ 원자재명세서(bom-table) 칼럼 너비 조정 - 규격 칼럼 확대, 수량/비고 축소 */
+      .bom-table {
+        table-layout: fixed !important;  /* 고정 레이아웃으로 칼럼 너비 제어 */
+      }
+      
+      .bom-table th:nth-child(1),
+      .bom-table td:nth-child(1) {
+        width: 5% !important;  /* NO */
+      }
+      
+      .bom-table th:nth-child(2),
+      .bom-table td:nth-child(2) {
+        width: 30% !important;  /* 부품명 */
+      }
+      
+      .bom-table th:nth-child(3),
+      .bom-table td:nth-child(3) {
+        width: 50% !important;  /* 규격 칼럼 확대 */
+        min-width: 50% !important;
+      }
+      
+      .bom-table th:nth-child(4),
+      .bom-table td:nth-child(4) {
+        width: 8% !important;  /* 수량 칼럼 축소 */
+        min-width: 8% !important;
+      }
+      
+      .bom-table th:nth-child(7),
+      .bom-table td:nth-child(7) {
+        width: 7% !important;  /* 비고 칼럼 축소 */
+        min-width: 7% !important;
       }
       
 
