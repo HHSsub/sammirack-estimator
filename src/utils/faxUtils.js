@@ -65,7 +65,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;  /* A4 영역 내 보장 */
-          padding: 2mm 1mm 4mm 3mm !important;        /* 좌우 패딩 조정: 좌측 3mm, 우측 1mm (좌우 균형) */
+          padding: 2mm 2mm 4mm 2mm !important;        /* 좌우 패딩 동일 (좌우 균형) */        /* 좌우 패딩 조정: 좌측 3mm, 우측 1mm (좌우 균형) */
           margin: 0 auto !important;  /* 중앙 정렬 */
           background: #fff !important;
           min-height: auto !important;
@@ -170,30 +170,37 @@ export const convertDOMToPDFBase64 = async (element) => {
       
       /* ✅ info-table 칼럼 너비 고정 (A4 내 보장, 좌우 대칭) */
       .info-table tr td.label {
-        width: 12% !important;  /* 좌우 라벨 동일한 너비 (대칭) */
-        min-width: 12% !important;
-        max-width: 12% !important;
+        width: 13% !important;  /* 좌우 라벨 동일한 너비 (대칭) - 사업자등록번호 표시 공간 확보 */
+        min-width: 13% !important;
+        max-width: 13% !important;
         white-space: nowrap !important;  /* 라벨 한 줄 유지 */
+        padding-left: 2px !important;  /* 좌측 여백 1px 추가 */
+        padding-right: 2px !important;  /* 우측 여백 1px 추가 */
       }
       
       .info-table tr td:nth-child(1) {
-        width: 12% !important;  /* 좌측 라벨 (사업자등록번호 한 줄 표시) */
-        min-width: 12% !important;
-        max-width: 12% !important;
+        width: 13% !important;  /* 좌측 라벨 (사업자등록번호 한 줄 표시) */
+        min-width: 13% !important;
+        max-width: 13% !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
       }
       
       .info-table tr td:nth-child(2) {
-        width: 26% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보) */
+        width: 38% !important;  /* 좌측 정보 (거래일자 + 거래번호 공간 확보 - 13글자 표시) */
+        min-width: 38% !important;
       }
       
       .info-table tr td:nth-child(3) {
-        width: 12% !important;  /* 우측 라벨 (좌측과 동일 - 대칭) */
-        min-width: 12% !important;
-        max-width: 12% !important;
+        width: 13% !important;  /* 우측 라벨 (좌측과 동일 - 대칭) */
+        min-width: 13% !important;
+        max-width: 13% !important;
+        padding-left: 2px !important;
+        padding-right: 2px !important;
       }
       
       .info-table tr td:nth-child(4) {
-        width: 50% !important;  /* 우측 정보 (소재지 등) - A4 내 보장 */
+        width: 36% !important;  /* 우측 정보 (소재지 등) - 좌측 공간 확보를 위해 축소 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
         overflow: hidden !important;  /* A4 벗어남 방지 */
         text-overflow: ellipsis !important;  /* 잘림 표시 */
@@ -306,74 +313,89 @@ export const convertDOMToPDFBase64 = async (element) => {
 
       /* -------------------------------------------------
          11. 도장 - 모든 요소 위에 표시, 위에서 잘림 방지
+         html2canvas 캡처 시 테이블 경계를 뚫고 나오도록 강제
          ------------------------------------------------- */
-      /* ✅ 도장 이미지의 모든 부모 요소 overflow visible */
+      /* ✅ 도장 이미지의 모든 부모 요소 overflow visible 강제 */
       .info-table-stamp-wrapper,
+      .info-table-stamp-wrapper *,
       .info-table-stamp-wrapper table,
       .info-table-stamp-wrapper tbody,
       .info-table-stamp-wrapper tr,
       .info-table-stamp-wrapper td {
         overflow: visible !important;
+        clip: auto !important;
+        clip-path: none !important;
+      }
+      
+      /* ✅ 모든 테이블 요소에 overflow visible 강제 적용 */
+      .form-table,
+      .form-table *,
+      .form-table table,
+      .form-table tbody,
+      .form-table thead,
+      .form-table tr,
+      .form-table td,
+      .form-table th {
+        overflow: visible !important;
+        clip: auto !important;
+        clip-path: none !important;
+      }
+      
+      .info-table,
+      .info-table *,
+      .info-table table,
+      .info-table tbody,
+      .info-table thead,
+      .info-table tr,
+      .info-table td,
+      .info-table th {
+        overflow: visible !important;
+        clip: auto !important;
+        clip-path: none !important;
       }
       
       .rep-cell {
         position: relative !important;
         overflow: visible !important;
-        z-index: 1 !important;
-        padding-top: 30px !important;  /* 도장 이미지가 위에서 잘리지 않도록 상단 패딩 충분히 */
+        clip: auto !important;
+        clip-path: none !important;
+        z-index: 999 !important;
+        padding-top: 50px !important;  /* 도장 이미지가 위로 올라갈 충분한 공간 */
         padding-bottom: 10px !important;
+        padding-right: 50px !important;  /* 우측으로도 확장 가능하도록 */
       }
       
       .ceo-inline {
         position: relative !important;
         overflow: visible !important;
-        z-index: 1 !important;
+        clip: auto !important;
+        clip-path: none !important;
+        z-index: 998 !important;
       }
 
-      .stamp-inline {
-        position: fixed !important;  /* fixed로 변경하여 모든 요소 위에 표시 */
-        top: auto !important;
-        bottom: auto !important;
-        right: auto !important;
-        left: auto !important;
+      /* ✅ 도장 이미지 - absolute로 설정하여 rep-cell 기준으로 배치 */
+      .stamp-inline,
+      img[alt="도장"],
+      .rep-cell .stamp-inline,
+      .rep-cell img[alt="도장"],
+      .ceo-inline .stamp-inline,
+      .ceo-inline img[alt="도장"] {
+        position: absolute !important;  /* fixed 제거, absolute만 사용 */
+        top: -40px !important;  /* 위로 더 올라가도록 */
+        right: -40px !important;  /* 우측으로 더 나가도록 */
         width: 80px !important;
         height: 80px !important;
+        max-width: 80px !important;
+        max-height: 80px !important;
         z-index: 999999 !important;  /* 최상단으로 설정 */
         opacity: 0.85 !important;
-        pointer-events: none !important;  /* 클릭 방해 방지 */
-        transform: none !important;  /* transform 제거 */
-      }
-      
-      /* ✅ 도장 이미지를 rep-cell 기준으로 절대 배치 (위로 올라가도록) */
-      .rep-cell .stamp-inline {
-        position: absolute !important;  /* absolute로 다시 설정 */
-        top: -25px !important;  /* 위로 충분히 올라가도록 */
-        right: -30px !important;
+        pointer-events: none !important;
         transform: none !important;
-        z-index: 999999 !important;
-      }
-      
-      /* ✅ 도장 이미지가 모든 요소 위에 표시되도록 */
-      .stamp-inline,
-      img[alt="도장"] {
-        z-index: 999999 !important;
-        position: absolute !important;
-      }
-      
-      /* ✅ info-table과 form-table도 도장 이미지가 잘리지 않도록 */
-      .info-table,
-      .form-table {
         overflow: visible !important;
-      }
-      
-      .info-table tr,
-      .form-table tr {
-        overflow: visible !important;
-      }
-      
-      .info-table td,
-      .form-table td {
-        overflow: visible !important;
+        clip: auto !important;
+        clip-path: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
     }
   `;
