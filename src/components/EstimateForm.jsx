@@ -535,7 +535,7 @@ const EstimateForm = () => {
               <td className="label" style={{width:110}}>거래일자</td>
               <td>
                 <div style={{display:'flex', gap:'8px', alignItems:'center', width:'100%'}}>
-                  <div style={{flex:'0 0 60%'}}>
+                  <div style={{flex:'0 0 55%'}}>
                     <input
                       type="date"
                       value={formData.date}
@@ -543,7 +543,7 @@ const EstimateForm = () => {
                       style={{fontSize:'14px', fontWeight:600, padding:'3px 4px', width:'100%'}}
                     />
                   </div>
-                  <div style={{display:'flex', flexDirection:'column', flex:'0 0 40%'}}>
+                  <div style={{display:'flex', flexDirection:'column', flex:'0 0 45%', paddingLeft:'4px'}}>
                     <label style={{fontSize:'12px', fontWeight:600, marginBottom:2}}>거래번호</label>
                     <input
                       ref={documentNumberInputRef}

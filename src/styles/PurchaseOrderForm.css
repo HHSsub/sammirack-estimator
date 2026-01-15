@@ -140,7 +140,7 @@
 
 /* ✅ 폼 테이블 */
 .fax-capture .form-table {
-  font-size: 15px !important;
+  font-size: 15.5px !important;
 }
 
 /* ✅ 헤더 */
@@ -227,7 +227,7 @@ img[alt="도장"] {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 15.5px;
 }
 .form-table th,
 .form-table td {

@@ -470,6 +470,43 @@ export const convertDOMToPDFBase64 = async (element) => {
     // div 높이 계산 대기
     await new Promise(resolve => setTimeout(resolve, 100));
 
+    // ✅ 4-2단계: 도장 이미지를 테이블 밖으로 이동 (html2canvas 캡처 전)
+    const stampImages = element.querySelectorAll('.stamp-inline, img[alt="도장"]');
+    const stampBackups = [];
+    stampImages.forEach((stamp) => {
+      const computedStyle = window.getComputedStyle(stamp);
+      const rect = stamp.getBoundingClientRect();
+      const parentRect = element.getBoundingClientRect();
+      
+      // 원본 위치 저장
+      stampBackups.push({
+        element: stamp,
+        originalParent: stamp.parentElement,
+        originalPosition: stamp.style.position,
+        originalTop: stamp.style.top,
+        originalRight: stamp.style.right,
+        originalZIndex: stamp.style.zIndex
+      });
+      
+      // 도장을 body에 직접 추가하여 테이블 경계를 완전히 벗어나게 함
+      stamp.style.position = 'fixed';
+      stamp.style.top = `${rect.top - parentRect.top - 60}px`;  // 위로 더 올라가도록
+      stamp.style.right = `${parentRect.right - rect.right - 20}px`;
+      stamp.style.zIndex = '9999999';
+      stamp.style.overflow = 'visible';
+      stamp.style.clip = 'auto';
+      stamp.style.clipPath = 'none';
+      
+      // 부모의 overflow도 visible로 강제
+      let parent = stamp.parentElement;
+      while (parent && parent !== element) {
+        parent.style.overflow = 'visible';
+        parent.style.clip = 'auto';
+        parent.style.clipPath = 'none';
+        parent = parent.parentElement;
+      }
+    });
+
     // ✅ 5단계: html2canvas
     const canvas = await html2canvas(element, {
       scale: 3,
@@ -478,6 +515,26 @@ export const convertDOMToPDFBase64 = async (element) => {
       backgroundColor: '#ffffff',
       windowWidth: 1200,
       windowHeight: element.scrollHeight,
+      onclone: (clonedDoc) => {
+        // 클론된 문서에서도 도장 이미지 위치 재조정
+        const clonedStamps = clonedDoc.querySelectorAll('.stamp-inline, img[alt="도장"]');
+        clonedStamps.forEach((stamp) => {
+          stamp.style.position = 'fixed';
+          stamp.style.overflow = 'visible';
+          stamp.style.clip = 'auto';
+          stamp.style.clipPath = 'none';
+          stamp.style.zIndex = '9999999';
+          
+          // 모든 부모 요소의 overflow를 visible로 설정
+          let parent = stamp.parentElement;
+          while (parent) {
+            parent.style.overflow = 'visible';
+            parent.style.clip = 'auto';
+            parent.style.clipPath = 'none';
+            parent = parent.parentElement;
+          }
+        });
+      },
       ignoreElements: (el) =>
         el.classList.contains('no-print') ||
         el.classList.contains('add-item-btn') ||
@@ -487,6 +544,14 @@ export const convertDOMToPDFBase64 = async (element) => {
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    // ✅ 5-1단계: 도장 이미지 원래 위치로 복원
+    stampBackups.forEach((backup) => {
+      backup.element.style.position = backup.originalPosition;
+      backup.element.style.top = backup.originalTop;
+      backup.element.style.right = backup.originalRight;
+      backup.element.style.zIndex = backup.originalZIndex;
+    });
 
     // ✅ 6단계: PDF 생성
     const pdf = new jsPDF({
@@ -518,12 +583,24 @@ export const convertDOMToPDFBase64 = async (element) => {
     console.error('❌ PDF 변환 오류:', error);
     throw new Error('PDF 변환에 실패했습니다.');
   } finally {
-    // ✅ 7단계: 스타일 제거
+    // ✅ 7단계: 도장 이미지 원래 위치로 복원 (에러 발생 시에도 복원)
+    if (typeof stampBackups !== 'undefined' && stampBackups.length > 0) {
+      stampBackups.forEach((backup) => {
+        if (backup.element && backup.element.parentElement) {
+          backup.element.style.position = backup.originalPosition || '';
+          backup.element.style.top = backup.originalTop || '';
+          backup.element.style.right = backup.originalRight || '';
+          backup.element.style.zIndex = backup.originalZIndex || '';
+        }
+      });
+    }
+
+    // ✅ 8단계: 스타일 제거
     if (printStyleElement.parentNode) {
       printStyleElement.parentNode.removeChild(printStyleElement);
     }
 
-    // ✅ 8단계: 숨김 복원
+    // ✅ 9단계: 숨김 복원
     hiddenElements.forEach((el, index) => {
       el.style.display = originalDisplayValues[index];
     });
