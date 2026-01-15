@@ -11,6 +11,8 @@ import DocumentSettingsModal from './DocumentSettingsModal';
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
+import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
+import { getExtraOptionDisplayInfo } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -28,6 +30,9 @@ const DeliveryNoteForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isEditMode = !!id;
+  
+  // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출)
+  const { extraProducts } = useProducts();
   
   const documentNumberInputRef = useRef(null);
   const cartInitializedRef = useRef(false);  // ← 추가
@@ -151,7 +156,6 @@ const DeliveryNoteForm = () => {
       // ✅ customMaterials를 items 형식으로 변환
       // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
       const extraOptionItems = [];
-      const { extraProducts } = useProducts();
       
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
