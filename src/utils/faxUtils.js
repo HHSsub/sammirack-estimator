@@ -143,10 +143,21 @@ export const convertDOMToPDFBase64 = async (element) => {
         padding: 8px 6px !important; /* ✅ 6px → 8px */
         font-weight: 700 !important;
       }
-      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 및 너비 10% 증가 */
+      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 - 너비는 원래대로 유지 */
       .form-table .label {
         font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
+        white-space: nowrap !important;  /* 라벨은 한 줄로 유지 */
+      }
+      
+      /* ✅ 좌측 정보(content) 칼럼 너비 축소 - 라벨 다음 첫 번째 데이터 셀 */
+      .info-table tr td.label + td {
+        width: auto !important;
+        max-width: 200px !important;  /* 좌측 정보 칼럼 최대 너비 제한 */
+      }
+      
+      /* ✅ 우측 라벨 칼럼 너비 10% 증가 */
+      .info-table tr td.label + td + td.label {
         width: 132px !important;  /* 120px * 1.1 = 132px (10% 증가) */
       }
       
