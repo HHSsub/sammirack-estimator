@@ -65,7 +65,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           transform-origin: top center !important;
           max-width: 100% !important;
           width: 100% !important;
-          padding: 4mm 4mm 4mm !important;        /* 좌우 여백 최소화 */
+          padding: 2mm 2mm 4mm !important;        /* 좌우 여백 최소화 (A4 영역 내 보장) */
           margin: 0 !important;
           background: #fff !important;
           min-height: auto !important;
@@ -143,25 +143,13 @@ export const convertDOMToPDFBase64 = async (element) => {
         padding: 8px 6px !important; /* ✅ 6px → 8px */
         font-weight: 700 !important;
       }
-      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 - 너비는 원래대로 유지 */
+      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 */
       .form-table .label {
         font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
-        white-space: nowrap !important;  /* 라벨은 한 줄로 유지 */
       }
       
-      /* ✅ 좌측 정보(content) 칼럼 너비 축소 - 라벨 다음 첫 번째 데이터 셀 */
-      .info-table tr td.label + td {
-        width: auto !important;
-        max-width: 200px !important;  /* 좌측 정보 칼럼 최대 너비 제한 */
-      }
-      
-      /* ✅ 우측 라벨 칼럼 너비 10% 증가 */
-      .info-table tr td.label + td + td.label {
-        width: 132px !important;  /* 120px * 1.1 = 132px (10% 증가) */
-      }
-      
-      /* ✅ info-table 데이터 셀 글자 크기 약간 축소 및 소재지 주소 한 줄로 표시 */
+      /* ✅ 소재지 주소 한 줄로 표시 (글자 크기 약간 축소) */
       .info-table td:not(.label) {
         font-size: 17px !important;  /* 18px에서 1px 축소 */
       }
