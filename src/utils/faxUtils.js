@@ -143,10 +143,23 @@ export const convertDOMToPDFBase64 = async (element) => {
         padding: 8px 6px !important; /* ✅ 6px → 8px */
         font-weight: 700 !important;
       }
-      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 */
+      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 및 너비 10% 증가 */
       .form-table .label {
         font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
+        width: 132px !important;  /* 120px * 1.1 = 132px (10% 증가) */
+      }
+      
+      /* ✅ info-table 데이터 셀 글자 크기 약간 축소 및 소재지 주소 한 줄로 표시 */
+      .info-table td:not(.label) {
+        font-size: 17px !important;  /* 18px에서 1px 축소 */
+      }
+      
+      /* ✅ 우측 라벨 다음 데이터 셀들 (소재지, TEL, 홈페이지, FAX 등) 한 줄로 표시 */
+      .info-table tr td.label + td + td + td:not(.label),
+      .info-table tr td:nth-child(4):not(.label) {
+        white-space: nowrap !important;
+        overflow: visible !important;
       }
 
       /* -------------------------------------------------
