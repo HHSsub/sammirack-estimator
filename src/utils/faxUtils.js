@@ -72,7 +72,7 @@ export const convertDOMToPDFBase64 = async (element) => {
           box-sizing: border-box !important;
           font-size: 12px !important;
           line-height: 1.35 !important;
-          overflow: hidden !important;  /* A4 벗어남 방지 */
+          overflow: visible !important;  /* 도장 이미지가 잘리지 않도록 */
         }
 
       /* -------------------------------------------------
@@ -146,10 +146,13 @@ export const convertDOMToPDFBase64 = async (element) => {
         padding: 8px 6px !important; /* ✅ 6px → 8px */
         font-weight: 700 !important;
       }
-      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 */
+      /* ✅ 라벨(거래일자, 거래번호 등) 글자 크기 및 너비 최소화 */
       .form-table .label {
         font-size: 18px !important;  /* ✅ 추가 */
         font-weight: 700 !important;
+        width: auto !important;
+        min-width: 80px !important;  /* 최소 너비만 설정 */
+        max-width: 100px !important;  /* 최대 너비 제한으로 컨텐츠 공간 확보 */
       }
       
       /* ✅ 소재지 주소 한 줄로 표시 (글자 크기 약간 축소, 잘림 방지) */
@@ -161,30 +164,38 @@ export const convertDOMToPDFBase64 = async (element) => {
       .info-table {
         width: 100% !important;
         max-width: 100% !important;
-        table-layout: fixed !important;  /* 고정 레이아웃으로 A4 내 보장 */
+        table-layout: auto !important;  /* 자동 레이아웃으로 컨텐츠 공간 확보 */
         box-sizing: border-box !important;
       }
       
-      /* ✅ 좌측 정보 칼럼 너비 축소하여 우측 공간 확보 */
+      /* ✅ 좌측 라벨 칼럼 너비 최소화 */
+      .info-table tr td.label:first-child,
+      .info-table tr td.label:nth-child(1) {
+        width: auto !important;
+        min-width: 80px !important;
+        max-width: 100px !important;  /* 라벨 너비 최소화 */
+      }
+      
+      /* ✅ 좌측 정보 칼럼 너비 확대 */
       .info-table tr td.label + td:not(.label) {
-        width: 25% !important;  /* 좌측 정보 칼럼 너비 제한 */
-        max-width: 25% !important;
+        width: auto !important;
+        min-width: 150px !important;  /* 컨텐츠 공간 확보 */
       }
       
-      /* ✅ 우측 라벨 칼럼 */
+      /* ✅ 우측 라벨 칼럼 너비 최소화 */
       .info-table tr td.label + td + td.label {
-        width: 20% !important;
-        max-width: 20% !important;
+        width: auto !important;
+        min-width: 80px !important;
+        max-width: 100px !important;  /* 라벨 너비 최소화 */
       }
       
-      /* ✅ 우측 정보 칼럼 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, A4 내 보장 */
+      /* ✅ 우측 정보 칼럼 (소재지, TEL, 홈페이지, FAX 등) - 한 줄로 표시, 공간 확보 */
       .info-table tr td.label + td + td + td:not(.label),
       .info-table tr td:nth-child(4):not(.label) {
-        width: 30% !important;  /* 너비 제한으로 A4 내 보장 */
-        max-width: 30% !important;
+        width: auto !important;
+        min-width: 200px !important;  /* 컨텐츠 공간 확보 */
         white-space: nowrap !important;  /* 한 줄로 유지 */
-        overflow: hidden !important;  /* A4 벗어남 방지 */
-        text-overflow: ellipsis !important;  /* 잘림 표시 */
+        overflow: visible !important;  /* 잘림 방지 */
         box-sizing: border-box !important;
       }
       
@@ -254,6 +265,7 @@ export const convertDOMToPDFBase64 = async (element) => {
       .rep-cell {
         position: relative !important;
         overflow: visible !important;
+        z-index: 1 !important;
       }
 
       .stamp-inline {
@@ -262,8 +274,16 @@ export const convertDOMToPDFBase64 = async (element) => {
         right: -30px !important;
         width: 80px !important;
         height: 80px !important;
-        z-index: 999 !important;
+        z-index: 99999 !important;  /* 최상단으로 설정 */
         opacity: 0.85 !important;
+        pointer-events: none !important;  /* 클릭 방해 방지 */
+      }
+      
+      /* ✅ 도장 이미지가 모든 요소 위에 표시되도록 */
+      .stamp-inline,
+      img[alt="도장"] {
+        z-index: 99999 !important;
+        position: absolute !important;
       }
     }
   `;
