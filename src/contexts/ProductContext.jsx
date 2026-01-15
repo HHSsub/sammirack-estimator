@@ -2189,50 +2189,60 @@ const makeExtraOptionBOM = () => {
   // ✅ 수정된 cartBOMView - specification을 포함한 키로 그룹핑
   // ⚠️ 중요: 스텐랙 선반은 가격/표시용 partId로 구분 (재고관리용 inventoryPartId는 W만 구분)
   const cartBOMView = useMemo(() => {
-    const bomMap = new Map();
-    cart.forEach(item => {
-      if (item.bom && Array.isArray(item.bom)) {
-        item.bom.forEach(bomItem => {
-          // 스텐랙 선반의 경우 가격/표시용 partId로 구분 (WxD 모두 포함)
-          let key;
-          if (bomItem.rackType === '스텐랙' && bomItem.name === '선반') {
-            // partId가 없으면 생성 (WxD 모두 포함)
-            if (bomItem.partId) {
-              key = bomItem.partId;
+      const bomMap = new Map();
+      cart.forEach(item => {
+        if (item.bom && Array.isArray(item.bom)) {
+          item.bom.forEach(bomItem => {
+            let key;
+            let modifiedSpec = bomItem.specification || '';
+            
+            // 스텐랙 선반의 경우 가격/표시용 partId로 구분 (WxD 모두 포함)
+            if (bomItem.rackType === '스텐랙' && bomItem.name === '선반') {
+              // partId가 없으면 생성 (WxD 모두 포함)
+              if (bomItem.partId) {
+                key = bomItem.partId;
+              } else {
+                const partId = generatePartId({
+                  rackType: bomItem.rackType,
+                  name: bomItem.name,
+                  specification: bomItem.specification || ''
+                });
+                key = partId;
+              }
+            } else if (bomItem.rackType === '하이랙' && bomItem.name && bomItem.name.includes('기둥')) {
+              // 하이랙 기둥: W×급으로 그룹핑
+              const match = modifiedSpec.match(/사이즈\s+(\d+)x\d+\s+(높이\s+\d+\s+\d+kg)/);
+              if (match) {
+                modifiedSpec = `사이즈 ${match[1]}x ${match[2]}`;
+              }
+              key = generateInventoryPartId({ ...bomItem, specification: modifiedSpec });
             } else {
-              const partId = generatePartId({
-                rackType: bomItem.rackType,
-                name: bomItem.name,
-                specification: bomItem.specification || ''
-              });
-              key = partId;
+              // 기타는 재고관리용 inventoryPartId 사용
+              key = generateInventoryPartId(bomItem);
             }
-          } else {
-            // 기타는 재고관리용 inventoryPartId 사용
-            key = generateInventoryPartId(bomItem);
-          }
-          
-          if (bomMap.has(key)) {
-            const existing = bomMap.get(key);
-            bomMap.set(key, {
-              ...existing,
-              quantity: existing.quantity + (bomItem.quantity || 0),
-              totalPrice: existing.totalPrice + (bomItem.totalPrice || 0)
-            });
-          } else {
-            bomMap.set(key, {
-              ...bomItem,
-              quantity: bomItem.quantity || 0,
-              totalPrice: bomItem.totalPrice || 0,
-              unitPrice: bomItem.unitPrice || bomItem.unit_price || 0
-            });
-          }
-        });
-      }
-    });
-    const result = Array.from(bomMap.values());
-    return sortBOMByMaterialRule(result);
-  }, [cart]);
+            
+            if (bomMap.has(key)) {
+              const existing = bomMap.get(key);
+              bomMap.set(key, {
+                ...existing,
+                quantity: existing.quantity + (bomItem.quantity || 0),
+                totalPrice: existing.totalPrice + (bomItem.totalPrice || 0)
+              });
+            } else {
+              bomMap.set(key, {
+                ...bomItem,
+                specification: modifiedSpec,
+                quantity: bomItem.quantity || 0,
+                totalPrice: bomItem.totalPrice || 0,
+                unitPrice: bomItem.unitPrice || bomItem.unit_price || 0
+              });
+            }
+          });
+        }
+      });
+      const result = Array.from(bomMap.values());
+      return sortBOMByMaterialRule(result);
+    }, [cart]);
 
   const cartTotalCalc=useMemo(()=>{
     return cart.reduce((sum,item)=>{
