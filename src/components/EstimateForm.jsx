@@ -31,6 +31,17 @@ const EstimateForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const cartData = location.state || {};
+  const { 
+    cart = [], 
+    totalBom = [],
+    customItems = [],
+    customMaterials = [],
+    editingDocumentId = null,
+    editingDocumentData = {}
+  } = cartData;
+  
   const isEditMode = !!id || !!editingDocumentId;  // ✅ 수정
 
   // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
@@ -55,16 +66,6 @@ const EstimateForm = () => {
 
   const documentNumberInputRef = useRef(null);
   const cartInitializedRef = useRef(false);
-  
-  const cartData = location.state || {};
-  const { 
-    cart = [], 
-    totalBom = [],
-    customItems = [],
-    customMaterials = [],      // ✅ 추가!!!
-    editingDocumentId = null,
-    editingDocumentData = {}
-  } = cartData;
 
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || new Date().toISOString().split('T')[0],
