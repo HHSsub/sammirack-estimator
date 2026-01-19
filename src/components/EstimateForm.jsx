@@ -154,94 +154,108 @@ const EstimateForm = () => {
     }
   }, [id, isEditMode]);
 
-  // ✅ 새 문서 -cart 초기화
-  // ✅ 편집 데이터 우선 적용 + 새 문서 cart 초기화  
-  useEffect(() => {  
-    // ✅ 편집 데이터가 있으면 최우선으로 적용 (URL id와 무관)  
-    if (editingDocumentData && editingDocumentId && Object.keys(editingDocumentData || {}).length > 0) {
-      setFormData({  
-        ...editingDocumentData,  
-        documentSettings: editingDocumentData.documentSettings || null  
-      });  
-      return; // 편집 모드면 여기서 종료  
-    }  
+  // ✅ 새 문서 - cart 초기화
+  useEffect(() => {
+    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
+      cartInitializedRef.current = true;
+      const cartItems = cart.map(item => {
+        const qty = item.quantity || 1;
+        // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
+        const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
+        return {
+          name: item.displayName || item.name || '',
+          unit: '개',
+          quantity: qty,
+          unitPrice,
+          totalPrice: unitPrice * qty,
+          note: ''
+        };
+      });
+            
+      // ✅ customMaterials를 items 형식으로 변환
+      // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
+      const extraOptionItems = [];
       
-    // ✅ 기존 로직 (신규 문서용)  
-    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {  
-      cartInitializedRef.current = true;  
-      const cartItems = cart.map(item => {  
-        const qty = item.quantity || 1;  
-        const unitPrice = Math.round((item.price || 0) / (qty || 1));  
-        return {  
-          name: item.displayName || item.name || '',  
-          unit: '개',  
-          quantity: qty,  
-          unitPrice,  
-          totalPrice: unitPrice * qty,  
-          note: ''  
-        };  
-      });  
-              
-      // ✅ customMaterials를 items 형식으로 변환  
-      // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시  
-      const extraOptionItems = [];  
-      cart.forEach(item => {  
-        if (item.extraOptions && Array.isArray(item.extraOptions)) {  
-          item.extraOptions.forEach(opt => {  
-            if (opt && opt.name) {  
-              extraOptionItems.push({  
-                name: `[추가옵션] ${opt.name}`,  
-                unit: '개',  
-                quantity: 1,  
-                unitPrice: opt.price || 0,  
-                totalPrice: opt.price || 0,  
-                note: '기타추가옵션'  
-              });  
-            }  
-          });  
-        }  
-      });  
+      cart.forEach(item => {
+        if (item.extraOptions && Array.isArray(item.extraOptions)) {
+          item.extraOptions.forEach(optId => {
+            // optId가 ID인 경우 extraProducts에서 이름 찾기 - 유틸 함수 사용
+            const displayInfo = getExtraOptionDisplayInfo(item.type, optId, extraProducts);
+            
+            // opt가 객체인 경우 (하위 호환성)
+            let optName = '';
+            let optPrice = 0;
+            if (displayInfo) {
+              optName = displayInfo.name;
+              optPrice = displayInfo.price;
+            } else if (optId && typeof optId === 'object' && optId.name) {
+              optName = optId.name;
+              optPrice = optId.price || 0;
+            }
+            
+            if (optName) {
+              extraOptionItems.push({
+                name: `[추가옵션] ${optName}`,
+                unit: '개',
+                quantity: 1,
+                unitPrice: optPrice,
+                totalPrice: optPrice,
+                note: '추가옵션'
+              });
+            }
+          });
+        }
+      });
+      
+      // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)
+      const customMaterialItems = [];
+      cart.forEach(item => {
+        if (item.customMaterials && Array.isArray(item.customMaterials)) {
+          item.customMaterials.forEach(mat => {
+            if (mat && mat.name) {
+              customMaterialItems.push({
+                name: `[추가옵션] ${mat.name}`,
+                unit: '개',
+                quantity: 1,
+                unitPrice: mat.price || 0,
+                totalPrice: mat.price || 0,
+                note: '추가옵션'
+              });
+            }
+          });
+        }
+      });
+      
+      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
+      
+      const bomMaterials = (totalBom || []).map(m => {
+        // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
+        let displayName = m.name;
+        if (m.rackType === '하이랙' && m.colorWeight) {
+          const partName = extractPartNameFromCleanName(m.name) || m.name;
+          displayName = generateHighRackDisplayName(partName, m.colorWeight);
+        }
         
-      // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)  
-      const customMaterialItems = [];  
-      cart.forEach(item => {  
-        if (item.customMaterials && Array.isArray(item.customMaterials)) {  
-          item.customMaterials.forEach(mat => {  
-            if (mat && mat.name) {  
-              customMaterialItems.push({  
-                name: `[추가옵션] ${mat.name}`,  
-                unit: '개',  
-                quantity: 1,  
-                unitPrice: mat.price || 0,  
-                totalPrice: mat.price || 0,  
-                note: '기타추가옵션'  
-              });  
-            }  
-          });  
-        }  
-      });  
-        
-      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];  
-        
-      const bomMaterials = (totalBom || []).map(m => ({  
-        name: m.name,  
-        rackType: m.rackType,  
-        specification: m.specification || '',  
-        quantity: Number(m.quantity) || 0,  
-        unitPrice: Number(m.unitPrice) || 0,  
-        totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),  
-        note: m.note || ''  
-      }));  
-        
-      const allMaterials = [...bomMaterials, ...customMaterials];  
-        
-      setFormData(prev => ({   
-        ...prev,   
-        items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],  
-        materials: allMaterials  
-      }));  
-    }  
-  }, [cart, totalBom, customItems, customMaterials, isEditMode, editingDocumentData, editingDocumentId]);
+        return {
+          name: displayName,
+          rackType: m.rackType,
+          specification: m.specification || '',
+          quantity: Number(m.quantity) || 0,
+          unitPrice: Number(m.unitPrice) || 0,
+          totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
+          note: m.note || ''
+        };
+      });
+      
+      const allMaterials = [...bomMaterials, ...customMaterials];
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
+        materials: allMaterials
+      }));
+    }
+  }, [cart, totalBom, customItems, customMaterials, isEditMode]);
 
   // ✅ 합계 계산
   useEffect(() => {
