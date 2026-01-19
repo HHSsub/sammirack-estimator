@@ -528,12 +528,20 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     console.log('🔧 Custom Materials:', customMaterials.length, '개');
     
     // ✅ 저장된 문서에서 cart 복원 (extraOptions 포함)
-    // item.cart가 있으면 그대로 사용, 없으면 위에서 생성한 cart 사용
+    // item.cart가 있으면 사용하되, items에 저장된 최신 단가(unitPrice)로 동기화 (2026-01-19)
     let finalCart = cart;
     if (item.cart && Array.isArray(item.cart) && item.cart.length > 0) {
-      // 저장된 cart 사용 (extraOptions 포함)
-      finalCart = item.cart;
-      console.log('✅ 저장된 cart 사용 (extraOptions 포함):', finalCart.length, '개');
+      finalCart = item.cart.map(cartItem => {
+        // items 배열에서 이름이 일치하는 항목을 찾아 단가 동기화
+        const matchingItem = (item.items || []).find(it => it.name === (cartItem.displayName || cartItem.name));
+        if (matchingItem && matchingItem.unitPrice !== undefined) {
+          const up = Number(matchingItem.unitPrice) || 0;
+          const qty = Number(cartItem.quantity) || Number(matchingItem.quantity) || 1;
+          return { ...cartItem, unitPrice: up, price: up * qty };
+        }
+        return cartItem;
+      });
+      console.log('✅ 저장된 cart 사용 및 단가 최신화:', finalCart.length, '개');
     } else {
       console.log('⚠️ 저장된 cart 없음 - 재생성한 cart 사용:', finalCart.length, '개');
     }
