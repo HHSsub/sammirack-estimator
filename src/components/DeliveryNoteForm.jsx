@@ -29,13 +29,24 @@ const DeliveryNoteForm = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const isEditMode = !!id;
+  
+  const cartData = location.state || {};
+  const { 
+    cart = [], 
+    totalBom = [],
+    customItems = [],
+    customMaterials = [],
+    editingDocumentId = null,
+    editingDocumentData = {}
+  } = cartData;
+  
+  const isEditMode = !!id || !!editingDocumentId;  // ✅ 수정
   
   // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출)
   const { extraProducts } = useProducts();
   
   const documentNumberInputRef = useRef(null);
-  const cartInitializedRef = useRef(false);  // ← 추가
+  const cartInitializedRef = useRef(false);
   
   // ✅ 관리자 체크
   const [isAdmin, setIsAdmin] = useState(false);
@@ -54,16 +65,6 @@ const DeliveryNoteForm = () => {
     message: '', 
     onConfirm: null 
   });
-
-  const cartData = location.state || {};
-  const { 
-    cart = [], 
-    totalBom = [],
-    customItems = [],          // ✅ 추가
-    customMaterials = [],      // ✅ 추가
-    editingDocumentId = null,  // ✅ 추가
-    editingDocumentData = {}   // ✅ 추가
-  } = cartData;
 
   const adminPricesRef = useRef({});
     
