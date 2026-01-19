@@ -1084,7 +1084,7 @@ const PurchaseOrderForm = () => {
                         updateFormData('purchaseNumber', e.target.value);
                       }}
                       placeholder=""
-                      style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: '#000000', width: '100%' }}
+                      style={{ padding: '3px 4px', fontSize: '16.5px', fontWeight: 'bold', color: '#000000', width: '100%' }}
                     />
                   </div>
                 </div>
