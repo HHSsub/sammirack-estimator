@@ -42,7 +42,7 @@ const PurchaseOrderForm = () => {
       editingDocumentData = {}
     } = cartData;
     
-    const isEditMode = !!id || !!editingDocumentId;  // ✅ 수정
+    const isEditMode = (!!id && id !== 'new') || !!editingDocumentId;  // ✅ 수정
   
     // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
     const { extraProducts } = useProducts();
