@@ -109,225 +109,128 @@ const PurchaseOrderForm = () => {
   }, []);
   
   // 기존 저장 문서 로드
-  useEffect(() => {
-    if (isEditMode && id) {
-      const storageKey = `purchase_${id}`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try {
-          const data = JSON.parse(saved);
+  // ✅ 편집 데이터 우선 적용 + 초기 cart / BOM 반영 (관리자 단가 재적용)  
+  useEffect(() => {  
+    // ✅ 편집 데이터가 있으면 최우선으로 적용 (URL id와 무관)  
+    if (editingDocumentData && Object.keys(editingDocumentData).length > 0 && editingDocumentId) {  
+      setFormData({  
+        ...editingDocumentData,  
+        documentSettings: editingDocumentData.documentSettings || null  
+      });  
+      return; // 편집 모드면 여기서 종료  
+    }  
+      
+    // ✅ 기존 로직 (신규 문서용)  
+    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {  
+      cartInitializedRef.current = true;  // ← 추가  
+      adminPricesRef.current = loadAdminPricesDirect();  
+      const cartItems = cart.map(item => {  
+        const qty = item.quantity || 1;  
+        const unitPrice = Math.round((item.price || 0) / (qty || 1));  
+        return {  
+          name: item.displayName || item.name || '',  
+          unit: '개',  
+          quantity: qty,  
+          unitPrice,  
+          totalPrice: unitPrice * qty,  
+          note: ''  
+        };  
+      });  
           
-          // ✅ 원자재 검증: 비정상적인 수량 체크 (10000개 이상)
-          const hasBadMaterials = (data.materials || []).some(mat => 
-            Number(mat.quantity) > 10000
-          );
-          
-          if (hasBadMaterials || !data.materials || data.materials.length === 0) {
-            console.warn('⚠️ 원자재 데이터 손상 감지 - 재생성 시작');
-            
-            // ✅ items에서 BOM 재생성
-            const allBoms = [];
-            (data.items || []).forEach(item => {
-              if (item.name) {
-                const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
-                
-                if (bom.length === 0) {
-                  // 기타 품목
-                  const qty = Number(item.quantity) || 1;
-                  const totalPrice = Number(item.totalPrice) || 0;
-                  const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
-                  allBoms.push({
-                    rackType: '기타',
-                    name: item.name,
-                    specification: '',
-                    quantity: qty,
-                    unitPrice: unitPrice,
-                    totalPrice: totalPrice,
-                    note: '기타 품목'
-                  });
-                } else {
-                  allBoms.push(...bom);
-                }
-              }
-            });
-            
-            // ✅ 중복 제거 및 수량 합산
-            const bomMap = new Map();
-            allBoms.forEach(item => {
-              const key = generatePartId(item);
-              if (bomMap.has(key)) {
-                const existing = bomMap.get(key);
-                bomMap.set(key, {
-                  ...existing,
-                  quantity: existing.quantity + (item.quantity || 0),
-                  totalPrice: existing.totalPrice + (item.totalPrice || 0)
-                });
-              } else {
-                bomMap.set(key, { ...item });
-              }
-            });
-            
-            data.materials = Array.from(bomMap.values());
-            
-            console.log('✅ 원자재 재생성 완료:', data.materials.length, '개');
-            
-            // ✅ 즉시 저장 (손상된 데이터 덮어쓰기)
-            localStorage.setItem(storageKey, JSON.stringify(data));
-          }
-          setFormData({
-              ...data,
-              documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
-            });
-          } catch(e) {
-            console.error('청구서 로드 실패:', e);
-          }
-      }
-    }
-  }, [id, isEditMode]);
-
-  // 초기 cart / BOM 반영 (관리자 단가 재적용)
-  useEffect(() => {
-    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
-      cartInitializedRef.current = true;  // ← 추가
-      adminPricesRef.current = loadAdminPricesDirect();
-      const cartItems = cart.map(item => {
-        const qty = item.quantity || 1;
-        // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
-        const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
-        return {
-          name: item.displayName || item.name || '',
-          unit: '개',
-          quantity: qty,
-          unitPrice,
-          totalPrice: unitPrice * qty,
-          note: ''
-        };
-      });
+      // ✅ customMaterials를 items 형식으로 변환  
+      // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시  
+      const extraOptionItems = [];  
+      cart.forEach(item => {  
+        if (item.extraOptions && Array.isArray(item.extraOptions)) {  
+          item.extraOptions.forEach(opt => {  
+            if (opt && opt.name) {  
+              extraOptionItems.push({  
+                name: `[추가옵션] ${opt.name}`,  
+                unit: '개',  
+                quantity: 1,  
+                unitPrice: opt.price || 0,  
+                totalPrice: opt.price || 0,  
+                note: '기타추가옵션'  
+              });  
+            }  
+          });  
+        }  
+      });  
         
-      // ✅ customMaterials를 items 형식으로 변환
-      // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
-      const extraOptionItems = [];
-      
-      cart.forEach(item => {
-        if (item.extraOptions && Array.isArray(item.extraOptions)) {
-          item.extraOptions.forEach(optId => {
-            // optId가 ID인 경우 extraProducts에서 이름 찾기 - 유틸 함수 사용
-            const displayInfo = getExtraOptionDisplayInfo(item.type, optId, extraProducts);
-            
-            // opt가 객체인 경우 (하위 호환성)
-            let optName = '';
-            let optPrice = 0;
-            if (displayInfo) {
-              optName = displayInfo.name;
-              optPrice = displayInfo.price;
-            } else if (optId && typeof optId === 'object' && optId.name) {
-              optName = optId.name;
-              optPrice = optId.price || 0;
-            }
-            
-            if (optName) {
-              extraOptionItems.push({
-                name: `[추가옵션] ${optName}`,
-                unit: '개',
-                quantity: 1,
-                unitPrice: optPrice,
-                totalPrice: optPrice,
-                note: '추가옵션'
-              });
-            }
-          });
-        }
-      });
-      
-      // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)
-      const customMaterialItems = [];
-      cart.forEach(item => {
-        if (item.customMaterials && Array.isArray(item.customMaterials)) {
-          item.customMaterials.forEach(mat => {
-            if (mat && mat.name) {
-              customMaterialItems.push({
-                name: `[추가옵션] ${mat.name}`,
-                unit: '개',
-                quantity: 1,
-                unitPrice: mat.price || 0,
-                totalPrice: mat.price || 0,
-                note: '추가옵션'
-              });
-            }
-          });
-        }
-      });
-      
-      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
+      // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)  
+      const customMaterialItems = [];  
+      cart.forEach(item => {  
+        if (item.customMaterials && Array.isArray(item.customMaterials)) {  
+          item.customMaterials.forEach(mat => {  
+            if (mat && mat.name) {  
+              customMaterialItems.push({  
+                name: `[추가옵션] ${mat.name}`,  
+                unit: '개',  
+                quantity: 1,  
+                unitPrice: mat.price || 0,  
+                totalPrice: mat.price || 0,  
+                note: '기타추가옵션'  
+              });  
+            }  
+          });  
+        }  
+      });  
+        
+      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];  
+    
+      // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출  
+      let bomMaterials = [];  
+        
+      if (totalBom && totalBom.length > 0) {  
+        bomMaterials = totalBom.map(m => {  
+          const adminPrice = resolveAdminPrice(adminPricesRef.current, m);  
+          const appliedUnitPrice = adminPrice && adminPrice > 0  
+            ? adminPrice  
+            : (Number(m.unitPrice) || 0);  
+          const quantity = Number(m.quantity) || 0;  
+          return {  
+            name: m.name,  
+            rackType: m.rackType,  
+            specification: m.specification || '',  
+            quantity,  
+            unitPrice: appliedUnitPrice,  
+            totalPrice: appliedUnitPrice * quantity,  
+            note: m.note || ''  
+          };  
+        });  
+      } else {  
+        // ✅ totalBom이 없으면 cart에서 직접 BOM 추출  
+        cart.forEach(item => {  
+          if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {  
+            item.bom.forEach(bomItem => {  
+              const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);  
+              const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);  
+              const quantity = Number(bomItem.quantity) || 0;  
+                
+              bomMaterials.push({  
+                name: bomItem.name,  
+                rackType: bomItem.rackType,  
+                specification: bomItem.specification || '',  
+                quantity,  
+                unitPrice: appliedUnitPrice,  
+                totalPrice: appliedUnitPrice * quantity,  
+                note: bomItem.note || ''  
+              });  
+            });  
+          }  
+        });  
+      }  
   
-      // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출
-      let bomMaterials = [];
-      
-      if (totalBom && totalBom.length > 0) {
-        bomMaterials = totalBom.map(m => {
-          const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
-          const appliedUnitPrice = adminPrice && adminPrice > 0
-            ? adminPrice
-            : (Number(m.unitPrice) || 0);
-          const quantity = Number(m.quantity) || 0;
-          
-          // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
-          let displayName = m.name;
-          if (m.rackType === '하이랙' && m.colorWeight) {
-            const partName = extractPartNameFromCleanName(m.name) || m.name;
-            displayName = generateHighRackDisplayName(partName, m.colorWeight);
-          }
-          
-          return {
-            name: displayName,
-            rackType: m.rackType,
-            specification: m.specification || '',
-            quantity,
-            unitPrice: appliedUnitPrice,
-            totalPrice: appliedUnitPrice * quantity,
-            note: m.note || ''
-          };
-        });
-      } else {
-        // ✅ totalBom이 없으면 cart에서 직접 BOM 추출
-        cart.forEach(item => {
-          if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
-            item.bom.forEach(bomItem => {
-              const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
-              const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
-              const quantity = Number(bomItem.quantity) || 0;
-              
-              // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
-              let displayName = bomItem.name;
-              if (bomItem.rackType === '하이랙' && bomItem.colorWeight) {
-                const partName = extractPartNameFromCleanName(bomItem.name) || bomItem.name;
-                displayName = generateHighRackDisplayName(partName, bomItem.colorWeight);
-              }
-              
-              bomMaterials.push({
-                name: displayName,
-                rackType: bomItem.rackType,
-                specification: bomItem.specification || '',
-                quantity,
-                unitPrice: appliedUnitPrice,
-                totalPrice: appliedUnitPrice * quantity,
-                note: bomItem.note || ''
-              });
-            });
-          }
-        });
-      }
-
-      const allMaterials = [...bomMaterials, ...customMaterials];
-  
-      // ✅ 수정: 강제 설정
-      setFormData(prev => ({
-        ...prev,
-        items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
-        materials: allMaterials.length ? allMaterials : []
-      }));
-    }
-  }, [cart, totalBom, customItems, customMaterials, isEditMode]);
+      const allMaterials = [...bomMaterials, ...customMaterials];  
+    
+      // ✅ 수정: 강제 설정  
+      setFormData(prev => ({  
+        ...prev,  
+        items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],  
+        materials: allMaterials.length ? allMaterials : []  
+      }));  
+    }  
+  }, [cart, totalBom, customItems, customMaterials, isEditMode, editingDocumentData, editingDocumentId]);
 
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
