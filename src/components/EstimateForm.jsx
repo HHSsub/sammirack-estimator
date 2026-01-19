@@ -42,7 +42,7 @@ const EstimateForm = () => {
     editingDocumentData = {}
   } = cartData;
   
-  const isEditMode = (!!id && id !== 'new') || !!editingDocumentId;  // ✅ 수정
+  const isEditMode = !!id;  // ✅ 원래대로
 
   // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
   const { extraProducts } = useProducts();
@@ -160,7 +160,8 @@ const EstimateForm = () => {
       cartInitializedRef.current = true;
       const cartItems = cart.map(item => {
         const qty = item.quantity || 1;
-        const unitPrice = Math.round((item.price || 0) / (qty || 1));
+        // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
+        const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
         return {
           name: item.displayName || item.name || '',
           unit: '개',
