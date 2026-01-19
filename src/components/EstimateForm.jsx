@@ -158,7 +158,7 @@ const EstimateForm = () => {
   // ✅ 편집 데이터 우선 적용 + 새 문서 cart 초기화  
   useEffect(() => {  
     // ✅ 편집 데이터가 있으면 최우선으로 적용 (URL id와 무관)  
-    if (editingDocumentData && Object.keys(editingDocumentData).length > 0 && editingDocumentId) {  
+    if (editingDocumentData && editingDocumentData !== undefined && Object.keys(editingDocumentData).length > 0 && editingDocumentId) {
       setFormData({  
         ...editingDocumentData,  
         documentSettings: editingDocumentData.documentSettings || null  
