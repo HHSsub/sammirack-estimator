@@ -27,51 +27,52 @@ const PROVIDER = {
 };
 
 const PurchaseOrderForm = () => {
-  const { id } = useParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isEditMode = !!id;
-
-  // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
-  const { extraProducts } = useProducts();
-
-  const documentNumberInputRef = useRef(null);
-  const adminPricesRef = useRef({}); // 최신 관리자 단가 캐시
-  const cartInitializedRef = useRef(false);  // ← 추가
+    const { id } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
   
-  // ✅ 관리자 체크
-  const [isAdmin, setIsAdmin] = useState(false);
-  // ✅ 설정 모달
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  // ✅ 현재 전역 설정
-  const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
+    const cartData = location.state || {};
+    const { 
+      cart = [], 
+      totalBom = [], 
+      estimateData = {},
+      customItems = [],
+      customMaterials = [],
+      editingDocumentId = null,
+      editingDocumentData = {}
+    } = cartData;
+    
+    const isEditMode = !!id || !!editingDocumentId;  // ✅ 수정
   
-  // ✅ FAX 관련 state 추가
-  const [showFaxModal, setShowFaxModal] = useState(false);
-  const [pdfBlobURL, setPdfBlobURL] = useState(null);
-  const [pdfBase64, setPdfBase64] = useState(null);
+    // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
+    const { extraProducts } = useProducts();
   
-  // ✅ 토스트 알림 state 추가
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const saveButtonRef = useRef(null);
-  
-  // ✅ 확인 다이얼로그 state 추가
-  const [confirmDialog, setConfirmDialog] = useState({ 
-    show: false, 
-    message: '', 
-    onConfirm: null 
-  });
-
-  const cartData = location.state || {};
-  const { 
-    cart = [], 
-    totalBom = [], 
-    estimateData = {},
-    customItems = [],          // ✅ 추가
-    customMaterials = [],      // ✅ 추가
-    editingDocumentId = null,  // ✅ 추가
-    editingDocumentData = {}   // ✅ 추가
-  } = cartData;
+    const documentNumberInputRef = useRef(null);
+    const adminPricesRef = useRef({});
+    const cartInitializedRef = useRef(false);
+    
+    // ✅ 관리자 체크
+    const [isAdmin, setIsAdmin] = useState(false);
+    // ✅ 설정 모달
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    // ✅ 현재 전역 설정
+    const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
+    
+    // ✅ FAX 관련 state 추가
+    const [showFaxModal, setShowFaxModal] = useState(false);
+    const [pdfBlobURL, setPdfBlobURL] = useState(null);
+    const [pdfBase64, setPdfBase64] = useState(null);
+    
+    // ✅ 토스트 알림 state 추가
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const saveButtonRef = useRef(null);
+    
+    // ✅ 확인 다이얼로그 state 추가
+    const [confirmDialog, setConfirmDialog] = useState({ 
+      show: false, 
+      message: '', 
+      onConfirm: null 
+    });
 
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || estimateData.date || new Date().toISOString().split('T')[0],
