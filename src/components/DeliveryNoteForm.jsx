@@ -71,7 +71,7 @@ const DeliveryNoteForm = () => {
   // ✅ FAX 관련 state 추가
   const [showFaxModal, setShowFaxModal] = useState(false);
   const [pdfBlobURL, setPdfBlobURL] = useState(null);
-  const [pdfBase64, setPdfBase64] = useState(null);
+  const [pdfBase64, setPdfBase64] = useState(null); // ✅ 폼 데이터 초기 상태
 
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || new Date().toISOString().split('T')[0],
@@ -79,10 +79,27 @@ const DeliveryNoteForm = () => {
     orderNumber: '',
     companyName: editingDocumentData.companyName || '',
     bizNumber: editingDocumentData.bizNumber || '',
-    items: editingDocumentData.items || [
+    // ✅ 전달된 cart가 있으면 우선 사용
+    items: (cart && cart.length > 0) ? cart.map(item => ({
+      name: item.displayName || item.name || item.type,
+      unit: '개',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice || Math.round((item.price || 0) / (item.quantity || 1)),
+      totalPrice: item.price,
+      note: item.note || ''
+    })) : (editingDocumentData.items || [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
-    ],
-    materials: editingDocumentData.materials || [],
+    ]),
+    materials: (totalBom && totalBom.length > 0) ? totalBom.map(m => ({
+      ...m,
+      rackType: m.rackType || '',
+      name: m.name || '',
+      specification: m.specification || '',
+      quantity: m.quantity || 0,
+      unitPrice: m.unitPrice || 0,
+      totalPrice: m.totalPrice || 0,
+      note: m.note || ''
+    })) : (editingDocumentData.materials || []),
     subtotal: editingDocumentData.subtotal || 0,
     tax: editingDocumentData.tax || 0,
     totalAmount: editingDocumentData.totalAmount || 0,
@@ -90,6 +107,15 @@ const DeliveryNoteForm = () => {
     topMemo: editingDocumentData.topMemo || '',   // ✅ 수정
     documentSettings: null  // ✅ 이 문서의 회사정보
   });
+
+
+
+  // ✅ 컴포넌트 마운트 시 한 번만 실행 (장바구니에서 넘어온 경우 표시용)
+  useEffect(() => {
+    if (cart.length > 0) {
+      console.log('🛒 장바구니 데이터 전달됨:', cart.length, '개 항목');
+    }
+  }, []);
 
   // ✅ 관리자 체크 및 전역 설정 로드
   useEffect(() => {
@@ -129,9 +155,16 @@ const DeliveryNoteForm = () => {
             // cart는 나중에 사용할 수 있도록 보관 (필요시)
           }
 
-          setFormData({
-            ...data,
-            documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
+          setFormData(prev => {
+            // 이미 cart에서 항목이 로드되었다면 (이름이 있는 항목이 하나라도 있다면) items/materials는 로드하지 않음
+            const hasItems = prev.items.length > 1 || (prev.items[0] && prev.items[0].name);
+            const hasMaterials = prev.materials && prev.materials.length > 0;
+            return {
+              ...data,
+              items: hasItems ? prev.items : data.items,
+              materials: hasMaterials ? prev.materials : (data.materials || []),
+              documentSettings: data.documentSettings || prev.documentSettings
+            };
           });
         } catch { }
       }

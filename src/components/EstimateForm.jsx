@@ -65,17 +65,34 @@ const EstimateForm = () => {
   });
 
   const documentNumberInputRef = useRef(null);
-  const cartInitializedRef = useRef(false);
-
+  // ✅ 폼 데이터 초기 상태
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || new Date().toISOString().split('T')[0],
     documentNumber: editingDocumentData.documentNumber || '',
     companyName: editingDocumentData.companyName || '',
     bizNumber: editingDocumentData.bizNumber || '',
-    items: editingDocumentData.items || [
+    // ✅ 전달된 cart가 있으면 우선 사용 (편집/전환 모두 대응)
+    items: (cart && cart.length > 0) ? cart.map(item => ({
+      name: item.displayName || item.type,
+      unit: 'EA',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice || Math.round((item.price || 0) / (item.quantity || 1)),
+      totalPrice: item.price,
+      note: item.note || '',
+      bom: item.bom || []
+    })) : (editingDocumentData.items || [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
-    ],
-    materials: editingDocumentData.materials || [],
+    ]),
+    materials: (totalBom && totalBom.length > 0) ? totalBom.map(m => ({
+      ...m,
+      rackType: m.rackType || '',
+      name: m.name || '',
+      specification: m.specification || '',
+      quantity: m.quantity || 0,
+      unitPrice: m.unitPrice || 0,
+      totalPrice: m.totalPrice || 0,
+      note: m.note || ''
+    })) : (editingDocumentData.materials || []),
     subtotal: editingDocumentData.subtotal || 0,
     tax: editingDocumentData.tax || 0,
     totalAmount: editingDocumentData.totalAmount || 0,
@@ -83,6 +100,16 @@ const EstimateForm = () => {
     topMemo: editingDocumentData.topMemo || '',
     documentSettings: null  // ✅ 이 문서 저장 당시의 회사 정보 (도장 제외)
   });
+
+  // ✅ 장바구니 초기화 여부
+  const cartInitializedRef = useRef(false);
+
+  // ✅ 컴포넌트 마운트 시 한 번만 실행 (장바구니에서 넘어온 경우 표시용)
+  useEffect(() => {
+    if (cart.length > 0) {
+      console.log('🛒 장바구니 데이터 전달됨:', cart.length, '개 항목');
+    }
+  }, []);
 
   // ✅ 관리자 체크
   useEffect(() => {
@@ -145,9 +172,16 @@ const EstimateForm = () => {
             // cart는 나중에 사용할 수 있도록 보관 (필요시)
           }
 
-          setFormData({
-            ...data,
-            documentSettings: data.documentSettings || null
+          // ✅ 기존 로직 유지하되 setFormData 시 items/materials 보존 여부 결정
+          setFormData(prev => {
+            // 이미 cart에서 항목이 로드되었다면 (이름이 있는 항목이 하나라도 있다면) items/materials는 로드하지 않음
+            const hasItems = prev.items.length > 1 || (prev.items[0] && prev.items[0].name);
+            return {
+              ...data,
+              items: hasItems ? prev.items : data.items,
+              materials: (prev.materials && prev.materials.length > 0) ? prev.materials : (data.materials || []),
+              documentSettings: data.documentSettings || prev.documentSettings
+            };
           });
         } catch (e) {
           console.error('견적서 로드 실패:', e);
