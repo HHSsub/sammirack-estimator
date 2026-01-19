@@ -112,7 +112,7 @@ const PurchaseOrderForm = () => {
   // ✅ 편집 데이터 우선 적용 + 초기 cart / BOM 반영 (관리자 단가 재적용)  
   useEffect(() => {  
     // ✅ 편집 데이터가 있으면 최우선으로 적용 (URL id와 무관)  
-    if (editingDocumentData && editingDocumentData !== undefined && Object.keys(editingDocumentData).length > 0 && editingDocumentId) {
+    if (editingDocumentData && editingDocumentId && Object.keys(editingDocumentData || {}).length > 0) {
       setFormData({  
         ...editingDocumentData,  
         documentSettings: editingDocumentData.documentSettings || null  
