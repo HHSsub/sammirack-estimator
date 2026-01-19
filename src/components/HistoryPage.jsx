@@ -494,6 +494,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           displayName: itemData.name,
           quantity: qty,
           price: totalPrice,
+          unitPrice: Number(itemData.unitPrice) || 0,  // ✅ 추가! (문서관리에서 단가수정후 저장누르면 반영되게하기위함 , 2026-01-19)
           unit: itemData.unit || '개',
           bom: bom,
           // ✅ 저장된 문서에서 extraOptions 복원 (item.cart에서 가져옴)
