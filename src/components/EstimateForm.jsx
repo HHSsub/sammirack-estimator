@@ -377,7 +377,7 @@ const EstimateForm = () => {
       companyName: currentSettings.companyName,
       ceo: currentSettings.ceo,
       address: currentSettings.address,
-      homepage: currentSettings.homepage,
+      homepage: currentSettings.homepage || "http://www.ssmake.com",
       tel: currentSettings.tel,
       fax: currentSettings.fax
       // stampImage는 제외 (항상 PROVIDER 고정)
