@@ -1,0 +1,209 @@
+/* src/components/ItemSelector.css */
+
+.item-selector-panel {
+  background: #f8f9fa;
+  border: 2px solid #007bff;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.panel-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
+  border-radius: 4px;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.selector-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.selector-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  flex: 1;
+}
+
+.selector-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.selector-field select,
+.selector-field input {
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.selector-field select:focus,
+.selector-field input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.selector-field select:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+}
+
+.custom-input-section {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.custom-input-section h5 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.custom-row {
+  display: flex;
+  gap: 12px;
+}
+
+.custom-row input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.custom-row input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.action-row button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-btn {
+  background: #28a745;
+  color: white;
+}
+
+.add-btn:hover {
+  background: #218838;
+}
+
+.add-btn:active {
+  background: #1e7e34;
+  transform: translateY(1px);
+}
+
+.custom-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.custom-btn:hover {
+  background: #5a6268;
+}
+
+.cancel-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #c82333;
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .selector-row {
+    flex-direction: column;
+  }
+  
+  .selector-field {
+    min-width: 100%;
+  }
+  
+  .custom-row {
+    flex-direction: column;
+  }
+  
+  .action-row {
+    flex-direction: column;
+  }
+  
+  .action-row button {
+    width: 100%;
+  }
+}
+
+/* 인쇄 시 숨김 */
+@media print {
+  .item-selector-panel {
+    display: none !important;
+  }
+}

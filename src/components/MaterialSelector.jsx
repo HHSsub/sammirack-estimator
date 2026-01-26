@@ -1,0 +1,363 @@
+// src/components/MaterialSelector.jsx
+import React, { useState, useEffect } from 'react';
+import { loadAllMaterials, getEffectivePrice } from '../utils/unifiedPriceManager';
+import './MaterialSelector.css';
+
+const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
+  // 데이터 상태
+  const [allMaterials, setAllMaterials] = useState([]);
+  const [inventory, setInventory] = useState({});
+  const [adminPrices, setAdminPrices] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  // 필터/검색 상태
+  const [selectedRackType, setSelectedRackType] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showOnlyInStock, setShowOnlyInStock] = useState(false);
+
+  // 선택 상태
+  const [selectedMaterial, setSelectedMaterial] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [customMode, setCustomMode] = useState(false);
+  const [customData, setCustomData] = useState({
+    name: '',
+    specification: '',
+    quantity: 1,
+    unitPrice: 0
+  });
+
+  // 데이터 로드
+  useEffect(() => {
+    if (isOpen) {
+      loadData();
+    }
+  }, [isOpen]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      console.log('🔄 MaterialSelector: 데이터 로드 시작');
+
+      // 1. 전체 원자재 로드
+      const materials = await loadAllMaterials();
+      setAllMaterials(materials);
+      console.log(`✅ ${materials.length}개 원자재 로드 완료`);
+
+      // 2. 재고 데이터 로드
+      const inv = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+      setInventory(inv);
+      console.log(`✅ 재고 데이터: ${Object.keys(inv).length}개`);
+
+      // 3. 관리자 단가 로드
+      const prices = JSON.parse(localStorage.getItem('admin_edit_prices') || '{}');
+      setAdminPrices(prices);
+      console.log(`✅ 관리자 단가: ${Object.keys(prices).length}개`);
+    } catch (error) {
+      console.error('❌ MaterialSelector 데이터 로드 실패:', error);
+      alert('자재 데이터를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 필터링된 자재 목록
+  const filteredMaterials = allMaterials.filter(material => {
+    // 랙 타입 필터
+    if (selectedRackType && material.rackType !== selectedRackType) {
+      return false;
+    }
+
+    // 검색어 필터
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const matchName = (material.name || '').toLowerCase().includes(term);
+      const matchSpec = (material.specification || '').toLowerCase().includes(term);
+      const matchPartId = (material.partId || '').toLowerCase().includes(term);
+      if (!matchName && !matchSpec && !matchPartId) {
+        return false;
+      }
+    }
+
+    // 재고 있는 것만 보기
+    if (showOnlyInStock) {
+      const stock = inventory[material.partId] || 0;
+      if (stock <= 0) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // 랙 타입 목록 추출
+  const rackTypes = [...new Set(allMaterials.map(m => m.rackType))].sort();
+
+  // 자재 선택
+  const handleSelectMaterial = (material) => {
+    setSelectedMaterial(material);
+  };
+
+  // 추가 버튼 핸들러
+  const handleAdd = () => {
+    if (customMode) {
+      // 기타 자재 입력
+      if (!customData.name.trim()) {
+        alert('부품명을 입력하세요.');
+        return;
+      }
+
+      onAdd({
+        name: customData.name,
+        specification: customData.specification,
+        quantity: customData.quantity,
+        unitPrice: customData.unitPrice,
+        totalPrice: customData.quantity * customData.unitPrice,
+        note: ''
+      });
+
+      // 초기화
+      setCustomData({
+        name: '',
+        specification: '',
+        quantity: 1,
+        unitPrice: 0
+      });
+    } else {
+      // 시스템 자재 선택
+      if (!selectedMaterial) {
+        alert('자재를 선택하세요.');
+        return;
+      }
+
+      // 관리자 단가 적용
+      const effectivePrice = getEffectivePrice(selectedMaterial, adminPrices);
+
+      onAdd({
+        name: selectedMaterial.name,
+        specification: selectedMaterial.specification || '',
+        quantity: quantity,
+        unitPrice: effectivePrice,
+        totalPrice: quantity * effectivePrice,
+        note: ''
+      });
+
+      // 선택은 유지, 수량만 초기화
+      setQuantity(1);
+    }
+  };
+
+  // 닫기 핸들러
+  const handleClose = () => {
+    setSelectedRackType('');
+    setSearchTerm('');
+    setShowOnlyInStock(false);
+    setSelectedMaterial(null);
+    setQuantity(1);
+    setCustomMode(false);
+    setCustomData({
+      name: '',
+      specification: '',
+      quantity: 1,
+      unitPrice: 0
+    });
+    onClose();
+  };
+
+  // ESC 키 핸들러
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        handleClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="material-selector-panel">
+      <div className="panel-header">
+        <h4>자재 선택</h4>
+        <button className="close-btn" onClick={handleClose}>✕</button>
+      </div>
+
+      {!customMode ? (
+        <>
+          {/* 필터/검색 영역 */}
+          <div className="filter-row">
+            <div className="filter-field">
+              <label>랙 타입</label>
+              <select
+                value={selectedRackType}
+                onChange={e => setSelectedRackType(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">전체</option>
+                {rackTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-field search-field">
+              <label>검색</label>
+              <input
+                type="text"
+                placeholder="부품명, 규격 검색..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+
+            <div className="filter-field checkbox-field">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showOnlyInStock}
+                  onChange={e => setShowOnlyInStock(e.target.checked)}
+                  disabled={loading}
+                />
+                재고있는것만
+              </label>
+            </div>
+
+            <div className="filter-field stats-field">
+              <span className="result-count">
+                {loading ? '로딩...' : `${filteredMaterials.length}개`}
+              </span>
+            </div>
+          </div>
+
+          {/* 자재 목록 */}
+          <div className="material-list-container">
+            {loading ? (
+              <div className="loading-message">데이터를 불러오는 중...</div>
+            ) : filteredMaterials.length === 0 ? (
+              <div className="empty-message">검색 결과가 없습니다.</div>
+            ) : (
+              <div className="material-list">
+                {filteredMaterials.map(material => {
+                  const stock = inventory[material.partId] || 0;
+                  const effectivePrice = getEffectivePrice(material, adminPrices);
+                  const isSelected = selectedMaterial?.partId === material.partId;
+                  const hasAdminPrice = adminPrices[material.partId]?.price > 0;
+
+                  return (
+                    <div
+                      key={material.partId}
+                      className={`material-item ${isSelected ? 'selected' : ''} ${stock <= 0 ? 'out-of-stock' : ''}`}
+                      onClick={() => handleSelectMaterial(material)}
+                    >
+                      <div className="material-main-info">
+                        <div className="material-name">
+                          {material.name}
+                          {hasAdminPrice && (
+                            <span className="admin-badge">관리자가</span>
+                          )}
+                        </div>
+                        {material.specification && (
+                          <div className="material-spec">{material.specification}</div>
+                        )}
+                      </div>
+                      <div className="material-detail-info">
+                        <span className="rack-type">{material.rackType}</span>
+                        <span className={`stock ${stock > 0 ? 'available' : 'unavailable'}`}>
+                          재고: {stock}개
+                        </span>
+                        <span className="price">{effectivePrice.toLocaleString()}원</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 선택된 자재 정보 */}
+          {selectedMaterial && (
+            <div className="selected-material-info">
+              <strong>선택:</strong> {selectedMaterial.name}
+              {selectedMaterial.specification && ` - ${selectedMaterial.specification}`}
+              <span className="selected-price">
+                ({getEffectivePrice(selectedMaterial, adminPrices).toLocaleString()}원)
+              </span>
+            </div>
+          )}
+
+          {/* 수량 입력 */}
+          <div className="quantity-row">
+            <label>수량</label>
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={e => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+            />
+          </div>
+        </>
+      ) : (
+        /* 기타 자재 직접 입력 */
+        <div className="custom-input-section">
+          <h5>직접 입력</h5>
+          <div className="custom-row">
+            <input
+              type="text"
+              placeholder="부품명"
+              value={customData.name}
+              onChange={e => setCustomData({ ...customData, name: e.target.value })}
+            />
+            <input
+              type="text"
+              placeholder="규격"
+              value={customData.specification}
+              onChange={e => setCustomData({ ...customData, specification: e.target.value })}
+            />
+          </div>
+          <div className="custom-row">
+            <input
+              type="number"
+              placeholder="수량"
+              min="1"
+              value={customData.quantity}
+              onChange={e => setCustomData({ ...customData, quantity: Math.max(1, Number(e.target.value) || 1) })}
+            />
+            <input
+              type="number"
+              placeholder="단가"
+              min="0"
+              value={customData.unitPrice}
+              onChange={e => setCustomData({ ...customData, unitPrice: Math.max(0, Number(e.target.value) || 0) })}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 액션 버튼 */}
+      <div className="action-row">
+        <button className="add-btn" onClick={handleAdd}>
+          추가
+        </button>
+        <button 
+          className="custom-btn" 
+          onClick={() => {
+            setCustomMode(!customMode);
+            setSelectedMaterial(null);
+          }}
+        >
+          {customMode ? '시스템 자재' : '기타 입력'}
+        </button>
+        <button className="cancel-btn" onClick={handleClose}>
+          닫기
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default MaterialSelector;
