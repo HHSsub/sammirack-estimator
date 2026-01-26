@@ -181,16 +181,19 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
       
       if (tempOptions.color) {
         const colorBlock = data?.["하이랙"]?.["기본가격"]?.[tempOptions.color] || {};
-        const sizeKeys = Object.keys(colorBlock);
-        next.size = sortSizes(sizeKeys);
+        const sizesFromData = Object.keys(colorBlock);
+        const extraSizes = EXTRA_OPTIONS["하이랙"]?.size || [];
+        next.size = sortSizes([...sizesFromData, ...extraSizes]);  // ✅ EXTRA_OPTIONS 합침!
         
         if (tempOptions.size && colorBlock[tempOptions.size]) {
-          const heightKeys = Object.keys(colorBlock[tempOptions.size]);
-          next.height = sortHeights(heightKeys);
+          const heightsFromData = Object.keys(colorBlock[tempOptions.size]);
+          const extraHeights = EXTRA_OPTIONS["하이랙"]?.height || [];
+          next.height = sortHeights([...heightsFromData, ...extraHeights]);  // ✅ EXTRA_OPTIONS 합침!
           
           if (tempOptions.height && colorBlock[tempOptions.size]?.[tempOptions.height]) {
-            const levelKeys = Object.keys(colorBlock[tempOptions.size][tempOptions.height]);
-            next.level = sortLevels(levelKeys);
+            const levelsFromData = Object.keys(colorBlock[tempOptions.size][tempOptions.height]);
+            const extraLevels = EXTRA_OPTIONS["하이랙"]?.level || [];
+            next.level = sortLevels([...levelsFromData, ...extraLevels]);  // ✅ EXTRA_OPTIONS 합침!
             
             if (tempOptions.level) {
               next.formType = ["독립형", "연결형"];
@@ -208,16 +211,19 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
       const bd = data?.["스텐랙"]?.["기본가격"] || {};
       const next = { size: [], height: [], level: [] };
       
-      const sizeKeys = Object.keys(bd);
-      next.size = sortSizes(sizeKeys);
+      const sizesFromData = Object.keys(bd);
+      const extraSizes = EXTRA_OPTIONS["스텐랙"]?.size || [];
+      next.size = sortSizes([...sizesFromData, ...extraSizes]);  // ✅ EXTRA_OPTIONS 합침!
       
       if (tempOptions.size && bd[tempOptions.size]) {
-        const heightKeys = Object.keys(bd[tempOptions.size]);
-        next.height = sortHeights(heightKeys);
+        const heightsFromData = Object.keys(bd[tempOptions.size]);
+        const extraHeights = EXTRA_OPTIONS["스텐랙"]?.height || [];
+        next.height = sortHeights([...heightsFromData, ...extraHeights]);  // ✅ EXTRA_OPTIONS 합침!
         
         if (tempOptions.height && bd[tempOptions.size]?.[tempOptions.height]) {
-          const levelKeys = Object.keys(bd[tempOptions.size][tempOptions.height]);
-          next.level = sortLevels(levelKeys);
+          const levelsFromData = Object.keys(bd[tempOptions.size][tempOptions.height]);
+          const extraLevels = EXTRA_OPTIONS["스텐랙"]?.level || [];
+          next.level = sortLevels([...levelsFromData, ...extraLevels]);  // ✅ EXTRA_OPTIONS 합침!
         }
       }
       
