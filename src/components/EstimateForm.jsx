@@ -14,6 +14,7 @@ import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
+import ItemSelector from './ItemSelector';  // 26.01.27 추가 (품목셀렉터)
 
 // ✅ PROVIDER는 고정 (도장 이미지 포함)
 const PROVIDER = {
@@ -63,7 +64,8 @@ const EstimateForm = () => {
     message: '', 
     onConfirm: null 
   });
-
+  // 드롭다운 품목셀렉터 
+  const [showItemSelector, setShowItemSelector] = useState(false);
   const documentNumberInputRef = useRef(null);
   const cartInitializedRef = useRef(false);
 
@@ -312,13 +314,25 @@ const EstimateForm = () => {
     setFormData(prev => ({ ...prev, items }));
   };
 
+  // 아래 주석코드 삭제 금지
+  // const addItem = () => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
+  //   }));
+  // };
   const addItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }]
-    }));
+    setShowItemSelector(true);  // 드롭다운식으로 변경 (26_01_27) 
   };
 
+  const handleItemAdd = (itemData) => {
+    setFormData(prev => ({
+    ...prev,
+    items: [...prev.items, itemData]
+  }));
+  // 패널은 유지 (닫지 않음)
+  };
+  
   const removeItem = (idx) => {
     setFormData(prev => ({
       ...prev,
@@ -728,6 +742,11 @@ const EstimateForm = () => {
             + 품목 추가
           </button>
         </div>
+      <ItemSelector
+        isOpen={showItemSelector}
+        onClose={() => setShowItemSelector(false)}
+        onAdd={handleItemAdd}
+      />
       )}
 
       <table className="form-table total-table">
