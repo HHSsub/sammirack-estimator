@@ -15,6 +15,7 @@ import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts �
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 import ItemSelector from './ItemSelector';      // 26_01_27 품목셀렉터 추가
 import MaterialSelector from './MaterialSelector';  // 26_01_27 재고셀렉터 추가
+import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration'; 
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -410,12 +411,22 @@ const DeliveryNoteForm = () => {
   setShowMaterialSelector(true);  // 재고셀렉터 신규추가(26_01_27)
   };
   const handleMaterialAdd = (materialData) => {
+    // ✅ inventoryPartId 생성 (청구서쪽에서 재고감소용)
+    const materialWithId = {
+      ...materialData,
+      inventoryPartId: generateInventoryPartId({
+        rackType: materialData.rackType || '기타',
+        name: materialData.name,
+        specification: materialData.specification || '',
+        colorWeight: materialData.colorWeight || ''
+      })
+    };
+    
     setFormData(prev => ({
-    ...prev,
-    materials: [...prev.materials, materialData]
-  }));
-  // 패널은 유지 (닫지 않음)
-};
+      ...prev,
+      materials: [...prev.materials, materialWithId]
+    }));
+  };
   const rmMat=(idx)=>setFormData(p=>({...p,materials:p.materials.filter((_,i)=>i!==idx)}));
 
 const handleSave = async () => {
