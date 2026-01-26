@@ -308,8 +308,22 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
         return;
       }
       
-      // 필수 옵션 체크
-      const isComplete = tempType && tempOptions.formType && tempOptions.size && tempOptions.height && tempOptions.level;
+      // ✅ 랙 타입별 필수 옵션 체크
+      let isComplete = false;
+      
+      if (tempType === '파렛트랙') {
+        isComplete = tempOptions.version && tempOptions.weight && tempOptions.size && tempOptions.height && tempOptions.level && tempOptions.formType;
+      } else if (tempType === '스텐랙') {
+        isComplete = tempOptions.size && tempOptions.height && tempOptions.level;  // ← formType 없음!
+      } else if (tempType === '경량랙') {
+        isComplete = tempOptions.color && tempOptions.size && tempOptions.height && tempOptions.level && tempOptions.formType;
+      } else if (tempType === '하이랙') {
+        isComplete = tempOptions.color && tempOptions.size && tempOptions.height && tempOptions.level && tempOptions.formType;
+      } else {
+        // 중량랙, 파렛트랙 철판형
+        isComplete = tempOptions.size && tempOptions.height && tempOptions.level && tempOptions.formType;
+      }
+      
       if (!isComplete) {
         alert('모든 옵션을 선택하세요.');
         return;
@@ -327,7 +341,13 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
       if (tempType === "경량랙" && tempOptions.color) {
         displayName += ` ${tempOptions.color}`;
       }
-      displayName += ` ${tempOptions.formType || ''} ${tempOptions.size || ''} ${tempOptions.height || ''} ${tempOptions.level || ''}`;
+      
+      // ✅ 스텐랙은 formType 제외
+      if (tempType === "스텐랙") {
+        displayName += ` ${tempOptions.size || ''} ${tempOptions.height || ''} ${tempOptions.level || ''}`;
+      } else {
+        displayName += ` ${tempOptions.formType || ''} ${tempOptions.size || ''} ${tempOptions.height || ''} ${tempOptions.level || ''}`;
+      }
       displayName = displayName.replace(/\s+/g, ' ').trim();
       
       const unitPrice = calculateItemPrice();
