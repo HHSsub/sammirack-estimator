@@ -361,12 +361,38 @@ const DeliveryNoteForm = () => {
     setShowItemSelector(true);  // 품목셀렉터 신규추가 (26_01_27)
   };
   const handleItemAdd = (itemData) => {
-  setFormData(prev => ({
-    ...prev,
-    items: [...prev.items, itemData]
-  }));
-    // 패널은 유지 (닫지 않음)
-};
+    // ✅ 품목 추가
+    setFormData(prev => ({
+      ...prev,
+      items: [...prev.items, itemData]
+    }));
+    
+    // ✅ BOM 자동 생성 및 추가
+    if (itemData.name) {
+      const bom = regenerateBOMFromDisplayName(itemData.name, itemData.quantity || 1);
+      
+      if (bom && bom.length > 0) {
+        // 관리자 단가 적용
+        const bomWithAdminPrice = bom.map(bomItem => {
+          const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
+          const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
+          const quantity = Number(bomItem.quantity) || 0;
+          
+          return {
+            ...bomItem,
+            unitPrice: appliedUnitPrice,
+            totalPrice: appliedUnitPrice * quantity
+          };
+        });
+        
+        // materials에 추가
+        setFormData(prev => ({
+          ...prev,
+          materials: [...prev.materials, ...bomWithAdminPrice]
+        }));
+      }
+    }
+  };
   const rmItem=(idx)=>setFormData(p=>({...p,items:p.items.filter((_,i)=>i!==idx)}));
 
   const upMat=(idx,f,v)=>{
