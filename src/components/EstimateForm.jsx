@@ -742,13 +742,12 @@ const EstimateForm = () => {
             + 품목 추가
           </button>
         </div>
+      )}
       <ItemSelector
         isOpen={showItemSelector}
         onClose={() => setShowItemSelector(false)}
         onAdd={handleItemAdd}
       />
-      )}
-
       <table className="form-table total-table">
         <tbody>
           <tr>
