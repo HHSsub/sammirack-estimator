@@ -14,6 +14,8 @@ import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
+import ItemSelector from './ItemSelector'; // 26_01_27 신규기능추가 
+import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -73,7 +75,9 @@ const PurchaseOrderForm = () => {
       message: '', 
       onConfirm: null 
     });
-
+  const [showItemSelector, setShowItemSelector] = useState(false);
+  const [showMaterialSelector, setShowMaterialSelector] = useState(false);
+  
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || estimateData.date || new Date().toISOString().split('T')[0],
     documentNumber: editingDocumentData.documentNumber || estimateData.estimateNumber || '',
@@ -392,11 +396,21 @@ const PurchaseOrderForm = () => {
     }
     setFormData(prev => ({ ...prev, items }));
   };
+  // const addItem = () => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     items: [...prev.items, { name:'', unit:'', quantity:'', unitPrice:'', totalPrice:'', note:'' }]
+  //   }));
+  // };
   const addItem = () => {
+    setShowItemSelector(true);  // ← 이렇게 변경
+  };
+  const handleItemAdd = (itemData) => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { name:'', unit:'', quantity:'', unitPrice:'', totalPrice:'', note:'' }]
+      items: [...prev.items, itemData]
     }));
+    // 패널은 유지 (닫지 않음)
   };
   const removeItem = (idx) => {
     setFormData(prev => ({
@@ -416,12 +430,26 @@ const PurchaseOrderForm = () => {
     }
     setFormData(prev => ({ ...prev, materials }));
   };
+  // const addMaterial = () => {
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     materials: [...prev.materials, { name:'', specification:'', quantity:'', unitPrice:'', totalPrice:'', note:'' }]
+  //   }));
+  // };
+  
+  // 26_01_27 신규기능(자재셀렉터 추가, 기존코드삭제금지)
   const addMaterial = () => {
+    setShowMaterialSelector(true);
+  };
+  
+  const handleMaterialAdd = (materialData) => {
     setFormData(prev => ({
       ...prev,
-      materials: [...prev.materials, { name:'', specification:'', quantity:'', unitPrice:'', totalPrice:'', note:'' }]
+      materials: [...prev.materials, materialData]
     }));
+    // 패널은 유지 (닫지 않음)
   };
+    
   const removeMaterial = (idx) => {
     setFormData(prev => ({
       ...prev,
@@ -1223,7 +1251,11 @@ const checkInventoryAvailability = async (cartItems) => {
       <div className="item-controls no-print" style={{ marginBottom: 18, display: showFaxModal ? 'none' : 'block' }}>
         <button type="button" onClick={addMaterial} className="add-item-btn">+ 자재 추가</button>
       </div>
-
+      <MaterialSelector
+        isOpen={showMaterialSelector}
+        onClose={() => setShowMaterialSelector(false)}
+        onAdd={handleMaterialAdd}
+      />
       <table className="form-table total-table">
         <tbody>
           <tr><td className="label">소계</td><td className="right">{formData.subtotal.toLocaleString()}</td></tr>
