@@ -178,120 +178,114 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
   }, [isOpen]);
 
   if (!isOpen) return null;
-
+  
   return (
     <div className="material-selector-panel">
       <div className="panel-header">
         <h4>자재 선택</h4>
         <button className="close-btn" onClick={handleClose}>✕</button>
       </div>
-
+      
+      {/* 기타 입력 전환 버튼 - 좌측 상단으로 이동 */}
+      <div style={{ marginBottom: '8px', paddingLeft: '4px' }}>
+        <button 
+          className="custom-btn" 
+          onClick={() => setCustomMode(!customMode)}
+        >
+          {customMode ? '시스템 자재' : '기타 입력'}
+        </button>
+      </div>
+      
       {!customMode ? (
         <>
-          {/* 필터/검색 영역 */}
           <div className="filter-row">
             <div className="filter-field">
               <label>랙 타입</label>
-              <select
-                value={selectedRackType}
-                onChange={e => setSelectedRackType(e.target.value)}
-                disabled={loading}
-              >
+              <select value={rackTypeFilter} onChange={e => setRackTypeFilter(e.target.value)}>
                 <option value="">전체</option>
-                {rackTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
+                <option value="하이랙">하이랙</option>
+                <option value="스텐랙">스텐랙</option>
+                <option value="경량랙">경량랙</option>
+                <option value="중량랙">중량랙</option>
+                <option value="파렛트랙">파렛트랙</option>
+                <option value="파렛트랙 철판형">파렛트랙 철판형</option>
               </select>
             </div>
-
-            <div className="filter-field search-field">
-              <label>검색</label>
+            <div className="filter-field">
               <input
                 type="text"
-                placeholder="부품명, 규격 검색..."
+                placeholder="검색 (부품명, 규격, ID)"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                disabled={loading}
               />
             </div>
-
-            <div className="filter-field checkbox-field">
+            <div className="filter-field">
               <label>
                 <input
                   type="checkbox"
-                  checked={showOnlyInStock}
-                  onChange={e => setShowOnlyInStock(e.target.checked)}
-                  disabled={loading}
+                  checked={showStockOnly}
+                  onChange={e => setShowStockOnly(e.target.checked)}
                 />
                 재고있는것만
               </label>
             </div>
-
-            <div className="filter-field stats-field">
-              <span className="result-count">
-                {loading ? '로딩...' : `${filteredMaterials.length}개`}
-              </span>
-            </div>
           </div>
-
-          {/* 자재 목록 */}
-          <div className="material-list-container">
-            {loading ? (
-              <div className="loading-message">데이터를 불러오는 중...</div>
-            ) : filteredMaterials.length === 0 ? (
-              <div className="empty-message">검색 결과가 없습니다.</div>
-            ) : (
-              <div className="material-list">
-                {filteredMaterials.map(material => {
-                  const stock = inventory[material.partId] || 0;
-                  const effectivePrice = getEffectivePrice(material, adminPrices);
-                  const isSelected = selectedMaterial?.partId === material.partId;
-                  const hasAdminPrice = adminPrices[material.partId]?.price > 0;
-
-                  return (
-                    <div
-                      key={material.partId}
-                      className={`material-item ${isSelected ? 'selected' : ''} ${stock <= 0 ? 'out-of-stock' : ''}`}
-                      onClick={() => handleSelectMaterial(material)}
-                    >
-                      <div className="material-main-info">
-                        <div className="material-name">
-                          {material.name}
-                          {hasAdminPrice && (
-                            <span className="admin-badge">관리자가</span>
-                          )}
-                        </div>
-                        {material.specification && (
-                          <div className="material-spec">{material.specification}</div>
-                        )}
-                      </div>
-                      <div className="material-detail-info">
-                        <span className="rack-type">{material.rackType}</span>
-                        <span className={`stock ${stock > 0 ? 'available' : 'unavailable'}`}>
-                          재고: {stock}개
+  
+          <div className="material-count">
+            {filteredMaterials.length}개 자재
+          </div>
+  
+          <div className="material-list">
+            {filteredMaterials.map(mat => {
+              const stock = inventory[mat.partId] || 0;
+              const hasStock = stock > 0;
+              const isSelected = selectedMaterial?.partId === mat.partId;
+              
+              return (
+                <div
+                  key={mat.partId}
+                  className={`material-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => handleSelectMaterial(mat)}
+                >
+                  <div className="material-radio">
+                    <input
+                      type="radio"
+                      name="material"
+                      checked={isSelected}
+                      readOnly
+                    />
+                  </div>
+                  <div className="material-info">
+                    <div className="material-name">{mat.name}</div>
+                    {mat.specification && (
+                      <div className="material-spec">{mat.specification}</div>
+                    )}
+                    <div className="material-meta">
+                      {mat.hasAdminPrice && (
+                        <span className="admin-price-badge">관리자가</span>
+                      )}
+                      <span className={`stock-badge ${hasStock ? 'in-stock' : 'out-of-stock'}`}>
+                        재고: {stock}
+                      </span>
+                      {mat.price > 0 && (
+                        <span className="price-badge">
+                          {mat.price.toLocaleString()}원
                         </span>
-                        <span className="price">{effectivePrice.toLocaleString()}원</span>
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          {/* 선택된 자재 정보 */}
+  
           {selectedMaterial && (
-            <div className="selected-material-info">
-              <strong>선택:</strong> {selectedMaterial.name}
-              {selectedMaterial.specification && ` - ${selectedMaterial.specification}`}
-              <span className="selected-price">
-                ({getEffectivePrice(selectedMaterial, adminPrices).toLocaleString()}원)
-              </span>
+            <div className="selected-info">
+              선택: {selectedMaterial.name} ({selectedMaterial.price.toLocaleString()}원)
             </div>
           )}
-
-          {/* 수량 입력 */}
-          <div className="quantity-row">
+  
+          <div className="quantity-field">
             <label>수량</label>
             <input
               type="number"
@@ -302,7 +296,6 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
           </div>
         </>
       ) : (
-        /* 기타 자재 직접 입력 */
         <div className="custom-input-section">
           <h5>직접 입력</h5>
           <div className="custom-row">
@@ -318,8 +311,6 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
               value={customData.specification}
               onChange={e => setCustomData({ ...customData, specification: e.target.value })}
             />
-          </div>
-          <div className="custom-row">
             <input
               type="number"
               placeholder="수량"
@@ -337,20 +328,10 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
           </div>
         </div>
       )}
-
-      {/* 액션 버튼 */}
+  
       <div className="action-row">
         <button className="add-btn" onClick={handleAdd}>
           추가
-        </button>
-        <button 
-          className="custom-btn" 
-          onClick={() => {
-            setCustomMode(!customMode);
-            setSelectedMaterial(null);
-          }}
-        >
-          {customMode ? '시스템 자재' : '기타 입력'}
         </button>
         <button className="cancel-btn" onClick={handleClose}>
           닫기
