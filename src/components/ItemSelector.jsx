@@ -63,7 +63,7 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
     '중량랙': { size: [], height: [], level: [] },
     '파렛트랙 철판형': { size: ["2090x800","2090x1000"], height: ["H4500","H5000","H5500","H6000"], level: [] },
     '파렛트랙': { size: [], height: ["H4500","H5000","H5500","H6000"], level: [] },
-    '하이랙': { size: ["45x150"], height: ["150","250"], level: [] },
+    '하이랙': { size: ["45x150"], height: ["150","250"], level: ["1단","2단","3단","4단","5단","6단"] },
     '스텐랙': { size: [], height: [], level: [] }
   };
 
