@@ -57,9 +57,9 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
     name: '', unit: '개', quantity: 1, unitPrice: 0
   });
 
-  // 추가 옵션
+  // 추가 옵션 (필요하면 여기서 추가하면 됨)
   const EXTRA_OPTIONS = {
-    '경량랙': { size: ['w600xd600'], height: ['H2100'], level: [] },
+    '경량랙': { size: [], height: [], level: [] },
     '중량랙': { size: [], height: [], level: [] },
     '파렛트랙 철판형': { size: [], height: [], level: [] },
     '파렛트랙': { size: [], height: [], level: [] },
