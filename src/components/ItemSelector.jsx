@@ -86,29 +86,24 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
         const weightKeys = Object.keys(versionBlock || {});
         next.weight = weightKeys;
         
-        if (tempOptions.weight && versionBlock[tempOptions.weight]) {
+        if (tempOptions.weight) {
           const weightBlock = versionBlock[tempOptions.weight] || {};
           const sizesFromData = Object.keys(weightBlock || {});
           const extraSizes = EXTRA_OPTIONS["파렛트랙"]?.size || [];
           next.size = sortSizes([...sizesFromData, ...extraSizes]);
           
-          if (tempOptions.size && versionBlock[tempOptions.weight]?.[tempOptions.size]) {
-            const heightsFromData = Object.keys(
-              versionBlock[tempOptions.weight]?.[tempOptions.size] || {}
-            );
-            next.height = sortHeights([
-              ...heightsFromData,
-              ...(EXTRA_OPTIONS["파렛트랙"]?.height || [])
-            ]);
+          if (tempOptions.size) {
+            const heightsFromData = Object.keys(weightBlock[tempOptions.size] || {});
+            const extraHeights = EXTRA_OPTIONS["파렛트랙"]?.height || [];
+            next.height = sortHeights([...heightsFromData, ...extraHeights]);
             
-            if (tempOptions.height && versionBlock[tempOptions.weight]?.[tempOptions.size]?.[tempOptions.height]) {
-              const levelsFromData = Object.keys(
-                versionBlock[tempOptions.weight]?.[tempOptions.size]?.[tempOptions.height] || {}
-              );
-              next.level = sortLevels(levelsFromData.length ? levelsFromData : ["L1","L2","L3","L4","L5","L6"]);
+            if (tempOptions.height) {
+              const levelsFromData = Object.keys(weightBlock[tempOptions.size]?.[tempOptions.height] || {});
+              const extraLevels = EXTRA_OPTIONS["파렛트랙"]?.level || [];
+              next.level = sortLevels(levelsFromData.length ? [...levelsFromData, ...extraLevels] : (extraLevels.length ? extraLevels : ["L1","L2","L3","L4","L5","L6"]));
               
-              if (tempOptions.level && versionBlock[tempOptions.weight]?.[tempOptions.size]?.[tempOptions.height]?.[tempOptions.level]) {
-                const fm = versionBlock[tempOptions.weight]?.[tempOptions.size]?.[tempOptions.height]?.[tempOptions.level] || {};
+              if (tempOptions.level) {
+                const fm = weightBlock[tempOptions.size]?.[tempOptions.height]?.[tempOptions.level] || {};
                 next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
               }
             }
@@ -141,24 +136,17 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
       
       if (tempOptions.size) {
         const heightsFromData = Object.keys(bd[tempOptions.size] || {});
-        next.height = sortHeights([...heightsFromData, ...(EXTRA_OPTIONS[tempType]?.height || [])]);
-      } else {
-        next.height = sortHeights([...(EXTRA_OPTIONS[tempType]?.height || [])]);
-      }
-      
-      if (tempOptions.size && tempOptions.height) {
-        if (tempType === "경량랙" && tempOptions.height === "H750") {
-          const lk = Object.keys(bd[tempOptions.size]?.["H900"] || {});
-          next.level = lk.length ? lk : [];
+        const extraHeights = EXTRA_OPTIONS[tempType]?.height || [];
+        next.height = sortHeights([...heightsFromData, ...extraHeights]);
+        
+        if (tempOptions.height) {
+          const heightKey = tempType === "경량랙" && tempOptions.height === "H750" ? "H900" : tempOptions.height;
+          const levelKeys = Object.keys(bd[tempOptions.size]?.[heightKey] || {});
+          const extraLevels = EXTRA_OPTIONS[tempType]?.level || [];
+          next.level = levelKeys.length ? sortLevels([...levelKeys, ...extraLevels]) : sortLevels(extraLevels.length ? extraLevels : ["L1", "L2", "L3", "L4", "L5", "L6"]);
+          
           if (tempOptions.level) {
-            const fm = bd[tempOptions.size]?.["H900"]?.[tempOptions.level] || {};
-            next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
-          }
-        } else {
-          const levelKeys = Object.keys(bd[tempOptions.size]?.[tempOptions.height] || {}) || [];
-          next.level = levelKeys.length ? sortLevels(levelKeys) : ["L1", "L2", "L3", "L4", "L5", "L6"];
-          if (tempOptions.level) {
-            const fm = bd[tempOptions.size]?.[tempOptions.height]?.[tempOptions.level] || {};
+            const fm = bd[tempOptions.size]?.[heightKey]?.[tempOptions.level] || {};
             next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
           }
         }
@@ -183,17 +171,17 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
         const colorBlock = data?.["하이랙"]?.["기본가격"]?.[tempOptions.color] || {};
         const sizesFromData = Object.keys(colorBlock);
         const extraSizes = EXTRA_OPTIONS["하이랙"]?.size || [];
-        next.size = sortSizes([...sizesFromData, ...extraSizes]);  // ✅ EXTRA_OPTIONS 합침!
+        next.size = sortSizes([...sizesFromData, ...extraSizes]);
         
-        if (tempOptions.size && colorBlock[tempOptions.size]) {
-          const heightsFromData = Object.keys(colorBlock[tempOptions.size]);
+        if (tempOptions.size) {
+          const heightsFromData = Object.keys(colorBlock[tempOptions.size] || {});
           const extraHeights = EXTRA_OPTIONS["하이랙"]?.height || [];
-          next.height = sortHeights([...heightsFromData, ...extraHeights]);  // ✅ EXTRA_OPTIONS 합침!
+          next.height = sortHeights([...heightsFromData, ...extraHeights]);
           
-          if (tempOptions.height && colorBlock[tempOptions.size]?.[tempOptions.height]) {
-            const levelsFromData = Object.keys(colorBlock[tempOptions.size][tempOptions.height]);
+          if (tempOptions.height) {
+            const levelsFromData = Object.keys(colorBlock[tempOptions.size]?.[tempOptions.height] || {});
             const extraLevels = EXTRA_OPTIONS["하이랙"]?.level || [];
-            next.level = sortLevels([...levelsFromData, ...extraLevels]);  // ✅ EXTRA_OPTIONS 합침!
+            next.level = sortLevels([...levelsFromData, ...extraLevels]);
             
             if (tempOptions.level) {
               next.formType = ["독립형", "연결형"];
@@ -213,17 +201,17 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
       
       const sizesFromData = Object.keys(bd);
       const extraSizes = EXTRA_OPTIONS["스텐랙"]?.size || [];
-      next.size = sortSizes([...sizesFromData, ...extraSizes]);  // ✅ EXTRA_OPTIONS 합침!
+      next.size = sortSizes([...sizesFromData, ...extraSizes]);
       
-      if (tempOptions.size && bd[tempOptions.size]) {
-        const heightsFromData = Object.keys(bd[tempOptions.size]);
+      if (tempOptions.size) {
+        const heightsFromData = Object.keys(bd[tempOptions.size] || {});
         const extraHeights = EXTRA_OPTIONS["스텐랙"]?.height || [];
-        next.height = sortHeights([...heightsFromData, ...extraHeights]);  // ✅ EXTRA_OPTIONS 합침!
+        next.height = sortHeights([...heightsFromData, ...extraHeights]);
         
-        if (tempOptions.height && bd[tempOptions.size]?.[tempOptions.height]) {
-          const levelsFromData = Object.keys(bd[tempOptions.size][tempOptions.height]);
+        if (tempOptions.height) {
+          const levelsFromData = Object.keys(bd[tempOptions.size]?.[tempOptions.height] || {});
           const extraLevels = EXTRA_OPTIONS["스텐랙"]?.level || [];
-          next.level = sortLevels([...levelsFromData, ...extraLevels]);  // ✅ EXTRA_OPTIONS 합침!
+          next.level = sortLevels([...levelsFromData, ...extraLevels]);
         }
       }
       
@@ -270,7 +258,8 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
 
   // 간단한 가격 계산 (실제로는 ProductContext의 calculatePrice 로직 사용)
   const calculateItemPrice = useCallback(() => {
-    if (!tempType || !tempOptions.formType) return 0;
+    if (!tempType) return 0;
+    if (tempType !== "스텐랙" && !tempOptions.formType) return 0;
     
     // 기본가격 조회
     try {
@@ -285,6 +274,9 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
         return Number(price) || 0;
       } else if (tempType === "하이랙") {
         const price = data?.["하이랙"]?.["기본가격"]?.[tempOptions.color]?.[tempOptions.size]?.[tempOptions.height]?.[tempOptions.level];
+        return Number(price) || 0;
+      } else if (tempType === "파렛트랙") {
+        const price = data?.["파렛트랙"]?.["기본가격"]?.[tempOptions.version]?.[tempOptions.weight]?.[tempOptions.size]?.[tempOptions.height]?.[tempOptions.level]?.[tempOptions.formType];
         return Number(price) || 0;
       } else {
         const heightRaw = tempType === "경량랙" && tempOptions.height === "H750" ? "H900" : tempOptions.height;
@@ -320,7 +312,7 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
       if (tempType === '파렛트랙') {
         isComplete = tempOptions.version && tempOptions.weight && tempOptions.size && tempOptions.height && tempOptions.level && tempOptions.formType;
       } else if (tempType === '스텐랙') {
-        isComplete = tempOptions.size && tempOptions.height && tempOptions.level;  // ← formType 없음!
+        isComplete = tempOptions.size && tempOptions.height && tempOptions.level;
       } else if (tempType === '경량랙') {
         isComplete = tempOptions.color && tempOptions.size && tempOptions.height && tempOptions.level && tempOptions.formType;
       } else if (tempType === '하이랙') {
@@ -519,7 +511,7 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
 
       <div className="action-row">
         <button className="add-btn" onClick={handleAdd}>
-          {customMode ? '추가' : '추가'}
+          추가
         </button>
         <button 
           className="custom-btn" 
