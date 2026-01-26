@@ -16,6 +16,7 @@ import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts �
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 import ItemSelector from './ItemSelector'; // 26_01_27 신규기능추가 
 import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
+import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -406,11 +407,37 @@ const PurchaseOrderForm = () => {
     setShowItemSelector(true);  // ← 이렇게 변경
   };
   const handleItemAdd = (itemData) => {
+    // ✅ 품목 추가
     setFormData(prev => ({
       ...prev,
       items: [...prev.items, itemData]
     }));
-    // 패널은 유지 (닫지 않음)
+    
+    // ✅ BOM 자동 생성 및 추가
+    if (itemData.name) {
+      const bom = regenerateBOMFromDisplayName(itemData.name, itemData.quantity || 1);
+      
+      if (bom && bom.length > 0) {
+        // 관리자 단가 적용
+        const bomWithAdminPrice = bom.map(bomItem => {
+          const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
+          const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
+          const quantity = Number(bomItem.quantity) || 0;
+          
+          return {
+            ...bomItem,
+            unitPrice: appliedUnitPrice,
+            totalPrice: appliedUnitPrice * quantity
+          };
+        });
+        
+        // materials에 추가
+        setFormData(prev => ({
+          ...prev,
+          materials: [...prev.materials, ...bomWithAdminPrice]
+        }));
+      }
+    }
   };
   const removeItem = (idx) => {
     setFormData(prev => ({
@@ -443,11 +470,21 @@ const PurchaseOrderForm = () => {
   };
   
   const handleMaterialAdd = (materialData) => {
+    // ✅ inventoryPartId 생성 (재고 감소용)
+    const materialWithId = {
+      ...materialData,
+      inventoryPartId: generateInventoryPartId({
+        rackType: materialData.rackType || '기타',
+        name: materialData.name,
+        specification: materialData.specification || '',
+        colorWeight: materialData.colorWeight || ''
+      })
+    };
+    
     setFormData(prev => ({
       ...prev,
-      materials: [...prev.materials, materialData]
+      materials: [...prev.materials, materialWithId]
     }));
-    // 패널은 유지 (닫지 않음)
   };
     
   const removeMaterial = (idx) => {
