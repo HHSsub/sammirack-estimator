@@ -391,141 +391,145 @@ const ItemSelector = ({ isOpen, onClose, onAdd }) => {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+if (!isOpen) return null;
 
-  return (
-    <div className="item-selector-panel">
-      <div className="panel-header">
-        <h4>품목 선택</h4>
-        <button className="close-btn" onClick={handleClose}>✕</button>
-      </div>
-      
-      {!customMode ? (
-        <>
-          <div className="selector-row">
-            {/* 랙 타입 */}
-            <div className="selector-field">
-              <label>랙 타입</label>
-              <select
-                value={tempType}
-                onChange={e => handleOptionChange('type', e.target.value)}
-              >
-                <option value="">랙 타입 선택</option>
-                {(allOptions.types || []).map(t => (
-                  <option key={t} value={t}>
-                    {kgLabelFix(t)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* 파렛트랙 */}
-            {tempType === '파렛트랙' && (
-              <>
-                {renderOptionSelect('version', '버전', true)}
-                {renderOptionSelect('weight', '무게', !!tempOptions.version)}
-                {renderOptionSelect('size', '규격', !!tempOptions.version && !!tempOptions.weight)}
-                {renderOptionSelect('height', '높이', !!tempOptions.version && !!tempOptions.weight && !!tempOptions.size)}
-                {renderOptionSelect('level', '단수', !!tempOptions.version && !!tempOptions.weight && !!tempOptions.size && !!tempOptions.height)}
-                {availOpts.formType?.length > 0 && renderOptionSelect('formType', '형식', !!tempOptions.version && !!tempOptions.weight && !!tempOptions.size && !!tempOptions.height && !!tempOptions.level)}
-              </>
-            )}
-
-            {/* formTypeRacks */}
-            {formTypeRacks.includes(tempType) && (
-              <>
-                {tempType === '경량랙' && renderOptionSelect('color', '색상', true)}
-                {tempType === '경량랙' 
-                  ? renderOptionSelect('size', '규격', !!tempOptions.color)
-                  : renderOptionSelect('size', '규격')
-                }
-                {renderOptionSelect('height', '높이', !!tempOptions.size)}
-                {renderOptionSelect('level', '단수', !!tempOptions.size && !!tempOptions.height)}
-                {renderOptionSelect('formType', '형식', !!tempOptions.size && !!tempOptions.height && !!tempOptions.level)}
-              </>
-            )}
-
-            {/* 하이랙 */}
-            {tempType === '하이랙' && (
-              <>
-                {renderOptionSelect('color', '색상', true, colorLabelMap)}
-                {renderOptionSelect('size', '규격', !!tempOptions.color)}
-                {renderOptionSelect('height', '높이', !!tempOptions.color && !!tempOptions.size)}
-                {renderOptionSelect('level', '단수', !!tempOptions.color && !!tempOptions.size && !!tempOptions.height)}
-                {availOpts.formType?.length > 0 && renderOptionSelect('formType', '형식', !!tempOptions.color && !!tempOptions.size && !!tempOptions.height && !!tempOptions.level)}
-              </>
-            )}
-
-            {/* 스텐랙 */}
-            {tempType === '스텐랙' && (
-              <>
-                {renderOptionSelect('size', '규격')}
-                {renderOptionSelect('height', '높이', !!tempOptions.size)}
-                {renderOptionSelect('level', '단수', !!tempOptions.size && !!tempOptions.height)}
-              </>
-            )}
-
-            {/* 수량 */}
-            <div className="selector-field">
-              <label>수량</label>
-              <input
-                type="number"
-                min="1"
-                value={tempQuantity}
-                onChange={e => setTempQuantity(Math.max(1, Number(e.target.value) || 1))}
-              />
-            </div>
+return (
+  <div className="item-selector-panel">
+    <div className="panel-header">
+      <h4>품목 선택</h4>
+      <button className="close-btn" onClick={handleClose}>✕</button>
+    </div>
+    
+    {/* 기타 입력 전환 버튼 - 좌측 상단으로 이동 */}
+    <div style={{ marginBottom: '8px', paddingLeft: '4px' }}>
+      <button 
+        className="custom-btn" 
+        onClick={() => setCustomMode(!customMode)}
+      >
+        {customMode ? '시스템 품목' : '기타 입력'}
+      </button>
+    </div>
+    
+    {!customMode ? (
+      <>
+        <div className="selector-row">
+          {/* 랙 타입 */}
+          <div className="selector-field">
+            <label>랙 타입</label>
+            <select
+              value={tempType}
+              onChange={e => handleOptionChange('type', e.target.value)}
+            >
+              <option value="">랙 타입 선택</option>
+              {(allOptions.types || []).map(t => (
+                <option key={t} value={t}>
+                  {kgLabelFix(t)}
+                </option>
+              ))}
+            </select>
           </div>
-        </>
-      ) : (
-        <div className="custom-input-section">
-          <h5>직접 입력</h5>
-          <div className="custom-row">
-            <input
-              type="text"
-              placeholder="품명"
-              value={customData.name}
-              onChange={e => setCustomData({ ...customData, name: e.target.value })}
-            />
-            <input
-              type="text"
-              placeholder="단위"
-              value={customData.unit}
-              onChange={e => setCustomData({ ...customData, unit: e.target.value })}
-            />
+
+          {/* 파렛트랙 */}
+          {tempType === '파렛트랙' && (
+            <>
+              {renderOptionSelect('version', '버전', true)}
+              {renderOptionSelect('weight', '무게', !!tempOptions.version)}
+              {renderOptionSelect('size', '규격', !!tempOptions.version && !!tempOptions.weight)}
+              {renderOptionSelect('height', '높이', !!tempOptions.version && !!tempOptions.weight && !!tempOptions.size)}
+              {renderOptionSelect('level', '단수', !!tempOptions.version && !!tempOptions.weight && !!tempOptions.size && !!tempOptions.height)}
+              {availOpts.formType?.length > 0 && renderOptionSelect('formType', '형식', !!tempOptions.version && !!tempOptions.weight && !!tempOptions.size && !!tempOptions.height && !!tempOptions.level)}
+            </>
+          )}
+
+          {/* formTypeRacks */}
+          {formTypeRacks.includes(tempType) && (
+            <>
+              {tempType === '경량랙' && renderOptionSelect('color', '색상', true)}
+              {tempType === '경량랙' 
+                ? renderOptionSelect('size', '규격', !!tempOptions.color)
+                : renderOptionSelect('size', '규격')
+              }
+              {renderOptionSelect('height', '높이', !!tempOptions.size)}
+              {renderOptionSelect('level', '단수', !!tempOptions.size && !!tempOptions.height)}
+              {renderOptionSelect('formType', '형식', !!tempOptions.size && !!tempOptions.height && !!tempOptions.level)}
+            </>
+          )}
+
+          {/* 하이랙 */}
+          {tempType === '하이랙' && (
+            <>
+              {renderOptionSelect('color', '색상', true, colorLabelMap)}
+              {renderOptionSelect('size', '규격', !!tempOptions.color)}
+              {renderOptionSelect('height', '높이', !!tempOptions.color && !!tempOptions.size)}
+              {renderOptionSelect('level', '단수', !!tempOptions.color && !!tempOptions.size && !!tempOptions.height)}
+              {availOpts.formType?.length > 0 && renderOptionSelect('formType', '형식', !!tempOptions.color && !!tempOptions.size && !!tempOptions.height && !!tempOptions.level)}
+            </>
+          )}
+
+          {/* 스텐랙 */}
+          {tempType === '스텐랙' && (
+            <>
+              {renderOptionSelect('size', '규격')}
+              {renderOptionSelect('height', '높이', !!tempOptions.size)}
+              {renderOptionSelect('level', '단수', !!tempOptions.size && !!tempOptions.height)}
+            </>
+          )}
+
+          {/* 수량 */}
+          <div className="selector-field">
+            <label>수량</label>
             <input
               type="number"
-              placeholder="수량"
               min="1"
-              value={customData.quantity}
-              onChange={e => setCustomData({ ...customData, quantity: Math.max(1, Number(e.target.value) || 1) })}
-            />
-            <input
-              type="number"
-              placeholder="단가"
-              min="0"
-              value={customData.unitPrice}
-              onChange={e => setCustomData({ ...customData, unitPrice: Math.max(0, Number(e.target.value) || 0) })}
+              value={tempQuantity}
+              onChange={e => setTempQuantity(Math.max(1, Number(e.target.value) || 1))}
             />
           </div>
         </div>
-      )}
-
-      <div className="action-row">
-        <button className="add-btn" onClick={handleAdd}>
-          추가
-        </button>
-        <button 
-          className="custom-btn" 
-          onClick={() => setCustomMode(!customMode)}
-        >
-          {customMode ? '시스템 품목' : '기타 입력'}
-        </button>
-        <button className="cancel-btn" onClick={handleClose}>
-          닫기
-        </button>
+      </>
+    ) : (
+      <div className="custom-input-section">
+        <h5>직접 입력</h5>
+        <div className="custom-row">
+          <input
+            type="text"
+            placeholder="품명"
+            value={customData.name}
+            onChange={e => setCustomData({ ...customData, name: e.target.value })}
+          />
+          <input
+            type="text"
+            placeholder="단위"
+            value={customData.unit}
+            onChange={e => setCustomData({ ...customData, unit: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="수량"
+            min="1"
+            value={customData.quantity}
+            onChange={e => setCustomData({ ...customData, quantity: Math.max(1, Number(e.target.value) || 1) })}
+          />
+          <input
+            type="number"
+            placeholder="단가"
+            min="0"
+            value={customData.unitPrice}
+            onChange={e => setCustomData({ ...customData, unitPrice: Math.max(0, Number(e.target.value) || 0) })}
+          />
+        </div>
       </div>
+    )}
+
+    <div className="action-row">
+      <button className="add-btn" onClick={handleAdd}>
+        추가
+      </button>
+      <button className="cancel-btn" onClick={handleClose}>
+        닫기
+      </button>
     </div>
+  </div>
   );
 };
 
