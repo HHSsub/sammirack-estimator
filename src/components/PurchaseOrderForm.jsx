@@ -1208,6 +1208,11 @@ const checkInventoryAvailability = async (cartItems) => {
       <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
         <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
       </div>
+      <ItemSelector
+        isOpen={showItemSelector}
+        onClose={() => setShowItemSelector(false)}
+        onAdd={handleItemAdd}
+      />
 
       {/* BOM */}
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>원자재 명세서</h3>
