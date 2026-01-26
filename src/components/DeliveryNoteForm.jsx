@@ -13,6 +13,8 @@ import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
+import ItemSelector from './ItemSelector';      // 26_01_27 품목셀렉터 추가
+import MaterialSelector from './MaterialSelector';  // 26_01_27 재고셀렉터 추가
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -65,6 +67,9 @@ const DeliveryNoteForm = () => {
     message: '', 
     onConfirm: null 
   });
+  // 품목, 재고 셀렉터 
+  const [showItemSelector, setShowItemSelector] = useState(false);
+  const [showMaterialSelector, setShowMaterialSelector] = useState(false);
 
   const adminPricesRef = useRef({});
     
@@ -351,7 +356,17 @@ const DeliveryNoteForm = () => {
     }
     setFormData(p=>({...p,items}));
   };
-  const addItem=()=>setFormData(p=>({...p,items:[...p.items,{name:'',unit:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
+  // const addItem=()=>setFormData(p=>({...p,items:[...p.items,{name:'',unit:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
+  const addItem = () => {
+    setShowItemSelector(true);  // 품목셀렉터 신규추가 (26_01_27)
+  };
+  const handleItemAdd = (itemData) => {
+  setFormData(prev => ({
+    ...prev,
+    items: [...prev.items, itemData]
+  }));
+    // 패널은 유지 (닫지 않음)
+};
   const rmItem=(idx)=>setFormData(p=>({...p,items:p.items.filter((_,i)=>i!==idx)}));
 
   const upMat=(idx,f,v)=>{
@@ -364,7 +379,17 @@ const DeliveryNoteForm = () => {
     }
     setFormData(p=>({...p,materials}));
   };
-  const addMaterial=()=>setFormData(p=>({...p,materials:[...p.materials,{name:'',specification:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
+  // const addMaterial=()=>setFormData(p=>({...p,materials:[...p.materials,{name:'',specification:'',quantity:'',unitPrice:'',totalPrice:'',note:''}]}));
+  const addMaterial = () => {
+  setShowMaterialSelector(true);  // 재고셀렉터 신규추가(26_01_27)
+  };
+  const handleMaterialAdd = (materialData) => {
+    setFormData(prev => ({
+    ...prev,
+    materials: [...prev.materials, materialData]
+  }));
+  // 패널은 유지 (닫지 않음)
+};
   const rmMat=(idx)=>setFormData(p=>({...p,materials:p.materials.filter((_,i)=>i!==idx)}));
 
 const handleSave = async () => {
@@ -751,6 +776,12 @@ const handleSendFax = async (faxNumber) => {
         </div>
       )}
 
+      <ItemSelector
+        isOpen={showItemSelector}
+        onClose={() => setShowItemSelector(false)}
+        onAdd={handleItemAdd}
+      />
+
       <h3 style={{margin:'14px 0 6px', fontSize:16}}>원자재 명세서</h3>
       <table className="form-table bom-table">
         <thead>
@@ -792,7 +823,11 @@ const handleSendFax = async (faxNumber) => {
       <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
         <button type="button" onClick={addMaterial} className="add-item-btn">+ 자재 추가</button>
       </div>
-
+      <MaterialSelector
+      isOpen={showMaterialSelector}
+      onClose={() => setShowMaterialSelector(false)}
+      onAdd={handleMaterialAdd}
+      />
       <table className="form-table total-table">
         <tbody>
           <tr><td className="label">소계</td><td className="right">{formData.subtotal.toLocaleString()}</td></tr>
