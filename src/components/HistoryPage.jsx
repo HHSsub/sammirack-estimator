@@ -48,7 +48,7 @@ const HistoryPage = () => {
   // ✅ 삭제된 문서 목록
   const [deletedItems, setDeletedItems] = useState([]);
   // ✅ 정렬 상태
-  const [sortColumn, setSortColumn] = useState('updatedAt'); // 기본: 최종수정일
+  const [sortColumn, setSortColumn] = useState('date'); // 기본: 최종수정일 -> 문서수정일(26_01_28)
   const [sortDirection, setSortDirection] = useState('desc'); // 기본: 내림차순
   // ✅ 메모 모달 state
   const [memoModalItem, setMemoModalItem] = useState(null);
@@ -471,15 +471,14 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   const editItem = (item) => {
     if (!item || !item.type) return;
     
-    console.log('📝 편집 시작:', {
+    console.log('📝 편집:', {
       id: item.id,
-      cart: item.cart?.length,
       materials: item.materials?.length
     });
     
     let finalCart = [];
     
-    // ✅ cart 복원 (bom은 제외!)
+    // ✅ cart 복원 (bom 제외!)
     if (item.cart && Array.isArray(item.cart) && item.cart.length > 0) {
       finalCart = item.cart.map(cartItem => {
         const matchingItem = (item.items || []).find(it => it.name === (cartItem.displayName || cartItem.name));
@@ -489,14 +488,14 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           return { 
             ...cartItem, 
             unitPrice: up, 
-            price: up * qty,
-            bom: []  // ✅ bom 제거! materials로 대체
+            price: up * qty
+            // ✅ bom 완전 제거!
           };
         }
-        return { ...cartItem, bom: [] };  // ✅ bom 제거!
+        return cartItem;
       });
     } else {
-      // ✅ cart 없으면 items 변환 (bom 없이!)
+      // ✅ cart 없으면 items 변환
       finalCart = (item.items || []).map(itemData => ({
         id: `edit_${Date.now()}_${Math.random()}`,
         name: itemData.name,
@@ -504,15 +503,14 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         quantity: Number(itemData.quantity) || 1,
         price: Number(itemData.totalPrice) || 0,
         unitPrice: Number(itemData.unitPrice) || 0,
-        unit: itemData.unit || '개',
-        bom: [],  // ✅ bom 없이!
-        extraOptions: []
+        unit: itemData.unit || '개'
+        // ✅ bom 완전 제거!
       }));
     }
     
     const editingData = {
       cart: finalCart,
-      materials: item.materials || [],  // ✅ materials 별도 전달!
+      materials: item.materials || [],  // ✅ materials 별도!
       customItems: [],
       customMaterials: [],
       editingDocumentId: item.id,
@@ -530,11 +528,6 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         memo: item.memo || ''
       }
     };
-    
-    console.log('✅ 편집 데이터:', {
-      cart: finalCart.length,
-      materials: editingData.materials.length
-    });
     
     navigate('/', { state: editingData });
   };
