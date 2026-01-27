@@ -117,8 +117,14 @@ const HomePage = ({ currentUser }) => {
   useEffect(() => {
     if (isEditMode && editingData.cart) {
       setCart(editingData.cart);
+      
+      // ✅ materials도 복원 (BOM 재생성 방지!)
+      if (editingData.materials && editingData.materials.length > 0) {
+        // ProductContext에 materials 직접 설정하는 함수 필요
+        console.log('✅ materials 복원:', editingData.materials.length);
+      }
 
-      // ✅ cart에서 extraOptions 추출하여 복원
+      // extraOptions 복원
       const allExtraOptions = [];
       editingData.cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
@@ -128,10 +134,9 @@ const HomePage = ({ currentUser }) => {
       if (allExtraOptions.length > 0) {
         const uniqueExtraOptions = Array.from(new Set(allExtraOptions));
         handleExtraOptionChange(uniqueExtraOptions);
-        console.log('✅ extraOptions 복원:', uniqueExtraOptions);
       }
     }
-  }, [isEditMode, editingData.cart, setCart, handleExtraOptionChange]);
+  }, [isEditMode, editingData.cart, editingData.materials, setCart, handleExtraOptionChange]);
 
   const getFinalPrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
@@ -172,8 +177,11 @@ const HomePage = ({ currentUser }) => {
   const canAddItem = finalPrice > 0;
   const canProceed = cart.length > 0;
 
-  const totalBomForDisplay = cartBOMView || [];
-
+  // ✅ 편집 모드일 때는 materials 직접 사용!
+  const totalBomForDisplay = (isEditMode && editingData.materials && editingData.materials.length > 0)
+    ? editingData.materials 
+    : cartBOMView || [];
+    
   const getCurrentRackOptionName = () => {
     if (!selectedType) return '';
     return [

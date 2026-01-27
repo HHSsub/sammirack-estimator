@@ -471,86 +471,50 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
   const editItem = (item) => {
     if (!item || !item.type) return;
     
-    console.log('📝 문서 편집 시작:', item);
-    
-    // items를 cart로 변환 + 시스템에 없는 항목 분리
-    const cart = [];
-    const customItems = [];
-    
-    (item.items || []).forEach(itemData => {
-      if (!itemData.name) return;
-      
-      // BOM 재생성 시도
-      const bom = regenerateBOMFromDisplayName(itemData.name, itemData.quantity || 1);
-      
-      if (bom.length > 0) {
-        // 시스템 품목 -> cart에 추가
-        const qty = Number(itemData.quantity) || 1;
-        const totalPrice = Number(itemData.totalPrice) || 0;
-        
-        cart.push({
-          id: `edit_${Date.now()}_${Math.random()}`,
-          name: itemData.name,
-          displayName: itemData.name,
-          quantity: qty,
-          price: totalPrice,
-          unitPrice: Number(itemData.unitPrice) || 0,  // ✅ 추가! (문서관리에서 단가수정후 저장누르면 반영되게하기위함 , 2026-01-19)
-          unit: itemData.unit || '개',
-          bom: bom,
-          // ✅ 저장된 문서에서 extraOptions 복원 (item.cart에서 가져옴)
-          extraOptions: [] // 기본값 (item.cart에서 복원)
-        });
-      } else {
-        // 직접 추가 품목 -> customItems에 보관
-        customItems.push({ ...itemData });
-      }
+    console.log('📝 편집 시작:', {
+      id: item.id,
+      cart: item.cart?.length,
+      materials: item.materials?.length
     });
     
-    // materials도 처리 (청구서용)
-    const customMaterials = [];
-    if (item.materials && Array.isArray(item.materials)) {
-      item.materials.forEach(mat => {
-        // materials는 대부분 시스템 자재이지만, 사용자가 직접 추가한 것도 있을 수 있음
-        // Part ID 생성 불가능한 것들은 customMaterials로 보관
-        try {
-          const partId = generatePartId(mat);
-          if (!partId || partId === 'unknown') {
-            customMaterials.push({ ...mat });
-          }
-        } catch {
-          customMaterials.push({ ...mat });
-        }
-      });
-    }
+    let finalCart = [];
     
-    console.log('🛒 Cart 변환:', cart.length, '개');
-    console.log('📦 Custom Items:', customItems.length, '개');
-    console.log('🔧 Custom Materials:', customMaterials.length, '개');
-    
-    // ✅ 저장된 문서에서 cart 복원 (extraOptions 포함)
-    // item.cart가 있으면 사용하되, items에 저장된 최신 단가(unitPrice)로 동기화 (2026-01-19)
-    let finalCart = cart;
+    // ✅ cart 복원 (bom은 제외!)
     if (item.cart && Array.isArray(item.cart) && item.cart.length > 0) {
       finalCart = item.cart.map(cartItem => {
-        // items 배열에서 이름이 일치하는 항목을 찾아 단가 동기화
         const matchingItem = (item.items || []).find(it => it.name === (cartItem.displayName || cartItem.name));
         if (matchingItem && matchingItem.unitPrice !== undefined) {
           const up = Number(matchingItem.unitPrice) || 0;
           const qty = Number(cartItem.quantity) || Number(matchingItem.quantity) || 1;
-          return { ...cartItem, unitPrice: up, price: up * qty };
+          return { 
+            ...cartItem, 
+            unitPrice: up, 
+            price: up * qty,
+            bom: []  // ✅ bom 제거! materials로 대체
+          };
         }
-        return cartItem;
+        return { ...cartItem, bom: [] };  // ✅ bom 제거!
       });
-      console.log('✅ 저장된 cart 사용 및 단가 최신화:', finalCart.length, '개');
     } else {
-      console.log('⚠️ 저장된 cart 없음 - 재생성한 cart 사용:', finalCart.length, '개');
+      // ✅ cart 없으면 items 변환 (bom 없이!)
+      finalCart = (item.items || []).map(itemData => ({
+        id: `edit_${Date.now()}_${Math.random()}`,
+        name: itemData.name,
+        displayName: itemData.name,
+        quantity: Number(itemData.quantity) || 1,
+        price: Number(itemData.totalPrice) || 0,
+        unitPrice: Number(itemData.unitPrice) || 0,
+        unit: itemData.unit || '개',
+        bom: [],  // ✅ bom 없이!
+        extraOptions: []
+      }));
     }
     
-    // 홈 화면으로 이동 (타입별로 다른 route)
     const editingData = {
-      cart: finalCart, // ✅ 저장된 cart 또는 재생성한 cart 사용
-      customItems,
-      customMaterials,
+      cart: finalCart,
+      materials: item.materials || [],  // ✅ materials 별도 전달!
+      customItems: [],
+      customMaterials: [],
       editingDocumentId: item.id,
       editingDocumentType: item.type,
       editingDocumentData: {
@@ -567,7 +531,11 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       }
     };
     
-    // 홈 화면으로 이동
+    console.log('✅ 편집 데이터:', {
+      cart: finalCart.length,
+      materials: editingData.materials.length
+    });
+    
     navigate('/', { state: editingData });
   };
 

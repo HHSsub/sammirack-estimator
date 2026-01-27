@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: '/sammirack-estimator/', // GitHub Pages 저장소 이름에 맞게 수정
+  base: '/', // GitHub Pages 저장소말고, 가비아 루트폴더
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
