@@ -201,7 +201,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
           <div className="filter-row">
             <div className="filter-field">
               <label>랙 타입</label>
-              <select value={rackTypeFilter} onChange={e => setRackTypeFilter(e.target.value)}>
+              <select value={selectedRackType} onChange={e => setselectedRackType(e.target.value)}>
                 <option value="">전체</option>
                 <option value="하이랙">하이랙</option>
                 <option value="스텐랙">스텐랙</option>
@@ -223,8 +223,8 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
               <label>
                 <input
                   type="checkbox"
-                  checked={showStockOnly}
-                  onChange={e => setShowStockOnly(e.target.checked)}
+                  checked={showOnlyInStock}
+                  onChange={e => setshowOnlyInStock(e.target.checked)}
                 />
                 재고있는것만
               </label>
