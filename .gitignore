@@ -18,6 +18,9 @@ Thumbs.db
 .env.development.local
 .env.test.local
 .env.production.local
+.pem
+.pem*
+.pem.*
 
 # GitHub 토큰 보안
 *.env
