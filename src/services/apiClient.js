@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 1200000,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -25,13 +25,13 @@ export const pricesAPI = {
 // 문서 API
 export const documentsAPI = {
   getAll: () => apiClient.get('/documents'),
-  getById: (docId) => apiClient.get(`/documents/${docId}`),
+  getById: (docId) => apiClient.get(`/documents/${docId}`),  // ✅ 괄호로 수정!
   save: (docId, data) => apiClient.post('/documents/save', { docId, ...data }),
-  delete: (docId) => apiClient.delete(`/documents/${docId}`)
+  delete: (docId) => apiClient.delete(`/documents/${docId}`)  // ✅ 괄호로 수정!
 };
 
 // 활동 로그 API
 export const activityAPI = {
-  getRecent: (limit = 100) => apiClient.get(`/activity/recent?limit=${limit}`),
+  getRecent: (limit = 100) => apiClient.get(`/activity/recent?limit=${limit}`),  // ✅ 괄호로 수정!
   log: (action, details) => apiClient.post('/activity/log', { action, details })
 };

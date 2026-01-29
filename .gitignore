@@ -21,6 +21,7 @@ Thumbs.db
 .pem
 .pem*
 .pem.*
+Keypair
 
 # GitHub 토큰 보안
 *.env

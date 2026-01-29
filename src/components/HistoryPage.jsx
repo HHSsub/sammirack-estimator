@@ -48,8 +48,13 @@ const HistoryPage = () => {
   // ✅ 삭제된 문서 목록
   const [deletedItems, setDeletedItems] = useState([]);
   // ✅ 정렬 상태
-  const [sortColumn, setSortColumn] = useState('date'); // 기본: 최종수정일 -> 문서수정일(26_01_28)
-  const [sortDirection, setSortDirection] = useState('desc'); // 기본: 내림차순
+  // ✅ localStorage에서 정렬 설정 불러오기
+  const [sortColumn, setSortColumn] = useState(() => {
+    return localStorage.getItem('historyPage_sortColumn') || 'date';  // ✅ 기본값: 날짜
+  });
+  const [sortDirection, setSortDirection] = useState(() => {
+    return localStorage.getItem('historyPage_sortDirection') || 'desc';
+  });
   // ✅ 메모 모달 state
   const [memoModalItem, setMemoModalItem] = useState(null);
   const [memoModalValue, setMemoModalValue] = useState('');
@@ -81,11 +86,16 @@ const HistoryPage = () => {
    */
   const loadHistory = useCallback(() => {
     try {
-      // ✅ 서버 동기화된 문서에서 로드 (삭제되지 않은 것만)
       const syncedDocuments = loadAllDocuments(false);
       
-      // ✅ topMemo를 memo로 복사 (memo가 비어있을 때만)
-      const documentsWithMemo = syncedDocuments.map(doc => {
+      // ✅ 유령 문서 필터링 (documentNumber 없는 문서 제거)
+      const validDocuments = syncedDocuments.filter(doc => {
+        const hasNumber = doc.estimateNumber || doc.purchaseNumber || doc.documentNumber;
+        const hasItems = doc.items && doc.items.length > 0;
+        return hasNumber && hasItems;
+      });
+      
+      const documentsWithMemo = validDocuments.map(doc => {
         if (!doc.memo && doc.topMemo) {
           return { ...doc, memo: doc.topMemo };
         }
@@ -95,7 +105,7 @@ const HistoryPage = () => {
       setHistoryItems(documentsWithMemo);
       setLastSyncTime(new Date());
       
-      console.log(`📄 문서 로드 완료: ${documentsWithMemo.length}개`);
+      console.log(`📄 문서 로드 완료: ${documentsWithMemo.length}개 (유령문서 제외)`);
     } catch (error) {
       console.error('Error loading history:', error);
     }
@@ -138,14 +148,17 @@ const HistoryPage = () => {
    * ✅ 컬럼별 정렬 처리
    */
   const handleSort = (column) => {
+    let newDirection = 'desc';
     if (sortColumn === column) {
-      // 같은 컬럼 클릭 시 방향 토글
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // 다른 컬럼 클릭 시 해당 컬럼으로 변경, 기본 내림차순
-      setSortColumn(column);
-      setSortDirection('desc');
+      newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
     }
+    
+    // ✅ localStorage에 저장
+    localStorage.setItem('historyPage_sortColumn', column);
+    localStorage.setItem('historyPage_sortDirection', newDirection);
+    
+    setSortColumn(column);
+    setSortDirection(newDirection);
   };
 
   /**

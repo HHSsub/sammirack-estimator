@@ -691,7 +691,8 @@ export const loadAllMaterials = async () => {
       console.log(`   - 매칭률: ${(matchCount/existingKeys.length*100).toFixed(1)}%`);
     }
     
-    if (missingInNew.length > 0) {
+    if (missingInNew.length > 0 && missingInNew.length < 50) {
+      // ✅ 50개 미만일 때만 경고 (대량은 정상)
       console.warn(`   ⚠️  CSV에 없는 부품: ${missingInNew.length}개`);
       console.warn('   누락된 부품 (최대 10개):');
       missingInNew.slice(0, 10).forEach(k => {

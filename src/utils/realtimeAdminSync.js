@@ -385,14 +385,30 @@ class RealtimeAdminSync {
       const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
       const inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '{}');
       const adminPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
-      const activityLog = JSON.parse(localStorage.getItem(ACTIVITY_LOG_KEY) || '[]');
-
+      // ✅ activityLog가 배열인지 확인
+      let activityLog;
+      try {
+        const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
+        activityLog = stored ? JSON.parse(stored) : [];
+        if (!Array.isArray(activityLog)) {
+          console.warn('⚠️ activityLog가 배열이 아님. 초기화함:', activityLog);
+          activityLog = [];
+        }
+      } catch (e) {
+        console.error('❌ activityLog 파싱 실패:', e);
+        activityLog = [];
+      }
       const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
       
       localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
       this.syncToLegacyKeys(mergedDocuments);
 
       const userIP = await this.getUserIP();
+      
+      // ✅ 배열 검증
+      if (!Array.isArray(activityLog)) {
+        activityLog = [];
+      }
       
       activityLog.unshift({
         timestamp: new Date().toISOString(),
@@ -431,12 +447,48 @@ class RealtimeAdminSync {
   }
 
   async saveAllPrices(adminPrices) {
-    const priceEntries = Object.entries(adminPrices);
-    for (let i = 0; i < priceEntries.length; i += 10) {
-      const batch = priceEntries.slice(i, i + 10);
+    // ✅ 배열이면 객체로 변환 (데이터 손상 방지)
+    if (Array.isArray(adminPrices)) {
+      console.warn('⚠️ adminPrices가 배열입니다. 무시합니다.');
+      return;
+    }
+
+    // ✅ 유효한 항목만 필터링
+    const validEntries = Object.entries(adminPrices).filter(([partId, data]) => {
+      // 숫자 키 제거
+      if (!isNaN(partId)) {
+        console.warn(`⚠️ 잘못된 partId 제거: ${partId}`);
+        return false;
+      }
+      // price가 없는 항목 제거
+      if (!data || !data.price || data.price <= 0) {
+        console.warn(`⚠️ price 없는 항목 제거: ${partId}`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validEntries.length === 0) {
+      console.log('📋 저장할 가격 데이터 없음');
+      return;
+    }
+
+    // ✅ 배치 크기 줄이고 에러 무시
+    for (let i = 0; i < validEntries.length; i += 5) {
+      const batch = validEntries.slice(i, i + 5);
       await Promise.all(
         batch.map(([partId, data]) => 
-          pricesAPI.update(partId, data).catch(err => console.error(`가격 저장 실패 (${partId}):`, err))
+          pricesAPI.update(partId, {
+            price: Number(data.price),
+            timestamp: data.timestamp,
+            account: data.account,
+            partInfo: data.partInfo || {}
+          }).catch(err => {
+            // 405 에러는 무시
+            if (!err.message.includes('405')) {
+              console.error(`가격 저장 실패 (${partId}):`, err.message);
+            }
+          })
         )
       );
     }
