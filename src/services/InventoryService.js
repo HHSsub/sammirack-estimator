@@ -23,6 +23,11 @@ class InventoryService {
       
       localStorage.setItem('inventory_data', JSON.stringify(response.data.inventory));
       
+      // ✅ 이벤트 발생 추가!
+      window.dispatchEvent(new CustomEvent('inventoryUpdated', {
+        detail: { inventory: response.data.inventory }
+      }));
+      
       return response.data.inventory;
     } catch (error) {
       console.error('❌ 재고 데이터 서버 업데이트 실패:', error);

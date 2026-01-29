@@ -442,29 +442,27 @@ const InventoryManager = ({ currentUser }) => {
     );
   }
 
-useEffect(() => {
-  // ✅ async 함수를 만들어 순차적으로 데이터 로드
-  const initializeData = async () => {
-    try {
-      setSyncStatus('🔄 초기화 중...');
-      
-      // 순차적으로 데이터 로드
-      await loadAllMaterialsData();
-      await loadInventoryData();  // ✅ 서버 동기화 후 로드
-      loadAdminPricesData();  // 동기 함수는 그대로
-      await loadRackOptions();
-      setupRealtimeListeners();
-      
-      setSyncStatus('✅ 초기화 완료');
-      setLastSyncTime(new Date());
-    } catch (error) {
-      console.error('❌ 초기화 실패:', error);
-      setSyncStatus('❌ 초기화 오류');
-    }
-  };
-  
-  initializeData();
-}, []);
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        setSyncStatus('🔄 초기화 중...');
+        
+        await loadAllMaterialsData();
+        await syncAndLoadInventoryData();  // ✅ 최초 1회만 서버 동기화
+        loadAdminPricesData();
+        await loadRackOptions();
+        setupRealtimeListeners();
+        
+        setSyncStatus('✅ 초기화 완료');
+        setLastSyncTime(new Date());
+      } catch (error) {
+        console.error('❌ 초기화 실패:', error);
+        setSyncStatus('❌ 초기화 오류');
+      }
+    };
+    
+    initializeData();
+  }, []);
 
   // 실시간 동기화 리스너 설정
   const setupRealtimeListeners = () => {
@@ -528,28 +526,26 @@ useEffect(() => {
   };
 
   // 재고 데이터 로드 (서버에서 먼저 동기화)
-  const loadInventoryData = async () => {
+  const loadInventoryData = () => {
     try {
-      console.log('🔄 재고 데이터 로드 시작 - 서버 동기화 중...');
-      
-      // ✅ 1. 서버(GitHub Gist)에서 최신 데이터 먼저 가져오기
-      await forceServerSync();
-      
-      // ✅ 2. 동기화된 로컬 데이터 읽기
+      console.log('📦 로컬 재고 데이터 로드...');
       const data = loadInventory();
       setInventory(data);
-      console.log(`📦 재고 데이터 로드 완료: ${Object.keys(data).length}개 항목`);
+      console.log(`✅ 재고 로드 완료: ${Object.keys(data).length}개`);
     } catch (error) {
-      console.error('❌ 재고 데이터 로드 실패:', error);
-      // 서버 동기화 실패시에도 로컬 데이터는 읽기
-      try {
-        const data = loadInventory();
-        setInventory(data);
-        console.log(`⚠️ 로컬 재고 데이터 로드: ${Object.keys(data).length}개 항목`);
-      } catch (localError) {
-        console.error('❌ 로컬 재고 데이터도 로드 실패:', localError);
-        setInventory({});
-      }
+      console.error('❌ 재고 로드 실패:', error);
+      setInventory({});
+    }
+  };
+
+  const syncAndLoadInventoryData = async () => {
+    try {
+      console.log('🔄 서버 동기화 중...');
+      await forceServerSync();
+      loadInventoryData();
+    } catch (error) {
+      console.error('❌ 서버 동기화 실패:', error);
+      loadInventoryData(); // 실패해도 로컬 데이터는 로드
     }
   };
 
