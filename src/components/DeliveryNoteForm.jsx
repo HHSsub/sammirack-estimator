@@ -6,6 +6,7 @@ import { showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
 import FaxPreviewModal from './FaxPreviewModal'; // ✅ 추가
@@ -136,8 +137,14 @@ const DeliveryNoteForm = () => {
             // cart는 나중에 사용할 수 있도록 보관 (필요시)
           }
 
+          // ✅ 편집 후 진입 시 state.totalBom으로 materials 보정 (비어 있으면)
+          const materialsToUse = (editingDocumentId && totalBom && totalBom.length > 0 && (!data.materials || data.materials.length === 0))
+            ? totalBom
+            : (data.materials || []);
+
           setFormData({
             ...data,
+            materials: materialsToUse,
             documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
           });
 
@@ -148,7 +155,7 @@ const DeliveryNoteForm = () => {
         }
       }
     }
-  }, [id, isEditMode, editingDocumentId]);
+  }, [id, isEditMode, editingDocumentId, totalBom]);
 
   // 초기 cart / BOM 반영
   useEffect(() => {
@@ -507,6 +514,25 @@ const handleSave = async () => {
     const success = await saveDocumentSync(newDoc);
     
     if (success) {
+      try {
+        await documentsAPI.save(newDoc.id, {
+          docId: newDoc.id,
+          type: newDoc.type,
+          date: newDoc.date,
+          documentNumber: newDoc.deliveryNumber || newDoc.documentNumber,
+          companyName: newDoc.companyName,
+          bizNumber: newDoc.bizNumber,
+          items: newDoc.items || [],
+          materials: newDoc.materials || [],
+          subtotal: newDoc.subtotal,
+          tax: newDoc.tax,
+          totalAmount: newDoc.totalAmount,
+          notes: newDoc.notes,
+          topMemo: newDoc.topMemo
+        });
+      } catch (err) {
+        console.error('문서 즉시 서버 저장 실패:', err);
+      }
       setToast({ 
         show: true, 
         message: isEditMode ? '문서가 수정되었습니다.' : '문서가 저장되었습니다.', 

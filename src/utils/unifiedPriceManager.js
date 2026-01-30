@@ -22,6 +22,8 @@ const INVENTORY_KEY = 'inventory_data';
 const RACK_OPTIONS_KEY = 'rack_options_registry';
 const EXTRA_OPTIONS_PRICES_KEY = 'extra_options_prices';
 
+console.log("DEBUG_MARKER_V2"); // 이 줄이 있으면 새 코드임
+
 // ✅ 표준 partID 생성 함수 (단가 관리용 - 색상 제거)
 export const generatePartId = (item) => {
   if (!item) {
@@ -73,7 +75,6 @@ export const generatePartId = (item) => {
   }
 };
 
-// ✅ 재고 관리용 partID 생성 함수 (색상 포함)
 export const generateInventoryPartId = (item) => {
   if (!item) {
     console.warn('generateInventoryPartId: item이 undefined입니다');
@@ -93,26 +94,33 @@ export const generateInventoryPartId = (item) => {
     .replace(/\s+/g, '')
     .replace(/\*/g, 'x');
   
-  // ✅ 하이랙이고 colorWeight가 있으면 색상 추가
-  if (rackType === '하이랙' && colorWeight) {
+  // ✅ 하이랙이고 (colorWeight가 있거나, 이름에 색상이 포함된 경우)
+  if (rackType === '하이랙') {
     // ⚠️ 중요: name에서 부품명만 추출 (기둥, 선반, 로드빔)
-    // 예: "블루 기둥" → "기둥", "메트그레이 선반" → "선반", "오렌지 로드빔" → "로드빔"
-    // 예: "45x150메트그레이기둥" → "기둥", "60x108오렌지선반" → "선반"
     const partNameMatch = cleanName.match(/(기둥|선반|로드빔|빔)/i);
+    
     if (partNameMatch) {
-      // 부품명만 사용 (색상, 숫자, 사이즈 정보 모두 제거)
-      cleanName = partNameMatch[1].toLowerCase();
+      // 부품명만 먼저 뽑음 (예: "기둥")
+      let purePartName = partNameMatch[1].toLowerCase();
+      
+      // colorWeight가 있으면 그걸 쓰고, 없으면 기존 이름에서 색상만 추출 시도
+      let cleanColor = '';
+      if (colorWeight) {
+        cleanColor = String(colorWeight).replace(/\s+/g, '').toLowerCase();
+      } else {
+        // colorWeight가 없을 경우를 대비해 기존 name에서 색상 키워드 추출
+        const colorMatch = cleanName.match(/(메트그레이|매트그레이|블루|오렌지)/i);
+        cleanColor = colorMatch ? colorMatch[0].toLowerCase() : '';
+      }
+      
+      // 최종 결합: "기둥" + "메트그레이(볼트식)270kg"
+      cleanName = `${purePartName}${cleanColor}`;
     } else {
       // 부품명을 찾을 수 없으면 색상 정보만 제거
       cleanName = cleanName
         .replace(/^(메트그레이|매트그레이|블루|오렌지)/i, '')
         .replace(/(메트그레이|매트그레이|블루|오렌지)/gi, '');
     }
-    
-    const cleanColor = String(colorWeight)
-      .replace(/\s+/g, '')
-      .toLowerCase();
-    cleanName = `${cleanName}${cleanColor}`;
   }
   // ✅ 경량랙 전용: color가 있으면 부품명에 색상 포함
   if (rackType === '경량랙' && color) {

@@ -38,7 +38,8 @@ function formatSpecification(str) {
 
 // ✅ 재고 감소 함수 수정 (export 필요)
 // ✅ 서버 기반 재고 감소 함수
-export const deductInventoryOnPrint = async (cartItems, documentType = 'document', documentNumber = '') => {
+// ✅ materialsOverride: cart에 bom이 없을 때(예: 청구서 생성 플로우) 원자재 배열로 재고 차감
+export const deductInventoryOnPrint = async (cartItems, documentType = 'document', documentNumber = '', materialsOverride = null) => {
   if (!cartItems || !Array.isArray(cartItems)) {
     console.warn('재고 감소: 유효하지 않은 카트 데이터');
     return { success: false, message: '유효하지 않은 데이터' };
@@ -46,6 +47,9 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
   
   console.log(`📋 프린트 재고 감소 시작: ${documentType} ${documentNumber}`);
   console.log('📦 카트 아이템:', cartItems);
+  if (materialsOverride && materialsOverride.length > 0) {
+    console.log('📦 materialsOverride 사용 (BOM 대신):', materialsOverride.length, '개');
+  }
   
   try {
     // ✅ 1. 서버에서 최신 재고 데이터 가져오기
@@ -59,22 +63,24 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
     const warnings = [];
     const updates = {};
     
-    // ✅ 2. 모든 카트 아이템의 BOM 처리
-    cartItems.forEach((item, itemIndex) => {
-      console.log(`\n🔍 카트 아이템 ${itemIndex + 1}:`, {
-        name: item.displayName || item.name,
-        quantity: item.quantity,
-        hasBOM: !!(item.bom && item.bom.length)
-      });
-      
-      if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
-        console.log(`  ⚠️ BOM 데이터 없음`);
-        return;
-      }
-      
-      console.log(`  📦 BOM 항목 수: ${item.bom.length}`);
-      
-      item.bom.forEach((bomItem, bomIndex) => {
+    // ✅ 2. 처리할 BOM/원자재 목록: materialsOverride 있으면 사용, 없으면 cartItems[].bom
+    const bomItemsToProcess = (materialsOverride && Array.isArray(materialsOverride) && materialsOverride.length > 0)
+      ? materialsOverride
+      : cartItems.flatMap(item => (item.bom && Array.isArray(item.bom) ? item.bom : []));
+    
+    if (bomItemsToProcess.length === 0) {
+      console.log('⚠️ 재고 감소할 BOM/원자재 없음');
+      return {
+        success: true,
+        message: '재고 감소할 항목이 없습니다.',
+        deductedParts: [],
+        warnings: []
+      };
+    }
+    
+    console.log(`  📦 처리할 BOM/원자재 항목 수: ${bomItemsToProcess.length}`);
+    
+    bomItemsToProcess.forEach((bomItem, bomIndex) => {
         // ✅ 재고용 Part ID 생성 (기타추가옵션 매핑 고려)
         let inventoryPartId;
         
@@ -279,7 +285,6 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
             console.log(`    ⚠️ 재고 부족: ${currentStock} → 0 (부족: ${requiredQty - currentStock}개)`);
           }
         }
-      });
     });
     
     // ✅ 3. 로컬스토리지 업데이트

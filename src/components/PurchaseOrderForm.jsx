@@ -6,6 +6,7 @@ import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager'
 import '../styles/PurchaseOrderForm.css';
 import { generatePartId, generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
@@ -182,6 +183,12 @@ const PurchaseOrderForm = () => {
             // ✅ 즉시 저장 (손상된 데이터 덮어쓰기)
             localStorage.setItem(storageKey, JSON.stringify(data));
           }
+
+          // ✅ 편집 후 진입 시 state.totalBom으로 materials 보정 (비어 있으면)
+          if (editingDocumentId && totalBom && totalBom.length > 0 && (!data.materials || data.materials.length === 0)) {
+            data.materials = totalBom;
+          }
+
           setFormData({
             ...data,
             documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
@@ -194,7 +201,7 @@ const PurchaseOrderForm = () => {
         }
       }
     }
-  }, [id, isEditMode, editingDocumentId]);
+  }, [id, isEditMode, editingDocumentId, totalBom]);
 
   // 초기 cart / BOM 반영 (관리자 단가 재적용)
   useEffect(() => {
@@ -293,6 +300,8 @@ const PurchaseOrderForm = () => {
             name: displayName,
             rackType: m.rackType,
             specification: m.specification || '',
+            colorWeight: m.colorWeight || '',  // ✅ HiRack 색상+중량 정보 보존  
+            color: m.color || '',              // ✅ 경량랙 색상 정보 보존  
             quantity,
             unitPrice: appliedUnitPrice,
             totalPrice: appliedUnitPrice * quantity,
@@ -577,6 +586,25 @@ const PurchaseOrderForm = () => {
     const success = await saveDocumentSync(newOrder);
     
     if (success) {
+      try {
+        await documentsAPI.save(newOrder.id, {
+          docId: newOrder.id,
+          type: newOrder.type,
+          date: newOrder.date,
+          documentNumber: newOrder.purchaseNumber,
+          companyName: newOrder.companyName,
+          bizNumber: newOrder.bizNumber,
+          items: newOrder.items || [],
+          materials: newOrder.materials || [],
+          subtotal: newOrder.subtotal,
+          tax: newOrder.tax,
+          totalAmount: newOrder.totalAmount,
+          notes: newOrder.notes,
+          topMemo: newOrder.topMemo
+        });
+      } catch (err) {
+        console.error('문서 즉시 서버 저장 실패:', err);
+      }
       // ✅ 토스트 알림으로 변경
       setToast({ 
         show: true, 
@@ -669,8 +697,11 @@ const proceedWithPrint = async () => {
     );
     
     if (confirmDeduct && cart && cart.length > 0) {
-      // ✅ 재고 감소 실행
-      const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber);
+      // ✅ 재고 감소 실행 (청구서 생성 플로우: cart에 bom 없으면 formData.materials 사용)
+      const materialsForDeduct = !cart.every(i => !i.bom?.length) 
+      ? cart 
+      : (formData.materials?.length > 0 ? formData.materials : undefined);
+      const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, materialsForDeduct);
       
       if (result.success) {
         let message = '✅ 재고가 감소되었습니다.\n\n';
@@ -817,7 +848,8 @@ const handleSendFax = async (faxNumber) => {
       
       // ✅ FAX 전송 성공 후 재고 감소
       if (cart && cart.length > 0) {
-        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber);
+        const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length) ? formData.materials : undefined;
+        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
         
         if (deductResult.success) {
           if (deductResult.warnings && deductResult.warnings.length > 0) {
@@ -872,7 +904,8 @@ const proceedWithFax = async (faxNumber) => {
       
       // ✅ FAX 전송 성공 후 재고 감소
       if (cart && cart.length > 0) {
-        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber);
+        const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length) ? formData.materials : undefined;
+        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
         
         if (deductResult.success) {
           if (deductResult.warnings && deductResult.warnings.length > 0) {
@@ -981,12 +1014,10 @@ const checkInventoryAvailability = async (cartItems) => {
       console.log('✅ 서버 재고 데이터 로드 성공:', Object.keys(serverInventory).length, '개 항목');
     } catch (serverError) {
       console.warn('⚠️ 서버 재고 데이터 로드 실패, 로컬스토리지 사용:', serverError);
-      // 서버 로드 실패 시 로컬스토리지에서 재고 데이터 가져오기
       const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
       serverInventory = localInventory;
       console.log('📦 로컬스토리지 재고 데이터 사용:', Object.keys(serverInventory).length, '개 항목');
       
-      // 로컬스토리지도 비어있으면 재고 체크 건너뛰기
       if (Object.keys(serverInventory).length === 0) {
         console.warn('⚠️ 로컬스토리지 재고 데이터도 없음, 재고 체크 건너뜀');
         return {
@@ -999,51 +1030,85 @@ const checkInventoryAvailability = async (cartItems) => {
     
     const warnings = [];
     
+    // ✅ 기존 로직: cart에서 BOM 확인
     cartItems.forEach((item) => {
-      if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
-        return;
+      if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+        item.bom.forEach((bomItem) => {
+          let inventoryPartId;
+          if (bomItem.inventoryPartId) {
+            inventoryPartId = bomItem.inventoryPartId;
+            console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
+          } else {
+            inventoryPartId = generateInventoryPartId({
+              rackType: bomItem.rackType || '',
+              name: bomItem.name || '',
+              specification: bomItem.specification || '',
+              colorWeight: bomItem.colorWeight || ''
+            });
+            console.log(`  🔑 generateInventoryPartId로 생성: "${inventoryPartId}"`);
+          }
+          
+          const requiredQty = Number(bomItem.quantity) || 0;
+          const currentStock = Number(serverInventory[inventoryPartId]) || 0;
+          
+          console.log(`  📊 서버 재고: ${currentStock}개`);
+          console.log(`  📈 필요 수량: ${requiredQty}개`);
+          
+          if (requiredQty > 0 && currentStock < requiredQty) {
+            const shortage = requiredQty - currentStock;
+            console.log(`  ⚠️ 재고 부족: ${currentStock} → ${requiredQty} (부족: ${shortage}개)`);
+            warnings.push({
+              partId: inventoryPartId,
+              name: bomItem.name,
+              specification: bomItem.specification || '',
+              rackType: bomItem.rackType || '',
+              required: requiredQty,
+              available: currentStock,
+              shortage: shortage
+            });
+          } else {
+            console.log(`  ✅ 재고 충분: ${currentStock} >= ${requiredQty}`);
+          }
+        });
       }
-      
-      item.bom.forEach((bomItem) => {
-        // ⚠️ 중요: BOM에 inventoryPartId가 있으면 우선 사용 (하이랙 등)
-        let inventoryPartId;
-        if (bomItem.inventoryPartId) {
-          inventoryPartId = bomItem.inventoryPartId;
-          console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
-        } else {
-          // 기존 로직 (하위 호환성)
-          inventoryPartId = generateInventoryPartId({
-            rackType: bomItem.rackType || '',
-            name: bomItem.name || '',
-            specification: bomItem.specification || '',
-            colorWeight: bomItem.colorWeight || ''
-          });
-          console.log(`  🔑 generateInventoryPartId로 생성: "${inventoryPartId}"`);
-        }
-        
-        const requiredQty = Number(bomItem.quantity) || 0;
-        const currentStock = Number(serverInventory[inventoryPartId]) || 0;
-        
-        console.log(`  📊 서버 재고: ${currentStock}개`);
-        console.log(`  📈 필요 수량: ${requiredQty}개`);
-        
-        if (requiredQty > 0 && currentStock < requiredQty) {
-          const shortage = requiredQty - currentStock;
-          console.log(`  ⚠️ 재고 부족: ${currentStock} → ${requiredQty} (부족: ${shortage}개)`);
-          warnings.push({
-            partId: inventoryPartId,
-            name: bomItem.name,
-            specification: bomItem.specification || '',
-            rackType: bomItem.rackType || '',
-            required: requiredQty,
-            available: currentStock,
-            shortage: shortage
-          });
-        } else {
-          console.log(`  ✅ 재고 충분: ${currentStock} >= ${requiredQty}`);
-        }
-      });
     });
+    
+    // ✅ 추가 로직: cart에 bom이 없으면 formData.materials 사용
+    if (warnings.length === 0 && cartItems.every(item => !item.bom || item.bom.length === 0)) {
+      console.log('📦 cart에 BOM 없음 - formData.materials 사용');
+      
+      if (formData.materials && formData.materials.length > 0) {
+        formData.materials.forEach((material) => {
+          let inventoryPartId;
+          if (material.inventoryPartId) {
+            inventoryPartId = material.inventoryPartId;
+          } else {
+            inventoryPartId = generateInventoryPartId({
+              rackType: material.rackType || '',
+              name: material.name || '',
+              specification: material.specification || '',
+              colorWeight: material.colorWeight || ''
+            });
+          }
+          
+          const requiredQty = Number(material.quantity) || 0;
+          const currentStock = Number(serverInventory[inventoryPartId]) || 0;
+          
+          if (requiredQty > 0 && currentStock < requiredQty) {
+            const shortage = requiredQty - currentStock;
+            warnings.push({
+              partId: inventoryPartId,
+              name: material.name,
+              specification: material.specification || '',
+              rackType: material.rackType || '',
+              required: requiredQty,
+              available: currentStock,
+              shortage: shortage
+            });
+          }
+        });
+      }
+    }
     
     return {
       success: true,
@@ -1052,7 +1117,6 @@ const checkInventoryAvailability = async (cartItems) => {
     
   } catch (error) {
     console.error('❌ 재고 체크 실패:', error);
-    // 예상치 못한 오류 발생 시 재고 체크 건너뛰기 (재고 부족으로 잘못 판단하지 않음)
     return {
       success: true,
       warnings: [],

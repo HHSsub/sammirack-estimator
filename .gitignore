@@ -4,6 +4,9 @@
 # Node.js 의존성 폴더
 /node_modules
 
+# sammirack-api 폴더 (라우트 기능 등)
+/sammirack-api
+
 # Vite 개발 환경 캐시
 .vite/
 
@@ -29,3 +32,5 @@ Keypair
 
 # 로그 파일
 *.log
+
+*.txt

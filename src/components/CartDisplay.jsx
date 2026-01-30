@@ -57,30 +57,31 @@ export default function CartDisplay() {
   };
 
   // 아이템의 단가 계산
-// ✅ 수정 (1209): 아이템의 단가 계산 - 수량 변경 시 단가 유지
-  const getItemUnitPrice = (item) => {
-    // 1순위: customPrice가 있으면 그대로 사용
-    if (item.customPrice && item.customPrice > 0) {
-      return item.customPrice;
-    }
+  // ✅ 수정 (1209): 아이템의 단가 계산 - 수량 변경 시 단가 유지
+  const getItemUnitPrice = (item) => {  
+    // 1순위: customPrice가 있으면 그대로 사용  
+    if (item.customPrice && item.customPrice > 0) {  
+      return item.customPrice;  
+    }  
+      
+    // 2순위: BOM이 없으면 item.price를 수량으로 나눈 단가 계산  
+    if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {  
+      const qty = Number(item.quantity) || 1;  
+      return Math.round((item.price || 0) / qty);  // ✅ 수정: 총액을 수량으로 나누어 단가 계산  
+    }  
     
-    // 2순위: BOM이 없으면 item.price를 단가로 사용
-    if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
-      return item.price || 0;
-    }
-
-    // 3순위: BOM 기반 단가 계산
-    // ✅ BOM의 quantity는 이미 카트 아이템 수량이 반영되어 있으므로
-    // 원래 수량(1개 기준)으로 나눈 단가를 구합니다
-    const bomTotalPrice = item.bom.reduce((sum, bomItem) => {
-      const effectivePrice = getEffectivePrice ? getEffectivePrice(bomItem) : (Number(bomItem.unitPrice) || 0);
-      const quantity = Number(bomItem.quantity) || 0;
-      return sum + (effectivePrice * quantity);
-    }, 0);
-    
-    // ✅ BOM 총액을 카트 아이템 수량으로 나누어 1개당 단가 계산
-    const cartQuantity = Number(item.quantity) || 1;
-    return Math.round(bomTotalPrice / cartQuantity);
+    // 3순위: BOM 기반 단가 계산  
+    // ✅ BOM의 quantity는 이미 카트 아이템 수량이 반영되어 있으므로  
+    // 원래 수량(1개 기준)으로 나눈 단가를 구합니다  
+    const bomTotalPrice = item.bom.reduce((sum, bomItem) => {  
+      const effectivePrice = getEffectivePrice ? getEffectivePrice(bomItem) : (Number(bomItem.unitPrice) || 0);  
+      const quantity = Number(bomItem.quantity) || 0;  
+      return sum + (effectivePrice * quantity);  
+    }, 0);  
+      
+    // ✅ BOM 총액을 카트 아이템 수량으로 나누어 1개당 단가 계산  
+    const cartQuantity = Number(item.quantity) || 1;  
+    return Math.round(bomTotalPrice / cartQuantity);  
   };
 
   // 전체 장바구니 총액

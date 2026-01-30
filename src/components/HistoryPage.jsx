@@ -407,7 +407,9 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         specification: mat.specification || '',
         quantity: mat.quantity || 0,
         unitPrice: mat.unitPrice || 0,
-        note: mat.note || ''
+        note: mat.note || '',
+        colorWeight: mat.colorWeight || '',  // ✅ 하이랙을 위해 필요함!
+        color: mat.color || ''  // ✅ 추가 필요 (경량랙 등 다른 랙타입 대응)   
       }));
       console.log('✅ 저장된 materials 사용:', totalBom.length);
     } else {

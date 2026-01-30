@@ -6,6 +6,7 @@ import '../styles/EstimateForm.css';
 import { generateInventoryPartId } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils';
@@ -249,6 +250,8 @@ const EstimateForm = () => {
           rackType: m.rackType,
           specification: m.specification || '',
           quantity: Number(m.quantity) || 0,
+          colorWeight: m.colorWeight || '',  // ✅ HiRack 색상+중량 정보 보존  
+          color: m.color || '',              // ✅ 경량랙 색상 정보 보존  
           unitPrice: Number(m.unitPrice) || 0,
           totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
           note: m.note || ''
@@ -429,6 +432,25 @@ const EstimateForm = () => {
     const success = await saveDocumentSync(newEstimate);
     
     if (success) {
+      try {
+        await documentsAPI.save(newEstimate.id, {
+          docId: newEstimate.id,
+          type: newEstimate.type,
+          date: newEstimate.date,
+          documentNumber: newEstimate.estimateNumber,
+          companyName: newEstimate.companyName,
+          bizNumber: newEstimate.bizNumber,
+          items: newEstimate.items || [],
+          materials: newEstimate.materials || [],
+          subtotal: newEstimate.subtotal,
+          tax: newEstimate.tax,
+          totalAmount: newEstimate.totalAmount,
+          notes: newEstimate.notes,
+          topMemo: newEstimate.topMemo
+        });
+      } catch (err) {
+        console.error('문서 즉시 서버 저장 실패:', err);
+      }
       setToast({ 
         show: true, 
         message: isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.', 

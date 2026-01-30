@@ -232,7 +232,14 @@ class RealtimeAdminSync {
       localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(mergedPrices));
       this.broadcastUpdate('prices-updated', mergedPrices);
   
-      const serverDocuments = documentsRes.data || {};
+      const serverDocumentsRaw = documentsRes.data || {};
+      const serverDocuments = {};
+      for (const [docIdKey, doc] of Object.entries(serverDocumentsRaw)) {
+        const type = doc.type || (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_')[0] : 'estimate');
+        const id = doc.id != null ? doc.id : (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_').slice(1).join('_') : docIdKey);
+        const normKey = type + '_' + id;
+        serverDocuments[normKey] = { ...doc, id, type };
+      }
       const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
       const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
       localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
