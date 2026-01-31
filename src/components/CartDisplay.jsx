@@ -42,7 +42,7 @@ export default function CartDisplay() {
     
     // 2순위: BOM이 없으면 item.price 사용
     if (!item.bom || !Array.isArray(item.bom) || item.bom.length === 0) {
-      return (item.price || 0) * (Number(item.quantity) || 1);
+      return getItemUnitPrice(item) * (Number(item.quantity) || 1);
     }
 
     // 3순위: BOM 기반 재계산

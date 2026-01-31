@@ -30,20 +30,20 @@ export const generatePartId = (item) => {
     console.warn('generatePartId: item이 undefined입니다');
     return 'unknown-part';
   }
-  
+
   let { rackType = '', name = '', specification = '', version = '' } = item;
-  
+
   // ✅ 파렛트랙 전용: version이 "신형"이면 rackType 변경
   if (rackType === '파렛트랙' && version === '신형') {
     rackType = '파렛트랙신형';
   }
-  
+
   // 부품명 처리
   let cleanName = String(name)
     .replace(/[()]/g, '')  // 괄호 제거
     .replace(/\s+/g, '')   // 공백 제거
     .replace(/\*/g, 'x');  // * → x 변환 (700*300 → 700x300)
-  
+
   // 하이랙 전용: 색상 제거 (단가 통합 관리)
   if (rackType === '하이랙') {
     cleanName = cleanName
@@ -52,7 +52,7 @@ export const generatePartId = (item) => {
       .replace(/오렌지/g, '')        // 오렌지 제거
       .replace(/블루/g, '');          // 블루 제거
   }
-  
+
   // 경량랙 전용: 색상 제거 (단가 통합 관리)
   if (rackType === '경량랙') {
     cleanName = cleanName
@@ -60,10 +60,10 @@ export const generatePartId = (item) => {
       .replace(/블랙/g, '')
       .replace(/실버/g, '');
   }
-  
+
   // 소문자 변환 (H4500 → h4500)
   cleanName = cleanName.toLowerCase();
-  
+
   // 규격 처리
   if (specification && String(specification).trim()) {
     const cleanSpec = String(specification)
@@ -81,38 +81,40 @@ export const generateInventoryPartId = (item) => {
     return 'unknown-part-inv';
   }
   let { rackType = '', name = '', specification = '', colorWeight = '', color = '', version = '' } = item;
-  
+
   // ✅ 파렛트랙 전용: version이 "신형"이면 rackType 변경
   if (rackType === '파렛트랙' && version === '신형') {
     rackType = '파렛트랙신형';
   }
-  
+
   // ✅ 하이랙 전용: colorWeight가 있으면 부품명에 색상 포함
   // ⚠️ 중요: name에 이미 색상 정보가 포함되어 있으면 제거 후 colorWeight 추가
   let cleanName = String(name)
     .replace(/[()]/g, '')
     .replace(/\s+/g, '')
     .replace(/\*/g, 'x');
-  
+
   // ✅ 하이랙이고 (colorWeight가 있거나, 이름에 색상이 포함된 경우)
   if (rackType === '하이랙') {
     // ⚠️ 중요: name에서 부품명만 추출 (기둥, 선반, 로드빔)
     const partNameMatch = cleanName.match(/(기둥|선반|로드빔|빔)/i);
-    
+
     if (partNameMatch) {
       // 부품명만 먼저 뽑음 (예: "기둥")
       let purePartName = partNameMatch[1].toLowerCase();
-      
+
       // colorWeight가 있으면 그걸 쓰고, 없으면 기존 이름에서 색상만 추출 시도
       let cleanColor = '';
       if (colorWeight) {
-        cleanColor = String(colorWeight).replace(/\s+/g, '').toLowerCase();
+        // ✅ 괄호와 대소문자 보존, 공백만 제거
+        // 예: "메트그레이(볼트식)270kg" → "메트그레이(볼트식)270kg"
+        cleanColor = String(colorWeight).replace(/\s+/g, '');
       } else {
         // colorWeight가 없을 경우를 대비해 기존 name에서 색상 키워드 추출
         const colorMatch = cleanName.match(/(메트그레이|매트그레이|블루|오렌지)/i);
         cleanColor = colorMatch ? colorMatch[0].toLowerCase() : '';
       }
-      
+
       // 최종 결합: "기둥" + "메트그레이(볼트식)270kg"
       cleanName = `${purePartName}${cleanColor}`;
     } else {
@@ -134,10 +136,10 @@ export const generateInventoryPartId = (item) => {
     let cleanSpec = String(specification)
       .replace(/\s+/g, '')
       .toLowerCase();
-    
+
     // ✅ 스텐랙 선반: WxD 모두 포함하여 재고 관리 (변경됨)
     // 예: "사이즈43x90" → "사이즈43x90", "사이즈50x75" → "사이즈50x75"
-    
+
     return `${rackType}-${cleanName}-${cleanSpec}`;
   } else {
     return `${rackType}-${cleanName}-`;
@@ -174,7 +176,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '스텐랙-43x120선반-': '스텐랙-선반-사이즈43x120',
   '스텐랙-43x150선반-': '스텐랙-선반-사이즈43x150',
   '스텐랙-43x180선반-': '스텐랙-선반-사이즈43x180',
-  
+
   // ========================================
   // 중량랙 매핑 (12개) - W×D 형식
   // ========================================
@@ -191,7 +193,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '중량랙-90x125선반-': '중량랙-선반-w1200xd900',
   '중량랙-90x155선반-': '중량랙-선반-w1500xd900',
   '중량랙-90x185선반-': '중량랙-선반-w1800xd900',
-  
+
   // ========================================
   // 하이랙 270kg 매트그레이 선반 매핑 (6개)
   // ========================================
@@ -201,7 +203,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '하이랙-60x108매트그레이선반-': '하이랙-선반메트그레이(볼트식)270kg-사이즈60x108270kg',
   '하이랙-60x150매트그레이선반-': '하이랙-선반메트그레이(볼트식)270kg-사이즈60x150270kg',
   '하이랙-60x200매트그레이선반-': '하이랙-선반메트그레이(볼트식)270kg-사이즈60x200270kg',
-  
+
   // ========================================
   // 하이랙 270kg 오렌지 선반 매핑 (6개)
   // ========================================
@@ -211,7 +213,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '하이랙-60x108선반-': '하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)270kg-사이즈60x108270kg',
   '하이랙-60x150선반-': '하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)270kg-사이즈60x150270kg',
   '하이랙-60x200선반-': '하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)270kg-사이즈60x200270kg',
-  
+
   // ========================================
   // 하이랙 270kg 블루 기둥 매핑 (4개)
   // ========================================
@@ -219,7 +221,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '하이랙-45x200기둥-': '하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)270kg-높이200270kg',
   '하이랙-60x150기둥-': '하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)270kg-높이150270kg',
   '하이랙-60x200기둥-': '하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)270kg-높이200270kg',
-  
+
   // ========================================
   // 하이랙 270kg 메트그레이 기둥 매핑 (4개) - 추가상품3에 포함
   // ========================================
@@ -227,7 +229,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '하이랙-45x200메트그레이기둥-': '하이랙-기둥메트그레이(볼트식)270kg-높이200270kg',
   '하이랙-60x150메트그레이기둥-': '하이랙-기둥메트그레이(볼트식)270kg-높이150270kg',
   '하이랙-60x200메트그레이기둥-': '하이랙-기둥메트그레이(볼트식)270kg-높이200270kg',
-  
+
   // ========================================
   // 하이랙 450kg 매핑 - 추가상품4 (메트그레이) - 6개
   // ⚠️ 주의: 추가상품4와 추가상품5가 같은 extra option ID를 사용하지만,
@@ -240,7 +242,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '하이랙-60x108선반450kg-': '하이랙-선반메트그레이(볼트식)450kg-사이즈60x108450kg',
   '하이랙-60x150선반450kg-': '하이랙-선반메트그레이(볼트식)450kg-사이즈60x150450kg',
   '하이랙-60x200선반450kg-': '하이랙-선반메트그레이(볼트식)450kg-사이즈60x200450kg',
-  
+
   // ⚠️ 추가상품5 (블루+오렌지 450kg)는 매핑 테이블에 없음
   // 이유: 추가상품4와 같은 extraOptionId 형식(`하이랙-60x150기둥450kg-`)을 사용하므로
   // 카테고리명으로 구분하여 ProductContext.jsx의 handleHighRackDirectExtraOption에서 직접 처리
@@ -252,7 +254,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   //   - 하이랙-60x108선반450kg- (추가상품5) → 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x108450kg
   //   - 하이랙-60x150선반450kg- (추가상품5) → 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x150450kg
   //   - 하이랙-60x200선반450kg- (추가상품5) → 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x200450kg
-  
+
   // ========================================
   // 하이랙 600kg 병합 옵션 - 배열로 분리 매핑 (3개)
   // ========================================
@@ -270,7 +272,7 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
     '하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)600kg-사이즈80x200600kg',
     '하이랙-로드빔블루(기둥.선반)+오렌지(빔)600kg-200600kg'
   ]
-  
+
   // ⚠️ 주의: 아래 항목들은 별도 부품이므로 매핑하지 않음
   // - 중량랙-중량바퀴- (별도 재고 관리)
   // - 파렛트랙-화이트코팅판1000x2440- (합판)
@@ -297,7 +299,7 @@ export const EXTRA_TO_BASE_PARTID_MAPPING = {
   '하이랙-60x108매트그레이선반-': '하이랙-선반-사이즈60x108270kg',
   '하이랙-60x150매트그레이선반-': '하이랙-선반-사이즈60x150270kg',
   '하이랙-60x200매트그레이선반-': '하이랙-선반-사이즈60x200270kg',
-  
+
   // ========================================
   // 하이랙 270kg 오렌지 선반
   // ========================================
@@ -307,7 +309,7 @@ export const EXTRA_TO_BASE_PARTID_MAPPING = {
   '하이랙-60x108선반-': '하이랙-선반-사이즈60x108270kg',
   '하이랙-60x150선반-': '하이랙-선반-사이즈60x150270kg',
   '하이랙-60x200선반-': '하이랙-선반-사이즈60x200270kg',
-  
+
   // ========================================
   // 하이랙 270kg 블루 기둥
   // ========================================
@@ -315,7 +317,7 @@ export const EXTRA_TO_BASE_PARTID_MAPPING = {
   '하이랙-45x200기둥-': '하이랙-기둥-높이200270kg',
   '하이랙-60x150기둥-': '하이랙-기둥-높이150270kg',
   '하이랙-60x200기둥-': '하이랙-기둥-높이200270kg',
-  
+
   // ========================================
   // 하이랙 270kg 메트그레이 기둥
   // ========================================
@@ -323,7 +325,7 @@ export const EXTRA_TO_BASE_PARTID_MAPPING = {
   '하이랙-45x200메트그레이기둥-': '하이랙-기둥-높이200270kg',
   '하이랙-60x150메트그레이기둥-': '하이랙-기둥-높이150270kg',
   '하이랙-60x200메트그레이기둥-': '하이랙-기둥-높이200270kg',
-  
+
   // ========================================
   // 하이랙 450kg
   // ========================================
@@ -333,7 +335,7 @@ export const EXTRA_TO_BASE_PARTID_MAPPING = {
   '하이랙-60x108선반450kg-': '하이랙-선반-사이즈60x108450kg',
   '하이랙-60x150선반450kg-': '하이랙-선반-사이즈60x150450kg',
   '하이랙-60x200선반450kg-': '하이랙-선반-사이즈60x200450kg',
-  
+
   // ========================================
   // 하이랙 600kg 병합 옵션
   // ========================================
@@ -350,9 +352,9 @@ export const mapExtraToBaseInventoryPart = (extraInventoryPartId) => {
   if (!extraInventoryPartId) {
     return extraInventoryPartId;
   }
-  
+
   const mapped = EXTRA_TO_BASE_INVENTORY_MAPPING[extraInventoryPartId];
-  
+
   if (Array.isArray(mapped)) {
     // 병합 옵션 - 배열 반환
     console.log(`🔀 병합 옵션 분리: ${extraInventoryPartId} → [${mapped.join(', ')}]`);
@@ -372,9 +374,9 @@ export const mapExtraToBasePartId = (extraInventoryPartId) => {
   if (!extraInventoryPartId) {
     return null;
   }
-  
+
   const mapped = EXTRA_TO_BASE_PARTID_MAPPING[extraInventoryPartId];
-  
+
   if (Array.isArray(mapped)) {
     // 병합 옵션 - 배열 반환
     return mapped;
@@ -427,18 +429,18 @@ export const saveAdminPrice = (partId, price, partInfo = {}) => {
   try {
     const prices = loadAdminPrices();
     const oldPrice = prices[partId]?.price || 0;
-    
+
     prices[partId] = {
       price: Number(price),
       ...partInfo,
       updatedAt: new Date().toISOString()
     };
-    
+
     localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(prices));
-    
+
     // 히스토리 저장
     savePriceHistory(partId, oldPrice, price);
-    
+
     return true;
   } catch (error) {
     console.error('단가 저장 실패:', error);
@@ -450,11 +452,11 @@ export const saveAdminPrice = (partId, price, partInfo = {}) => {
 export const getEffectivePrice = (item) => {
   const partId = generatePartId(item);
   const adminPrices = loadAdminPrices();
-  
+
   if (adminPrices[partId]?.price > 0) {
     return adminPrices[partId].price;
   }
-  
+
   return Number(item.unitPrice) || 0;
 };
 
@@ -490,35 +492,35 @@ export const getRackOptionComponents = (optionId) => {
 export const getRackOptionsUsingPart = (partId) => {
   const registry = loadRackOptionsRegistry();
   const usingOptions = [];
-  
+
   Object.values(registry).forEach(option => {
     if (option.components && option.components.some(comp => comp.partId === partId)) {
       usingOptions.push(option);
     }
   });
-  
+
   return usingOptions;
 };
 
 // ✅ CSV 파싱 헬퍼 함수
 const parseCSV = (text) => {
   const lines = text.trim().split('\n');
-  
+
   // ✅ BOM 제거 및 정확한 헤더 파싱
   const headerLine = lines[0].replace(/\uFEFF/g, '').trim();
   const headers = headerLine.split(',').map(h => h.trim());
-  
+
   console.log('📋 CSV 헤더:', headers);  // ✅ 디버깅용
-  
+
   const result = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i];
     if (!line.trim()) continue;
-    
+
     const values = [];
     let currentValue = '';
     let insideQuotes = false;
-    
+
     // CSV 파싱 (따옴표 처리)
     for (let j = 0; j < line.length; j++) {
       const char = line[j];
@@ -532,14 +534,14 @@ const parseCSV = (text) => {
       }
     }
     values.push(currentValue.trim());  // 마지막 값
-    
+
     const row = {};
     headers.forEach((header, index) => {
       row[header] = values[index] || '';
     });
     result.push(row);
   }
-  
+
   return result;
 };
 
@@ -549,44 +551,44 @@ export const loadAllMaterials = async () => {
   try {
     console.log('🔄 전체 원자재 로드 시작...');
     console.log('📋 데이터 소스: all_materials_list_v2.csv');
-    
+
     const materials = new Map();
-    
+
     // ✅ CSV 파일 로드
     const csvResponse = await fetch('./all_materials_list_v2.csv');
     if (!csvResponse.ok) {
       throw new Error(`CSV 파일 로드 실패: ${csvResponse.status}`);
     }
-    
+
     const csvText = await csvResponse.text();
     const csvData = parseCSV(csvText);
-    
+
     console.log(`📊 CSV 데이터: ${csvData.length}개 행 로드됨`);
-    
+
     // ✅ 첫 번째 행 샘플 확인
     if (csvData.length > 0) {
       console.log('📋 첫 번째 행 샘플:', csvData[0]);
       console.log('📋 사용 가능한 키:', Object.keys(csvData[0]));
     }
-    
+
     // CSV의 각 행을 부품으로 변환
     let validCount = 0;
     let skippedCount = 0;
     let generatedIdCount = 0;
     let csvIdUsedCount = 0;
-    
+
     csvData.forEach((row, index) => {
       // ✅ 가능한 모든 부품ID 컬럼명 시도
       const csvPartId = (
-        row['부품ID'] || 
-        row['부품Id'] || 
-        row['부품id'] || 
-        row['partId'] || 
-        row['PartID'] || 
+        row['부품ID'] ||
+        row['부품Id'] ||
+        row['부품id'] ||
+        row['partId'] ||
+        row['PartID'] ||
         row['PARTID'] ||
         ''
       ).trim();
-      
+
       const rackType = String(row['랙타입'] || '').trim();
       const name = String(row['부품명'] || '').trim();
       const specification = String(row['규격'] || '').trim();
@@ -595,20 +597,20 @@ export const loadAllMaterials = async () => {
       const source = String(row['출처'] || '').trim();
       const note = String(row['비고'] || '').trim();
       const categoryName = String(row['카테고리'] || '').trim();
-      
+
       // 빈 행이나 유효하지 않은 데이터 스킵
       if (!rackType || !name) {
         skippedCount++;
         return;
       }
-      
+
       // ✅ 우선순위: CSV 부품ID > 자동 생성
       let finalPartId;
       if (csvPartId && csvPartId.length > 0) {
         // CSV에 부품ID가 있으면 그대로 사용
         finalPartId = csvPartId;
         csvIdUsedCount++;
-        
+
         // ✅ 디버깅: 처음 10개만 출력
         if (csvIdUsedCount <= 10) {
           console.log(`  ✅ CSV 부품ID 사용: "${finalPartId}"`);
@@ -626,13 +628,13 @@ export const loadAllMaterials = async () => {
         console.warn(`  ⚠️ 부품ID 없음 - 자동 생성: ${finalPartId} (행 ${index + 2})`);
         console.warn(`     원본 데이터:`, { rackType, name, specification });
       }
-      
+
       // 중복 체크
       if (materials.has(finalPartId)) {
         console.warn(`⚠️ 중복 부품 발견: ${finalPartId} (행 ${index + 2})`);
         return;
       }
-      
+
       materials.set(finalPartId, {
         partId: finalPartId,
         rackType,
@@ -644,61 +646,61 @@ export const loadAllMaterials = async () => {
         note,
         categoryName
       });
-      
+
       validCount++;
     });
-    
+
     const finalMaterials = Array.from(materials.values());
-    
+
     console.log(`\n✅ ===== CSV 기반 원자재 로드 완료 =====`);
     console.log(`📦 총 부품 수: ${finalMaterials.length}개`);
     console.log(`✅ 유효 부품: ${validCount}개`);
     console.log(`📋 CSV 부품ID 사용: ${csvIdUsedCount}개`);
     console.log(`🔧 자동 생성 ID: ${generatedIdCount}개`);
     console.log(`⏭️  스킵된 행: ${skippedCount}개`);
-    
+
     // ✅ CSV ID 사용률 계산
-    const csvIdUsageRate = validCount > 0 
-      ? ((csvIdUsedCount / validCount) * 100).toFixed(1) 
+    const csvIdUsageRate = validCount > 0
+      ? ((csvIdUsedCount / validCount) * 100).toFixed(1)
       : 0;
     console.log(`📊 CSV ID 사용률: ${csvIdUsageRate}%`);
-    
+
     // ⚠️ CSV ID 사용률이 낮으면 경고
     if (csvIdUsageRate < 90) {
       console.warn(`\n⚠️⚠️⚠️ 경고: CSV ID 사용률이 낮습니다!`);
       console.warn(`CSV 파일의 첫 번째 컬럼명이 "부품ID"인지 확인하세요.`);
       console.warn(`현재 감지된 헤더:`, Object.keys(csvData[0] || {}));
     }
-    
+
     // 랙타입별 통계
     const rackTypes = {};
     finalMaterials.forEach(m => {
       rackTypes[m.rackType] = (rackTypes[m.rackType] || 0) + 1;
     });
-    
+
     console.log('\n🏷️ 랙타입별 부품 수:');
     Object.entries(rackTypes)
       .sort((a, b) => b[1] - a[1])
       .forEach(([type, count]) => {
         console.log(`   - ${type}: ${count}개`);
       });
-    
+
     // ✅ 기존 재고 데이터와 호환성 확인
     const existingInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
     const existingKeys = Object.keys(existingInventory);
     const newKeys = new Set(finalMaterials.map(m => m.partId));
-    
+
     const missingInNew = existingKeys.filter(k => !newKeys.has(k));
     const matchCount = existingKeys.filter(k => newKeys.has(k)).length;
-    
+
     console.log('\n🔍 기존 재고 데이터 호환성:');
     console.log(`   - 기존 재고 부품: ${existingKeys.length}개`);
     console.log(`   - 매칭: ${matchCount}개 ✅`);
-    
+
     if (existingKeys.length > 0) {
-      console.log(`   - 매칭률: ${(matchCount/existingKeys.length*100).toFixed(1)}%`);
+      console.log(`   - 매칭률: ${(matchCount / existingKeys.length * 100).toFixed(1)}%`);
     }
-    
+
     if (missingInNew.length > 0 && missingInNew.length < 50) {
       // ✅ 50개 미만일 때만 경고 (대량은 정상)
       console.warn(`   ⚠️  CSV에 없는 부품: ${missingInNew.length}개`);
@@ -706,25 +708,25 @@ export const loadAllMaterials = async () => {
       missingInNew.slice(0, 10).forEach(k => {
         console.warn(`      - ${k}: ${existingInventory[k]}개`);
       });
-      
+
       if (missingInNew.length > 10) {
         console.warn(`      ... 외 ${missingInNew.length - 10}개`);
       }
     } else {
       console.log('   ✅ 모든 기존 재고 부품이 CSV에 존재합니다!');
     }
-    
+
     return finalMaterials;
   } catch (error) {
     console.error('❌ 원자재 로드 실패:', error);
     console.error('스택:', error.stack);
-    
+
     // 에러 상세 정보
     if (error.message.includes('fetch')) {
       console.error('💡 힌트: CSV 파일이 public/ 폴더에 있는지 확인하세요.');
       console.error('   파일명: all_materials_list_v2.csv');
     }
-    
+
     return [];
   }
 };
@@ -754,12 +756,12 @@ export const savePriceHistory = (partId, oldPrice, newPrice, rackOption = '') =>
       rackOption,
       timestamp: new Date().toISOString(),
     });
-    
+
     // 최근 100개만 보관
     if (history.length > 100) {
       history.splice(0, history.length - 100);
     }
-    
+
     localStorage.setItem(PRICE_HISTORY_KEY, JSON.stringify(history));
   } catch (error) {
     console.error('히스토리 저장 실패:', error);

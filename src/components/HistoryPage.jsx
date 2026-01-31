@@ -62,15 +62,15 @@ const HistoryPage = () => {
   // Load history on component mount
   useEffect(() => {
     loadHistory();
-    
+
     // ✅ 문서 업데이트 이벤트 리스너
     const handleDocumentsUpdate = () => {
       console.log('📄 문서 업데이트 감지 - 목록 새로고침');
       loadHistory();
     };
-    
+
     window.addEventListener('documentsupdated', handleDocumentsUpdate);
-    
+
     return () => {
       window.removeEventListener('documentsupdated', handleDocumentsUpdate);
     };
@@ -87,24 +87,24 @@ const HistoryPage = () => {
   const loadHistory = useCallback(() => {
     try {
       const syncedDocuments = loadAllDocuments(false);
-      
+
       // ✅ 유령 문서 필터링 (documentNumber 없는 문서 제거)
       const validDocuments = syncedDocuments.filter(doc => {
         const hasNumber = doc.estimateNumber || doc.purchaseNumber || doc.documentNumber;
         const hasItems = doc.items && doc.items.length > 0;
         return hasNumber && hasItems;
       });
-      
+
       const documentsWithMemo = validDocuments.map(doc => {
         if (!doc.memo && doc.topMemo) {
           return { ...doc, memo: doc.topMemo };
         }
         return doc;
       });
-      
+
       setHistoryItems(documentsWithMemo);
       setLastSyncTime(new Date());
-      
+
       console.log(`📄 문서 로드 완료: ${documentsWithMemo.length}개 (유령문서 제외)`);
     } catch (error) {
       console.error('Error loading history:', error);
@@ -152,11 +152,11 @@ const HistoryPage = () => {
     if (sortColumn === column) {
       newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
     }
-    
+
     // ✅ localStorage에 저장
     localStorage.setItem('historyPage_sortColumn', column);
     localStorage.setItem('historyPage_sortDirection', newDirection);
-    
+
     setSortColumn(column);
     setSortDirection(newDirection);
   };
@@ -174,12 +174,12 @@ const HistoryPage = () => {
           bValue = b.type || '';
           break;
         case 'documentNumber':
-          aValue = a.type === 'estimate' ? a.estimateNumber : 
-                   a.type === 'purchase' ? a.purchaseNumber : 
-                   a.documentNumber || '';
-          bValue = b.type === 'estimate' ? b.estimateNumber : 
-                   b.type === 'purchase' ? b.purchaseNumber : 
-                   b.documentNumber || '';
+          aValue = a.type === 'estimate' ? a.estimateNumber :
+            a.type === 'purchase' ? a.purchaseNumber :
+              a.documentNumber || '';
+          bValue = b.type === 'estimate' ? b.estimateNumber :
+            b.type === 'purchase' ? b.purchaseNumber :
+              b.documentNumber || '';
           break;
         case 'date':
           aValue = new Date(a.date || 0).getTime();
@@ -208,8 +208,8 @@ const HistoryPage = () => {
 
       // 문자열 비교
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue, 'ko') 
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue, 'ko')
           : bValue.localeCompare(aValue, 'ko');
       }
 
@@ -225,22 +225,22 @@ const HistoryPage = () => {
    */
   const filterItems = () => {
     let filtered = [...historyItems];
-    
+
     // Filter by document type
     if (filters.documentType !== 'all') {
       filtered = filtered.filter(item => item.type === filters.documentType);
     }
-    
+
     // Filter by document number
     if (filters.documentNumber) {
       const searchTerm = filters.documentNumber.toLowerCase();
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         (item.estimateNumber && item.estimateNumber.toLowerCase().includes(searchTerm)) ||
         (item.purchaseNumber && item.purchaseNumber.toLowerCase().includes(searchTerm)) ||
         (item.documentNumber && item.documentNumber.toLowerCase().includes(searchTerm))
       );
     }
-    
+
     // ✅ Filter by date range (문자열 비교로 수정)
     if (filters.dateFrom) {
       filtered = filtered.filter(item => {
@@ -249,7 +249,7 @@ const HistoryPage = () => {
         return itemDateStr >= filters.dateFrom;
       });
     }
-    
+
     if (filters.dateTo) {
       filtered = filtered.filter(item => {
         if (!item.date) return false;
@@ -257,7 +257,7 @@ const HistoryPage = () => {
         return itemDateStr <= filters.dateTo;
       });
     }
-    
+
     setFilteredItems(filtered);
   };
 
@@ -289,28 +289,28 @@ const HistoryPage = () => {
    */
   const deleteItem = async (item) => {
     if (!item || !item.id || !item.type) return;
-    
+
     const confirmDelete = window.confirm(
       `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 삭제하시겠습니까? 
       ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
       
 ※ 삭제된 문서는 '삭제된 문서 보기'에서 복구할 수 있습니다.`
     );
-    
+
     if (confirmDelete) {
       try {
         // ✅ 소프트 삭제 (서버 동기화)
         const success = await deleteDocumentSync(item.id, item.type);
-        
+
         if (success) {
           // Update state
           setHistoryItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
-          
+
           if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
             setSelectedItem(null);
             setView('list');
           }
-          
+
           console.log('✅ 문서 삭제 완료 (복구 가능)');
         } else {
           alert('문서 삭제에 실패했습니다.');
@@ -327,16 +327,16 @@ const HistoryPage = () => {
    */
   const restoreItem = async (item) => {
     if (!item || !item.id || !item.type) return;
-    
+
     const confirmRestore = window.confirm(
       `이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 복구하시겠습니까?
       ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}`
     );
-    
+
     if (confirmRestore) {
       try {
         const success = await restoreDocumentSync(item.id, item.type);
-        
+
         if (success) {
           // 삭제 목록에서 제거
           setDeletedItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
@@ -358,7 +358,7 @@ const HistoryPage = () => {
    */
   const permanentDeleteItem = async (item) => {
     if (!item || !item.id || !item.type) return;
-    
+
     const confirmDelete = window.confirm(
       `⚠️ 경고: 이 문서를 영구적으로 삭제하시겠습니까?
       
@@ -366,11 +366,11 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
 
 이 작업은 되돌릴 수 없습니다!`
     );
-    
+
     if (confirmDelete) {
       try {
         const success = await permanentDeleteDocumentSync(item.id, item.type);
-        
+
         if (success) {
           setDeletedItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
           alert('문서가 영구 삭제되었습니다.');
@@ -389,7 +389,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    */
   const convertToPurchase = (estimate) => {
     console.log('🔍 견적서 원본:', estimate);
-    
+
     const cart = (estimate.items || []).map(item => ({
       name: item.name,
       displayName: item.name,
@@ -397,39 +397,132 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       price: item.totalPrice || 0,
       unit: item.unit || '개'
     }));
-    
+
     let totalBom = [];
-    
+
+    // ✅ 하이랙 제품의 규격 정보를 미리 파싱하여 저장 (기둥 깊이 정보 복구용)
+    const highRackSpecs = (estimate.items || [])
+      .filter(item => item.name && item.name.includes('하이랙'))
+      .map(item => {
+        // 예: "하이랙 독립형 60x150 200 4단..."
+        // 정규식: {폭}x{깊이} {높이}
+        const match = item.name.match(/(\d+)x(\d+)\s+(\d+)/);
+        if (match) {
+          return {
+            width: match[1],  // 60
+            depth: match[2],  // 150
+            height: match[3], // 200
+            name: item.name
+          };
+        }
+        return null;
+      })
+      .filter(spec => spec !== null);
+
+    console.log('📋 파싱된 하이랙 규격:', highRackSpecs);
+
     if (estimate.materials && estimate.materials.length > 0) {
-      totalBom = estimate.materials.map(mat => ({
-        name: mat.name,
-        rackType: mat.rackType,
-        specification: mat.specification || '',
-        quantity: mat.quantity || 0,
-        unitPrice: mat.unitPrice || 0,
-        note: mat.note || '',
-        colorWeight: mat.colorWeight || '',  // ✅ 하이랙을 위해 필요함!
-        color: mat.color || ''  // ✅ 추가 필요 (경량랙 등 다른 랙타입 대응)   
-      }));
+      totalBom = estimate.materials.map(mat => {
+        // ✅ inventoryPartId 재생성 (기존 저장된 잘못된 ID 수정)
+        let inventoryPartId = mat.inventoryPartId;
+
+        // 하이랙의 경우 inventoryPartId 재생성
+        if (mat.rackType === '하이랙' && mat.name) {
+          console.log(`🔍 하이랙 부품: "${mat.name}", colorWeight: "${mat.colorWeight || '없음'}", spec: "${mat.specification}"`);
+
+          // 부품명에서 색상 정보 추출
+          const colorMatch = mat.name.match(/(메트그레이|매트그레이|블루|오렌지)/);
+          const extractedColor = colorMatch ? colorMatch[0] : '';
+
+          // 부품명에서 색상 정보 제거
+          const baseName = mat.name
+            .replace(/메트그레이|매트그레이|블루|오렌지/g, '')
+            .trim();
+
+          // colorWeight 재생성 ((볼트식) 누락 복구용)
+          let colorWeight = mat.colorWeight || '';
+          if ((!colorWeight || !colorWeight.includes('(볼트식)')) && extractedColor) {
+            const weightMatch = (mat.specification || '').match(/(\d+kg)/);
+            const weight = weightMatch ? weightMatch[0] : ''; // 위험한 기본값 제거
+            colorWeight = `${extractedColor}(볼트식)${weight}`;
+            console.log(`  ✅ colorWeight 재생성 (볼트식 추가): "${colorWeight}"`);
+          }
+
+          // specification 재구성
+          let specification = mat.specification || '';
+
+          // 기둥의 경우: 사이즈 정보 확인 및 재구성
+          if (baseName.includes('기둥')) {
+            // 정규식 개선: 공백 허용 및 다양한 형식 지원
+            const sizeMatch = specification.match(/사이즈\s*(\d+)x\s*(\d+)?|(\d+)x(\d+)/);
+            const heightMatch = specification.match(/높이\s*(\d+)/);
+            const weightMatch = specification.match(/(\d+kg)/);
+
+            if (sizeMatch && weightMatch) {
+              const width = sizeMatch[1] || sizeMatch[3];
+              let depth = sizeMatch[2] || sizeMatch[4];
+              const height = heightMatch ? heightMatch[1] : '';
+              const weight = weightMatch[0];
+
+              // 🔴 깊이가 없는 경우 estimate.items에서 파싱한 정보로 복구
+              if (!depth && height && width) {
+                // items에 있는 규격 중, height와 width가 일치하는 것을 찾음
+                const matchedSpec = highRackSpecs.find(s => String(s.height) === String(height) && String(s.width) === String(width));
+                if (matchedSpec) {
+                  depth = matchedSpec.depth;
+                  console.log(`  🔹 기둥 깊이 정보 복구 성공: ${width}x${depth} (from item: ${matchedSpec.name})`);
+                } else {
+                  console.log(`  ⚠️ 매칭되는 하이랙 제품을 찾을 수 없음 (H:${height}, W:${width}) - ID 재생성 불가 가능성 있음`);
+                }
+              }
+
+              if (width && depth && height) {
+                // ✅ 올바른 형식: "사이즈{폭}x{깊이}높이{높이}{무게}"
+                specification = `사이즈${width}x${depth}높이${height}${weight}`;
+                console.log(`  ✅ specification 재구성: "${specification}"`);
+              }
+            }
+          }
+
+          // inventoryPartId 재생성
+          if (colorWeight) {
+            inventoryPartId = `하이랙-${baseName}${colorWeight}-${specification}`;
+            console.log(`🔄 inventoryPartId 재생성: "${mat.inventoryPartId}" → "${inventoryPartId}"`);
+          } else {
+            console.log(`  ⚠️ colorWeight 없음 - 재생성 건너뛰기`);
+          }
+        }
+        return {
+          name: mat.name,
+          rackType: mat.rackType,
+          specification: mat.specification || '',
+          quantity: mat.quantity || 0,
+          unitPrice: mat.unitPrice || 0,
+          note: mat.note || '',
+          colorWeight: mat.colorWeight || '',  // ✅ 하이랙을 위해 필요함!
+          color: mat.color || '',  // ✅ 추가 필요 (경량랙 등 다른 랙타입 대응)
+          inventoryPartId: inventoryPartId  // ✅ 재생성된 ID 사용
+        };
+      });
       console.log('✅ 저장된 materials 사용:', totalBom.length);
     } else {
       console.log('⚠️ materials 없음 - items에서 BOM 재생성');
-      
+
       const allBoms = [];
-      
+
       estimate.items.forEach(item => {
         console.log('  🔍 품목:', item.name, '수량:', item.quantity, '가격:', item.totalPrice);
-        
+
         if (item.name) {
           const bom = regenerateBOMFromDisplayName(item.name, item.quantity || 1);
-          
+
           if (bom.length === 0) {
             const qty = Number(item.quantity) || 1;
             const totalPrice = Number(item.totalPrice) || 0;
             const unitPrice = Number(item.unitPrice) || (totalPrice > 0 ? Math.round(totalPrice / qty) : 0);
-            
+
             console.log('  📦 기타 품목:', item.name, '단가:', unitPrice);
-            
+
             allBoms.push({
               rackType: '기타',
               name: item.name,
@@ -444,11 +537,11 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           }
         }
       });
-      
+
       const bomMap = new Map();
       allBoms.forEach(item => {
         const key = generatePartId(item);
-        
+
         if (bomMap.has(key)) {
           const existing = bomMap.get(key);
           bomMap.set(key, {
@@ -460,11 +553,11 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           bomMap.set(key, { ...item });
         }
       });
-      
+
       totalBom = Array.from(bomMap.values());
       console.log('✅ 중복 제거 후:', totalBom.length, '개');
     }
-    
+
     // ✅ 메타정보 전달
     const estimateData = {
       estimateNumber: estimate.estimateNumber || estimate.documentNumber || '',
@@ -474,25 +567,25 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       notes: estimate.notes || '',
       topMemo: estimate.topMemo || ''
     };
-    
+
     console.log('📋 청구서 생성:', { cart, totalBom, estimateData });
-    
+
     navigate(`/purchase-order/new`, { state: { cart, totalBom, estimateData } });
   };
-    
+
   /**
    * Edit an existing item - 홈 화면으로 이동하여 cart 기반 편집
    */
   const editItem = (item) => {
     if (!item || !item.type) return;
-    
+
     console.log('📝 편집:', {
       id: item.id,
       materials: item.materials?.length
     });
-    
+
     let finalCart = [];
-    
+
     // ✅ cart 복원 (bom 제외!)
     if (item.cart && Array.isArray(item.cart) && item.cart.length > 0) {
       finalCart = item.cart.map(cartItem => {
@@ -500,9 +593,9 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         if (matchingItem && matchingItem.unitPrice !== undefined) {
           const up = Number(matchingItem.unitPrice) || 0;
           const qty = Number(cartItem.quantity) || Number(matchingItem.quantity) || 1;
-          return { 
-            ...cartItem, 
-            unitPrice: up, 
+          return {
+            ...cartItem,
+            unitPrice: up,
             price: up * qty
             // ✅ bom 완전 제거!
           };
@@ -522,7 +615,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         // ✅ bom 완전 제거!
       }));
     }
-    
+
     const editingData = {
       cart: finalCart,
       materials: item.materials || [],  // ✅ materials 별도!
@@ -531,9 +624,9 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       editingDocumentId: item.id,
       editingDocumentType: item.type,
       editingDocumentData: {
-        documentNumber: item.type === 'estimate' ? item.estimateNumber : 
-                        item.type === 'purchase' ? item.purchaseNumber : 
-                        item.documentNumber,
+        documentNumber: item.type === 'estimate' ? item.estimateNumber :
+          item.type === 'purchase' ? item.purchaseNumber :
+            item.documentNumber,
         companyName: item.customerName || item.companyName,
         bizNumber: item.bizNumber,
         contactInfo: item.contactInfo,
@@ -543,7 +636,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         memo: item.memo || ''
       }
     };
-    
+
     navigate('/', { state: editingData });
   };
 
@@ -966,7 +1059,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     printWindow.document.close();
 
     // 인쇄 실행
-    printWindow.onload = function() {
+    printWindow.onload = function () {
       printWindow.print();
       printWindow.close();
     };
@@ -977,16 +1070,16 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    */
   const updateMemo = async (item, newMemo) => {
     if (!item || !item.id || !item.type) return;
-    
+
     try {
       const updatedItem = {
         ...item,
         memo: newMemo
         // ✅ updatedAt 제거 - 메모는 문서 수정 시간에 영향 안 줌
       };
-      
+
       const success = await saveDocumentSync(updatedItem);
-      
+
       if (success) {
         setHistoryItems(prev => prev.map(i => {
           if (i.id === item.id && i.type === item.type) {
@@ -994,7 +1087,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           }
           return i;
         }));
-        
+
         if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
           setSelectedItem(updatedItem);
         }
@@ -1009,7 +1102,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    */
   const formatDate = (dateString) => {
     if (!dateString) return '';
-    
+
     try {
       const date = new Date(dateString);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -1023,7 +1116,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    */
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
-    
+
     try {
       const date = new Date(dateString);
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -1045,9 +1138,9 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    */
   const renderItemDetails = () => {
     if (!selectedItem) return null;
-    
+
     const isEstimate = selectedItem.type === 'estimate';
-    
+
     return (
       <div className="item-details">
         <div className="details-header">
@@ -1056,7 +1149,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           </h2>
           <button className="back-button" onClick={() => setView('list')}>목록으로</button>
         </div>
-        
+
         <div className="details-content">
           <div className="details-section">
             <h3>기본 정보</h3>
@@ -1102,12 +1195,12 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               {selectedItem.memo && (
                 <div className="details-item">
                   <strong>메모:</strong>
-                  <span style={{color: '#ff6600', fontWeight: 'bold'}}>{selectedItem.memo}</span>
+                  <span style={{ color: '#ff6600', fontWeight: 'bold' }}>{selectedItem.memo}</span>
                 </div>
               )}
             </div>
           </div>
-          
+
           <div className="details-section">
             <h3>제품 정보</h3>
             <div className="details-grid">
@@ -1118,10 +1211,10 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               {selectedItem.selectedOptions && Object.entries(selectedItem.selectedOptions).map(([key, value]) => (
                 <div className="details-item" key={key}>
                   <strong>
-                    {key === 'size' ? '규격' : 
-                    key === 'height' ? '높이' : 
-                    key === 'level' ? '단수' : 
-                    key === 'color' ? '색상' : key}:
+                    {key === 'size' ? '규격' :
+                      key === 'height' ? '높이' :
+                        key === 'level' ? '단수' :
+                          key === 'color' ? '색상' : key}:
                   </strong>
                   <span>{value}</span>
                 </div>
@@ -1140,7 +1233,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               </div>
             </div>
           </div>
-          
+
           {selectedItem.type === 'purchase' && (
             <div className="details-section">
               <h3>배송 정보</h3>
@@ -1160,7 +1253,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               </div>
             </div>
           )}
-          
+
           <div className="details-section">
             <h3>문서 작업</h3>
             <div className="action-buttons">
@@ -1199,7 +1292,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           ← 문서 목록으로
         </button>
       </div>
-      
+
       {deletedItems.length === 0 ? (
         <div className="no-items">
           <p>삭제된 문서가 없습니다.</p>
@@ -1215,9 +1308,9 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
             <div className="header-cell price">금액</div>
             <div className="header-cell actions">작업</div>
           </div>
-          
+
           {deletedItems.map((item) => (
-            <div 
+            <div
               key={`deleted_${item.type}_${item.id}`}
               className="list-item deleted-item"
             >
@@ -1240,15 +1333,15 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                 {item.totalPrice?.toLocaleString()}원
               </div>
               <div className="item-cell actions">
-                <button 
-                  title="복구" 
+                <button
+                  title="복구"
                   className="restore-button"
                   onClick={() => restoreItem(item)}
                 >
                   ♻️ 복구
                 </button>
-                <button 
-                  title="영구 삭제" 
+                <button
+                  title="영구 삭제"
                   className="permanent-delete-button"
                   onClick={() => permanentDeleteItem(item)}
                 >
@@ -1267,7 +1360,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    */
   const renderItemsList = () => {
     const sortedItems = getSortedItems(filteredItems);
-    
+
     return (
       <div className="history-list">
         <div className="list-header">
@@ -1294,14 +1387,14 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           </div>
           <div className="header-cell actions">작업</div>
         </div>
-        
+
         {sortedItems.length === 0 ? (
           <div className="no-items">
             <p>표시할 항목이 없습니다.</p>
           </div>
         ) : (
           sortedItems.map((item) => (
-            <div 
+            <div
               key={`${item.type}_${item.id}`}
               className="list-item"
               onClick={() => {
@@ -1327,8 +1420,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               <div className="item-cell price">
                 {item.totalPrice?.toLocaleString()}원
               </div>
-              <div 
-                className="item-cell memo" 
+              <div
+                className="item-cell memo"
                 onClick={(e) => {
                   e.stopPropagation();
                   setMemoModalItem(item);
@@ -1346,8 +1439,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
                 }}>
-                  {item.memo && item.memo.length > 15 
-                    ? `${item.memo.substring(0, 15)}...` 
+                  {item.memo && item.memo.length > 15
+                    ? `${item.memo.substring(0, 15)}...`
                     : (item.memo || '메모...')}
                 </div>
               </div>
@@ -1359,15 +1452,15 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   인쇄
                 </button>
                 {item.type === 'estimate' && (
-                  <button 
-                    title="청구서 생성" 
+                  <button
+                    title="청구서 생성"
                     onClick={(e) => { e.stopPropagation(); convertToPurchase(item); }}
                   >
                     청구서생성
                   </button>
                 )}
-                <button 
-                  title="삭제" 
+                <button
+                  title="삭제"
                   className="delete-icon"
                   onClick={(e) => { e.stopPropagation(); deleteItem(item); }}
                 >
@@ -1393,7 +1486,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   마지막 동기화: {formatDateTime(lastSyncTime)}
                 </span>
               )}
-              <button 
+              <button
                 className="sync-button"
                 onClick={handleForceSync}
                 disabled={isSyncing}
@@ -1402,7 +1495,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               </button>
             </div>
           </div>
-          
+
           <div className="filters-section">
             <div className="filters-container" style={{
               display: 'grid',
@@ -1420,33 +1513,33 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   value={filters.documentNumber}
                   onChange={handleFilterChange}
                   className="filter-input"
-                  style={{width: '100%'}}
+                  style={{ width: '100%' }}
                 />
               </div>
-              
-              <div className="filter-group" style={{gridColumn: 'span 2'}}>
+
+              <div className="filter-group" style={{ gridColumn: 'span 2' }}>
                 <label>날짜 범위:</label>
-                <div className="date-range" style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                  <input 
+                <div className="date-range" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
                     type="date"
                     name="dateFrom"
                     value={filters.dateFrom}
                     onChange={handleFilterChange}
-                    style={{flex: 1}}
+                    style={{ flex: 1 }}
                   />
                   <span>~</span>
-                  <input 
+                  <input
                     type="date"
                     name="dateTo"
                     value={filters.dateTo}
                     onChange={handleFilterChange}
-                    style={{flex: 1}}
+                    style={{ flex: 1 }}
                   />
                 </div>
               </div>
-              
-              <button 
-                className="reset-filters" 
+
+              <button
+                className="reset-filters"
                 onClick={resetFilters}
                 style={{
                   padding: '8px 16px',
@@ -1457,7 +1550,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               </button>
             </div>
           </div>
-          
+
           <div className="action-buttons top-actions">
             <button onClick={() => navigate('/estimate/new')}>
               새 견적서 작성
@@ -1465,7 +1558,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
             <button onClick={() => navigate('/purchase-order/new')}>
               새 청구서 작성
             </button>
-            <button 
+            <button
               className="deleted-docs-button"
               onClick={() => {
                 loadDeletedHistory();
@@ -1475,7 +1568,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               🗑️ 삭제된 문서 보기
             </button>
           </div>
-          
+
           {renderItemsList()}
         </>
       )}
@@ -1483,7 +1576,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
       {view === 'deleted' && renderDeletedItemsList()}
       {/* ✅ 메모 모달 */}
       {memoModalItem && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -1498,7 +1591,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           }}
           onClick={() => setMemoModalItem(null)}
         >
-          <div 
+          <div
             style={{
               background: 'white',
               borderRadius: '8px',
@@ -1526,13 +1619,13 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               }}
               placeholder="메모를 입력하세요..."
             />
-            <div style={{ 
-              marginTop: '16px', 
-              display: 'flex', 
-              gap: '8px', 
-              justifyContent: 'flex-end' 
+            <div style={{
+              marginTop: '16px',
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-end'
             }}>
-              <button 
+              <button
                 onClick={() => setMemoModalItem(null)}
                 style={{
                   padding: '8px 16px',
@@ -1545,7 +1638,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
               >
                 취소
               </button>
-              <button 
+              <button
                 onClick={async () => {
                   await updateMemo(memoModalItem, memoModalValue);
                   setMemoModalItem(null);
@@ -1565,7 +1658,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           </div>
         </div>
       )}
-      
+
     </div>
   );
 };
