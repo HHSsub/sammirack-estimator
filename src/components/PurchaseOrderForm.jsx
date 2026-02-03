@@ -488,6 +488,7 @@ const PurchaseOrderForm = () => {
     setShowMaterialSelector(true);
   };
 
+
   const handleMaterialAdd = (materialData) => {
     // ✅ inventoryPartId 생성 (재고 감소용)
     const materialWithId = {
@@ -740,6 +741,11 @@ const PurchaseOrderForm = () => {
         const materialsForDeduct = !cart.every(i => !i.bom?.length)
           ? cart
           : (formData.materials?.length > 0 ? formData.materials.filter(m => !m.isService) : undefined);
+
+        console.log('🔍🔍🔍 재고 감소 직전 materials 확인:', formData.materials.map(m => ({
+          name: m.name,
+          inventoryPartId: m.inventoryPartId
+        })));
         const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, materialsForDeduct);
 
         if (result.success) {
