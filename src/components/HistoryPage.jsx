@@ -591,7 +591,7 @@ const HistoryPage = () => {
             ...cartItem,
             unitPrice: cartItem.customPrice,
             totalPrice: cartItem.customPrice * cartItem.quantity,
-            price: cartItem.customPrice * cartItem.quantity
+            price: cartItem.customPrice  // 단가만! 
           };
         }
 
@@ -614,7 +614,7 @@ const HistoryPage = () => {
         console.log(`  ⚠️ 기존 가격 유지: ${cartItem.displayName}`);
         return {
           ...cartItem,
-          price: cartItem.totalPrice || cartItem.price || 0
+          price: cartItem.unitPrice || cartItem.price || 0  // ✅ 단가 우선!
         };
       });
 
