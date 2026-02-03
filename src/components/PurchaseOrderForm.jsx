@@ -737,34 +737,16 @@ const PurchaseOrderForm = () => {
       );
 
       if (confirmDeduct && cart && cart.length > 0) {
-        // ✅ cart.bom 우선, 없으면 formData.materials 사용
         let materialsForDeduct;
 
-        if (cart && cart.length > 0 && cart.some(i => i.bom && i.bom.length > 0)) {
-          // 1) cart에 BOM 있음 → cart 그대로 사용
+        if (cart.some(i => i.bom && i.bom.length > 0)) {
           console.log('✅ cart.bom 존재 → cart 사용');
           materialsForDeduct = cart;
         } else if (formData.materials && formData.materials.length > 0) {
-          // 2) cart.bom 없음 → formData.materials 필터링
-          console.log('⚠️ cart.bom 없음 → formData.materials 사용');
+          console.log('⚠️ cart.bom 없음 → formData.materials 변환');
 
           materialsForDeduct = formData.materials
-            .filter(m => {
-              if (!m) {
-                console.log('    ❌ undefined/null 제거');
-                return false;
-              }
-              if (m.isService) {
-                console.log('    ❌ 서비스 항목:', m.name);
-                return false;
-              }
-              if (!m.inventoryPartId || m.inventoryPartId === '--' || m.inventoryPartId === 'undefined') {
-                console.log('    ❌ 잘못된 inventoryPartId:', m.name, '→', m.inventoryPartId);
-                return false;
-              }
-              console.log('    ✅', m.name, '→', m.inventoryPartId);
-              return true;
-            })
+            .filter(m => m && !m.isService && m.inventoryPartId && m.inventoryPartId !== '--')
             .map(m => ({
               bom: [{
                 name: m.name,
@@ -772,20 +754,15 @@ const PurchaseOrderForm = () => {
                 specification: m.specification || '',
                 colorWeight: m.colorWeight || '',
                 quantity: m.quantity,
-                inventoryPartId: m.inventoryPartId  // ✅ 이미 있는 ID 그대로 사용
+                inventoryPartId: m.inventoryPartId
               }]
             }));
 
-          console.log('📊 최종 재고 감소 대상:', materialsForDeduct.length, '개');
-
-          if (materialsForDeduct.length === 0) {
-            materialsForDeduct = undefined;
-          }
+          console.log('📊 변환 결과:', materialsForDeduct.length, '개');
+          if (materialsForDeduct.length === 0) materialsForDeduct = undefined;
         } else {
-          console.log('⚠️ 재고 감소 대상 없음');
           materialsForDeduct = undefined;
         }
-
 
         console.log('🔍🔍🔍 재고 감소 직전 materials 확인:', formData.materials.map(m => ({
           name: m.name,
