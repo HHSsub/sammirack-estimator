@@ -148,7 +148,7 @@ const PurchaseOrderForm = () => {
                   // 기타 품목
                   const qty = Number(item.quantity) || 1;
                   const totalPrice = Number(item.totalPrice) || 0;
-                  const unitPrice = totalPrice > 0 ? Math.round(totalPrice / qty) : 0;
+                  const unitPrice = item.customPrice || item.unitPrice || (item.totalPrice ? Math.round(item.totalPrice / qty) : Math.round((item.price || 0) / qty));
                   allBoms.push({
                     rackType: '기타',
                     name: item.name,
@@ -197,7 +197,7 @@ const PurchaseOrderForm = () => {
           if (editingDocumentId && cart && cart.length > 0 && (!data.items || data.items.length === 0 || (data.items.length === 1 && !data.items[0].name))) {
             const loadedCartItems = cart.map(item => {
               const qty = item.quantity || 1;
-              const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
+              const unitPrice = item.customPrice || item.unitPrice || (item.totalPrice ? Math.round(item.totalPrice / qty) : Math.round((item.price || 0) / qty));
               return {
                 name: item.displayName || item.name || '',
                 unit: '개',
@@ -250,7 +250,7 @@ const PurchaseOrderForm = () => {
       const restoredCartItems = cart.map(item => {
         const qty = item.quantity || 1;
         // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
-        const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
+        const unitPrice = item.customPrice || item.unitPrice || (item.totalPrice ? Math.round(item.totalPrice / qty) : Math.round((item.price || 0) / qty));
         return {
           name: item.displayName || item.name || '',
           unit: '개',
@@ -413,10 +413,7 @@ const PurchaseOrderForm = () => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
       // ✅ 우선순위: customPrice > unitPrice > totalPrice/qty > price/qty
-      const unitPrice = item.customPrice
-        || item.unitPrice
-        || (item.totalPrice ? Math.round(item.totalPrice / (qty || 1)) : Math.round((item.price || 0) / (qty || 1)));
-
+      const unitPrice = item.customPrice || item.unitPrice || (item.totalPrice ? Math.round(item.totalPrice / qty) : Math.round((item.price || 0) / qty));
       return {
         ...mat,
         unitPrice,

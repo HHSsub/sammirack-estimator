@@ -173,6 +173,14 @@ const DeliveryNoteForm = () => {
 
   // 초기 cart / BOM 반영
   useEffect(() => {
+    // 🔴 디버깅 로그 추가
+    console.log('🚨🚨🚨 DeliveryNoteForm useEffect 진입 시도');
+    console.log('  isEditMode:', isEditMode);
+    console.log('  cart.length:', cart?.length);
+    console.log('  totalBom.length:', totalBom?.length);
+    console.log('  materials.length:', materials?.length);
+    console.log('  cartInitializedRef.current:', cartInitializedRef.current);
+
     // ✅ 수정: isEditMode가 아닐 때만 실행하되, cartInitializedRef로 중복 실행 방지
     if (!isEditMode && (cart.length > 0 || totalBom.length > 0 || materials.length > 0) && !cartInitializedRef.current) {
       console.log('📦 신규 문서 초기 데이터 로드 시작');
@@ -182,9 +190,7 @@ const DeliveryNoteForm = () => {
       const restoredCartItems = cart.map(item => {
         const qty = item.quantity || 1;
         // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
-        const unitPrice = item.customPrice
-          || item.unitPrice
-          || (item.totalPrice ? Math.round(item.totalPrice / (qty || 1)) : Math.round((item.price || 0) / (qty || 1)));
+        const unitPrice = item.customPrice || item.unitPrice || (item.totalPrice ? Math.round(item.totalPrice / qty) : Math.round((item.price || 0) / qty));
         return {
           name: item.displayName || item.name || '',
           unit: '개',
@@ -255,6 +261,12 @@ const DeliveryNoteForm = () => {
       let bomMaterials = [];
       const incomingMaterials = (totalBom && totalBom.length > 0) ? totalBom : materials;
 
+      // 🔴 디버깅 로그 추가
+      console.log('🔍 incomingMaterials 확인:');
+      console.log('  totalBom:', totalBom);
+      console.log('  materials:', materials);
+      console.log('  incomingMaterials:', incomingMaterials);
+      console.log('  incomingMaterials.length:', incomingMaterials?.length);
       if (incomingMaterials && incomingMaterials.length > 0) {
         console.log('✅ 전달된 materials 사용');
         bomMaterials = incomingMaterials.map(m => {
@@ -342,16 +354,16 @@ const DeliveryNoteForm = () => {
         items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
         materials: allMaterials.length ? allMaterials : []
       }));
+      // 🔴 디버깅 로그 추가
+      console.log('🚀🚀🚀 DeliveryNoteForm setFormData 호출 완료!');
+      console.log('  설정된 items 개수:', allItems.length);
+      console.log('  설정된 materials 개수:', allMaterials.length);
+      console.log('  allMaterials:', allMaterials);
     }
   }, [cart, totalBom, materials, customItems, customMaterials, isEditMode]);
 
   // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
-    // ✅ materials가 비어있어도 합계 계산은 수행해야 함 (items 기준이므로)
-    // if (formData.materials.length === 0) {
-    //   return;
-    // }
-
     const materialsRecalc = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
@@ -362,6 +374,7 @@ const DeliveryNoteForm = () => {
         totalPrice: unitPrice * quantity
       };
     });
+
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const matSum = materialsRecalc.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const subtotal = (materialsRecalc.length > 0 && matSum > 0) ? matSum : itemSum;
@@ -369,14 +382,16 @@ const DeliveryNoteForm = () => {
     const totalAmount = subtotal + tax;
 
     setFormData(prev => {
-      // ✅ 변경 없으면 같은 객체 반환
-      const materialsChanged = JSON.stringify(materialsRecalc) !== JSON.stringify(prev.materials);
+      // ✅ materials가 비어있으면 기존 값 유지 (초기화 방지)
+      const materialsToUse = materialsRecalc.length > 0 ? materialsRecalc : prev.materials;
+
+      const materialsChanged = JSON.stringify(materialsToUse) !== JSON.stringify(prev.materials);
       const totalsChanged = prev.subtotal !== subtotal || prev.tax !== tax || prev.totalAmount !== totalAmount;
 
       if (!materialsChanged && !totalsChanged) {
         return prev;
       }
-      return { ...prev, materials: materialsRecalc, subtotal, tax, totalAmount };
+      return { ...prev, materials: materialsToUse, subtotal, tax, totalAmount };
     });
   }, [formData.items, formData.materials]);
 
