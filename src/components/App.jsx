@@ -118,7 +118,7 @@ const HomePage = ({ currentUser }) => {
 
   useEffect(() => {
     // ✅ 이미 복원한 문서면 다시 실행 안 함
-    if (isEditMode && editingData.cart && restoredDocIdRef.current !== editingData.editingDocumentId) {
+    if (isEditMode && editingData.editingDocumentId && restoredDocIdRef.current !== editingData.editingDocumentId) {
       restoredDocIdRef.current = editingData.editingDocumentId;  // ✅ 복원 완료 표시
 
       console.log('🔍🔍🔍 HomePage: 편집 모드 데이터 복원 🔍🔍🔍');
@@ -277,17 +277,12 @@ const HomePage = ({ currentUser }) => {
   const canAddItem = isEditMode ? true : (finalPrice > 0);  // ✅ 편집 모드에서는 항상 추가 가능
   const canProceed = cart.length > 0;
 
-  // ✅ 편집 모드일 때 materials가 비어있으면 cart의 BOM에서 재생성
+  // ✅ 새 코드
   const totalBomForDisplay = useMemo(() => {
     if (isEditMode) {
-      // 1) editingData.materials가 있으면 그대로 사용
-      if (editingData.materials && editingData.materials.length > 0) {
-        console.log('✅ 기존 materials 사용:', editingData.materials.length, '개');
-        return editingData.materials;
-      }
-      // 2) materials가 없으면 cart의 BOM에서 재생성
+      // ✅ 편집 모드에서는 항상 현재 cart 기반으로 BOM 재생성
       if (cart && cart.length > 0) {
-        console.log('🔄 cart의 BOM에서 재생성 시작...');
+        console.log('🔄 [편집모드] cart의 BOM에서 재생성 시작...');
         const regeneratedBOM = [];
         cart.forEach(item => {
           if (item.bom && item.bom.length > 0) {
@@ -295,13 +290,16 @@ const HomePage = ({ currentUser }) => {
             console.log(`  - ${item.displayName}: ${item.bom.length}개 부품 추가`);
           }
         });
-        console.log('✅ BOM 재생성 완료:', regeneratedBOM.length, '개');
+        console.log('✅ [편집모드] BOM 재생성 완료:', regeneratedBOM.length, '개');
         return regeneratedBOM;
       }
+      console.log('⚠️ [편집모드] cart가 비어있음');
+      return [];
     }
-    // 3) 일반 모드에서는 cartBOMView 사용
+    // 일반 모드에서는 cartBOMView 사용
     return cartBOMView || [];
-  }, [isEditMode, editingData.materials, cart, cartBOMView]);
+  }, [isEditMode, cart, cartBOMView]);
+  // ✅ 중요: editingData.materials 의존성 제거!
 
   const getCurrentRackOptionName = () => {
     if (!selectedType) return '';
@@ -392,6 +390,7 @@ const HomePage = ({ currentUser }) => {
               cart,
               cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
               totalBom: totalBomForDisplay,
+              materials: totalBomForDisplay,  // ✅ 이 줄 추가!
               ...(isEditMode ? {
                 customItems: editingData.customItems || [],
                 customMaterials: editingData.customMaterials || [],
@@ -412,6 +411,7 @@ const HomePage = ({ currentUser }) => {
               cart,
               cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
               totalBom: totalBomForDisplay,
+              materials: totalBomForDisplay,  // ✅ 이 줄 추가!
               ...(isEditMode ? {
                 customItems: editingData.customItems || [],
                 customMaterials: editingData.customMaterials || [],
@@ -431,6 +431,7 @@ const HomePage = ({ currentUser }) => {
               cart,
               cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
               totalBom: totalBomForDisplay,
+              materials: totalBomForDisplay,  // ✅ 이 줄 추가!
               ...(isEditMode ? {
                 customItems: editingData.customItems || [],
                 customMaterials: editingData.customMaterials || [],
