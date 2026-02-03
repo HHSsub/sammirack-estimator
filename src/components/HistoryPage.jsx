@@ -632,16 +632,22 @@ const HistoryPage = () => {
 
       console.log('🚀 편집 데이터로 이동:', editingData);
 
-      // 7) 문서 타입에 따라 경로 이동
-      const docType = fullDoc.type || 'estimate';
+      // 7) 홈 화면으로 이동 (필수!)
+      navigate('/', {
+        state: editingData,
+        replace: false  // 뒤로가기 가능하도록
+      });
 
-      if (docType === 'purchase') {
-        navigate('/purchase-order/new', { state: editingData });
-      } else if (docType === 'delivery') {
-        navigate('/delivery-note/new', { state: editingData });
-      } else {
-        navigate('/estimate/new', { state: editingData });
-      }
+      // // 7) 문서 타입에 따라 경로 이동 (이거 주석 절대로 지우지말것, 홈화면 안거칠꺼면 이거 주석 풀면 됨)
+      // const docType = fullDoc.type || 'estimate';
+
+      // if (docType === 'purchase') {
+      //   navigate('/purchase-order/new', { state: editingData });
+      // } else if (docType === 'delivery') {
+      //   navigate('/delivery-note/new', { state: editingData });
+      // } else {
+      //   navigate('/estimate/new', { state: editingData });
+      // }
 
     } catch (error) {
       console.error('❌ 편집 실패:', error);
