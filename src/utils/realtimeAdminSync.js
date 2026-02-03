@@ -385,7 +385,7 @@ class RealtimeAdminSync {
 
           // 로컬에서 명시적으로 복구했고, 그 복구 시점이 서버 삭제보다 뒤라면 로컬이 이김
           if (localRestoreTime > serverDeleteTime) {
-            merged[docKey] = localDoc;
+            merged[normKey] = localDoc;
           } else {
             // 그 외에는 서버의 '삭제됨' 상태를 유지 (로컬이 아무리 최신이어도 무시)
             merged[normKey] = serverDoc;

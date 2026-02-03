@@ -115,9 +115,10 @@ const HistoryPage = () => {
       });
 
       const validDocuments = Array.from(deduplicatedMap.values()).filter(doc => {
-        const hasNumber = doc.estimateNumber || doc.purchaseNumber || doc.documentNumber;
-        const hasItems = doc.items && doc.items.length > 0;
-        return hasNumber && hasItems;
+        // [수정] 필터링 조건 완화: 번호가 없어도 항목이 있거나, 항목이 없어도 번호가 있으면 노출 (수백개 유실 방지)
+        const hasNumber = doc.estimateNumber || doc.purchaseNumber || doc.documentNumber || doc.id;
+        const hasContent = (doc.items && doc.items.length > 0) || (doc.cart && doc.cart.length > 0) || (doc.materials && doc.materials.length > 0);
+        return hasNumber || hasContent;
       });
 
       const documentsWithMemo = validDocuments.map(doc => {
@@ -448,9 +449,10 @@ const HistoryPage = () => {
     console.log('🔍 견적서 변환 시작:', item.id);
 
     // 1. 카트 데이터 추출
-    const cart = (item.cart && item.cart.length > 0) ? item.cart : (item.items || []).map(it => ({
-      name: it.name,
-      displayName: it.displayName || it.name,
+    const cart = ((item.cart && item.cart.length > 0) ? item.cart : (item.items || [])).map(it => ({
+      ...it,
+      name: it.name || it.displayName || '',
+      displayName: it.displayName || it.name || '',
       quantity: it.quantity || 1,
       unitPrice: it.unitPrice || 0,
       price: it.totalPrice || it.price || 0,
@@ -513,7 +515,10 @@ const HistoryPage = () => {
     const normId = String(item.id).replace(/\.0$/, '');
 
     let materials = item.materials || [];
-    const cart = (item.cart && item.cart.length > 0) ? item.cart : (item.items || []);
+    const cart = ((item.cart && item.cart.length > 0) ? item.cart : (item.items || [])).map(it => ({
+      ...it,
+      displayName: it.displayName || it.name || ''
+    }));
 
     // 원자재 유실 시 재생성
     if (materials.length === 0 && cart.length > 0) {
