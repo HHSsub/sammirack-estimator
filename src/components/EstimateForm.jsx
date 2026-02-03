@@ -38,6 +38,7 @@ const EstimateForm = () => {
   const {
     cart = [],
     totalBom = [],
+    materials = [], // ✅ 추가
     customItems = [],
     customMaterials = [],
     editingDocumentId = null,
@@ -192,7 +193,7 @@ const EstimateForm = () => {
         }
       }
     }
-  }, [id, isEditMode, editingDocumentId]);
+  }, [id, isEditMode, editingDocumentId, totalBom, materials]);
 
   // ✅ 새 문서 - cart 초기화
   useEffect(() => {
@@ -268,26 +269,53 @@ const EstimateForm = () => {
 
       const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
 
-      const bomMaterials = (totalBom || []).map(m => {
-        // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
-        let displayName = m.name;
-        if (m.rackType === '하이랙' && m.colorWeight) {
-          const partName = extractPartNameFromCleanName(m.name) || m.name;
-          displayName = generateHighRackDisplayName(partName, m.colorWeight);
-        }
+      // ✅ BOM 추출: totalBom 또는 materials 확인
+      let bomMaterials = [];
+      const incomingMaterials = (totalBom && totalBom.length > 0) ? totalBom : materials;
 
-        return {
-          name: displayName,
-          rackType: m.rackType,
-          specification: m.specification || '',
-          quantity: Number(m.quantity) || 0,
-          colorWeight: m.colorWeight || '',  // ✅ HiRack 색상+중량 정보 보존  
-          color: m.color || '',              // ✅ 경량랙 색상 정보 보존  
-          unitPrice: Number(m.unitPrice) || 0,
-          totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
-          note: m.note || ''
-        };
-      });
+      if (incomingMaterials && incomingMaterials.length > 0) {
+        bomMaterials = incomingMaterials.map(m => {
+          // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
+          let displayName = m.name;
+          if (m.rackType === '하이랙' && m.colorWeight) {
+            const partName = extractPartNameFromCleanName(m.name) || m.name;
+            displayName = generateHighRackDisplayName(partName, m.colorWeight);
+          }
+
+          return {
+            name: displayName,
+            rackType: m.rackType,
+            specification: m.specification || '',
+            quantity: Number(m.quantity) || 0,
+            colorWeight: m.colorWeight || '',  // ✅ HiRack 색상+중량 정보 보존  
+            color: m.color || '',              // ✅ 경량랙 색상 정보 보존  
+            unitPrice: Number(m.unitPrice) || 0,
+            totalPrice: (Number(m.quantity) || 0) * (Number(m.unitPrice) || 0),
+            note: m.note || ''
+          };
+        });
+      } else {
+        // ✅ materials가 없으면 cart에서 직접 BOM 추출
+        cart.forEach(item => {
+          if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+            item.bom.forEach(bomItem => {
+              bomMaterials.push({
+                name: bomItem.name,
+                rackType: bomItem.rackType,
+                specification: bomItem.specification || '',
+                quantity: Number(bomItem.quantity) || 0,
+                unitPrice: Number(bomItem.unitPrice) || 0,
+                totalPrice: (Number(bomItem.quantity) || 0) * (Number(bomItem.unitPrice) || 0),
+                note: bomItem.note || ''
+              });
+            });
+          } else if (item.displayName || item.name) {
+            // ✅ BOM 없음 -> 이름에서 재생성 (History 등)
+            const regenerated = regenerateBOMFromDisplayName(item.displayName || item.name, item.quantity || 1);
+            bomMaterials.push(...regenerated);
+          }
+        });
+      }
 
       const allMaterials = [...bomMaterials, ...customMaterials];
 

@@ -2,6 +2,7 @@ import React, {
   createContext, useContext, useState, useEffect, useCallback, useMemo
 } from "react";
 import { sortBOMByMaterialRule } from "../utils/materialSort";
+import { setBomDataForRegeneration } from "../utils/bomRegeneration";
 import {
   loadAdminPrices,
   getEffectivePrice as utilGetEffectivePrice,
@@ -363,7 +364,9 @@ export const ProductProvider = ({ children }) => {
         await loadInventory();
 
         // 3. 데이터 및 BOM 설정 (기존 로직 유지)
-        setData(dj); setBomData(bj);
+        setData(dj);
+        setBomData(bj);
+        setBomDataForRegeneration(bj); // ✅ 추가: BOM 재생성 유틸에도 데이터 전달
 
         const canonical = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형", "하이랙", "스텐랙"];
         const fromData = Object.keys(dj || {});

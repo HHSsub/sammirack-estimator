@@ -10,8 +10,8 @@ import {
   permanentDeleteDocumentSync,
   forceServerSync
 } from '../utils/realtimeAdminSync';
-import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
-import { generatePartId } from '../utils/unifiedPriceManager';
+import { regenerateBOMFromDisplayName, setBomDataForRegeneration } from '../utils/bomRegeneration';
+import { generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
 
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
@@ -61,6 +61,21 @@ const HistoryPage = () => {
   // Load history on component mount
   useEffect(() => {
     loadHistory();
+
+    // ✅ BOM 재생성을 위한 데이터 로드
+    const loadData = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}bom_data_weight_added.json`);
+        if (response.ok) {
+          const data = await response.json();
+          setBomDataForRegeneration(data);
+          console.log('✅ BOM 재생성용 데이터 로드 완료');
+        }
+      } catch (e) {
+        console.error('BOM 데이터 로드 실패:', e);
+      }
+    };
+    loadData();
 
     // ✅ 문서 업데이트 이벤트 리스너
     const handleDocumentsUpdate = () => {
@@ -251,15 +266,25 @@ const HistoryPage = () => {
           bValue = new Date(b.updatedAt || b.date || 0).getTime();
       }
 
-      // 문자열 비교
+      // 정렬 비교
+      let result = 0;
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc'
-          ? aValue.localeCompare(bValue, 'ko')
-          : bValue.localeCompare(aValue, 'ko');
+        result = aValue.localeCompare(bValue, 'ko');
+      } else {
+        result = aValue - bValue;
       }
 
-      // 숫자 비교
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      // 오름차순/내림차순 적용
+      result = sortDirection === 'asc' ? result : -result;
+
+      // ✅ 2차 정렬: 값 동일 시 거래번호 기준 내림차순 (최신순 느낌 유지)
+      if (result === 0) {
+        const aNum = String(a.estimateNumber || a.purchaseNumber || a.documentNumber || '');
+        const bNum = String(b.estimateNumber || b.purchaseNumber || b.documentNumber || '');
+        return bNum.localeCompare(aNum, 'ko');
+      }
+
+      return result;
     });
   }, [filteredItems, sortColumn, sortDirection]);
 
@@ -585,7 +610,14 @@ const HistoryPage = () => {
 
     console.log('📋 청구서 생성:', { cart, totalBom, estimateData });
 
-    navigate(`/purchase-order/new`, { state: { cart, totalBom, estimateData } });
+    navigate(`/purchase-order/new`, {
+      state: {
+        cart,
+        totalBom,
+        materials: totalBom, // ✅ 하위 호환성 (materials 키도 함께 전달)
+        estimateData
+      }
+    });
   };
 
   /**

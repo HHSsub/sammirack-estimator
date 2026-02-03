@@ -38,6 +38,7 @@ const PurchaseOrderForm = () => {
   const {
     cart = [],
     totalBom = [],
+    materials = [], // ✅ 추가
     estimateData = {},
     customItems = [],
     customMaterials = [],
@@ -230,10 +231,14 @@ const PurchaseOrderForm = () => {
 
   // 초기 cart / BOM 반영 (관리자 단가 재적용)
   useEffect(() => {
-    if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
-      cartInitializedRef.current = true;  // ← 추가
+    // ✅ 수정: isEditMode가 아닐 때만 실행하되, cartInitializedRef로 중복 실행 방지
+    if (!isEditMode && (cart.length > 0 || totalBom.length > 0 || materials.length > 0) && !cartInitializedRef.current) {
+      console.log('📦 신규 문서 초기 데이터 로드 시작');
+      cartInitializedRef.current = true;
       adminPricesRef.current = loadAdminPricesDirect();
-      const cartItems = cart.map(item => {
+
+      // items 복원 (cart 우선, 없으면 totalBom에서 역추적? 아니면 그냥 cart)
+      const initialItems = cart.map(item => {
         const qty = item.quantity || 1;
         // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
         const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
@@ -303,11 +308,12 @@ const PurchaseOrderForm = () => {
 
       const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
 
-      // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출
+      // ✅ BOM 추출: totalBom 또는 materials 확인
       let bomMaterials = [];
+      const incomingMaterials = (totalBom && totalBom.length > 0) ? totalBom : materials;
 
-      if (totalBom && totalBom.length > 0) {
-        bomMaterials = totalBom.map(m => {
+      if (incomingMaterials && incomingMaterials.length > 0) {
+        bomMaterials = incomingMaterials.map(m => {
           const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
           const appliedUnitPrice = adminPrice && adminPrice > 0
             ? adminPrice
@@ -359,6 +365,20 @@ const PurchaseOrderForm = () => {
                 note: bomItem.note || ''
               });
             });
+          } else if (item.displayName || item.name) {
+            // ✅ item.bom이 없는 경우 이름에서 재생성 (History에서 넘어온 경우 등)
+            console.log(`  🔄 BOM 없음 - 이름에서 재생성: ${item.displayName || item.name}`);
+            const regenerated = regenerateBOMFromDisplayName(item.displayName || item.name, item.quantity || 1);
+            regenerated.forEach(bomItem => {
+              const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
+              const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
+
+              bomMaterials.push({
+                ...bomItem,
+                unitPrice: appliedUnitPrice,
+                totalPrice: appliedUnitPrice * (bomItem.quantity || 0)
+              });
+            });
           }
         });
       }
@@ -376,10 +396,10 @@ const PurchaseOrderForm = () => {
 
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
-    // ✅ materials가 비어있으면 실행하지 않음
-    if (formData.materials.length === 0) {
-      return;
-    }
+    // ✅ materials가 비어있어도 합계 계산은 수행해야 함 (items 기준이므로)
+    // if (formData.materials.length === 0) {
+    //   return;
+    // }
 
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
