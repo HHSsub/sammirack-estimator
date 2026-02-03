@@ -401,8 +401,7 @@ const PurchaseOrderForm = () => {
         materials: allMaterials.length ? allMaterials : []
       }));
     }
-  }, [cart, totalBom, customItems, customMaterials, isEditMode]);
-
+  }, [cart, totalBom, materials, customItems, customMaterials, isEditMode]);
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
     // ✅ materials가 비어있어도 합계 계산은 수행해야 함 (items 기준이므로)
@@ -413,7 +412,11 @@ const PurchaseOrderForm = () => {
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
-      const unitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(mat.unitPrice) || 0);
+      // ✅ 우선순위: customPrice > unitPrice > totalPrice/qty > price/qty
+      const unitPrice = item.customPrice
+        || item.unitPrice
+        || (item.totalPrice ? Math.round(item.totalPrice / (qty || 1)) : Math.round((item.price || 0) / (qty || 1)));
+
       return {
         ...mat,
         unitPrice,

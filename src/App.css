@@ -694,6 +694,118 @@ button.nav-link:hover {
   scrollbar-color: #888 #f1f1f1;
 }
 
+/* ========== 버튼 스타일 강제 적용 ========== */
+
+/* 기본 버튼 스타일 초기화 */
+.action-buttons button {
+  padding: 14px 28px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 17px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  min-width: 160px !important;
+}
+
+/* 견적서 버튼 - 파란색 */
+.create-estimate-button {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.create-estimate-button:hover {
+  background-color: #0056b3 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* 거래명세서 버튼 - 노란색 */
+.create-delivery-note-button {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+.create-delivery-note-button:hover {
+  background-color: #e0a800 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+/* 청구서 버튼 - 초록색 */
+.create-order-button {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+.create-order-button:hover {
+  background-color: #218838 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* BOM 토글 버튼 */
+.toggle-bom-button {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+.toggle-bom-button:hover {
+  background-color: #5a6268 !important;
+}
+
+/* ========== 글자 크기 복원 ========== */
+body {
+  font-size: 15px !important;
+}
+
+h2 {
+  font-size: 26px !important;
+  font-weight: bold !important;
+  margin-bottom: 20px !important;
+}
+
+h3 {
+  font-size: 20px !important;
+  font-weight: bold !important;
+}
+
+.price {
+  font-size: 20px !important;  /* ← 26px → 20px */
+  font-weight: bold !important;
+  color: #007bff !important;
+}
+
+.cart-item {
+  font-size: 15px !important;
+}
+
+.cart-total {
+  font-size: 22px !important;
+  font-weight: bold !important;
+}
+
+/* 테이블 글자 크기 */
+table {
+  font-size: 14px !important;
+}
+
+table th {
+  font-size: 15px !important;
+  font-weight: bold !important;
+}
+
+/* 네비게이션 글자 크기 */
+.nav-link {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.nav-logo h1 {
+  font-size: 22px !important;
+}
+
+
 /* 반응형 디자인 */
 @media (max-width: 1400px) {
   .main-layout {

@@ -182,7 +182,9 @@ const DeliveryNoteForm = () => {
       const restoredCartItems = cart.map(item => {
         const qty = item.quantity || 1;
         // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
-        const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
+        const unitPrice = item.customPrice
+          || item.unitPrice
+          || (item.totalPrice ? Math.round(item.totalPrice / (qty || 1)) : Math.round((item.price || 0) / (qty || 1)));
         return {
           name: item.displayName || item.name || '',
           unit: '개',
@@ -341,7 +343,7 @@ const DeliveryNoteForm = () => {
         materials: allMaterials.length ? allMaterials : []
       }));
     }
-  }, [cart, totalBom, customItems, customMaterials, isEditMode]);
+  }, [cart, totalBom, materials, customItems, customMaterials, isEditMode]);
 
   // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
