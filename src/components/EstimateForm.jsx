@@ -42,6 +42,7 @@ const EstimateForm = () => {
     customItems = [],
     customMaterials = [],
     editingDocumentId = null,
+    editingDocumentType = null,
     editingDocumentData = {}
   } = cartData;
 
@@ -103,11 +104,13 @@ const EstimateForm = () => {
 
   // ✅ 기존 문서 로드 (편집 모드 또는 editingDocumentId가 있을 때)
   useEffect(() => {
-    const docIdToLoad = isEditMode ? id : editingDocumentId;
+    const docIdToLoad = isEditMode ? String(id) : (editingDocumentId ? String(editingDocumentId) : null);
     const docTypeToLoad = isEditMode ? 'estimate' : (editingDocumentType || 'estimate');
 
     if (docIdToLoad) {
-      const storageKey = `${docTypeToLoad}_${docIdToLoad}`;
+      // ✅ .0 접미사 방지를 위해 ID를 문자열로 정규화
+      const normalizedId = docIdToLoad.replace(/\.0$/, '');
+      const storageKey = `${docTypeToLoad}_${normalizedId}`;
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {

@@ -235,10 +235,18 @@ class RealtimeAdminSync {
       const serverDocumentsRaw = documentsRes.data || {};
       const serverDocuments = {};
       for (const [docIdKey, doc] of Object.entries(serverDocumentsRaw)) {
-        const type = doc.type || (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_')[0] : 'estimate');
-        const id = doc.id != null ? doc.id : (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_').slice(1).join('_') : docIdKey);
-        const normKey = type + '_' + id;
-        serverDocuments[normKey] = { ...doc, id, type };
+        let type = doc.type || (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_')[0] : 'estimate');
+        let id = doc.id != null ? doc.id : (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_').slice(1).join('_') : docIdKey);
+
+        // ✅ ID 정규화 (.0 제거 및 문자열화)
+        id = String(id).replace(/\.0$/, '');
+        const normKey = `${type}_${id}`;
+
+        // 중복 시 더 최신 데이터 유지
+        if (!serverDocuments[normKey] ||
+          new Date(doc.updatedAt || 0) > new Date(serverDocuments[normKey].updatedAt || 0)) {
+          serverDocuments[normKey] = { ...doc, id, type };
+        }
       }
       const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
       const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
@@ -316,8 +324,10 @@ class RealtimeAdminSync {
         try {
           const item = JSON.parse(localStorage.getItem(key));
           if (item && item.id && item.type) {
-            const docKey = `${item.type}_${item.id}`;
-            documents[docKey] = item;
+            // ✅ ID 정규화
+            const normId = String(item.id).replace(/\.0$/, '');
+            const docKey = `${item.type}_${normId}`;
+            documents[docKey] = { ...item, id: normId };
           }
         } catch (e) {
           console.error('문서 파싱 실패:', key, e);
@@ -329,17 +339,46 @@ class RealtimeAdminSync {
   }
 
   mergeDocumentsByTimestamp(serverDocs, localDocs) {
-    const merged = { ...serverDocs };
+    const merged = {};
 
-    for (const docKey in localDocs) {
-      const localDoc = localDocs[docKey];
-      const serverDoc = merged[docKey];
+    // ✅ 보조 함수: ID 정규화 (전수조사 결과 반영)
+    const normalizeKey = (key) => {
+      if (!key) return '';
+      let k = String(key).replace(/\.0$/, '');
+      // 접두사가 없으면 (숫자 형태라면) 기본값 처리
+      if (k.indexOf('_') === -1) {
+        // 내부 데이터의 type을 확인하는 로직은 호출부에서 처리하거나 여기서 추론
+        return k;
+      }
+      return k;
+    };
+
+    // 1. 서버 문서 먼저 정규화하여 채우기
+    for (const key in serverDocs) {
+      const doc = serverDocs[key];
+      const type = doc.type || (key.indexOf('_') >= 0 ? key.split('_')[0] : 'estimate');
+      const id = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key)).replace(/\.0$/, '');
+      const normKey = `${type}_${id}`;
+
+      if (!merged[normKey] || new Date(doc.updatedAt || 0) > new Date(merged[normKey].updatedAt || 0)) {
+        merged[normKey] = { ...doc, id, type };
+      }
+    }
+
+    // 2. 로컬 문서 정규화하여 병합
+    for (const key in localDocs) {
+      const doc = localDocs[key];
+      const type = doc.type || (key.indexOf('_') >= 0 ? key.split('_')[0] : 'estimate');
+      const id = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key)).replace(/\.0$/, '');
+      const normKey = `${type}_${id}`;
+
+      const localDoc = { ...doc, id, type };
+      const serverDoc = merged[normKey];
 
       if (!serverDoc) {
-        // 서버에 없는 경우 (새로 생성된 것)
-        merged[docKey] = localDoc;
+        merged[normKey] = localDoc;
       } else {
-        // ✅ Zombie 방지 로직: 서버가 삭제된 상태라면, 로컬이 '복구(restore)'된게 아니면 서버 승리
+        // Zombie 방지 로직: 서버가 삭제된 상태라면 로컬 restore 확인
         if (serverDoc.deleted) {
           const serverDeleteTime = new Date(serverDoc.deletedAt || serverDoc.updatedAt || 0).getTime();
           const localRestoreTime = localDoc.restoredAt ? new Date(localDoc.restoredAt).getTime() : 0;
@@ -349,15 +388,14 @@ class RealtimeAdminSync {
             merged[docKey] = localDoc;
           } else {
             // 그 외에는 서버의 '삭제됨' 상태를 유지 (로컬이 아무리 최신이어도 무시)
-            merged[docKey] = serverDoc;
+            merged[normKey] = serverDoc;
           }
         } else {
-          // 일반적인 업데이트 경쟁 (둘 다 살아있을 때)
           const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
           const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
 
           if (localTime > serverTime) {
-            merged[docKey] = localDoc;
+            merged[normKey] = localDoc;
           }
         }
       }
@@ -389,12 +427,22 @@ class RealtimeAdminSync {
   }
 
   syncToLegacyKeys(documents) {
+    // legacy 키 정리 (오래된 .0 키들 등 삭제 유도)
     for (const docKey in documents) {
       const doc = documents[docKey];
       if (doc && !doc.deleted) {
-        localStorage.setItem(docKey, JSON.stringify(doc));
+        // ✅ 정규화된 키로만 저장
+        const normKey = `${doc.type}_${String(doc.id).replace(/\.0$/, '')}`;
+        localStorage.setItem(normKey, JSON.stringify(doc));
+
+        // 만약 docKey가 정규화된 키와 다르면 구버전 키 삭제
+        if (docKey !== normKey) {
+          localStorage.removeItem(docKey);
+        }
       } else if (doc && doc.deleted) {
         localStorage.removeItem(docKey);
+        // .0 붙은 구형 키도 삭제 시도
+        localStorage.removeItem(docKey + '.0');
       }
     }
   }
@@ -551,10 +599,11 @@ class RealtimeAdminSync {
       const batch = docEntries.slice(i, i + 10);
       await Promise.all(
         batch.map(([docKey, doc]) => {
-          // ✅ Fix: ID 충돌 방지를 위해 접두사가 포함된 docKey를 그대로 docId로 사용
-          // 기존: const [type, ...idParts] = docKey.split('_'); const docId = idParts.join('_');
-          const docId = docKey;
-          return documentsAPI.save(docId, { ...doc, docId, type: doc.type }).catch(err =>
+          // ✅ .0 제거하여 서버에 전송
+          const normalizedDocId = docKey.replace(/\.0$/, '');
+          const docId = normalizedDocId;
+          const cleanedDoc = { ...doc, id: docId.split('_').slice(1).join('_'), docId, type: doc.type };
+          return documentsAPI.save(docId, cleanedDoc).catch(err =>
             console.error(`문서 저장 실패 (${docKey}):`, err)
           );
         })
@@ -720,8 +769,12 @@ export const saveDocumentSync = async (document) => {
       return false;
     }
 
+    // ✅ ID 강제 정규화
+    const normalizedId = String(document.id).replace(/\.0$/, '');
+    document.id = normalizedId;
+
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
-    const docKey = `${document.type}_${document.id}`;
+    const docKey = `${document.type}_${normalizedId}`;
 
     if (!documents[docKey] && syncInstance) {
       document.createdBy = await syncInstance.getCreatorInfo();
