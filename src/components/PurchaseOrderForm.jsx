@@ -412,8 +412,8 @@ const PurchaseOrderForm = () => {
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
-      // ✅ 우선순위: customPrice > unitPrice > totalPrice/qty > price/qty
-      const unitPrice = item.customPrice || item.unitPrice || (item.totalPrice ? Math.round(item.totalPrice / qty) : Math.round((item.price || 0) / qty));
+      // ✅ 수정: mat과 quantity 사용
+      const unitPrice = mat.customPrice || mat.unitPrice || (mat.totalPrice ? Math.round(mat.totalPrice / quantity) : Math.round((mat.price || 0) / quantity));
       return {
         ...mat,
         unitPrice,
