@@ -153,7 +153,7 @@ const HomePage = ({ currentUser }) => {
               newItem.customPrice = savedCustomPrice;
               newItem.unitPrice = savedCustomPrice;
               newItem.totalPrice = savedCustomPrice * (newItem.quantity || 1);
-              newItem.price = newItem.totalPrice;
+              newItem.price = savedCustomPrice;
               return newItem;
             }
             // 2순위: Admin 가격
@@ -164,13 +164,13 @@ const HomePage = ({ currentUser }) => {
               console.log(`  ✅ Admin 가격 적용: ${adminPrice.price}원`);
               newItem.unitPrice = adminPrice.price;
               newItem.totalPrice = adminPrice.price * (newItem.quantity || 1);
-              newItem.price = newItem.totalPrice;
+              newItem.price = adminPrice.price;
               return newItem;
             }
 
             // 3순위: 기존 가격 유지
             console.log(`  ⚠️ 기존 가격 유지: ${newItem.unitPrice || 0}원`);
-            newItem.price = newItem.totalPrice || newItem.price || 0;
+            newItem.price = newItem.unitPrice || newItem.price || 0;
             return newItem;
           });
 

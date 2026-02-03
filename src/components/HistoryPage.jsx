@@ -534,7 +534,7 @@ const HistoryPage = () => {
           unitPrice: Number(itm.unitPrice) || 0,
           totalPrice: Number(itm.totalPrice) || 0,
           customPrice: Number(itm.customPrice) || 0,  // ✅ customPrice 보존!
-          price: Number(itm.totalPrice) || Number(itm.price) || 0  // ✅ price 필드 보존!
+          price: Number(itm.unitPrice) || 0  // ✅ price는 unitPrice를 사용 (총가격이 아님!)
         }));
       }
       console.log('📦 복원된 cart:', cart);
