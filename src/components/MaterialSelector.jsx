@@ -25,6 +25,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
     quantity: 1,
     unitPrice: 0
   });
+  const [quickAction, setQuickAction] = useState(null); // '공임' or '운임'
 
   // 데이터 로드
   useEffect(() => {
@@ -138,7 +139,12 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         quantity: quantity,
         unitPrice: effectivePrice,
         totalPrice: quantity * effectivePrice,
-        note: ''
+        note: '',
+        // ✅ 재고 매핑을 위한 메타데이터 추가
+        rackType: selectedMaterial.rackType || '기타',
+        colorWeight: selectedMaterial.colorWeight || '',
+        color: selectedMaterial.color || '',
+        partId: selectedMaterial.partId || ''
       });
 
       // 선택은 유지, 수량만 초기화
@@ -160,6 +166,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
       quantity: 1,
       unitPrice: 0
     });
+    setQuickAction(null);
     onClose();
   };
 
@@ -177,38 +184,82 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
     }
   }, [isOpen]);
 
+  // ✅ 퀵 버튼 핸들러
+  const handleQuickAdd = (type, price) => {
+    onAdd({
+      name: type,
+      unit: '개',
+      quantity: 1,
+      unitPrice: price,
+      totalPrice: price,
+      note: '',
+      isService: true // 재고 감소 제외용 플래그
+    });
+    setQuickAction(null);
+  };
+
+  const handleQuickManual = (type) => {
+    setCustomMode(true);
+    setCustomData({
+      name: type,
+      specification: '',
+      quantity: 1,
+      unitPrice: 0
+    });
+    setQuickAction(null);
+  };
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="material-selector-panel">
       <div className="panel-header">
         <h4>자재 선택</h4>
         <button className="close-btn" onClick={handleClose}>✕</button>
       </div>
-      
-      {/* 기타 입력 전환 버튼 - 좌측 상단으로 이동 */}
-      <div style={{ marginBottom: '8px', paddingLeft: '4px' }}>
-        <button 
-          className="custom-btn" 
-          onClick={() => setCustomMode(!customMode)}
+
+      {/* 모드 전환 및 퀵 버튼 */}
+      <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <button
+          className={`custom-btn ${customMode ? 'active' : ''}`}
+          onClick={() => {
+            setCustomMode(!customMode);
+            setQuickAction(null);
+          }}
         >
           {customMode ? '시스템 자재' : '기타 입력'}
         </button>
+
+        {!customMode && (
+          <div className="quick-actions" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            {!quickAction ? (
+              <>
+                <button className="quick-btn" onClick={() => setQuickAction('공임')}>공임</button>
+                <button className="quick-btn" onClick={() => setQuickAction('운임')}>운임</button>
+              </>
+            ) : (
+              <div className="quick-price-selection" style={{ display: 'flex', gap: '6px', alignItems: 'center', background: '#e9ecef', padding: '4px 8px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{quickAction}:</span>
+                <button className="price-opt-btn" onClick={() => handleQuickAdd(quickAction, 1000)}>1,000</button>
+                <button className="price-opt-btn" onClick={() => handleQuickAdd(quickAction, 10000)}>10,000</button>
+                <button className="price-opt-btn" onClick={() => handleQuickManual(quickAction)}>직접입력</button>
+                <button className="price-opt-cancel" onClick={() => setQuickAction(null)}>✕</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      
+
       {!customMode ? (
         <>
           <div className="filter-row">
             <div className="filter-field">
               <label>랙 타입</label>
-              <select value={selectedRackType} onChange={e => setselectedRackType(e.target.value)}>
+              <select value={selectedRackType} onChange={e => setSelectedRackType(e.target.value)}>
                 <option value="">전체</option>
-                <option value="하이랙">하이랙</option>
-                <option value="스텐랙">스텐랙</option>
-                <option value="경량랙">경량랙</option>
-                <option value="중량랙">중량랙</option>
-                <option value="파렛트랙">파렛트랙</option>
-                <option value="파렛트랙 철판형">파렛트랙 철판형</option>
+                {rackTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
               </select>
             </div>
             <div className="filter-field">
@@ -224,23 +275,23 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
                 <input
                   type="checkbox"
                   checked={showOnlyInStock}
-                  onChange={e => setshowOnlyInStock(e.target.checked)}
+                  onChange={e => setShowOnlyInStock(e.target.checked)}
                 />
                 재고있는것만
               </label>
             </div>
           </div>
-  
+
           <div className="material-count">
             {filteredMaterials.length}개 자재
           </div>
-  
+
           <div className="material-list">
             {filteredMaterials.map(mat => {
               const stock = inventory[mat.partId] || 0;
               const hasStock = stock > 0;
               const isSelected = selectedMaterial?.partId === mat.partId;
-              
+
               return (
                 <div
                   key={mat.partId}
@@ -278,13 +329,13 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
               );
             })}
           </div>
-  
+
           {selectedMaterial && (
             <div className="selected-info">
               선택: {selectedMaterial.name} ({selectedMaterial.price.toLocaleString()}원)
             </div>
           )}
-  
+
           <div className="quantity-field">
             <label>수량</label>
             <input
@@ -297,7 +348,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         </>
       ) : (
         <div className="custom-input-section">
-          <h5>직접 입력</h5>
+          <h5>기타 입력</h5>
           <div className="custom-row">
             <input
               type="text"
@@ -328,7 +379,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
           </div>
         </div>
       )}
-  
+
       <div className="action-row">
         <button className="add-btn" onClick={handleAdd}>
           추가

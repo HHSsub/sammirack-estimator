@@ -387,14 +387,85 @@
   background: #5a6268;
 }
 
-.cancel-btn {
-  background: #dc3545;
-  color: white;
-}
-
 .cancel-btn:hover {
   background: #c82333;
 }
+
+/* 퀵 버튼 스타일 */
+.quick-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.quick-btn {
+  padding: 6px 12px;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-btn:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.quick-price-selection {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  background: #e9ecef;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px dashed #adb5bd;
+}
+
+.quick-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #495057;
+  margin-right: 4px;
+}
+
+.price-opt-btn {
+  padding: 4px 10px;
+  background: white;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+.price-opt-btn:hover {
+  border-color: #17a2b8;
+  color: #17a2b8;
+  background: #f8fdfe;
+}
+
+.price-opt-cancel {
+  padding: 2px 6px;
+  background: none;
+  border: none;
+  color: #dc3545;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.price-opt-cancel:hover {
+  color: #a71d2a;
+}
+
 
 /* 스크롤바 */
 .material-list-container::-webkit-scrollbar {

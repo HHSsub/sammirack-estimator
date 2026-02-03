@@ -15,9 +15,8 @@ import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
-import ItemSelector from './ItemSelector'; // 26_01_27 신규기능추가 
 import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
-import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';  
+import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 
 const PROVIDER = {
   bizNumber: '232-81-01750',
@@ -31,55 +30,55 @@ const PROVIDER = {
 };
 
 const PurchaseOrderForm = () => {
-    const { id } = useParams();
-    const location = useLocation();
-    const navigate = useNavigate();
-  
-    const cartData = location.state || {};
-    const { 
-      cart = [], 
-      totalBom = [], 
-      estimateData = {},
-      customItems = [],
-      customMaterials = [],
-      editingDocumentId = null,
-      editingDocumentData = {}
-    } = cartData;
-    
-    const isEditMode = !!id;  // ✅ 원래대로
-  
-    // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
-    const { extraProducts } = useProducts();
-  
-    const documentNumberInputRef = useRef(null);
-    const adminPricesRef = useRef({});
-    const cartInitializedRef = useRef(false);
-    
-    // ✅ 관리자 체크
-    const [isAdmin, setIsAdmin] = useState(false);
-    // ✅ 설정 모달
-    const [showSettingsModal, setShowSettingsModal] = useState(false);
-    // ✅ 현재 전역 설정
-    const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
-    
-    // ✅ FAX 관련 state 추가
-    const [showFaxModal, setShowFaxModal] = useState(false);
-    const [pdfBlobURL, setPdfBlobURL] = useState(null);
-    const [pdfBase64, setPdfBase64] = useState(null);
-    
-    // ✅ 토스트 알림 state 추가
-    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-    const saveButtonRef = useRef(null);
-    
-    // ✅ 확인 다이얼로그 state 추가
-    const [confirmDialog, setConfirmDialog] = useState({ 
-      show: false, 
-      message: '', 
-      onConfirm: null 
-    });
-  const [showItemSelector, setShowItemSelector] = useState(false);
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const cartData = location.state || {};
+  const {
+    cart = [],
+    totalBom = [],
+    estimateData = {},
+    customItems = [],
+    customMaterials = [],
+    editingDocumentId = null,
+    editingDocumentData = {}
+  } = cartData;
+
+  const isEditMode = !!id;  // ✅ 원래대로
+
+  // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
+  const { extraProducts } = useProducts();
+
+  const documentNumberInputRef = useRef(null);
+  const adminPricesRef = useRef({});
+  const cartInitializedRef = useRef(false);
+
+  // ✅ 관리자 체크
+  const [isAdmin, setIsAdmin] = useState(false);
+  // ✅ 설정 모달
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  // ✅ 현재 전역 설정
+  const [currentGlobalSettings, setCurrentGlobalSettings] = useState(null);
+
+  // ✅ FAX 관련 state 추가
+  const [showFaxModal, setShowFaxModal] = useState(false);
+  const [pdfBlobURL, setPdfBlobURL] = useState(null);
+  const [pdfBase64, setPdfBase64] = useState(null);
+
+  // ✅ 토스트 알림 state 추가
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const saveButtonRef = useRef(null);
+
+  // ✅ 확인 다이얼로그 state 추가
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    message: '',
+    onConfirm: null
+  });
   const [showMaterialSelector, setShowMaterialSelector] = useState(false);
-  
+  const [selectorTarget, setSelectorTarget] = useState('material'); // 'item' or 'material'
+
   const [formData, setFormData] = useState({
     date: editingDocumentData.date || estimateData.date || new Date().toISOString().split('T')[0],
     documentNumber: editingDocumentData.documentNumber || estimateData.estimateNumber || '',
@@ -109,11 +108,11 @@ const PurchaseOrderForm = () => {
         setIsAdmin(false);
       }
     }
-    
+
     const globalSettings = getDocumentSettings();
     setCurrentGlobalSettings(globalSettings);
   }, []);
-  
+
   // 기존 저장 문서 로드 (편집 모드 또는 editingDocumentId가 있을 때)
   useEffect(() => {
     // ✅ 수정: editingDocumentId가 있으면 해당 문서를 localStorage에서 로드
@@ -196,7 +195,7 @@ const PurchaseOrderForm = () => {
 
           // ✅ 문서 로드 완료 플래그 설정 (새 cart 반영 방지)
           cartInitializedRef.current = true;
-        } catch(e) {
+        } catch (e) {
           console.error('청구서 로드 실패:', e);
         }
       }
@@ -221,17 +220,17 @@ const PurchaseOrderForm = () => {
           note: ''
         };
       });
-        
+
       // ✅ customMaterials를 items 형식으로 변환
       // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
       const extraOptionItems = [];
-      
+
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
           item.extraOptions.forEach(optId => {
             // optId가 ID인 경우 extraProducts에서 이름 찾기 - 유틸 함수 사용
             const displayInfo = getExtraOptionDisplayInfo(item.type, optId, extraProducts);
-            
+
             // opt가 객체인 경우 (하위 호환성)
             let optName = '';
             let optPrice = 0;
@@ -242,7 +241,7 @@ const PurchaseOrderForm = () => {
               optName = optId.name;
               optPrice = optId.price || 0;
             }
-            
+
             if (optName) {
               extraOptionItems.push({
                 name: `[추가옵션] ${optName}`,
@@ -256,7 +255,7 @@ const PurchaseOrderForm = () => {
           });
         }
       });
-      
+
       // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)
       const customMaterialItems = [];
       cart.forEach(item => {
@@ -275,12 +274,12 @@ const PurchaseOrderForm = () => {
           });
         }
       });
-      
+
       const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
-  
+
       // ✅ BOM 추출: totalBom 확인 후 없으면 cart에서 직접 추출
       let bomMaterials = [];
-      
+
       if (totalBom && totalBom.length > 0) {
         bomMaterials = totalBom.map(m => {
           const adminPrice = resolveAdminPrice(adminPricesRef.current, m);
@@ -288,14 +287,14 @@ const PurchaseOrderForm = () => {
             ? adminPrice
             : (Number(m.unitPrice) || 0);
           const quantity = Number(m.quantity) || 0;
-          
+
           // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
           let displayName = m.name;
           if (m.rackType === '하이랙' && m.colorWeight) {
             const partName = extractPartNameFromCleanName(m.name) || m.name;
             displayName = generateHighRackDisplayName(partName, m.colorWeight);
           }
-          
+
           return {
             name: displayName,
             rackType: m.rackType,
@@ -316,14 +315,14 @@ const PurchaseOrderForm = () => {
               const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
               const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
               const quantity = Number(bomItem.quantity) || 0;
-              
+
               // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
               let displayName = bomItem.name;
               if (bomItem.rackType === '하이랙' && bomItem.colorWeight) {
                 const partName = extractPartNameFromCleanName(bomItem.name) || bomItem.name;
                 displayName = generateHighRackDisplayName(partName, bomItem.colorWeight);
               }
-              
+
               bomMaterials.push({
                 name: displayName,
                 rackType: bomItem.rackType,
@@ -339,7 +338,7 @@ const PurchaseOrderForm = () => {
       }
 
       const allMaterials = [...bomMaterials, ...customMaterials];
-  
+
       // ✅ 수정: 강제 설정
       setFormData(prev => ({
         ...prev,
@@ -355,7 +354,7 @@ const PurchaseOrderForm = () => {
     if (formData.materials.length === 0) {
       return;
     }
-    
+
     const materialsWithAdmin = formData.materials.map(mat => {
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
@@ -366,17 +365,17 @@ const PurchaseOrderForm = () => {
         totalPrice: unitPrice * quantity
       };
     });
-  
+
     const itemSum = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const subtotal = itemSum;
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-  
+
     setFormData(prev => {
       // ✅ 변경 없으면 같은 객체 반환
       const materialsChanged = JSON.stringify(materialsWithAdmin) !== JSON.stringify(prev.materials);
       const totalsChanged = prev.subtotal !== subtotal || prev.tax !== tax || prev.totalAmount !== totalAmount;
-  
+
       if (!materialsChanged && !totalsChanged) {
         return prev;
       }
@@ -406,48 +405,11 @@ const PurchaseOrderForm = () => {
     }
     setFormData(prev => ({ ...prev, items }));
   };
-  // const addItem = () => {
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     items: [...prev.items, { name:'', unit:'', quantity:'', unitPrice:'', totalPrice:'', note:'' }]
-  //   }));
-  // };
   const addItem = () => {
-    setShowItemSelector(true);  // ← 이렇게 변경
+    setSelectorTarget('item');
+    setShowMaterialSelector(true);
   };
-  const handleItemAdd = (itemData) => {
-    // ✅ 품목 추가
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, itemData]
-    }));
-    
-    // ✅ BOM 자동 생성 및 추가
-    if (itemData.name) {
-      const bom = regenerateBOMFromDisplayName(itemData.name, itemData.quantity || 1);
-      
-      if (bom && bom.length > 0) {
-        // 관리자 단가 적용
-        const bomWithAdminPrice = bom.map(bomItem => {
-          const adminPrice = resolveAdminPrice(adminPricesRef.current, bomItem);
-          const appliedUnitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(bomItem.unitPrice) || 0);
-          const quantity = Number(bomItem.quantity) || 0;
-          
-          return {
-            ...bomItem,
-            unitPrice: appliedUnitPrice,
-            totalPrice: appliedUnitPrice * quantity
-          };
-        });
-        
-        // materials에 추가
-        setFormData(prev => ({
-          ...prev,
-          materials: [...prev.materials, ...bomWithAdminPrice]
-        }));
-      }
-    }
-  };
+
   const removeItem = (idx) => {
     setFormData(prev => ({
       ...prev,
@@ -466,36 +428,50 @@ const PurchaseOrderForm = () => {
     }
     setFormData(prev => ({ ...prev, materials }));
   };
-  // const addMaterial = () => {
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     materials: [...prev.materials, { name:'', specification:'', quantity:'', unitPrice:'', totalPrice:'', note:'' }]
-  //   }));
-  // };
-  
-  // 26_01_27 신규기능(자재셀렉터 추가, 기존코드삭제금지)
   const addMaterial = () => {
+    setSelectorTarget('material');
     setShowMaterialSelector(true);
   };
-  
+
   const handleMaterialAdd = (materialData) => {
     // ✅ inventoryPartId 생성 (재고 감소용)
     const materialWithId = {
       ...materialData,
-      inventoryPartId: generateInventoryPartId({
+      inventoryPartId: materialData.isService ? null : (materialData.inventoryPartId || generateInventoryPartId({
         rackType: materialData.rackType || '기타',
         name: materialData.name,
         specification: materialData.specification || '',
         colorWeight: materialData.colorWeight || ''
-      })
+      }))
     };
-    
-    setFormData(prev => ({
-      ...prev,
-      materials: [...prev.materials, materialWithId]
-    }));
+
+    if (selectorTarget === 'item') {
+      // ✅ 품목으로 추가할 때는 표시 이름을 "품명 (규격)" 형태로 구성
+      const itemDisplayName = materialData.specification
+        ? `${materialData.name} (${materialData.specification})`
+        : materialData.name;
+
+      setFormData(prev => ({
+        ...prev,
+        items: [...prev.items, {
+          name: itemDisplayName,
+          unit: '개',
+          quantity: materialData.quantity,
+          unitPrice: materialData.unitPrice,
+          totalPrice: materialData.totalPrice,
+          note: materialData.note || ''
+        }],
+        materials: [...prev.materials, materialWithId]
+      }));
+    } else {
+      // ✅ 자재로만 추가
+      setFormData(prev => ({
+        ...prev,
+        materials: [...prev.materials, materialWithId]
+      }));
+    }
   };
-    
+
   const removeMaterial = (idx) => {
     setFormData(prev => ({
       ...prev,
@@ -506,19 +482,19 @@ const PurchaseOrderForm = () => {
   const handleSave = async () => {
     if (!formData.documentNumber.trim()) {
       // 거래번호 입력 요청은 토스트로 표시
-      setToast({ 
-        show: true, 
-        message: '거래번호(문서번호)를 입력해주세요.', 
-        type: 'error' 
+      setToast({
+        show: true,
+        message: '거래번호(문서번호)를 입력해주세요.',
+        type: 'error'
       });
       documentNumberInputRef.current?.focus();
       return;
     }
-    
+
     // ✅ 동일 거래번호 찾기
     let itemId;
     let existingDoc = null;
-    
+
     if (editingDocumentId) {
       // 편집 모드: 기존 ID 재사용
       itemId = editingDocumentId;
@@ -543,21 +519,21 @@ const PurchaseOrderForm = () => {
         itemId = Date.now();
       }
     }
-    
+
     // 저장 로직 실행
     await proceedWithSave(itemId, existingDoc);
   };
-  
+
   // ✅ 저장 로직 분리
   const proceedWithSave = async (itemId, existingDoc) => {
     const storageKey = `purchase_${itemId}`;
-    
+
     // ✅ cart에서 extraOptions 추출 (문서 저장 시 포함)
     const cartWithExtraOptions = cart.map(item => ({
       ...item,
       extraOptions: item.extraOptions || []
     }));
-    
+
     const newOrder = {
       ...formData,
       id: itemId,
@@ -565,7 +541,7 @@ const PurchaseOrderForm = () => {
       status: formData.status || '진행 중',
       purchaseNumber: formData.documentNumber,
       // ✅ 문서 설정: 편집=기존유지, 신규=현재전역설정
-      documentSettings: (existingDoc || isEditMode || editingDocumentId) 
+      documentSettings: (existingDoc || isEditMode || editingDocumentId)
         ? (formData.documentSettings || currentGlobalSettings)
         : currentGlobalSettings,
       customerName: formData.companyName,
@@ -578,13 +554,13 @@ const PurchaseOrderForm = () => {
       cart: cartWithExtraOptions,
       ...(isEditMode ? {} : { createdAt: new Date().toISOString() })
     };
-    
+
     // ✅ 레거시 키 저장 (하위 호환)
     localStorage.setItem(storageKey, JSON.stringify(newOrder));
-    
+
     // ✅ 서버 동기화 저장 (필수!)
     const success = await saveDocumentSync(newOrder);
-    
+
     if (success) {
       try {
         await documentsAPI.save(newOrder.id, {
@@ -606,19 +582,19 @@ const PurchaseOrderForm = () => {
         console.error('문서 즉시 서버 저장 실패:', err);
       }
       // ✅ 토스트 알림으로 변경
-      setToast({ 
-        show: true, 
-        message: isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.', 
-        type: 'success' 
+      setToast({
+        show: true,
+        message: isEditMode ? '청구서가 수정되었습니다.' : '청구서가 저장되었습니다.',
+        type: 'success'
       });
-      
+
       // ✅ 문서 업데이트 이벤트 발생
       window.dispatchEvent(new Event('documentsupdated'));
     } else {
-      setToast({ 
-        show: true, 
-        message: '저장 중 오류가 발생했습니다.', 
-        type: 'error' 
+      setToast({
+        show: true,
+        message: '저장 중 오류가 발생했습니다.',
+        type: 'error'
       });
     }
   };
@@ -629,323 +605,327 @@ const PurchaseOrderForm = () => {
       return;
     }
     exportToExcel(formData, 'purchase')
-      .then(()=>alert('엑셀 파일이 다운로드되었습니다.'))
-      .catch(e=>{
+      .then(() => alert('엑셀 파일이 다운로드되었습니다.'))
+      .catch(e => {
         console.error(e);
         alert('엑셀 다운로드 오류');
       });
   };
 
-const handlePrint = async () => {
-  if (!formData.documentNumber.trim()) {
-    alert('거래번호(문서번호)를 입력해주세요.');
-    documentNumberInputRef.current?.focus();
-    return;
-  }
-
-  // ✅ 1단계: 재고 부족 여부 체크
-  if (cart && cart.length > 0) {
-    const checkResult = await checkInventoryAvailability(cart);
-    
-    if (checkResult.warnings && checkResult.warnings.length > 0) {
-      // ✅ 재고 부족 패널 표시 (confirm 창 제거)
-      window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
-        detail: {
-          shortageItems: checkResult.warnings.map(w => ({
-            partId: w.partId,
-            name: w.name,
-            specification: w.specification,
-            rackType: w.rackType,
-            quantity: w.required,
-            requiredQuantity: w.required,
-            serverInventory: w.available,
-            shortage: w.shortage,
-            isShortage: true
-          })),
-          documentType: '청구서 (인쇄)',
-          timestamp: Date.now(),
-          // ✅ 콜백 함수 추가
-          onConfirm: () => {
-            // "무시하고 인쇄" 클릭 시 실행
-            proceedWithPrint();
-          },
-          onCancel: () => {
-            alert('인쇄가 취소되었습니다.\n재고는 감소되지 않았습니다.');
-          }
-        }
-      }));
-      
-      return;  // ✅ 여기서 리턴 (패널에서 선택하도록)
+  const handlePrint = async () => {
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호(문서번호)를 입력해주세요.');
+      documentNumberInputRef.current?.focus();
+      return;
     }
-  }
 
-  // 재고 부족 없으면 바로 인쇄
-  await proceedWithPrint();
-};
+    // ✅ 1단계: 재고 부족 여부 체크
+    if (cart && cart.length > 0) {
+      const checkResult = await checkInventoryAvailability(cart);
 
-// ✅ 실제 인쇄 로직 분리
-const proceedWithPrint = async () => {
-  // ✅ 1. 브라우저 인쇄 다이얼로그 표시
-  window.print();
-
-  // ✅ 2. 인쇄 다이얼로그가 닫힌 후 재고 감소 여부 확인
-  setTimeout(async () => {
-    const confirmDeduct = window.confirm(
-      '인쇄가 완료되었습니까?\n\n' +
-      '✅ 확인: 재고 감소 (부족한 부품은 0으로 처리)\n' +
-      '❌ 취소: 재고 유지'
-    );
-    
-    if (confirmDeduct && cart && cart.length > 0) {
-      // ✅ 재고 감소 실행 (청구서 생성 플로우: cart에 bom 없으면 formData.materials 사용)
-      const materialsForDeduct = !cart.every(i => !i.bom?.length) 
-      ? cart 
-      : (formData.materials?.length > 0 ? formData.materials : undefined);
-      const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, materialsForDeduct);
-      
-      if (result.success) {
-        let message = '✅ 재고가 감소되었습니다.\n\n';
-        
-        // ✅ 정상 감소된 부품
-        const normalParts = result.deductedParts.filter(p => !p.wasShortage);
-        const shortageParts = result.deductedParts.filter(p => p.wasShortage);
-        
-        if (normalParts.length > 0) {
-          message += `📦 정상 감소: ${normalParts.length}개 부품\n`;
-        }
-        
-        // ✅ 부족하여 0으로 처리된 부품
-        if (shortageParts.length > 0) {
-          message += `⚠️ 재고 부족 (0으로 처리): ${shortageParts.length}개 부품\n\n`;
-          
-          // 최대 3개만 표시
-          const displayParts = shortageParts.slice(0, 3);
-          displayParts.forEach(p => {
-            message += `  • ${p.name}: ${p.deducted}개 감소 → 재고 0\n`;
-          });
-          
-          if (shortageParts.length > 3) {
-            message += `  • 외 ${shortageParts.length - 3}개 부품...\n`;
+      if (checkResult.warnings && checkResult.warnings.length > 0) {
+        // ✅ 재고 부족 패널 표시 (confirm 창 제거)
+        window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
+          detail: {
+            shortageItems: checkResult.warnings.map(w => ({
+              partId: w.partId,
+              name: w.name,
+              specification: w.specification,
+              rackType: w.rackType,
+              quantity: w.required,
+              requiredQuantity: w.required,
+              serverInventory: w.available,
+              shortage: w.shortage,
+              isShortage: true
+            })),
+            documentType: '청구서 (인쇄)',
+            timestamp: Date.now(),
+            // ✅ 콜백 함수 추가
+            onConfirm: () => {
+              // "무시하고 인쇄" 클릭 시 실행
+              proceedWithPrint();
+            },
+            onCancel: () => {
+              alert('인쇄가 취소되었습니다.\n재고는 감소되지 않았습니다.');
+            }
           }
-          
-          message += '\n재고 관리 탭에서 부족한 부품을 확인하세요.';
+        }));
+
+        return;  // ✅ 여기서 리턴 (패널에서 선택하도록)
+      }
+    }
+
+    // 재고 부족 없으면 바로 인쇄
+    await proceedWithPrint();
+  };
+
+  // ✅ 실제 인쇄 로직 분리
+  const proceedWithPrint = async () => {
+    // ✅ 1. 브라우저 인쇄 다이얼로그 표시
+    window.print();
+
+    // ✅ 2. 인쇄 다이얼로그가 닫힌 후 재고 감소 여부 확인
+    setTimeout(async () => {
+      const confirmDeduct = window.confirm(
+        '인쇄가 완료되었습니까?\n\n' +
+        '✅ 확인: 재고 감소 (부족한 부품은 0으로 처리)\n' +
+        '❌ 취소: 재고 유지'
+      );
+
+      if (confirmDeduct && cart && cart.length > 0) {
+        // ✅ 재고 감소 실행 (청구서 생성 플로우: cart에 bom 없으면 formData.materials 사용)
+        const materialsForDeduct = !cart.every(i => !i.bom?.length)
+          ? cart
+          : (formData.materials?.length > 0 ? formData.materials.filter(m => !m.isService) : undefined);
+        const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, materialsForDeduct);
+
+        if (result.success) {
+          let message = '✅ 재고가 감소되었습니다.\n\n';
+
+          // ✅ 정상 감소된 부품
+          const normalParts = result.deductedParts.filter(p => !p.wasShortage);
+          const shortageParts = result.deductedParts.filter(p => p.wasShortage);
+
+          if (normalParts.length > 0) {
+            message += `📦 정상 감소: ${normalParts.length}개 부품\n`;
+          }
+
+          // ✅ 부족하여 0으로 처리된 부품
+          if (shortageParts.length > 0) {
+            message += `⚠️ 재고 부족 (0으로 처리): ${shortageParts.length}개 부품\n\n`;
+
+            // 최대 3개만 표시
+            const displayParts = shortageParts.slice(0, 3);
+            displayParts.forEach(p => {
+              message += `  • ${p.name}: ${p.deducted}개 감소 → 재고 0\n`;
+            });
+
+            if (shortageParts.length > 3) {
+              message += `  • 외 ${shortageParts.length - 3}개 부품...\n`;
+            }
+
+            message += '\n재고 관리 탭에서 부족한 부품을 확인하세요.';
+          }
+
+          alert(message);
+        } else {
+          alert(`❌ 재고 감소 실패: ${result.message}`);
         }
-        
-        alert(message);
       } else {
-        alert(`❌ 재고 감소 실패: ${result.message}`);
+        alert('재고가 감소되지 않았습니다.');
       }
-    } else {
-      alert('재고가 감소되지 않았습니다.');
+    }, 500);
+  };
+
+  // ✅ FAX 전송 버튼 클릭 시 - 재고부터 체크 후 PDF 생성
+  const handleFaxPreview = async () => {
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호(문서번호)를 입력해주세요.');
+      documentNumberInputRef.current?.focus();
+      return;
     }
-  }, 500);
-};
 
-// ✅ FAX 전송 버튼 클릭 시 - 재고부터 체크 후 PDF 생성
-const handleFaxPreview = async () => {
-  if (!formData.documentNumber.trim()) {
-    alert('거래번호(문서번호)를 입력해주세요.');
-    documentNumberInputRef.current?.focus();
-    return;
-  }
+    // ✅ 1단계: 재고 체크
+    if (cart && cart.length > 0) {
+      const checkResult = await checkInventoryAvailability(cart);
 
-  // ✅ 1단계: 재고 체크
-  if (cart && cart.length > 0) {
-    const checkResult = await checkInventoryAvailability(cart);
-    
-    // ✅ 전체 BOM 목록 추출 (부족 여부 상관없이 모든 BOM)
-    const allBomItems = [];
-    cart.forEach((item) => {
-      if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
-        allBomItems.push(...item.bom);
-      }
-    });
-    
-    // ✅ 재고 부족이 있든 없든 패널 표시 (전체 BOM 현황 보여주기 위해)
-    if (checkResult.warnings && checkResult.warnings.length > 0) {
-      window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
-        detail: {
-          shortageItems: checkResult.warnings.map(w => ({
-            partId: w.partId,
-            name: w.name,
-            specification: w.specification,
-            rackType: w.rackType,
-            quantity: w.required,
-            requiredQuantity: w.required,
-            serverInventory: w.available,
-            shortage: w.shortage,
-            isShortage: true,
-            colorWeight: w.colorWeight || ''
-          })),
-          allBomItems: allBomItems,  // ✅ 전체 BOM 추가
-          documentType: '청구서 (FAX)',
-          timestamp: Date.now(),
-          onConfirm: () => {
-            // "무시하고 진행" 클릭 시
-            proceedWithFaxPreview();
-          },
-          onCancel: () => {
-            alert('FAX 전송이 취소되었습니다.');
-          }
+      // ✅ 전체 BOM 목록 추출 (부족 여부 상관없이 모든 BOM)
+      const allBomItems = [];
+      cart.forEach((item) => {
+        if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+          allBomItems.push(...item.bom);
         }
-      }));
-      
-      return;  // ✅ 패널에서 사용자 선택 대기
+      });
+
+      // ✅ 재고 부족이 있든 없든 패널 표시 (전체 BOM 현황 보여주기 위해)
+      if (checkResult.warnings && checkResult.warnings.length > 0) {
+        window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
+          detail: {
+            shortageItems: checkResult.warnings.map(w => ({
+              partId: w.partId,
+              name: w.name,
+              specification: w.specification,
+              rackType: w.rackType,
+              quantity: w.required,
+              requiredQuantity: w.required,
+              serverInventory: w.available,
+              shortage: w.shortage,
+              isShortage: true,
+              colorWeight: w.colorWeight || ''
+            })),
+            allBomItems: allBomItems,  // ✅ 전체 BOM 추가
+            documentType: '청구서 (FAX)',
+            timestamp: Date.now(),
+            onConfirm: () => {
+              // "무시하고 진행" 클릭 시
+              proceedWithFaxPreview();
+            },
+            onCancel: () => {
+              alert('FAX 전송이 취소되었습니다.');
+            }
+          }
+        }));
+
+        return;  // ✅ 패널에서 사용자 선택 대기
+      }
     }
-  }
 
-  // 재고 부족 없으면 바로 PDF 생성
-  await proceedWithFaxPreview();
-};
+    // 재고 부족 없으면 바로 PDF 생성
+    await proceedWithFaxPreview();
+  };
 
-// ✅ 실제 PDF 생성 및 FAX 모달 표시
-const proceedWithFaxPreview = async () => {
-  try {
-    const docElement = document.querySelector('.purchase-order-form-container');
-    if (!docElement) { alert('문서 영역을 찾을 수 없습니다.'); return; }
+  // ✅ 실제 PDF 생성 및 FAX 모달 표시
+  const proceedWithFaxPreview = async () => {
+    try {
+      const docElement = document.querySelector('.purchase-order-form-container');
+      if (!docElement) { alert('문서 영역을 찾을 수 없습니다.'); return; }
 
-    // ✅ 캡처 모드 ON
-    docElement.classList.add('fax-capture');
+      // ✅ 캡처 모드 ON
+      docElement.classList.add('fax-capture');
 
-    const base64 = await convertDOMToPDFBase64(docElement);
+      const base64 = await convertDOMToPDFBase64(docElement);
 
-    setPdfBase64(base64);
-    setPdfBlobURL(base64ToBlobURL(base64));
-    setShowFaxModal(true);
-  } catch (e) {
-    console.error(e);
-    alert(`PDF 생성에 실패했습니다.\n오류: ${e.message}`);
-  } finally {
-    // ✅ 캡처 모드 OFF
-    const el = document.querySelector('.purchase-order-form-container');
-    el?.classList.remove('fax-capture');
-  }
-};
-  
-// ✅ handleSendFax는 이제 재고 체크 없이 바로 전송만 수행
-const handleSendFax = async (faxNumber) => {
-  if (!pdfBase64) {
-    alert('PDF가 생성되지 않았습니다.');
-    return;
-  }
+      setPdfBase64(base64);
+      setPdfBlobURL(base64ToBlobURL(base64));
+      setShowFaxModal(true);
+    } catch (e) {
+      console.error(e);
+      alert(`PDF 생성에 실패했습니다.\n오류: ${e.message}`);
+    } finally {
+      // ✅ 캡처 모드 OFF
+      const el = document.querySelector('.purchase-order-form-container');
+      el?.classList.remove('fax-capture');
+    }
+  };
 
-  try {
-    const result = await sendFax(
-      pdfBase64,
-      faxNumber,
-      formData.companyName,
-      ''
-    );
+  // ✅ handleSendFax는 이제 재고 체크 없이 바로 전송만 수행
+  const handleSendFax = async (faxNumber) => {
+    if (!pdfBase64) {
+      alert('PDF가 생성되지 않았습니다.');
+      return;
+    }
 
-    if (result.success) {
-      alert(
-        `✅ 팩스 전송이 완료되었습니다!\n\n` +
-        `📄 발송번호: ${result.jobNo}\n` +
-        `📑 페이지 수: ${result.pages}장\n` +
-        `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+    try {
+      const result = await sendFax(
+        pdfBase64,
+        faxNumber,
+        formData.companyName,
+        ''
       );
-      setShowFaxModal(false);
-      
-      // ✅ FAX 전송 성공 후 재고 감소
-      if (cart && cart.length > 0) {
-        const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length) ? formData.materials : undefined;
-        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
-        
-        if (deductResult.success) {
-          if (deductResult.warnings && deductResult.warnings.length > 0) {
-            console.warn(`⚠️ ${deductResult.warnings.length}개 부품 재고 부족`);
+
+      if (result.success) {
+        alert(
+          `✅ 팩스 전송이 완료되었습니다!\n\n` +
+          `📄 발송번호: ${result.jobNo}\n` +
+          `📑 페이지 수: ${result.pages}장\n` +
+          `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+        );
+        setShowFaxModal(false);
+
+        // ✅ FAX 전송 성공 후 재고 감소
+        if (cart && cart.length > 0) {
+          const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length)
+            ? formData.materials.filter(m => !m.isService)
+            : undefined;
+          const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
+
+          if (deductResult.success) {
+            if (deductResult.warnings && deductResult.warnings.length > 0) {
+              console.warn(`⚠️ ${deductResult.warnings.length}개 부품 재고 부족`);
+            } else {
+              console.log('✅ 재고가 정상적으로 감소되었습니다.');
+            }
           } else {
-            console.log('✅ 재고가 정상적으로 감소되었습니다.');
+            console.error(`❌ 재고 감소 실패: ${deductResult.message}`);
           }
-        } else {
-          console.error(`❌ 재고 감소 실패: ${deductResult.message}`);
         }
+      } else {
+        throw new Error(result.error || '알 수 없는 오류');
       }
-    } else {
-      throw new Error(result.error || '알 수 없는 오류');
-    }
-  } catch (error) {
-    console.error('❌ 팩스 전송 오류:', error);
-    
-    let errorMessage = '팩스 전송에 실패했습니다.\n\n';
-    
-    if (error.message.includes('잔액')) {
-      errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
-    } else if (error.message.includes('타임아웃')) {
-      errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
-    } else if (error.message.includes('네트워크')) {
-      errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
-    } else {
-      errorMessage += `오류: ${error.message}`;
-    }
-    
-    alert(errorMessage);
-  }
-};
+    } catch (error) {
+      console.error('❌ 팩스 전송 오류:', error);
 
-// ✅ 실제 FAX 전송 로직 분리
-const proceedWithFax = async (faxNumber) => {
-  try {
-    const result = await sendFax(
-      pdfBase64,
-      faxNumber,
-      formData.companyName,
-      ''
-    );
+      let errorMessage = '팩스 전송에 실패했습니다.\n\n';
 
-    if (result.success) {
-      alert(
-        `✅ 팩스 전송이 완료되었습니다!\n\n` +
-        `📄 발송번호: ${result.jobNo}\n` +
-        `📑 페이지 수: ${result.pages}장\n` +
-        `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+      if (error.message.includes('잔액')) {
+        errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
+      } else if (error.message.includes('타임아웃')) {
+        errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
+      } else if (error.message.includes('네트워크')) {
+        errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
+      } else {
+        errorMessage += `오류: ${error.message}`;
+      }
+
+      alert(errorMessage);
+    }
+  };
+
+  // ✅ 실제 FAX 전송 로직 분리
+  const proceedWithFax = async (faxNumber) => {
+    try {
+      const result = await sendFax(
+        pdfBase64,
+        faxNumber,
+        formData.companyName,
+        ''
       );
-      setShowFaxModal(false);
-      
-      // ✅ FAX 전송 성공 후 재고 감소
-      if (cart && cart.length > 0) {
-        const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length) ? formData.materials : undefined;
-        const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
-        
-        if (deductResult.success) {
-          if (deductResult.warnings && deductResult.warnings.length > 0) {
-            console.warn(`⚠️ ${deductResult.warnings.length}개 부품 재고 부족`);
-          } else {
-            console.log('✅ 재고가 정상적으로 감소되었습니다.');
-          }
-        } else {
-          console.error(`❌ 재고 감소 실패: ${deductResult.message}`);
-        }
-      }
-    } else {
-      throw new Error(result.error || '알 수 없는 오류');
-    }
-  } catch (error) {
-    console.error('❌ 팩스 전송 오류:', error);
-    
-    let errorMessage = '팩스 전송에 실패했습니다.\n\n';
-    
-    if (error.message.includes('잔액')) {
-      errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
-    } else if (error.message.includes('타임아웃')) {
-      errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
-    } else if (error.message.includes('네트워크')) {
-      errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
-    } else {
-      errorMessage += `오류: ${error.message}`;
-    }
-    
-    alert(errorMessage);
-  }
-};
 
-    const handleCreatePurchase = () => {
+      if (result.success) {
+        alert(
+          `✅ 팩스 전송이 완료되었습니다!\n\n` +
+          `📄 발송번호: ${result.jobNo}\n` +
+          `📑 페이지 수: ${result.pages}장\n` +
+          `💰 남은 잔액: ${(result.cash || 0).toLocaleString()}원`
+        );
+        setShowFaxModal(false);
+
+        // ✅ FAX 전송 성공 후 재고 감소
+        if (cart && cart.length > 0) {
+          const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length)
+            ? formData.materials.filter(m => !m.isService)
+            : undefined;
+          const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
+
+          if (deductResult.success) {
+            if (deductResult.warnings && deductResult.warnings.length > 0) {
+              console.warn(`⚠️ ${deductResult.warnings.length}개 부품 재고 부족`);
+            } else {
+              console.log('✅ 재고가 정상적으로 감소되었습니다.');
+            }
+          } else {
+            console.error(`❌ 재고 감소 실패: ${deductResult.message}`);
+          }
+        }
+      } else {
+        throw new Error(result.error || '알 수 없는 오류');
+      }
+    } catch (error) {
+      console.error('❌ 팩스 전송 오류:', error);
+
+      let errorMessage = '팩스 전송에 실패했습니다.\n\n';
+
+      if (error.message.includes('잔액')) {
+        errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
+      } else if (error.message.includes('타임아웃')) {
+        errorMessage += '❌ 서버 응답 시간 초과\n잠시 후 다시 시도해주세요.';
+      } else if (error.message.includes('네트워크')) {
+        errorMessage += '❌ 네트워크 연결 오류\n인터넷 연결을 확인해주세요.';
+      } else {
+        errorMessage += `오류: ${error.message}`;
+      }
+
+      alert(errorMessage);
+    }
+  };
+
+  const handleCreatePurchase = () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호를 먼저 입력해주세요.');
       documentNumberInputRef.current?.focus();
       return;
     }
-    
+
     // 현재 formData를 청구서로 전달
     navigate('/purchase-order/new', {
       state: {
@@ -971,7 +951,7 @@ const proceedWithFax = async (faxNumber) => {
       documentNumberInputRef.current?.focus();
       return;
     }
-    
+
     // 현재 formData를 거래명세서로 전달
     navigate('/delivery-note/new', {
       state: {
@@ -999,131 +979,132 @@ const proceedWithFax = async (faxNumber) => {
     setPdfBase64(null);
   };
 
-// ✅ 추가: 재고 체크만 수행하는 함수 (감소는 안 함)
-const checkInventoryAvailability = async (cartItems) => {
-  if (!cartItems || !Array.isArray(cartItems)) {
-    return { success: true, warnings: [] };
-  }
-  
-  try {
-    const { inventoryService } = await import('../services/InventoryService');
-    let serverInventory;
-    
+  // ✅ 추가: 재고 체크만 수행하는 함수 (감소는 안 함)
+  const checkInventoryAvailability = async (cartItems) => {
+    if (!cartItems || !Array.isArray(cartItems)) {
+      return { success: true, warnings: [] };
+    }
+
     try {
-      serverInventory = await inventoryService.getInventory();
-      console.log('✅ 서버 재고 데이터 로드 성공:', Object.keys(serverInventory).length, '개 항목');
-    } catch (serverError) {
-      console.warn('⚠️ 서버 재고 데이터 로드 실패, 로컬스토리지 사용:', serverError);
-      const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-      serverInventory = localInventory;
-      console.log('📦 로컬스토리지 재고 데이터 사용:', Object.keys(serverInventory).length, '개 항목');
-      
-      if (Object.keys(serverInventory).length === 0) {
-        console.warn('⚠️ 로컬스토리지 재고 데이터도 없음, 재고 체크 건너뜀');
-        return {
-          success: true,
-          warnings: [],
-          message: '재고 데이터를 불러올 수 없어 재고 체크를 건너뜁니다.'
-        };
+      const { inventoryService } = await import('../services/InventoryService');
+      let serverInventory;
+
+      try {
+        serverInventory = await inventoryService.getInventory();
+        console.log('✅ 서버 재고 데이터 로드 성공:', Object.keys(serverInventory).length, '개 항목');
+      } catch (serverError) {
+        console.warn('⚠️ 서버 재고 데이터 로드 실패, 로컬스토리지 사용:', serverError);
+        const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
+        serverInventory = localInventory;
+        console.log('📦 로컬스토리지 재고 데이터 사용:', Object.keys(serverInventory).length, '개 항목');
+
+        if (Object.keys(serverInventory).length === 0) {
+          console.warn('⚠️ 로컬스토리지 재고 데이터도 없음, 재고 체크 건너뜀');
+          return {
+            success: true,
+            warnings: [],
+            message: '재고 데이터를 불러올 수 없어 재고 체크를 건너뜁니다.'
+          };
+        }
       }
+
+      const warnings = [];
+
+      // ✅ 기존 로직: cart에서 BOM 확인
+      cartItems.forEach((item) => {
+        if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
+          item.bom.forEach((bomItem) => {
+            let inventoryPartId;
+            if (bomItem.inventoryPartId) {
+              inventoryPartId = bomItem.inventoryPartId;
+              console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
+            } else {
+              inventoryPartId = generateInventoryPartId({
+                rackType: bomItem.rackType || '',
+                name: bomItem.name || '',
+                specification: bomItem.specification || '',
+                colorWeight: bomItem.colorWeight || ''
+              });
+              console.log(`  🔑 generateInventoryPartId로 생성: "${inventoryPartId}"`);
+            }
+
+            const requiredQty = Number(bomItem.quantity) || 0;
+            const currentStock = Number(serverInventory[inventoryPartId]) || 0;
+
+            console.log(`  📊 서버 재고: ${currentStock}개`);
+            console.log(`  📈 필요 수량: ${requiredQty}개`);
+
+            if (requiredQty > 0 && currentStock < requiredQty) {
+              const shortage = requiredQty - currentStock;
+              console.log(`  ⚠️ 재고 부족: ${currentStock} → ${requiredQty} (부족: ${shortage}개)`);
+              warnings.push({
+                partId: inventoryPartId,
+                name: bomItem.name,
+                specification: bomItem.specification || '',
+                rackType: bomItem.rackType || '',
+                required: requiredQty,
+                available: currentStock,
+                shortage: shortage
+              });
+            } else {
+              console.log(`  ✅ 재고 충분: ${currentStock} >= ${requiredQty}`);
+            }
+          });
+        }
+      });
+
+      // ✅ 추가 로직: cart에 bom이 없으면 formData.materials 사용
+      if (warnings.length === 0 && cartItems.every(item => !item.bom || item.bom.length === 0)) {
+        console.log('📦 cart에 BOM 없음 - formData.materials 사용');
+
+        if (formData.materials && formData.materials.length > 0) {
+          formData.materials.forEach((material) => {
+            if (material.isService) return; // ✅ 서비스 항목(공임, 운임)은 재고 체크 제외
+            let inventoryPartId;
+            if (material.inventoryPartId) {
+              inventoryPartId = material.inventoryPartId;
+            } else {
+              inventoryPartId = generateInventoryPartId({
+                rackType: material.rackType || '',
+                name: material.name || '',
+                specification: material.specification || '',
+                colorWeight: material.colorWeight || ''
+              });
+            }
+
+            const requiredQty = Number(material.quantity) || 0;
+            const currentStock = Number(serverInventory[inventoryPartId]) || 0;
+
+            if (requiredQty > 0 && currentStock < requiredQty) {
+              const shortage = requiredQty - currentStock;
+              warnings.push({
+                partId: inventoryPartId,
+                name: material.name,
+                specification: material.specification || '',
+                rackType: material.rackType || '',
+                required: requiredQty,
+                available: currentStock,
+                shortage: shortage
+              });
+            }
+          });
+        }
+      }
+
+      return {
+        success: true,
+        warnings
+      };
+
+    } catch (error) {
+      console.error('❌ 재고 체크 실패:', error);
+      return {
+        success: true,
+        warnings: [],
+        message: '재고 체크 중 오류가 발생하여 재고 체크를 건너뜁니다: ' + error.message
+      };
     }
-    
-    const warnings = [];
-    
-    // ✅ 기존 로직: cart에서 BOM 확인
-    cartItems.forEach((item) => {
-      if (item.bom && Array.isArray(item.bom) && item.bom.length > 0) {
-        item.bom.forEach((bomItem) => {
-          let inventoryPartId;
-          if (bomItem.inventoryPartId) {
-            inventoryPartId = bomItem.inventoryPartId;
-            console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
-          } else {
-            inventoryPartId = generateInventoryPartId({
-              rackType: bomItem.rackType || '',
-              name: bomItem.name || '',
-              specification: bomItem.specification || '',
-              colorWeight: bomItem.colorWeight || ''
-            });
-            console.log(`  🔑 generateInventoryPartId로 생성: "${inventoryPartId}"`);
-          }
-          
-          const requiredQty = Number(bomItem.quantity) || 0;
-          const currentStock = Number(serverInventory[inventoryPartId]) || 0;
-          
-          console.log(`  📊 서버 재고: ${currentStock}개`);
-          console.log(`  📈 필요 수량: ${requiredQty}개`);
-          
-          if (requiredQty > 0 && currentStock < requiredQty) {
-            const shortage = requiredQty - currentStock;
-            console.log(`  ⚠️ 재고 부족: ${currentStock} → ${requiredQty} (부족: ${shortage}개)`);
-            warnings.push({
-              partId: inventoryPartId,
-              name: bomItem.name,
-              specification: bomItem.specification || '',
-              rackType: bomItem.rackType || '',
-              required: requiredQty,
-              available: currentStock,
-              shortage: shortage
-            });
-          } else {
-            console.log(`  ✅ 재고 충분: ${currentStock} >= ${requiredQty}`);
-          }
-        });
-      }
-    });
-    
-    // ✅ 추가 로직: cart에 bom이 없으면 formData.materials 사용
-    if (warnings.length === 0 && cartItems.every(item => !item.bom || item.bom.length === 0)) {
-      console.log('📦 cart에 BOM 없음 - formData.materials 사용');
-      
-      if (formData.materials && formData.materials.length > 0) {
-        formData.materials.forEach((material) => {
-          let inventoryPartId;
-          if (material.inventoryPartId) {
-            inventoryPartId = material.inventoryPartId;
-          } else {
-            inventoryPartId = generateInventoryPartId({
-              rackType: material.rackType || '',
-              name: material.name || '',
-              specification: material.specification || '',
-              colorWeight: material.colorWeight || ''
-            });
-          }
-          
-          const requiredQty = Number(material.quantity) || 0;
-          const currentStock = Number(serverInventory[inventoryPartId]) || 0;
-          
-          if (requiredQty > 0 && currentStock < requiredQty) {
-            const shortage = requiredQty - currentStock;
-            warnings.push({
-              partId: inventoryPartId,
-              name: material.name,
-              specification: material.specification || '',
-              rackType: material.rackType || '',
-              required: requiredQty,
-              available: currentStock,
-              shortage: shortage
-            });
-          }
-        });
-      }
-    }
-    
-    return {
-      success: true,
-      warnings
-    };
-    
-  } catch (error) {
-    console.error('❌ 재고 체크 실패:', error);
-    return {
-      success: true,
-      warnings: [],
-      message: '재고 체크 중 오류가 발생하여 재고 체크를 건너뜁니다: ' + error.message
-    };
-  }
-};
+  };
 
   return (
     <div className="purchase-order-form-container">
@@ -1159,30 +1140,30 @@ const checkInventoryAvailability = async (cartItems) => {
         <table className="form-table info-table compact">
           <tbody>
             <tr>
-              <td className="label" style={{width:110}}>거래일자</td>
+              <td className="label" style={{ width: 110 }}>거래일자</td>
               <td>
-                <div style={{display:'flex', gap:'8px', alignItems:'center', width:'100%'}}>
-                  <div style={{flex:'0 0 55%'}}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: '0 0 55%' }}>
                     <input
                       type="date"
                       value={formData.date}
-                      onChange={e=>updateFormData('date', e.target.value)}
-                      style={{fontSize:'14px', fontWeight:600, padding:'3px 4px', width:'100%'}}
+                      onChange={e => updateFormData('date', e.target.value)}
+                      style={{ fontSize: '14px', fontWeight: 600, padding: '3px 4px', width: '100%' }}
                     />
                   </div>
-                  <div style={{display:'flex', flexDirection:'column', flex:'0 0 45%', paddingLeft:'4px'}}>
-                    <label style={{fontSize:'11px', fontWeight:600, marginBottom:2}}>거래번호</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: '0 0 45%', paddingLeft: '4px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: 2 }}>거래번호</label>
                     <input
                       ref={documentNumberInputRef}
                       type="text"
                       value={formData.documentNumber}
-                      onChange={e=>{
+                      onChange={e => {
                         documentNumberInputRef.current?.classList.remove('invalid');
                         updateFormData('documentNumber', e.target.value);
                         updateFormData('purchaseNumber', e.target.value);
                       }}
                       placeholder=""
-                      style={{padding:'3px 4px', fontSize:'18px', fontWeight:'bold', color:'#000000', width:'100%'}}
+                      style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: '#000000', width: '100%' }}
                     />
                   </div>
                 </div>
@@ -1196,7 +1177,7 @@ const checkInventoryAvailability = async (cartItems) => {
                 <input
                   type="text"
                   value={formData.bizNumber}
-                  onChange={e=>updateFormData('bizNumber', e.target.value)}
+                  onChange={e => updateFormData('bizNumber', e.target.value)}
                   placeholder=""
                 />
               </td>
@@ -1209,12 +1190,12 @@ const checkInventoryAvailability = async (cartItems) => {
                 <input
                   type="text"
                   value={formData.companyName}
-                  onChange={e=>updateFormData('companyName', e.target.value)}
+                  onChange={e => updateFormData('companyName', e.target.value)}
                   placeholder="" /* 상호명 입력 placeholder 제거 */
                 />
               </td>
               <td className="label">대표자</td>
-              <td className="rep-cell" style={{whiteSpace:'nowrap'}}>
+              <td className="rep-cell" style={{ whiteSpace: 'nowrap' }}>
                 <span className="ceo-inline">
                   <span className="ceo-name">{displaySettings.ceo}</span>
                   {PROVIDER.stampImage && (
@@ -1233,7 +1214,7 @@ const checkInventoryAvailability = async (cartItems) => {
                 <textarea
                   className="estimate-memo memo-narrow"
                   value={formData.topMemo}
-                  onChange={e=>updateFormData('topMemo', e.target.value)}
+                  onChange={e => updateFormData('topMemo', e.target.value)}
                   placeholder=""
                 />
               </td>
@@ -1257,29 +1238,29 @@ const checkInventoryAvailability = async (cartItems) => {
       </div>
 
       {/* 품목 목록 */}
-      <h3 style={{margin:'14px 0 6px', fontSize:16}}>품목 목록</h3>
+      <h3 style={{ margin: '14px 0 6px', fontSize: 16 }}>품목 목록</h3>
       <table className="form-table order-table">
         <thead>
           <tr>
-            <th style={{width:'50px'}}>NO</th>
+            <th style={{ width: '50px' }}>NO</th>
             <th>품명</th>
-            <th style={{width:'70px'}}>단위</th>
-            <th style={{width:'90px'}}>수량</th>
-            <th style={{width:'110px'}}>단가</th>
-            <th style={{width:'120px'}}>공급가</th>
-            <th style={{width:'120px'}}>비고</th>
-            <th className="no-print" style={{width:'70px'}}>작업</th>
+            <th style={{ width: '70px' }}>단위</th>
+            <th style={{ width: '90px' }}>수량</th>
+            <th style={{ width: '110px' }}>단가</th>
+            <th style={{ width: '120px' }}>공급가</th>
+            <th style={{ width: '120px' }}>비고</th>
+            <th className="no-print" style={{ width: '70px' }}>작업</th>
           </tr>
         </thead>
         <tbody>
           {formData.items.map((it, idx) => (
             <tr key={`item-${idx}`}>
-              <td>{idx+1}</td>
+              <td>{idx + 1}</td>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input type="text" value={it.name} onChange={e=>updateItem(idx,'name',e.target.value)} placeholder="품명" style={{ flex: 1 }} />
+                  <input type="text" value={it.name} onChange={e => updateItem(idx, 'name', e.target.value)} placeholder="품명" style={{ flex: 1 }} />
                   {it.note === '추가옵션' && (
-                    <span style={{ 
+                    <span style={{
                       fontSize: '10px',
                       color: '#17a2b8',
                       backgroundColor: '#d1ecf1',
@@ -1293,13 +1274,13 @@ const checkInventoryAvailability = async (cartItems) => {
                   )}
                 </div>
               </td>
-              <td><input type="text" value={it.unit} onChange={e=>updateItem(idx,'unit',e.target.value)} placeholder="단위" /></td>
-              <td><input type="number" value={it.quantity} onChange={e=>updateItem(idx,'quantity',e.target.value)} placeholder="수량" /></td>
-              <td><input type="number" value={it.unitPrice} onChange={e=>updateItem(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
-              <td className="right">{it.totalPrice?parseInt(it.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={it.note} onChange={e=>updateItem(idx,'note',e.target.value)} placeholder="" /></td>
+              <td><input type="text" value={it.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} placeholder="단위" /></td>
+              <td><input type="number" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} placeholder="수량" /></td>
+              <td><input type="number" value={it.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} placeholder="단가" /></td>
+              <td className="right">{it.totalPrice ? parseInt(it.totalPrice).toLocaleString() : '0'}</td>
+              <td><input type="text" value={it.note} onChange={e => updateItem(idx, 'note', e.target.value)} placeholder="" /></td>
               <td className="no-print">
-                <button type="button" onClick={()=>removeItem(idx)} disabled={formData.items.length===1} className="remove-btn">삭제</button>
+                <button type="button" onClick={() => removeItem(idx)} disabled={formData.items.length === 1} className="remove-btn">삭제</button>
               </td>
             </tr>
           ))}
@@ -1309,46 +1290,42 @@ const checkInventoryAvailability = async (cartItems) => {
       <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
         <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
       </div>
-      <ItemSelector
-        isOpen={showItemSelector}
-        onClose={() => setShowItemSelector(false)}
-        onAdd={handleItemAdd}
-      />
+      {/* ItemSelector 제거됨 */}
 
       {/* BOM */}
-      <h3 style={{margin:'14px 0 6px', fontSize:16}}>원자재 명세서</h3>
+      <h3 style={{ margin: '14px 0 6px', fontSize: 16 }}>원자재 명세서</h3>
       <table className="form-table bom-table">
         <thead>
           <tr>
-            <th style={{width:'50px'}}>NO</th>
-            <th style={{width:'350px'}}>부품명</th>
-            <th className="spec-col" style={{width:'150px'}}>규격</th>
-            <th style={{width:'70px'}}>수량</th>
-            <th style={{width:'70px', display:'none'}}>단가</th>
-            <th style={{width:'90px', display:'none'}}>금액</th>
-            <th style={{width:'90px'}}>비고</th>
-            <th className="no-print" style={{width:'70px'}}>작업</th>
+            <th style={{ width: '50px' }}>NO</th>
+            <th style={{ width: '350px' }}>부품명</th>
+            <th className="spec-col" style={{ width: '150px' }}>규격</th>
+            <th style={{ width: '70px' }}>수량</th>
+            <th style={{ width: '70px', display: 'none' }}>단가</th>
+            <th style={{ width: '90px', display: 'none' }}>금액</th>
+            <th style={{ width: '90px' }}>비고</th>
+            <th className="no-print" style={{ width: '70px' }}>작업</th>
           </tr>
         </thead>
         <tbody>
           {formData.materials.map((m, idx) => (
             <tr key={`mat-${idx}`}>
-              <td>{idx+1}</td>
-              <td><input type="text" value={m.name} onChange={e=>updateMaterial(idx,'name',e.target.value)} placeholder="부품명" /></td>
+              <td>{idx + 1}</td>
+              <td><input type="text" value={m.name} onChange={e => updateMaterial(idx, 'name', e.target.value)} placeholder="부품명" /></td>
               <td className="spec-cell">
                 <input
                   type="text"
                   value={m.specification}
-                  onChange={e=>updateMaterial(idx,'specification',e.target.value)}
+                  onChange={e => updateMaterial(idx, 'specification', e.target.value)}
                   placeholder=""
                 />
               </td>
-              <td><input type="number" value={m.quantity} onChange={e=>updateMaterial(idx,'quantity',e.target.value)} placeholder="수량" /></td>
-              <td style={{display:'none'}}><input type="number" value={m.unitPrice} onChange={e=>updateMaterial(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
-              <td style={{display:'none'}} className="right">{m.totalPrice?parseInt(m.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={m.note} onChange={e=>updateMaterial(idx,'note',e.target.value)} placeholder="" /></td>
+              <td><input type="number" value={m.quantity} onChange={e => updateMaterial(idx, 'quantity', e.target.value)} placeholder="수량" /></td>
+              <td style={{ display: 'none' }}><input type="number" value={m.unitPrice} onChange={e => updateMaterial(idx, 'unitPrice', e.target.value)} placeholder="단가" /></td>
+              <td style={{ display: 'none' }} className="right">{m.totalPrice ? parseInt(m.totalPrice).toLocaleString() : '0'}</td>
+              <td><input type="text" value={m.note} onChange={e => updateMaterial(idx, 'note', e.target.value)} placeholder="" /></td>
               <td className="no-print">
-                <button type="button" onClick={()=>removeMaterial(idx)} className="remove-btn">삭제</button>
+                <button type="button" onClick={() => removeMaterial(idx)} className="remove-btn">삭제</button>
               </td>
             </tr>
           ))}
@@ -1374,16 +1351,16 @@ const checkInventoryAvailability = async (cartItems) => {
         <label>비고:</label>
         <textarea
           value={formData.notes}
-          onChange={e=>updateFormData('notes', e.target.value)}
+          onChange={e => updateFormData('notes', e.target.value)}
           placeholder="기타 사항"
           rows={4}
         />
       </div>
 
       <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
-        <button 
-          type="button" 
-          onClick={handleSave} 
+        <button
+          type="button"
+          onClick={handleSave}
           className="save-btn"
           ref={saveButtonRef}
         >
@@ -1393,7 +1370,7 @@ const checkInventoryAvailability = async (cartItems) => {
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
-      
+
       {/* ✅ 토스트 알림 */}
       <ToastNotification
         show={toast.show}
@@ -1403,7 +1380,7 @@ const checkInventoryAvailability = async (cartItems) => {
         duration={2000}
         onClose={() => setToast({ ...toast, show: false })}
       />
-      
+
       {/* ✅ 확인 다이얼로그 */}
       <ConfirmDialog
         show={confirmDialog.show}
@@ -1426,7 +1403,7 @@ const checkInventoryAvailability = async (cartItems) => {
           onSendFax={handleSendFax}
         />
       )}
-      
+
       {/* ✅ 문서 양식 설정 모달 */}
       <DocumentSettingsModal
         isOpen={showSettingsModal}
@@ -1448,12 +1425,12 @@ function findDocumentByNumber(docNumber, docType) {
       try {
         const data = JSON.parse(localStorage.getItem(key));
         const checkNumber = docType === 'estimate' ? data.estimateNumber :
-                           docType === 'purchase' ? data.purchaseNumber :
-                           data.documentNumber;
+          docType === 'purchase' ? data.purchaseNumber :
+            data.documentNumber;
         if (checkNumber === docNumber) {
           return data;
         }
-      } catch {}
+      } catch { }
     }
   }
   return null;

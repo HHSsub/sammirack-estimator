@@ -49,7 +49,7 @@ const HistoryPage = () => {
   // ✅ 정렬 상태
   // ✅ localStorage에서 정렬 설정 불러오기
   const [sortColumn, setSortColumn] = useState(() => {
-    return localStorage.getItem('historyPage_sortColumn') || 'date';  // ✅ 기본값: 날짜
+    return localStorage.getItem('historyPage_sortColumn') || 'updatedAt';  // ✅ 기본값: 수정날짜(updated-date)
   });
   const [sortDirection, setSortDirection] = useState(() => {
     return localStorage.getItem('historyPage_sortDirection') || 'desc';
