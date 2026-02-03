@@ -99,11 +99,11 @@ function App() {
 }
 
 const HomePage = ({ currentUser }) => {
-  const location = useLocation();  // ✅ 추가
-  const navigate = useNavigate();  // ✅ 추가
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
     currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView,
-    selectedType, selectedOptions, setCart, handleExtraOptionChange  // ✅ handleExtraOptionChange 추가
+    selectedType, selectedOptions, setCart, handleExtraOptionChange
   } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
@@ -113,8 +113,14 @@ const HomePage = ({ currentUser }) => {
   const editingData = location.state || {};
   const isEditMode = !!editingData.editingDocumentId;
 
+  // ✅ 복원 완료 플래그 (한 번만 실행하기 위해)
+  const restoredDocIdRef = React.useRef(null);
+
   useEffect(() => {
-    if (isEditMode && editingData.cart) {
+    // ✅ 이미 복원한 문서면 다시 실행 안 함
+    if (isEditMode && editingData.cart && restoredDocIdRef.current !== editingData.editingDocumentId) {
+      restoredDocIdRef.current = editingData.editingDocumentId;  // ✅ 복원 완료 표시
+
       console.log('🔍🔍🔍 HomePage: 편집 모드 데이터 복원 🔍🔍🔍');
       console.log('📄 editingData:', editingData);
       console.log('🛒 원본 cart:', editingData.cart);
@@ -140,14 +146,13 @@ const HomePage = ({ currentUser }) => {
 
             console.log(`\n🔍 [Item ${index + 1}] ${newItem.displayName || newItem.name}`);
 
-            // 1순위: customPrice (사용자 직접 수정)
-            // ✅ 수정: item.price도 확인 (서버에서 불러온 가격)
-            const savedPrice = newItem.customPrice || item.price || 0;
-            if (savedPrice > 0) {
-              console.log(`  ✅ 저장된 가격 적용: ${savedPrice}원 (customPrice=${newItem.customPrice}, price=${item.price})`);
-              newItem.customPrice = savedPrice;
-              newItem.unitPrice = savedPrice;
-              newItem.totalPrice = savedPrice * (newItem.quantity || 1);
+            // 1순위: customPrice (사용자 직접 수정) - 서버에서 price로 저장된 경우도 처리
+            const savedCustomPrice = newItem.customPrice || item.price;
+            if (savedCustomPrice && savedCustomPrice > 0) {
+              console.log(`  ✅ customPrice 적용: ${savedCustomPrice}원`);
+              newItem.customPrice = savedCustomPrice;
+              newItem.unitPrice = savedCustomPrice;
+              newItem.totalPrice = savedCustomPrice * (newItem.quantity || 1);
               newItem.price = newItem.totalPrice;
               return newItem;
             }
@@ -204,9 +209,11 @@ const HomePage = ({ currentUser }) => {
           setCart(deepCopiedCart);
         }
       })();
+    } else if (!isEditMode) {
+      // ✅ 편집 모드 종료 시 플래그 초기화
+      restoredDocIdRef.current = null;
     }
-    // }, [isEditMode, editingData.cart, editingData.materials, setCart, handleExtraOptionChange]);
-  }, [isEditMode]);
+  }, [isEditMode, editingData.editingDocumentId]);
 
 
 
