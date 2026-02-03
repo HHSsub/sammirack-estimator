@@ -1,8 +1,8 @@
 // src/components/InventoryManager.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { sortBOMByMaterialRule } from '../utils/materialSort';
-import { 
-  loadAllMaterials, 
+import {
+  loadAllMaterials,
   generatePartId,
   generateInventoryPartId,  // ✅ 추가
   generateRackOptionId,
@@ -10,10 +10,10 @@ import {
   getEffectivePrice,
   mapExtraToBaseInventoryPart  // ✅ 기타추가옵션 매핑
 } from '../utils/unifiedPriceManager';
-import { 
-  saveInventorySync, 
-  loadInventory, 
-  forceServerSync 
+import {
+  saveInventorySync,
+  loadInventory,
+  forceServerSync
 } from '../utils/realtimeAdminSync';
 import AdminPriceEditor from './AdminPriceEditor';
 
@@ -26,13 +26,13 @@ function kgLabelFix(str) {
 // ✅ 규격 표시용 함수 추가 (x 유지)
 function formatSpecification(str) {
   if (!str) return '-';
-  
+
   // * → x 변환 (700*300 → 700x300)
   let formatted = String(str).replace(/\*/g, 'x');
-  
+
   // 무게 라벨 변환도 적용
   formatted = kgLabelFix(formatted);
-  
+
   return formatted;
 }
 
@@ -44,30 +44,30 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
     console.warn('재고 감소: 유효하지 않은 카트 데이터');
     return { success: false, message: '유효하지 않은 데이터' };
   }
-  
+
   console.log(`📋 프린트 재고 감소 시작: ${documentType} ${documentNumber}`);
   console.log('📦 카트 아이템:', cartItems);
   if (materialsOverride && materialsOverride.length > 0) {
     console.log('📦 materialsOverride 사용 (BOM 대신):', materialsOverride.length, '개');
   }
-  
+
   try {
     // ✅ 1. 서버에서 최신 재고 데이터 가져오기
     const { inventoryService } = await import('../services/InventoryService');
     const serverInventory = await inventoryService.getInventory();
-    
+
     console.log('📦 서버 재고 데이터:', serverInventory);
     console.log('📦 서버 재고 항목 수:', Object.keys(serverInventory).length);
-    
+
     const deductedParts = [];
     const warnings = [];
     const updates = {};
-    
+
     // ✅ 2. 처리할 BOM/원자재 목록: materialsOverride 있으면 사용, 없으면 cartItems[].bom
     const bomItemsToProcess = (materialsOverride && Array.isArray(materialsOverride) && materialsOverride.length > 0)
       ? materialsOverride
       : cartItems.flatMap(item => (item.bom && Array.isArray(item.bom) ? item.bom : []));
-    
+
     if (bomItemsToProcess.length === 0) {
       console.log('⚠️ 재고 감소할 BOM/원자재 없음');
       return {
@@ -77,244 +77,245 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
         warnings: []
       };
     }
-    
+
     console.log(`  📦 처리할 BOM/원자재 항목 수: ${bomItemsToProcess.length}`);
-    
+
     bomItemsToProcess.forEach((bomItem, bomIndex) => {
-        // ✅ 재고용 Part ID 생성 (기타추가옵션 매핑 고려)
-        let inventoryPartId;
-        
-        // 1. BOM 아이템에 이미 inventoryPartId가 있으면 우선 사용
-        if (bomItem.inventoryPartId) {
-          inventoryPartId = bomItem.inventoryPartId;
-          console.log(`    🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
-        } else {
-          // 2. 기타추가옵션인지 확인 (스텐랙의 경우)
-          const rackType = bomItem.rackType || '';
-          const name = bomItem.name || '';
-          const spec = bomItem.specification || '';
-          
-          // 스텐랙 기타추가옵션 extraOptionId 생성
-          let extraOptionId = null;
-          if (rackType === '스텐랙') {
+      // ✅ 재고용 Part ID 생성 (기타추가옵션 매핑 고려)
+      let inventoryPartId;
+
+      // 1. BOM 아이템에 이미 inventoryPartId가 있으면 우선 사용
+      if (bomItem.inventoryPartId) {
+        inventoryPartId = bomItem.inventoryPartId;
+        console.log(`    🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
+      } else {
+        // 2. 기타추가옵션인지 확인 (스텐랙의 경우)
+        const rackType = bomItem.rackType || '';
+        const name = bomItem.name || '';
+        const spec = bomItem.specification || '';
+
+        // 스텐랙 기타추가옵션 extraOptionId 생성
+        let extraOptionId = null;
+        if (rackType === '스텐랙') {
+          const sizeMatch = name.match(/(\d+)x(\d+)/);
+          // 기둥: "75(4개 1set)", "120(4개 1set)" 등
+          const heightMatch = name.match(/^(\d+)/);
+          if (sizeMatch) {
+            // 선반: 스텐랙-50x120선반-
+            extraOptionId = `${rackType}-${sizeMatch[0]}선반-`;
+          } else if (heightMatch && (name.includes('기둥') || name.includes('set') || name.includes('('))) {
+            // 기둥: 스텐랙-75기둥- 또는 스텐랙-75(4개 1set)-
+            extraOptionId = `${rackType}-${heightMatch[1]}기둥-`;
+          }
+        } else if (rackType === '하이랙') {
+          // 하이랙 기타추가옵션 extraOptionId 생성
+          // ⚠️ 중요: 추가상품3은 name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
+          // 추가상품4 (메트그레이): 하이랙-60x108선반450kg-
+          // 추가상품5 (블루+오렌지): 하이랙-60x108선반450kg- (같은 ID지만 색상 정보로 구분)
+          const sizeMatch = name.match(/(\d+)x(\d+)/);
+          const note = bomItem.note || '';
+          const colorWeight = bomItem.colorWeight || '';
+
+          // 추가상품3 (270kg 기둥추가): name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
+          if (name.includes('(블루기둥)') || name.includes('블루기둥')) {
+            // 블루+오렌지 기둥
+            if (sizeMatch && name.includes('기둥')) {
+              extraOptionId = `${rackType}-${sizeMatch[0]}기둥-`;
+            }
+          } else if (name.includes('(메트그레이기둥)') || name.includes('메트그레이기둥') || name.includes('매트그레이기둥')) {
+            // 메트그레이 기둥
+            if (sizeMatch && name.includes('기둥')) {
+              extraOptionId = `${rackType}-${sizeMatch[0]}메트그레이기둥-`;
+            }
+          } else if (sizeMatch && (name.includes('선반') || name.includes('기둥'))) {
+            if (name.includes('450kg')) {
+              // 추가상품4/5 (450kg): 색상 정보로 구분
+              // 추가상품4는 메트그레이, 추가상품5는 블루+오렌지
+              // note나 colorWeight에서 색상 정보 확인
+              const isBlueOrange = note.includes('추가상품5') ||
+                note.includes('블루+오렌지') ||
+                note.includes('블루') && note.includes('오렌지') ||
+                colorWeight.includes('블루') && colorWeight.includes('오렌지') ||
+                name.includes('블루') && name.includes('오렌지');
+              const isMetGray = note.includes('추가상품4') ||
+                note.includes('메트그레이') ||
+                note.includes('매트그레이') ||
+                colorWeight.includes('메트그레이') ||
+                colorWeight.includes('매트그레이') ||
+                name.includes('메트그레이') ||
+                name.includes('매트그레이');
+
+              if (name.includes('선반')) {
+                extraOptionId = `${rackType}-${sizeMatch[0]}선반450kg-`;
+              } else if (name.includes('기둥')) {
+                extraOptionId = `${rackType}-${sizeMatch[0]}기둥450kg-`;
+              }
+            } else if (name.includes('270kg') || name.includes('메트그레이') || name.includes('오렌지') || name.includes('매트그레이')) {
+              // 추가상품1/2 (270kg 선반): 추가상품1은 메트그레이, 추가상품2는 오렌지
+              if (name.includes('메트그레이') || name.includes('매트그레이')) {
+                // 추가상품1 (메트그레이 선반)
+                if (name.includes('선반') && sizeMatch) {
+                  extraOptionId = `${rackType}-${sizeMatch[0]}매트그레이선반-`;
+                }
+              } else if (name.includes('오렌지')) {
+                // 추가상품2 (오렌지 선반)
+                if (name.includes('선반') && sizeMatch) {
+                  extraOptionId = `${rackType}-${sizeMatch[0]}선반-`;
+                }
+              }
+              // 추가상품3 (270kg 기둥) - 위에서 이미 처리됨
+            } else if (name.includes('600kg') || (name.includes('블루') && name.includes('오렌지'))) {
+              // 추가상품6 (600kg 블루+오렌지)
+              if (sizeMatch && (name.includes('선반') || name.includes('빔'))) {
+                extraOptionId = `${rackType}-${sizeMatch[0]}선반+빔-`;
+              }
+            }
+          }
+        }
+
+        // 3. 기타추가옵션 매핑 확인
+        if (extraOptionId) {
+          // ⚠️ 하이랙 추가상품5 (블루+오렌지 450kg)는 매핑 테이블에 없으므로 색상 정보 확인
+          const note = bomItem.note || '';
+          const colorWeight = bomItem.colorWeight || '';
+          const isBlueOrange450kg = (rackType === '하이랙' && extraOptionId.includes('450kg') &&
+            (note.includes('추가상품5') ||
+              note.includes('블루+오렌지') ||
+              (note.includes('블루') && note.includes('오렌지')) ||
+              (colorWeight.includes('블루') && colorWeight.includes('오렌지')) ||
+              (name.includes('블루') && name.includes('오렌지'))));
+
+          if (isBlueOrange450kg) {
+            // 추가상품5 (블루+오렌지 450kg): 서버에 존재하는 ID 직접 생성
             const sizeMatch = name.match(/(\d+)x(\d+)/);
-            // 기둥: "75(4개 1set)", "120(4개 1set)" 등
-            const heightMatch = name.match(/^(\d+)/);
             if (sizeMatch) {
-              // 선반: 스텐랙-50x120선반-
-              extraOptionId = `${rackType}-${sizeMatch[0]}선반-`;
-            } else if (heightMatch && (name.includes('기둥') || name.includes('set') || name.includes('('))) {
-              // 기둥: 스텐랙-75기둥- 또는 스텐랙-75(4개 1set)-
-              extraOptionId = `${rackType}-${heightMatch[1]}기둥-`;
-            }
-          } else if (rackType === '하이랙') {
-            // 하이랙 기타추가옵션 extraOptionId 생성
-            // ⚠️ 중요: 추가상품3은 name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
-            // 추가상품4 (메트그레이): 하이랙-60x108선반450kg-
-            // 추가상품5 (블루+오렌지): 하이랙-60x108선반450kg- (같은 ID지만 색상 정보로 구분)
-            const sizeMatch = name.match(/(\d+)x(\d+)/);
-            const note = bomItem.note || '';
-            const colorWeight = bomItem.colorWeight || '';
-            
-            // 추가상품3 (270kg 기둥추가): name에 "(블루기둥)" 또는 "(메트그레이기둥)" 명시
-            if (name.includes('(블루기둥)') || name.includes('블루기둥')) {
-              // 블루+오렌지 기둥
-              if (sizeMatch && name.includes('기둥')) {
-                extraOptionId = `${rackType}-${sizeMatch[0]}기둥-`;
-              }
-            } else if (name.includes('(메트그레이기둥)') || name.includes('메트그레이기둥') || name.includes('매트그레이기둥')) {
-              // 메트그레이 기둥
-              if (sizeMatch && name.includes('기둥')) {
-                extraOptionId = `${rackType}-${sizeMatch[0]}메트그레이기둥-`;
-              }
-            } else if (sizeMatch && (name.includes('선반') || name.includes('기둥'))) {
-              if (name.includes('450kg')) {
-                // 추가상품4/5 (450kg): 색상 정보로 구분
-                // 추가상품4는 메트그레이, 추가상품5는 블루+오렌지
-                // note나 colorWeight에서 색상 정보 확인
-                const isBlueOrange = note.includes('추가상품5') || 
-                                     note.includes('블루+오렌지') || 
-                                     note.includes('블루') && note.includes('오렌지') ||
-                                     colorWeight.includes('블루') && colorWeight.includes('오렌지') ||
-                                     name.includes('블루') && name.includes('오렌지');
-                const isMetGray = note.includes('추가상품4') || 
-                                  note.includes('메트그레이') || 
-                                  note.includes('매트그레이') ||
-                                  colorWeight.includes('메트그레이') ||
-                                  colorWeight.includes('매트그레이') ||
-                                  name.includes('메트그레이') ||
-                                  name.includes('매트그레이');
-                
-                if (name.includes('선반')) {
-                  extraOptionId = `${rackType}-${sizeMatch[0]}선반450kg-`;
-                } else if (name.includes('기둥')) {
-                  extraOptionId = `${rackType}-${sizeMatch[0]}기둥450kg-`;
-                }
-              } else if (name.includes('270kg') || name.includes('메트그레이') || name.includes('오렌지') || name.includes('매트그레이')) {
-                // 추가상품1/2 (270kg 선반): 추가상품1은 메트그레이, 추가상품2는 오렌지
-                if (name.includes('메트그레이') || name.includes('매트그레이')) {
-                  // 추가상품1 (메트그레이 선반)
-                  if (name.includes('선반') && sizeMatch) {
-                    extraOptionId = `${rackType}-${sizeMatch[0]}매트그레이선반-`;
-                  }
-                } else if (name.includes('오렌지')) {
-                  // 추가상품2 (오렌지 선반)
-                  if (name.includes('선반') && sizeMatch) {
-                    extraOptionId = `${rackType}-${sizeMatch[0]}선반-`;
-                  }
-                }
-                // 추가상품3 (270kg 기둥) - 위에서 이미 처리됨
-              } else if (name.includes('600kg') || (name.includes('블루') && name.includes('오렌지'))) {
-                // 추가상품6 (600kg 블루+오렌지)
-                if (sizeMatch && (name.includes('선반') || name.includes('빔'))) {
-                  extraOptionId = `${rackType}-${sizeMatch[0]}선반+빔-`;
+              if (name.includes('선반')) {
+                // 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x108450kg
+                const directSpec = `사이즈${sizeMatch[1]}x${sizeMatch[2]}450kg`;
+                inventoryPartId = `하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-${directSpec}`;
+                console.log(`    🔗 추가상품5 블루+오렌지 선반 직접 생성: "${inventoryPartId}"`);
+              } else if (name.includes('기둥')) {
+                // 하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)450kg-높이150450kg
+                const heightMatch = name.match(/(\d+)x(\d+)/);
+                if (heightMatch) {
+                  const directSpec = `높이${heightMatch[2]}450kg`;
+                  inventoryPartId = `하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)450kg-${directSpec}`;
+                  console.log(`    🔗 추가상품5 블루+오렌지 기둥 직접 생성: "${inventoryPartId}"`);
                 }
               }
             }
-          }
-          
-          // 3. 기타추가옵션 매핑 확인
-          if (extraOptionId) {
-            // ⚠️ 하이랙 추가상품5 (블루+오렌지 450kg)는 매핑 테이블에 없으므로 색상 정보 확인
-            const note = bomItem.note || '';
-            const colorWeight = bomItem.colorWeight || '';
-            const isBlueOrange450kg = (rackType === '하이랙' && extraOptionId.includes('450kg') && 
-                                       (note.includes('추가상품5') || 
-                                        note.includes('블루+오렌지') || 
-                                        (note.includes('블루') && note.includes('오렌지')) ||
-                                        (colorWeight.includes('블루') && colorWeight.includes('오렌지')) ||
-                                        (name.includes('블루') && name.includes('오렌지'))));
-            
-            if (isBlueOrange450kg) {
-              // 추가상품5 (블루+오렌지 450kg): 서버에 존재하는 ID 직접 생성
-              const sizeMatch = name.match(/(\d+)x(\d+)/);
-              if (sizeMatch) {
-                if (name.includes('선반')) {
-                  // 하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-사이즈60x108450kg
-                  const directSpec = `사이즈${sizeMatch[1]}x${sizeMatch[2]}450kg`;
-                  inventoryPartId = `하이랙-선반블루(기둥)+오렌지(가로대)(볼트식)450kg-${directSpec}`;
-                  console.log(`    🔗 추가상품5 블루+오렌지 선반 직접 생성: "${inventoryPartId}"`);
-                } else if (name.includes('기둥')) {
-                  // 하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)450kg-높이150450kg
-                  const heightMatch = name.match(/(\d+)x(\d+)/);
-                  if (heightMatch) {
-                    const directSpec = `높이${heightMatch[2]}450kg`;
-                    inventoryPartId = `하이랙-기둥블루(기둥)+오렌지(가로대)(볼트식)450kg-${directSpec}`;
-                    console.log(`    🔗 추가상품5 블루+오렌지 기둥 직접 생성: "${inventoryPartId}"`);
-                  }
-                }
-              }
+          } else {
+            // 매핑 테이블 확인
+            // ⚠️ 하이랙 추가상품4 (메트그레이 450kg)는 매핑 테이블에 있음
+            // 추가상품5는 위에서 이미 처리되었으므로, 여기서는 추가상품4 또는 기타 추가상품 처리
+            const mappedId = mapExtraToBaseInventoryPart(extraOptionId);
+            if (mappedId && mappedId !== extraOptionId) {
+              inventoryPartId = mappedId;
+              console.log(`    🔗 기타추가옵션 매핑: "${extraOptionId}" → "${inventoryPartId}"`);
             } else {
-              // 매핑 테이블 확인
-              // ⚠️ 하이랙 추가상품4 (메트그레이 450kg)는 매핑 테이블에 있음
-              // 추가상품5는 위에서 이미 처리되었으므로, 여기서는 추가상품4 또는 기타 추가상품 처리
-              const mappedId = mapExtraToBaseInventoryPart(extraOptionId);
-              if (mappedId && mappedId !== extraOptionId) {
-                inventoryPartId = mappedId;
-                console.log(`    🔗 기타추가옵션 매핑: "${extraOptionId}" → "${inventoryPartId}"`);
-              } else {
-                // 매핑 없으면 일반 생성
-                inventoryPartId = generateInventoryPartId({
-                  rackType: rackType,
-                  name: name,
-                  specification: spec,
-                  colorWeight: bomItem.colorWeight || ''
-                });
-              }
+              // 매핑 없으면 일반 생성
+              inventoryPartId = generateInventoryPartId({
+                rackType: rackType,
+                name: name,
+                specification: spec,
+                colorWeight: bomItem.colorWeight || ''
+              });
             }
-          } else {
-            // 일반 부품은 그대로 생성
-            inventoryPartId = generateInventoryPartId({
-              rackType: rackType,
-              name: name,
-              specification: spec,
-              colorWeight: bomItem.colorWeight || ''
-            });
           }
+        } else {
+          // 일반 부품은 그대로 생성
+          inventoryPartId = generateInventoryPartId({
+            rackType: rackType,
+            name: name,
+            specification: spec,
+            colorWeight: bomItem.colorWeight || ''
+          });
         }
-        
-        const requiredQty = Number(bomItem.quantity) || 0;
-        const currentStock = Number(serverInventory[inventoryPartId]) || 0;
-        
-        console.log(`\n  📌 BOM ${bomIndex + 1}: ${bomItem.name}`);
-        console.log(`    🔑 inventoryPartId: "${inventoryPartId}"`);
-        console.log(`    📊 서버 재고: ${currentStock}개`);
-        console.log(`    📈 필요 수량: ${requiredQty}개`);
-        
-        if (requiredQty > 0) {
-          if (currentStock >= requiredQty) {
-            // ✅ 충분한 재고 - 정상 감소
-            const newStock = currentStock - requiredQty;
-            updates[inventoryPartId] = newStock;
-            
-            deductedParts.push({
-              partId: inventoryPartId,
-              name: bomItem.name,
-              specification: bomItem.specification || '',
-              rackType: bomItem.rackType || '',
-              deducted: requiredQty,
-              remainingStock: newStock
-            });
-            console.log(`    ✅ 재고 감소: ${currentStock} → ${newStock}`);
-          } else {
-            // ✅ 부족한 재고 - 0으로 설정 (음수 방지)
-            const actualDeducted = currentStock; // 실제 감소 수량
-            updates[inventoryPartId] = 0; // 0으로 설정
-            
-            warnings.push({
-              partId: inventoryPartId,
-              name: bomItem.name,
-              specification: bomItem.specification || '',
-              rackType: bomItem.rackType || '',
-              required: requiredQty,
-              available: currentStock,
-              shortage: requiredQty - currentStock,
-              actualDeducted: actualDeducted // 실제 감소된 수량
-            });
-            
-            deductedParts.push({
-              partId: inventoryPartId,
-              name: bomItem.name,
-              specification: bomItem.specification || '',
-              rackType: bomItem.rackType || '',
-              deducted: actualDeducted,
-              remainingStock: 0,
-              wasShortage: true
-            });
-            
-            console.log(`    ⚠️ 재고 부족: ${currentStock} → 0 (부족: ${requiredQty - currentStock}개)`);
-          }
+      }
+
+      const requiredQty = Number(bomItem.quantity) || 0;
+      const currentStock = Number(serverInventory[inventoryPartId]) || 0;
+
+      console.log(`\n  📌 BOM ${bomIndex + 1}: ${bomItem.name}`);
+      console.log(`    🔑 inventoryPartId: "${inventoryPartId}"`);
+      console.log(`    📊 서버 재고: ${currentStock}개`);
+      console.log(`    📈 필요 수량: ${requiredQty}개`);
+
+      if (requiredQty > 0) {
+        if (currentStock >= requiredQty) {
+          // ✅ 충분한 재고 - 정상 감소
+          const newStock = currentStock - requiredQty;
+          updates[inventoryPartId] = newStock;
+
+          deductedParts.push({
+            partId: inventoryPartId,
+            name: bomItem.name,
+            specification: bomItem.specification || '',
+            rackType: bomItem.rackType || '',
+            deducted: requiredQty,
+            remainingStock: newStock
+          });
+          console.log(`    ✅ 재고 감소: ${currentStock} → ${newStock}`);
+        } else {
+          // ✅ 부족한 재고 - 0으로 설정 (음수 방지)
+          const actualDeducted = currentStock; // 실제 감소 수량
+          updates[inventoryPartId] = 0; // 0으로 설정
+
+          warnings.push({
+            partId: inventoryPartId,
+            name: bomItem.name,
+            specification: bomItem.specification || '',
+            rackType: bomItem.rackType || '',
+            required: requiredQty,
+            available: currentStock,
+            shortage: requiredQty - currentStock,
+            actualDeducted: actualDeducted // 실제 감소된 수량
+          });
+
+          deductedParts.push({
+            partId: inventoryPartId,
+            name: bomItem.name,
+            specification: bomItem.specification || '',
+            rackType: bomItem.rackType || '',
+            deducted: actualDeducted,
+            remainingStock: 0,
+            wasShortage: true
+          });
+
+          console.log(`    ⚠️ 재고 부족: ${currentStock} → 0 (부족: ${requiredQty - currentStock}개)`);
         }
+      }
     });
-    
+
     // ✅ 3. 로컬스토리지 업데이트
     const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
     Object.assign(localInventory, updates);
     localStorage.setItem('inventory_data', JSON.stringify(localInventory));
-    console.log('✅ 로컬스토리지 재고 업데이트 완료');
-    
-    // ✅ 4. 서버 재고 업데이트
-    await inventoryService.updateInventory(localInventory);
+
+    console.log('💾 로컬스토리지 재고 업데이트 완료');
+
+    // ✅ 재고가 변경된 부분(updates)만 서버로 전송
+    await inventoryService.updateInventory(updates);  // ← localInventory → updates
     console.log('✅ 서버 재고 업데이트 완료');
-    
+
     // ✅ 5. inventoryUpdated 이벤트 발생
     window.dispatchEvent(new CustomEvent('inventoryUpdated', {
       detail: { inventory: localInventory }
     }));
-    
+
     // ✅ 6. 결과 반환
     console.log('\n📊 재고 감소 완료:', {
       감소된부품: deductedParts.length,
       부족경고: warnings.length
     });
-    
+
     return {
       success: true,
       message: '재고가 성공적으로 감소되었습니다.',
       deductedParts,
       warnings
     };
-    
+
   } catch (error) {
     console.error('❌ 재고 감소 실패:', error);
     return {
@@ -333,31 +334,31 @@ export const showInventoryResult = (result, documentType) => {
     console.warn('showInventoryResult: 결과 데이터 없음');
     return;
   }
-  
+
   console.log('📊 재고 결과 표시:', result);
-  
+
   let message = `📄 ${documentType} 출력 완료\n`;
-  
+
   if (result.success) {
     message += `📦 재고 감소: ${result.deductedParts.length}개 부품 처리`;
-    
+
     if (result.warnings.length > 0) {
       message += `\n⚠️ 재고 부족 경고: ${result.warnings.length}개 부품`;
-      
+
       // 재고 부족 부품 상세 (최대 3개)
-      const warningDetails = result.warnings.slice(0, 3).map(w => 
+      const warningDetails = result.warnings.slice(0, 3).map(w =>
         `• ${w.name} (${w.specification || ''}): 필요 ${w.required}개, 가용 ${w.available}개`
       ).join('\n');
-      
+
       message += '\n' + warningDetails;
-      
+
       if (result.warnings.length > 3) {
         message += `\n• 외 ${result.warnings.length - 3}개 부품...`;
       }
-      
+
       // ✅ 재고 부족 시 컴포넌트 표시 이벤트 발생
       message += '\n\n재고 부족 상세 정보를 확인하시겠습니까?';
-      
+
       // 결과 표시 - 부족한 부품들 컴포넌트 표시
       if (window.confirm(message)) {
         // ✅ 부족한 부품들의 정보를 정리
@@ -370,9 +371,9 @@ export const showInventoryResult = (result, documentType) => {
           rackType: w.rackType || '',
           specification: w.specification || ''
         }));
-        
+
         console.log('📋 재고 부족 정보:', shortageInfo);
-        
+
         // ✅ 재고 부족 컴포넌트 표시 이벤트 발생
         window.dispatchEvent(new CustomEvent('showShortageInventoryPanel', {
           detail: {
@@ -381,16 +382,16 @@ export const showInventoryResult = (result, documentType) => {
             timestamp: Date.now()
           }
         }));
-        
+
         // ✅ 로컬스토리지에도 저장 (백업용)
         localStorage.setItem('shortageInventoryData', JSON.stringify({
           shortageItems: shortageInfo,
           documentType: documentType,
           timestamp: Date.now()
         }));
-        
+
         console.log('✅ 재고 부족 컴포넌트 표시 이벤트 발생');
-        
+
         // ✅ 중요: 여기서 return하여 인쇄 팝업이 뜨지 않도록 함
         return;
       }
@@ -398,7 +399,7 @@ export const showInventoryResult = (result, documentType) => {
       // 정상 완료는 간단히 alert
       alert(message);
     }
-    
+
   } else {
     message += `❌ 재고 감소 실패: ${result.message}`;
     alert(message);
@@ -421,11 +422,11 @@ const InventoryManager = ({ currentUser }) => {
   const [sortConfig, setSortConfig] = useState({ field: '', direction: '' });
   const [showAdminPriceEditor, setShowAdminPriceEditor] = useState(false);
   const [editingPrice, setEditingPrice] = useState(null);
-  
+
   // 실시간 동기화 관련
   const [syncStatus, setSyncStatus] = useState('✅ 동기화됨');
   const [lastSyncTime, setLastSyncTime] = useState(new Date());
-  
+
   // 일괄 작업 관련
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [bulkAction, setBulkAction] = useState('inventory'); // ✅ 기본값을 'inventory'로 설정
@@ -434,9 +435,9 @@ const InventoryManager = ({ currentUser }) => {
   // 관리자가 아닌 경우 접근 차단
   if (currentUser?.role !== 'admin') {
     return (
-      <div style={{ 
-        padding: '40px 20px', 
-        textAlign: 'center', 
+      <div style={{
+        padding: '40px 20px',
+        textAlign: 'center',
         backgroundColor: '#f8f9fa',
         borderRadius: '8px',
         color: '#6c757d'
@@ -451,13 +452,13 @@ const InventoryManager = ({ currentUser }) => {
     const initializeData = async () => {
       try {
         setSyncStatus('🔄 초기화 중...');
-        
+
         await loadAllMaterialsData();
         await syncAndLoadInventoryData();  // ✅ 최초 1회만 서버 동기화
         loadAdminPricesData();
         await loadRackOptions();
         setupRealtimeListeners();
-        
+
         setSyncStatus('✅ 초기화 완료');
         setLastSyncTime(new Date());
       } catch (error) {
@@ -465,7 +466,7 @@ const InventoryManager = ({ currentUser }) => {
         setSyncStatus('❌ 초기화 오류');
       }
     };
-    
+
     initializeData();
   }, []);
 
@@ -476,7 +477,7 @@ const InventoryManager = ({ currentUser }) => {
       setSyncStatus('🔄 동기화 중...');
       loadInventoryData();
       setLastSyncTime(new Date());
-      
+
       setTimeout(() => {
         setSyncStatus('✅ 동기화됨');
       }, 1000);
@@ -487,7 +488,7 @@ const InventoryManager = ({ currentUser }) => {
       setSyncStatus('🔄 동기화 중...');
       loadAdminPricesData();
       setLastSyncTime(new Date());
-      
+
       setTimeout(() => {
         setSyncStatus('✅ 동기화됨');
       }, 1000);
@@ -517,11 +518,11 @@ const InventoryManager = ({ currentUser }) => {
       const materials = await loadAllMaterials();
       setAllMaterials(materials);
       console.log(`✅ InventoryManager: ${materials.length}개 원자재 로드 완료`);
-      
+
       const anchorBolts = materials.filter(m => m.name.includes('앙카볼트'));
       const bracings = materials.filter(m => m.name.includes('브레싱'));
       console.log(`🔧 앙카볼트: ${anchorBolts.length}개, 브레싱 관련: ${bracings.length}개`);
-      
+
     } catch (error) {
       console.error('❌ 전체 원자재 로드 실패:', error);
       setAllMaterials([]);
@@ -571,9 +572,9 @@ const InventoryManager = ({ currentUser }) => {
     try {
       const bomResponse = await fetch('./bom_data.json');
       const bomData = await bomResponse.json();
-      
+
       const options = [];
-      
+
       Object.keys(bomData).forEach(rackType => {
         const rackData = bomData[rackType];
         Object.keys(rackData).forEach(size => {
@@ -584,7 +585,7 @@ const InventoryManager = ({ currentUser }) => {
                 if (productData) {
                   const optionId = generateRackOptionId(rackType, size, height, level, formType);
                   const displayName = `${rackType} ${formType} ${size} ${height} ${level}`;
-                  
+
                   options.push({
                     id: optionId,
                     rackType,
@@ -600,7 +601,7 @@ const InventoryManager = ({ currentUser }) => {
           });
         });
       });
-      
+
       setRackOptions(options);
     } catch (error) {
       console.error('❌ 랙옵션 로드 실패:', error);
@@ -611,19 +612,19 @@ const InventoryManager = ({ currentUser }) => {
   const loadAllData = async () => {
     setIsLoading(true);
     setSyncStatus('🔄 서버 동기화 중...');
-    
+
     try {
       // ✅ 서버 동기화 먼저 실행
       console.log('🔄 전체 데이터 로드 시작 - 서버 동기화 중...');
       await forceServerSync();
-      
+
       // ✅ 동기화 후 각 데이터 로드
       await Promise.all([
         loadAllMaterialsData(),
         loadInventoryData(),
         loadAdminPricesData()
       ]);
-      
+
       setSyncStatus('✅ 동기화 완료');
       setLastSyncTime(new Date());
       console.log('✅ 전체 데이터 로드 완료');
@@ -640,31 +641,31 @@ const InventoryManager = ({ currentUser }) => {
     // ✅ CSV partId를 그대로 사용
     const partId = material.partId;
     const quantity = Math.max(0, Number(newQuantity) || 0);
-    
+
     setSyncStatus('📤 저장 중...');
-    
+
     try {
       const userInfo = {
         username: currentUser?.username || 'admin',
         role: currentUser?.role || 'admin'
       };
-  
+
       // ✅ 로컬스토리지에 먼저 저장
       const success = await saveInventorySync(partId, quantity, userInfo);
-      
+
       if (success) {
         setInventory(prev => ({
           ...prev,
           [partId]: quantity
         }));
-        
+
         // ✅ 즉시 서버에 저장 (재시도 로직 포함)
         const { inventoryService } = await import('../services/InventoryService');
         const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-        
+
         let serverSaveSuccess = false;
         const maxRetries = 3;
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
             await inventoryService.updateInventory(currentInventory);
@@ -674,7 +675,7 @@ const InventoryManager = ({ currentUser }) => {
             break;
           } catch (serverError) {
             console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, serverError);
-            
+
             if (attempt < maxRetries) {
               // Exponential backoff: 1초, 2초, 4초
               const waitTime = Math.pow(2, attempt - 1) * 1000;
@@ -687,11 +688,11 @@ const InventoryManager = ({ currentUser }) => {
             }
           }
         }
-        
+
         if (!serverSaveSuccess) {
           setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
         }
-        
+
         setLastSyncTime(new Date());
       } else {
         setSyncStatus('❌ 저장 실패');
@@ -708,9 +709,9 @@ const InventoryManager = ({ currentUser }) => {
     const partId = material.partId;
     const currentQty = inventory[partId] || 0;
     const newQty = Math.max(0, currentQty + adjustment);
-    
+
     setSyncStatus('📤 저장 중...');
-    
+
     try {
       const userInfo = {
         username: currentUser?.username || 'admin',
@@ -719,20 +720,20 @@ const InventoryManager = ({ currentUser }) => {
 
       // ✅ 로컬스토리지에 먼저 저장
       const success = await saveInventorySync(partId, newQty, userInfo);
-      
+
       if (success) {
         setInventory(prev => ({
           ...prev,
           [partId]: newQty
         }));
-        
+
         // ✅ 즉시 서버에 저장 (재시도 로직 포함)
         const { inventoryService } = await import('../services/InventoryService');
         const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-        
+
         let serverSaveSuccess = false;
         const maxRetries = 3;
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
           try {
             await inventoryService.updateInventory(currentInventory);
@@ -742,7 +743,7 @@ const InventoryManager = ({ currentUser }) => {
             break;
           } catch (serverError) {
             console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, serverError);
-            
+
             if (attempt < maxRetries) {
               // Exponential backoff: 1초, 2초, 4초
               const waitTime = Math.pow(2, attempt - 1) * 1000;
@@ -755,11 +756,11 @@ const InventoryManager = ({ currentUser }) => {
             }
           }
         }
-        
+
         if (!serverSaveSuccess) {
           setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
         }
-        
+
         setLastSyncTime(new Date());
       } else {
         setSyncStatus('❌ 저장 실패');
@@ -773,7 +774,7 @@ const InventoryManager = ({ currentUser }) => {
   // 서버에서 강제 동기화
   const handleForceSync = async () => {
     setSyncStatus('🔄 서버 동기화 중...');
-    
+
     try {
       await forceServerSync();
       await loadAllData();
@@ -806,9 +807,9 @@ const InventoryManager = ({ currentUser }) => {
         // 파렛트랙 구형만 (partId가 "파렛트랙-"으로 시작하고 "파렛트랙신형-"이 아닌 것)
         result = result.filter(material => {
           const partId = material.partId || '';
-          return material.rackType === '파렛트랙' && 
-                 partId.startsWith('파렛트랙-') && 
-                 !partId.startsWith('파렛트랙신형-');
+          return material.rackType === '파렛트랙' &&
+            partId.startsWith('파렛트랙-') &&
+            !partId.startsWith('파렛트랙신형-');
         });
       } else if (selectedRackType === '파렛트랙신형') {
         // 파렛트랙 신형만 (partId가 "파렛트랙신형-"으로 시작하는 것)
@@ -838,7 +839,7 @@ const InventoryManager = ({ currentUser }) => {
     if (sortConfig.field) {
       result.sort((a, b) => {
         let aValue, bValue;
-        
+
         switch (sortConfig.field) {
           case 'name':
             aValue = a.name || '';
@@ -893,7 +894,7 @@ const InventoryManager = ({ currentUser }) => {
   const handleSelectItem = (material, checked) => {
     // ✅ CSV partId 그대로 사용
     const partId = material.partId;
-    
+
     setSelectedItems(prev => {
       const newSet = new Set(prev);
       if (checked) {
@@ -913,7 +914,7 @@ const InventoryManager = ({ currentUser }) => {
     }
 
     const selectedCount = selectedItems.size;
-    
+
     if (!confirm(`선택된 ${selectedCount}개 항목에 ${bulkAction === 'inventory' ? '재고 설정' : '단가 설정'}을 적용하시겠습니까?`)) {
       return;
     }
@@ -921,34 +922,34 @@ const InventoryManager = ({ currentUser }) => {
     try {
       setIsLoading(true);
       setSyncStatus('📤 저장 중...');
-      
+
       // ✅ 일괄 작업: selectedItems에는 CSV partId가 들어있음
       for (const partId of selectedItems) {
         if (bulkAction === 'inventory') {
           const quantity = Math.max(0, Number(bulkValue) || 0);
-          
+
           // ✅ CSV partId를 직접 사용하여 재고 업데이트
           const userInfo = {
             username: currentUser?.username || 'admin',
             role: currentUser?.role || 'admin'
           };
-          
+
           await saveInventorySync(partId, quantity, userInfo);
-          
+
           setInventory(prev => ({
             ...prev,
             [partId]: quantity
           }));
         }
       }
-      
+
       // ✅ 일괄 작업 후 즉시 서버에 저장 (재시도 로직 포함)
       const { inventoryService } = await import('../services/InventoryService');
       const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-      
+
       let serverSaveSuccess = false;
       const maxRetries = 3;
-      
+
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           await inventoryService.updateInventory(currentInventory);
@@ -958,7 +959,7 @@ const InventoryManager = ({ currentUser }) => {
           break;
         } catch (serverError) {
           console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, serverError);
-          
+
           if (attempt < maxRetries) {
             // Exponential backoff: 1초, 2초, 4초
             const waitTime = Math.pow(2, attempt - 1) * 1000;
@@ -971,15 +972,15 @@ const InventoryManager = ({ currentUser }) => {
           }
         }
       }
-      
+
       if (!serverSaveSuccess) {
         setSyncStatus('⚠️ 로컬 저장됨 (서버 저장 실패)');
       }
-      
+
       alert(`${selectedCount}개 항목의 ${bulkAction === 'inventory' ? '재고' : '단가'}가 업데이트되었습니다.`);
       setSelectedItems(new Set());
       setBulkValue(''); // ✅ bulkAction은 유지 (기본값이므로)
-      
+
     } catch (error) {
       console.error('일괄 작업 실패:', error);
       alert('일괄 작업 중 오류가 발생했습니다.');
@@ -995,7 +996,7 @@ const InventoryManager = ({ currentUser }) => {
       const inventoryData = filteredMaterials.map(material => {
         const quantity = inventory[material.partId] || 0;
         const effectivePrice = getEffectivePrice(material);
-        
+
         return {
           부품ID: material.partId,
           랙타입: material.rackType,
@@ -1008,14 +1009,14 @@ const InventoryManager = ({ currentUser }) => {
           카테고리: material.categoryName || ''
         };
       });
-  
+
       // CSV 형식으로 변환
       const headers = ['부품ID', '랙타입', '부품명', '규격', '재고수량', '단가', '재고가치', '소스', '카테고리'];
       const csvRows = [];
-      
+
       // 헤더 추가
       csvRows.push(headers.join(','));
-      
+
       // 데이터 행 추가
       inventoryData.forEach(row => {
         const values = headers.map(header => {
@@ -1029,15 +1030,15 @@ const InventoryManager = ({ currentUser }) => {
         });
         csvRows.push(values.join(','));
       });
-      
+
       const csvContent = csvRows.join('\n');
-      
+
       // BOM 추가 (한글 깨짐 방지)
       const bom = '\uFEFF';
       const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
-      
+
       const exportFileName = `재고현황_${new Date().toISOString().split('T')[0]}.csv`;
-      
+
       // 다운로드
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -1048,10 +1049,10 @@ const InventoryManager = ({ currentUser }) => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       console.log(`✅ 재고 데이터 CSV 내보내기 완료: ${inventoryData.length}개 항목`);
       alert(`재고 데이터가 CSV 파일로 저장되었습니다.\n파일명: ${exportFileName}`);
-      
+
     } catch (error) {
       console.error('재고 내보내기 실패:', error);
       alert('재고 내보내기에 실패했습니다.');
@@ -1080,13 +1081,13 @@ const InventoryManager = ({ currentUser }) => {
 
   // 랙타입 목록 생성
   const uniqueRackTypes = [...new Set(allMaterials.map(m => m.rackType).filter(Boolean))];
-  
+
   // ✅ 파렛트랙신형을 별도 랙타입으로 추가 (partId 기반)
   const hasPalletRackNew = allMaterials.some(m => {
     const partId = m.partId || '';
     return partId.startsWith('파렛트랙신형-');
   });
-  
+
   // ✅ 랙타입 목록 정렬 및 파렛트랙신형 추가
   const sortedRackTypes = [...uniqueRackTypes].sort((a, b) => {
     // 파렛트랙 관련 순서: 파렛트랙 → 파렛트랙신형 → 파렛트랙 철판형
@@ -1098,18 +1099,18 @@ const InventoryManager = ({ currentUser }) => {
     if (bIndex !== -1) return 1;
     return a.localeCompare(b);
   });
-  
+
   // 파렛트랙신형이 있으면 목록에 추가 (이미 있으면 중복 제거)
   const finalRackTypes = hasPalletRackNew && !sortedRackTypes.includes('파렛트랙신형')
     ? [...sortedRackTypes, '파렛트랙신형'].sort((a, b) => {
-        const order = ['경량랙', '중량랙', '파렛트랙', '파렛트랙신형', '파렛트랙 철판형', '하이랙', '스텐랙'];
-        const aIndex = order.indexOf(a);
-        const bIndex = order.indexOf(b);
-        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-        if (aIndex !== -1) return -1;
-        if (bIndex !== -1) return 1;
-        return a.localeCompare(b);
-      })
+      const order = ['경량랙', '중량랙', '파렛트랙', '파렛트랙신형', '파렛트랙 철판형', '하이랙', '스텐랙'];
+      const aIndex = order.indexOf(a);
+      const bIndex = order.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return a.localeCompare(b);
+    })
     : sortedRackTypes;
 
   // ✅ 재고관리 탭에서만 표시용 랙타입 이름 변환 (파렛트랙 → 파렛트랙구형)
@@ -1125,7 +1126,7 @@ const InventoryManager = ({ currentUser }) => {
     // ✅ CSV partId를 그대로 사용 (inventory.json의 키와 일치)
     const partId = material.partId;
     const stockData = inventory[partId];
-    
+
     if (typeof stockData === 'number') {
       return stockData;
     } else if (typeof stockData === 'object' && stockData !== null) {
@@ -1139,7 +1140,7 @@ const InventoryManager = ({ currentUser }) => {
     const effectivePrice = getEffectivePrice(material);
     // ✅ CSV partId 그대로 사용
     const hasAdminPrice = adminPrices[material.partId]?.price > 0;
-    
+
     return {
       price: effectivePrice,
       isModified: hasAdminPrice
@@ -1156,10 +1157,10 @@ const InventoryManager = ({ currentUser }) => {
             <small>마지막 동기화: {lastSyncTime.toLocaleTimeString()}</small>
           </div>
         </div>
-        
+
         <div className="header-actions">
-          <button 
-            onClick={handleForceSync} 
+          <button
+            onClick={handleForceSync}
             className="sync-btn"
             disabled={isLoading}
           >
@@ -1214,10 +1215,10 @@ const InventoryManager = ({ currentUser }) => {
         </div>
 
         {/* ✅ 랙타입 버튼 필터 추가 (복원) */}
-        <div style={{ 
-          display: 'flex', 
-          gap: '8px', 
-          flexWrap: 'wrap', 
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          flexWrap: 'wrap',
           marginTop: '12px',
           marginBottom: '12px'
         }}>
@@ -1255,7 +1256,7 @@ const InventoryManager = ({ currentUser }) => {
             </button>
           ))}
         </div>
-        
+
         <div className="filter-options">
           <label className="checkbox-label">
             <input
@@ -1279,7 +1280,7 @@ const InventoryManager = ({ currentUser }) => {
             />
             재고가 없는 부품만 보기
           </label>
-          
+
           <div className="search-stats">
             {filteredMaterials.length}개 부품 표시 (전체 {allMaterials.length}개)
           </div>
@@ -1296,7 +1297,7 @@ const InventoryManager = ({ currentUser }) => {
           >
             <option value="inventory">재고 수량 설정</option>
           </select>
-          
+
           <input
             type="number"
             value={bulkValue}
@@ -1304,7 +1305,7 @@ const InventoryManager = ({ currentUser }) => {
             placeholder="설정할 값"
             className="bulk-value-input"
           />
-          
+
           <button
             onClick={handleBulkAction}
             disabled={!bulkAction || selectedItems.size === 0 || !bulkValue}
@@ -1312,18 +1313,18 @@ const InventoryManager = ({ currentUser }) => {
           >
             선택된 {selectedItems.size}개에 적용
           </button>
-          
+
           {/* ✅ 적용 버튼 추가 - 모든 변경사항을 서버에 저장 (재시도 로직 포함) */}
           <button
             onClick={async () => {
               setSyncStatus('📤 서버 저장 중...');
-              
+
               const { inventoryService } = await import('../services/InventoryService');
               const currentInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-              
+
               let serverSaveSuccess = false;
               const maxRetries = 3;
-              
+
               for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
                   await inventoryService.updateInventory(currentInventory);
@@ -1335,7 +1336,7 @@ const InventoryManager = ({ currentUser }) => {
                   break;
                 } catch (error) {
                   console.error(`❌ 서버 저장 실패 (시도 ${attempt}/${maxRetries}):`, error);
-                  
+
                   if (attempt < maxRetries) {
                     // Exponential backoff: 1초, 2초, 4초
                     const waitTime = Math.pow(2, attempt - 1) * 1000;
@@ -1349,14 +1350,14 @@ const InventoryManager = ({ currentUser }) => {
                   }
                 }
               }
-              
+
               if (!serverSaveSuccess) {
                 setSyncStatus('❌ 서버 저장 실패');
               }
             }}
             className="bulk-apply-btn"
-            style={{ 
-              backgroundColor: '#007bff', 
+            style={{
+              backgroundColor: '#007bff',
               marginLeft: '10px',
               fontWeight: 'bold'
             }}
@@ -1384,20 +1385,20 @@ const InventoryManager = ({ currentUser }) => {
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
                 </th>
-                <th 
+                <th
                   onClick={() => handleSort('name')}
                   className="sortable"
                 >
                   부품명 {sortConfig.field === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
                 <th>규격</th>
-                <th 
+                <th
                   onClick={() => handleSort('rackType')}
                   className="sortable"
                 >
                   랙타입 {sortConfig.field === 'rackType' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </th>
-                <th 
+                <th
                   onClick={() => handleSort('quantity')}
                   className="sortable"
                 >
@@ -1405,7 +1406,7 @@ const InventoryManager = ({ currentUser }) => {
                 </th>
                 {/* ✅ 빠른조정 컬럼 추가 (복원) */}
                 <th>빠른조정</th>
-                <th 
+                <th
                   onClick={() => handleSort('price')}
                   className="sortable"
                 >
@@ -1482,8 +1483,8 @@ const InventoryManager = ({ currentUser }) => {
                             cursor: 'pointer',
                             fontSize: '14px',
                             fontWeight: 'bold',
-                            backgroundColor: quantity === 0 ? '#dc3545' : 
-                                           quantity < 100 ? '#ffc107' : '#28a745',
+                            backgroundColor: quantity === 0 ? '#dc3545' :
+                              quantity < 100 ? '#ffc107' : '#28a745',
                             color: 'white',
                             display: 'inline-block',
                             minWidth: '50px'
@@ -1498,7 +1499,7 @@ const InventoryManager = ({ currentUser }) => {
                     <td>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
                         <button
-                            onClick={() => adjustInventory(material, -100)}
+                          onClick={() => adjustInventory(material, -100)}
                           style={{
                             padding: '4px 8px',
                             fontSize: '12px',

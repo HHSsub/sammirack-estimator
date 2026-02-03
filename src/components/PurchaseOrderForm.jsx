@@ -738,9 +738,35 @@ const PurchaseOrderForm = () => {
 
       if (confirmDeduct && cart && cart.length > 0) {
         // ✅ 재고 감소 실행 (청구서 생성 플로우: cart에 bom 없으면 formData.materials 사용)
-        const materialsForDeduct = !cart.every(i => !i.bom?.length)
-          ? cart
-          : (formData.materials?.length > 0 ? formData.materials.filter(m => !m.isService) : undefined);
+        const materialsForDeduct = (() => {
+          // 1) cart에 bom이 있으면 cart 사용
+          if (!cart.every(i => !i.bom?.length)) {
+            return cart;
+          }
+
+          // 2) cart에 bom 없으면 formData.materials에서 정확히 필터링
+          if (formData.materials?.length > 0) {
+            const filtered = formData.materials.filter(m => {
+              // undefined, null 제거
+              if (!m) return false;
+              // 서비스 항목 제거
+              if (m.isService) return false;
+              // inventoryPartId 없는 항목 제거
+              if (!m.inventoryPartId || m.inventoryPartId === '--') return false;
+              return true;
+            });
+
+            console.log('🔍 재고 감소 대상 필터링 결과:', filtered.map(m => ({
+              name: m.name,
+              inventoryPartId: m.inventoryPartId,
+              quantity: m.quantity
+            })));
+
+            return filtered.length > 0 ? filtered : undefined;
+          }
+
+          return undefined;
+        })();
 
         console.log('🔍🔍🔍 재고 감소 직전 materials 확인:', formData.materials.map(m => ({
           name: m.name,
