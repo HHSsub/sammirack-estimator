@@ -35,15 +35,15 @@ const EstimateForm = () => {
   const navigate = useNavigate();
 
   const cartData = location.state || {};
-  const { 
-    cart = [], 
+  const {
+    cart = [],
     totalBom = [],
     customItems = [],
     customMaterials = [],
     editingDocumentId = null,
     editingDocumentData = {}
   } = cartData;
-  
+
   const isEditMode = !!id;  // ✅ 원래대로
 
   // ✅ extraProducts 로드 (컴포넌트 최상위 레벨에서 호출 - React Hook 규칙 준수)
@@ -54,16 +54,16 @@ const EstimateForm = () => {
   const [showFaxModal, setShowFaxModal] = useState(false);
   const [pdfBlobURL, setPdfBlobURL] = useState(null);
   const [pdfBase64, setPdfBase64] = useState(null);
-  
+
   // ✅ 토스트 알림 state 추가
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const saveButtonRef = useRef(null);
-  
+
   // ✅ 확인 다이얼로그 state 추가
-  const [confirmDialog, setConfirmDialog] = useState({ 
-    show: false, 
-    message: '', 
-    onConfirm: null 
+  const [confirmDialog, setConfirmDialog] = useState({
+    show: false,
+    message: '',
+    onConfirm: null
   });
   // 드롭다운 품목셀렉터 
   const [showItemSelector, setShowItemSelector] = useState(false);
@@ -99,7 +99,7 @@ const EstimateForm = () => {
       }
     }
   }, []);
-  
+
   // ✅ 기존 문서 로드 (편집 모드 또는 editingDocumentId가 있을 때)
   useEffect(() => {
     // ✅ 수정: editingDocumentId가 있으면 해당 문서를 localStorage에서 로드
@@ -143,20 +143,51 @@ const EstimateForm = () => {
             console.log(`✅ materials 자동 생성 완료: ${data.materials.length}개`);
           }
 
+          // ✅ 편집 후 진입 시 state.totalBom으로 materials 보정 (비어 있으면)
+          if (editingDocumentId && totalBom && totalBom.length > 0 && (!data.materials || data.materials.length === 0)) {
+            data.materials = totalBom;
+          }
+
+          // ✅ 편집 후 진입 시 state.cart로 items 보정 (비어 있으면)
+          if (editingDocumentId && cart && cart.length > 0 && (!data.items || data.items.length === 0 || (data.items.length === 1 && !data.items[0].name))) {
+            const cartItems = cart.map(item => {
+              const qty = item.quantity || 1;
+              const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
+              return {
+                name: item.displayName || item.name || '',
+                unit: '개',
+                quantity: qty,
+                unitPrice,
+                totalPrice: unitPrice * qty,
+                note: ''
+              };
+            });
+            data.items = cartItems;
+          }
+
           // ✅ 저장된 cart에서 extraOptions 복원
           if (data.cart && Array.isArray(data.cart)) {
             console.log('✅ 저장된 cart에서 extraOptions 복원:', data.cart);
             // cart는 나중에 사용할 수 있도록 보관 (필요시)
           }
 
-          setFormData({
+          // ✅ 편집 후 진입 시 state.editingDocumentData로 메타정보 보정 (비어 있으면)
+          const mergedData = {
             ...data,
+            date: data.date || editingDocumentData.date || data.date,
+            documentNumber: data.documentNumber || data.estimateNumber || editingDocumentData.documentNumber || data.documentNumber,
+            companyName: data.companyName || editingDocumentData.companyName || data.companyName,
+            bizNumber: data.bizNumber || editingDocumentData.bizNumber || data.bizNumber,
+            notes: data.notes || editingDocumentData.notes || data.notes,
+            topMemo: data.topMemo || editingDocumentData.topMemo || data.topMemo,
             documentSettings: data.documentSettings || null
-          });
+          };
+
+          setFormData(mergedData);
 
           // ✅ 문서 로드 완료 플래그 설정 (새 cart 반영 방지)
           cartInitializedRef.current = true;
-        } catch(e) {
+        } catch (e) {
           console.error('견적서 로드 실패:', e);
         }
       }
@@ -180,17 +211,17 @@ const EstimateForm = () => {
           note: ''
         };
       });
-            
+
       // ✅ customMaterials를 items 형식으로 변환
       // ✅ cart에서 extraOptions 추출 - 각 옵션을 개별 표시
       const extraOptionItems = [];
-      
+
       cart.forEach(item => {
         if (item.extraOptions && Array.isArray(item.extraOptions)) {
           item.extraOptions.forEach(optId => {
             // optId가 ID인 경우 extraProducts에서 이름 찾기 - 유틸 함수 사용
             const displayInfo = getExtraOptionDisplayInfo(item.type, optId, extraProducts);
-            
+
             // opt가 객체인 경우 (하위 호환성)
             let optName = '';
             let optPrice = 0;
@@ -201,7 +232,7 @@ const EstimateForm = () => {
               optName = optId.name;
               optPrice = optId.price || 0;
             }
-            
+
             if (optName) {
               extraOptionItems.push({
                 name: `[추가옵션] ${optName}`,
@@ -215,7 +246,7 @@ const EstimateForm = () => {
           });
         }
       });
-      
+
       // ✅ customMaterials를 items 형식으로 변환 (경량랙 전용)
       const customMaterialItems = [];
       cart.forEach(item => {
@@ -234,9 +265,9 @@ const EstimateForm = () => {
           });
         }
       });
-      
+
       const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
-      
+
       const bomMaterials = (totalBom || []).map(m => {
         // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
         let displayName = m.name;
@@ -244,7 +275,7 @@ const EstimateForm = () => {
           const partName = extractPartNameFromCleanName(m.name) || m.name;
           displayName = generateHighRackDisplayName(partName, m.colorWeight);
         }
-        
+
         return {
           name: displayName,
           rackType: m.rackType,
@@ -257,11 +288,11 @@ const EstimateForm = () => {
           note: m.note || ''
         };
       });
-      
+
       const allMaterials = [...bomMaterials, ...customMaterials];
-      
-      setFormData(prev => ({ 
-        ...prev, 
+
+      setFormData(prev => ({
+        ...prev,
         items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
         materials: allMaterials
       }));
@@ -273,7 +304,7 @@ const EstimateForm = () => {
     const subtotal = formData.items.reduce((s, it) => s + (parseFloat(it.totalPrice) || 0), 0);
     const tax = Math.round(subtotal * 0.1);
     const totalAmount = subtotal + tax;
-    
+
     setFormData(prev => {
       if (prev.subtotal === subtotal && prev.tax === tax && prev.totalAmount === totalAmount) {
         return prev;
@@ -291,7 +322,7 @@ const EstimateForm = () => {
         stampImage: PROVIDER.stampImage  // ✅ 도장은 항상 고정
       };
     }
-    
+
     // 없으면 현재 localStorage 또는 기본값
     const currentSettings = getDocumentSettings();
     return {
@@ -299,9 +330,9 @@ const EstimateForm = () => {
       stampImage: PROVIDER.stampImage  // ✅ 도장은 항상 고정
     };
   };
-  
+
   const displaySettings = getDisplaySettings();
-  
+
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -330,12 +361,12 @@ const EstimateForm = () => {
 
   const handleItemAdd = (itemData) => {
     setFormData(prev => ({
-    ...prev,
-    items: [...prev.items, itemData]
-  }));
-  // 패널은 유지 (닫지 않음)
+      ...prev,
+      items: [...prev.items, itemData]
+    }));
+    // 패널은 유지 (닫지 않음)
   };
-  
+
   const removeItem = (idx) => {
     setFormData(prev => ({
       ...prev,
@@ -345,19 +376,19 @@ const EstimateForm = () => {
 
   const handleSave = async () => {
     if (!formData.documentNumber.trim()) {
-      setToast({ 
-        show: true, 
-        message: '거래번호(문서번호)를 입력하세요.', 
-        type: 'error' 
+      setToast({
+        show: true,
+        message: '거래번호(문서번호)를 입력하세요.',
+        type: 'error'
       });
       documentNumberInputRef.current?.focus();
       return;
     }
-    
+
     // ✅ 동일 거래번호 찾기
     let itemId;
     let existingDoc = null;
-    
+
     if (editingDocumentId) {
       itemId = editingDocumentId;
     } else if (isEditMode) {
@@ -378,15 +409,15 @@ const EstimateForm = () => {
         itemId = Date.now();
       }
     }
-    
+
     // 저장 로직 실행
     await proceedWithSave(itemId, existingDoc);
   };
-  
+
   // ✅ 저장 로직 분리
   const proceedWithSave = async (itemId, existingDoc) => {
     const storageKey = `estimate_${itemId}`;
-    
+
     // ✅ 현재 문서 양식 설정 (도장 제외)
     const currentSettings = getDocumentSettings();
     const documentSettings = {
@@ -399,13 +430,13 @@ const EstimateForm = () => {
       fax: currentSettings.fax
       // stampImage는 제외 (항상 PROVIDER 고정)
     };
-    
+
     // ✅ cart에서 extraOptions 추출 (문서 저장 시 포함)
     const cartWithExtraOptions = cart.map(item => ({
       ...item,
       extraOptions: item.extraOptions || []
     }));
-    
+
     const newEstimate = {
       ...formData,
       id: itemId,
@@ -419,18 +450,18 @@ const EstimateForm = () => {
       totalPrice: formData.totalAmount,
       updatedAt: new Date().toISOString(),
       // ✅ 편집 모드: 기존 documentSettings 유지, 신규: 현재 설정 저장
-      documentSettings: (existingDoc || isEditMode || editingDocumentId) 
+      documentSettings: (existingDoc || isEditMode || editingDocumentId)
         ? (formData.documentSettings || documentSettings)
         : documentSettings,
       // ✅ extraOptions 저장 (문서 로드 시 복원용)
       cart: cartWithExtraOptions,
       ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
     };
-  
+
     localStorage.setItem(storageKey, JSON.stringify(newEstimate));
-    
+
     const success = await saveDocumentSync(newEstimate);
-    
+
     if (success) {
       try {
         await documentsAPI.save(newEstimate.id, {
@@ -451,17 +482,17 @@ const EstimateForm = () => {
       } catch (err) {
         console.error('문서 즉시 서버 저장 실패:', err);
       }
-      setToast({ 
-        show: true, 
-        message: isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.', 
-        type: 'success' 
+      setToast({
+        show: true,
+        message: isEditMode ? '견적서가 수정되었습니다.' : '견적서가 저장되었습니다.',
+        type: 'success'
       });
       window.dispatchEvent(new Event('documentsupdated'));
     } else {
-      setToast({ 
-        show: true, 
-        message: '저장 중 오류가 발생했습니다.', 
-        type: 'error' 
+      setToast({
+        show: true,
+        message: '저장 중 오류가 발생했습니다.',
+        type: 'error'
       });
     }
   };
@@ -544,9 +575,9 @@ const EstimateForm = () => {
       }
     } catch (error) {
       console.error('❌ 팩스 전송 오류:', error);
-      
+
       let errorMessage = '팩스 전송에 실패했습니다.\n\n';
-      
+
       if (error.message.includes('잔액')) {
         errorMessage += `❌ ${error.message}\n\n발송닷컴 사이트에서 충전해주세요.`;
       } else if (error.message.includes('타임아웃')) {
@@ -556,7 +587,7 @@ const EstimateForm = () => {
       } else {
         errorMessage += `오류: ${error.message}`;
       }
-      
+
       alert(errorMessage);
     }
   };
@@ -596,7 +627,7 @@ const EstimateForm = () => {
           ⚙️ 문서 양식 수정
         </button>
       )}
-      
+
       <div className="form-header">
         <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
       </div>
@@ -605,29 +636,29 @@ const EstimateForm = () => {
         <table className="form-table info-table compact">
           <tbody>
             <tr>
-              <td className="label" style={{width:110}}>거래일자</td>
+              <td className="label" style={{ width: 110 }}>거래일자</td>
               <td>
-                <div style={{display:'flex', gap:'8px', alignItems:'center', width:'100%'}}>
-                  <div style={{flex:'0 0 55%'}}>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: '0 0 55%' }}>
                     <input
                       type="date"
                       value={formData.date}
-                      onChange={e=>updateFormData('date', e.target.value)}
-                      style={{fontSize:'14px', fontWeight:600, padding:'3px 4px', width:'100%'}}
+                      onChange={e => updateFormData('date', e.target.value)}
+                      style={{ fontSize: '14px', fontWeight: 600, padding: '3px 4px', width: '100%' }}
                     />
                   </div>
-                  <div style={{display:'flex', flexDirection:'column', flex:'0 0 45%', paddingLeft:'4px'}}>
-                    <label style={{fontSize:'12px', fontWeight:600, marginBottom:2}}>거래번호</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: '0 0 45%', paddingLeft: '4px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, marginBottom: 2 }}>거래번호</label>
                     <input
                       ref={documentNumberInputRef}
                       type="text"
                       value={formData.documentNumber}
-                      onChange={e=>{
+                      onChange={e => {
                         documentNumberInputRef.current?.classList.remove('invalid');
                         updateFormData('documentNumber', e.target.value);
                       }}
                       placeholder=""
-                      style={{padding:'3px 4px', fontSize:'18px', fontWeight:'bold', color:'#000000', width:'100%'}}
+                      style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: '#000000', width: '100%' }}
                     />
                   </div>
                 </div>
@@ -641,7 +672,7 @@ const EstimateForm = () => {
                 <input
                   type="text"
                   value={formData.bizNumber}
-                  onChange={e=>updateFormData('bizNumber', e.target.value)}
+                  onChange={e => updateFormData('bizNumber', e.target.value)}
                   placeholder=""
                 />
               </td>
@@ -654,12 +685,12 @@ const EstimateForm = () => {
                 <input
                   type="text"
                   value={formData.companyName}
-                  onChange={e=>updateFormData('companyName', e.target.value)}
+                  onChange={e => updateFormData('companyName', e.target.value)}
                   placeholder="" /* 상호명 입력 placeholder제거 (인쇄할떄나와서) */
                 />
               </td>
               <td className="label">대표자</td>
-              <td className="rep-cell" style={{whiteSpace:'nowrap'}}>
+              <td className="rep-cell" style={{ whiteSpace: 'nowrap' }}>
                 <span className="ceo-inline">
                   <span className="ceo-name">{displaySettings.ceo}</span>
                   {displaySettings.stampImage && (
@@ -678,7 +709,7 @@ const EstimateForm = () => {
                 <textarea
                   className="estimate-memo memo-narrow"
                   value={formData.topMemo}
-                  onChange={e=>updateFormData('topMemo', e.target.value)}
+                  onChange={e => updateFormData('topMemo', e.target.value)}
                   placeholder=""
                 />
               </td>
@@ -720,9 +751,9 @@ const EstimateForm = () => {
               <td>{idx + 1}</td>
               <td>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <input type="text" value={it.name} onChange={e=>updateItem(idx,'name',e.target.value)} placeholder="품명" style={{ flex: 1 }} />
+                  <input type="text" value={it.name} onChange={e => updateItem(idx, 'name', e.target.value)} placeholder="품명" style={{ flex: 1 }} />
                   {it.note === '추가옵션' && (
-                    <span style={{ 
+                    <span style={{
                       fontSize: '10px',
                       color: '#17a2b8',
                       backgroundColor: '#d1ecf1',
@@ -736,16 +767,16 @@ const EstimateForm = () => {
                   )}
                 </div>
               </td>
-              <td><input type="text" value={it.unit} onChange={e=>updateItem(idx,'unit',e.target.value)} placeholder="단위" /></td>
-              <td><input type="number" value={it.quantity} onChange={e=>updateItem(idx,'quantity',e.target.value)} placeholder="수량" /></td>
-              <td><input type="number" value={it.unitPrice} onChange={e=>updateItem(idx,'unitPrice',e.target.value)} placeholder="단가" /></td>
-              <td className="right">{it.totalPrice?parseInt(it.totalPrice).toLocaleString():'0'}</td>
-              <td><input type="text" value={it.note} onChange={e=>updateItem(idx,'note',e.target.value)} placeholder="" /></td>
+              <td><input type="text" value={it.unit} onChange={e => updateItem(idx, 'unit', e.target.value)} placeholder="단위" /></td>
+              <td><input type="number" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} placeholder="수량" /></td>
+              <td><input type="number" value={it.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} placeholder="단가" /></td>
+              <td className="right">{it.totalPrice ? parseInt(it.totalPrice).toLocaleString() : '0'}</td>
+              <td><input type="text" value={it.note} onChange={e => updateItem(idx, 'note', e.target.value)} placeholder="" /></td>
               <td className="no-print">
                 <button
                   type="button"
-                  onClick={()=>removeItem(idx)}
-                  disabled={formData.items.length===1}
+                  onClick={() => removeItem(idx)}
+                  disabled={formData.items.length === 1}
                   className="remove-btn"
                 >삭제</button>
               </td>
@@ -756,8 +787,8 @@ const EstimateForm = () => {
 
       {!(showFaxModal || showSettingsModal) && (
         <div className="item-controls no-print">
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={addItem}
             className="add-item-btn"
           >
@@ -791,16 +822,16 @@ const EstimateForm = () => {
         <label>비고:</label>
         <textarea
           value={formData.notes}
-          onChange={e=>updateFormData('notes', e.target.value)}
+          onChange={e => updateFormData('notes', e.target.value)}
           placeholder="기타 사항"
           rows={4}
         />
       </div>
 
       <div className="form-actions no-print" style={{ display: (showFaxModal || showSettingsModal) ? 'none' : 'flex' }}>
-        <button 
-          type="button" 
-          onClick={handleSave} 
+        <button
+          type="button"
+          onClick={handleSave}
           className="save-btn"
           ref={saveButtonRef}
         >
@@ -810,7 +841,7 @@ const EstimateForm = () => {
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>
-      
+
       {/* ✅ 토스트 알림 */}
       <ToastNotification
         show={toast.show}
@@ -820,7 +851,7 @@ const EstimateForm = () => {
         duration={2000}
         onClose={() => setToast({ ...toast, show: false })}
       />
-      
+
       {/* ✅ 확인 다이얼로그 */}
       <ConfirmDialog
         show={confirmDialog.show}
@@ -836,7 +867,7 @@ const EstimateForm = () => {
       />
 
       <div className="form-company">({PROVIDER.companyName})</div>
-      
+
       {showFaxModal && (
         <FaxPreviewModal
           pdfBlobURL={pdfBlobURL}
@@ -844,7 +875,7 @@ const EstimateForm = () => {
           onSendFax={handleSendFax}
         />
       )}
-      
+
       <DocumentSettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
@@ -860,12 +891,12 @@ function findDocumentByNumber(docNumber, docType) {
       try {
         const data = JSON.parse(localStorage.getItem(key));
         const checkNumber = docType === 'estimate' ? data.estimateNumber :
-                           docType === 'purchase' ? data.purchaseNumber :
-                           data.documentNumber;
+          docType === 'purchase' ? data.purchaseNumber :
+            data.documentNumber;
         if (checkNumber === docNumber) {
           return data;
         }
-      } catch {}
+      } catch { }
     }
   }
   return null;

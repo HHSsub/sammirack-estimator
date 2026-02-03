@@ -585,7 +585,7 @@ const HistoryPage = () => {
 
     console.log('📋 청구서 생성:', { cart, totalBom, estimateData });
 
-    navigate(`/ purchase - order / new `, { state: { cart, totalBom, estimateData } });
+    navigate(`/purchase-order/new`, { state: { cart, totalBom, estimateData } });
   };
 
   /**
@@ -652,7 +652,11 @@ const HistoryPage = () => {
       }
     };
 
-    navigate('/', { state: editingData });
+    const targetPath = item.type === 'purchase' ? `/purchase-order/edit/${item.id}` :
+      item.type === 'estimate' ? `/estimate/edit/${item.id}` :
+        item.type === 'delivery' ? `/delivery-note/edit/${item.id}` : '/';
+
+    navigate(targetPath, { state: editingData });
   };
 
   /**

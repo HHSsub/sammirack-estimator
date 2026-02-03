@@ -188,10 +188,36 @@ const PurchaseOrderForm = () => {
             data.materials = totalBom;
           }
 
-          setFormData({
+          // ✅ 편집 후 진입 시 state.cart로 items 보정 (비어 있으면)
+          if (editingDocumentId && cart && cart.length > 0 && (!data.items || data.items.length === 0 || (data.items.length === 1 && !data.items[0].name))) {
+            const cartItems = cart.map(item => {
+              const qty = item.quantity || 1;
+              const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
+              return {
+                name: item.displayName || item.name || '',
+                unit: '개',
+                quantity: qty,
+                unitPrice,
+                totalPrice: unitPrice * qty,
+                note: ''
+              };
+            });
+            data.items = cartItems;
+          }
+
+          // ✅ 편집 후 진입 시 state.editingDocumentData로 메타정보 보정 (비어 있으면)
+          const mergedData = {
             ...data,
-            documentSettings: data.documentSettings || null  // ✅ 원본 설정 유지
-          });
+            date: data.date || editingDocumentData.date || estimateData.date || data.date,
+            documentNumber: data.documentNumber || data.purchaseNumber || editingDocumentData.documentNumber || estimateData.estimateNumber || data.documentNumber,
+            companyName: data.companyName || editingDocumentData.companyName || estimateData.companyName || data.companyName,
+            bizNumber: data.bizNumber || editingDocumentData.bizNumber || estimateData.bizNumber || data.bizNumber,
+            notes: data.notes || editingDocumentData.notes || estimateData.notes || data.notes,
+            topMemo: data.topMemo || editingDocumentData.topMemo || estimateData.topMemo || data.topMemo,
+            documentSettings: data.documentSettings || null
+          };
+
+          setFormData(mergedData);
 
           // ✅ 문서 로드 완료 플래그 설정 (새 cart 반영 방지)
           cartInitializedRef.current = true;
