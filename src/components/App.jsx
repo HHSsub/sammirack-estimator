@@ -277,28 +277,43 @@ const HomePage = ({ currentUser }) => {
   const canAddItem = isEditMode ? true : (finalPrice > 0);  // ✅ 편집 모드에서는 항상 추가 가능
   const canProceed = cart.length > 0;
 
-  // ✅ 새 코드
+  // ✅ 수정: 편집/일반 모드 모두 cart.bom에서 BOM 추출
+  // ✅ 최종 수정: 모든 모드에서 BOM 추출
   const totalBomForDisplay = useMemo(() => {
-    if (isEditMode) {
-      // ✅ 편집 모드에서는 항상 현재 cart 기반으로 BOM 재생성
-      if (cart && cart.length > 0) {
-        console.log('🔄 [편집모드] cart의 BOM에서 재생성 시작...');
-        const regeneratedBOM = [];
-        cart.forEach(item => {
-          if (item.bom && item.bom.length > 0) {
-            regeneratedBOM.push(...item.bom);
-            console.log(`  - ${item.displayName}: ${item.bom.length}개 부품 추가`);
-          }
-        });
-        console.log('✅ [편집모드] BOM 재생성 완료:', regeneratedBOM.length, '개');
+    console.log('🔍 totalBomForDisplay 계산 시작');
+    console.log('  isEditMode:', isEditMode);
+    console.log('  cart.length:', cart?.length);
+    console.log('  editingData.materials?.length:', editingData.materials?.length);
+    console.log('  cartBOMView.length:', cartBOMView?.length);
+
+    // 1순위: 편집 모드에서 editingData.materials가 있으면 사용
+    if (isEditMode && editingData.materials && editingData.materials.length > 0) {
+      console.log('✅ [편집모드] editingData.materials 사용:', editingData.materials.length, '개');
+      return editingData.materials;
+    }
+
+    // 2순위: cart에서 BOM 추출
+    if (cart && cart.length > 0) {
+      const regeneratedBOM = [];
+      cart.forEach(item => {
+        if (item.bom && item.bom.length > 0) {
+          regeneratedBOM.push(...item.bom);
+          console.log(`  - ${item.displayName || item.name}: ${item.bom.length}개 부품 추가`);
+        }
+      });
+
+      if (regeneratedBOM.length > 0) {
+        console.log('✅ cart.bom 사용:', regeneratedBOM.length, '개');
         return regeneratedBOM;
       }
-      console.log('⚠️ [편집모드] cart가 비어있음');
-      return [];
     }
-    // 일반 모드에서는 cartBOMView 사용
+
+    // 3순위: cartBOMView 사용 (fallback)
+    console.log('⚠️ cartBOMView 사용:', cartBOMView?.length, '개');
     return cartBOMView || [];
-  }, [isEditMode, cart, cartBOMView]);
+  }, [isEditMode, editingData.materials, cart, cartBOMView]);
+
+
   // ✅ 중요: editingData.materials 의존성 제거!
 
   const getCurrentRackOptionName = () => {
@@ -384,67 +399,73 @@ const HomePage = ({ currentUser }) => {
 
       {canProceed && (
         <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-          <Link
-            to="/estimate/new"
-            state={{
-              cart,
-              cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
-              totalBom: totalBomForDisplay,
-              materials: totalBomForDisplay,  // ✅ 이 줄 추가!
-              ...(isEditMode ? {
-                customItems: editingData.customItems || [],
-                customMaterials: editingData.customMaterials || [],
-                // ✅ 같은 타입(견적서)일 때만 editingDocumentId 전달하여 편집 모드 유지
-                editingDocumentId: editingData.editingDocumentType === 'estimate' ? editingData.editingDocumentId : undefined,
-                editingDocumentData: editingData.editingDocumentData || {},
-                // ✅ 다른 타입에서 전환 시 기본 정보로 사용
-                estimateData: editingData.editingDocumentData || {}
-              } : {})
+          <button
+            onClick={() => {
+              navigate('/estimate/new', {
+                state: {
+                  cart,
+                  cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
+                  totalBom: totalBomForDisplay,
+                  materials: totalBomForDisplay,
+                  ...(isEditMode ? {
+                    customItems: editingData.customItems || [],
+                    customMaterials: editingData.customMaterials || [],
+                    editingDocumentId: editingData.editingDocumentType === 'estimate' ? editingData.editingDocumentId : undefined,
+                    editingDocumentData: editingData.editingDocumentData || {},
+                    estimateData: editingData.editingDocumentData || {}
+                  } : {})
+                }
+              });
             }}
-            className={`create-estimate-button`}
+            className="create-estimate-button"
           >
             견적서 작성
-          </Link>
-          <Link
-            to="/delivery-note/new"
-            state={{
-              cart,
-              cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
-              totalBom: totalBomForDisplay,
-              materials: totalBomForDisplay,  // ✅ 이 줄 추가!
-              ...(isEditMode ? {
-                customItems: editingData.customItems || [],
-                customMaterials: editingData.customMaterials || [],
-                // ✅ 같은 타입(거래명세서)일 때만 editingDocumentId 전달
-                editingDocumentId: editingData.editingDocumentType === 'delivery' ? editingData.editingDocumentId : undefined,
-                editingDocumentData: editingData.editingDocumentData || {},
-                estimateData: editingData.editingDocumentData || {}
-              } : {})
+          </button>
+          <button
+            onClick={() => {
+              navigate('/delivery-note/new', {
+                state: {
+                  cart,
+                  cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
+                  totalBom: totalBomForDisplay,
+                  materials: totalBomForDisplay,
+                  ...(isEditMode ? {
+                    customItems: editingData.customItems || [],
+                    customMaterials: editingData.customMaterials || [],
+                    editingDocumentId: editingData.editingDocumentType === 'delivery' ? editingData.editingDocumentId : undefined,
+                    editingDocumentData: editingData.editingDocumentData || {},
+                    estimateData: editingData.editingDocumentData || {}
+                  } : {})
+                }
+              });
             }}
-            className={`create-delivery-note-button`}
+            className="create-delivery-note-button"
           >
             거래명세서 작성
-          </Link>
-          <Link
-            to="/purchase-order/new"
-            state={{
-              cart,
-              cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
-              totalBom: totalBomForDisplay,
-              materials: totalBomForDisplay,  // ✅ 이 줄 추가!
-              ...(isEditMode ? {
-                customItems: editingData.customItems || [],
-                customMaterials: editingData.customMaterials || [],
-                // ✅ 같은 타입(청구서)일 때만 editingDocumentId 전달
-                editingDocumentId: editingData.editingDocumentType === 'purchase' ? editingData.editingDocumentId : undefined,
-                editingDocumentData: editingData.editingDocumentData || {},
-                estimateData: editingData.editingDocumentData || {}
-              } : {})
+          </button>
+          <button
+            onClick={() => {
+              navigate('/purchase-order/new', {
+                state: {
+                  cart,
+                  cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
+                  totalBom: totalBomForDisplay,
+                  materials: totalBomForDisplay,
+                  ...(isEditMode ? {
+                    customItems: editingData.customItems || [],
+                    customMaterials: editingData.customMaterials || [],
+                    editingDocumentId: editingData.editingDocumentType === 'purchase' ? editingData.editingDocumentId : undefined,
+                    editingDocumentData: editingData.editingDocumentData || {},
+                    estimateData: editingData.editingDocumentData || {}
+                  } : {})
+                }
+              });
             }}
-            className={`create-order-button`}
+            className="create-order-button"
           >
             청구서 작성
-          </Link>
+          </button>
+
         </div>
       )}
       {showTotalBOM && (
