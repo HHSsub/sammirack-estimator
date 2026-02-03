@@ -6,6 +6,11 @@ import { loadAdminPrices, generatePartId, loadExtraOptionsPrices } from './unifi
 import { sortBOMByMaterialRule } from './materialSort';
 
 // ===== 헬퍼 함수들 (ProductContext와 100% 동일) =====
+let bomDataForRegeneration = null;
+export const setBomDataForRegeneration = (data) => {
+  bomDataForRegeneration = data;
+};
+
 const parseHeightMm = (h) => Number(String(h || "").replace(/[^\d]/g, "")) || 0;
 
 const parseLevel = (levelStr, rackType) => {
@@ -196,7 +201,7 @@ export const parseDisplayNameToOptions = (displayName) => {
 
   // ✅ "파렛트랙 철판형" 같은 2단어 랙타입 처리
   let type, formType, size, height, level, color, weight;
-  
+
   if (parts[0] === "파렛트랙" && parts[1] === "철판형") {
     // "파렛트랙 철판형 독립형 2580x1000 2500 L1"
     type = "파렛트랙 철판형";
@@ -258,20 +263,20 @@ export const regenerateBOMFromOptions = (options, quantity, bomData = null) => {
       { rackType: selectedType, size: sz, name: "기둥", specification: `${ht}`, quantity: (form === "연결형" ? 2 : 4) * qty, unitPrice: 0, totalPrice: 0 },
       { rackType: selectedType, size: sz, name: "로드빔", specification: loadSpec, quantity: 2 * lvl * qty, unitPrice: 0, totalPrice: 0 },
       ...(selectedType === "파렛트랙 철판형" ? [] : [
-              { 
-                rackType: selectedType, 
-                size: sz, 
-                name: "타이빔", 
-                specification: tieSpec, 
-                // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
-                quantity: (() => {
-                  const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
-                  return tieBeamPerLevel * lvl * qty;
-                })(), 
-                unitPrice: 0, 
-                totalPrice: 0 
-              },
-            ]),
+        {
+          rackType: selectedType,
+          size: sz,
+          name: "타이빔",
+          specification: tieSpec,
+          // ✅ 타이빔 계산 규칙: 1390→2개/단, 2590/2790→4개/단
+          quantity: (() => {
+            const tieBeamPerLevel = (d === 1390) ? 2 : (d === 2590 || d === 2790) ? 4 : 2;
+            return tieBeamPerLevel * lvl * qty;
+          })(),
+          unitPrice: 0,
+          totalPrice: 0
+        },
+      ]),
       { rackType: selectedType, size: sz, name: "안전핀", specification: "", quantity: 2 * lvl * 2 * qty, unitPrice: 0, totalPrice: 0 },
     ];
 
@@ -302,7 +307,7 @@ export const regenerateBOMFromOptions = (options, quantity, bomData = null) => {
     const rodBeamNum = d ? String(d) : '';
     const shelfNum = w ? String(w) : '';
     const shelfPerLevel = calcHighRackShelfPerLevel(size);
-  
+
     const list = [
       {
         rackType: selectedType,
@@ -332,7 +337,7 @@ export const regenerateBOMFromOptions = (options, quantity, bomData = null) => {
         totalPrice: 0
       }
     ].map(r => ensureSpecification(r, { size, height: heightValue, ...parseWD(size), weight: weightOnly }));
-  
+
     const listWithAdminPrices = list.map(applyAdminEditPrice);
     return sortBOMByMaterialRule(listWithAdminPrices);
   }
