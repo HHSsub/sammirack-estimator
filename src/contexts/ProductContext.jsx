@@ -2218,16 +2218,18 @@ export const ProductProvider = ({ children }) => {
         }))
         : item.bom;
 
-      // ✅ price도 비례하여 조정 (customPrice 없을 때만)
-      const newPrice = item.customPrice && item.customPrice > 0
-        ? item.customPrice * nextQty
-        : Math.round((Number(item.price) || 0) * ratio);
+      // ✅ price는 항상 단가를 저장
+      const newUnitPrice = item.customPrice && item.customPrice > 0
+        ? item.customPrice
+        : (Number(item.unitPrice) || Math.round((Number(item.price) || 0) / oldQty));
 
       return {
         ...item,
         quantity: nextQty,
         bom: newBom,
-        price: newPrice
+        unitPrice: newUnitPrice,
+        price: newUnitPrice,
+        totalPrice: newUnitPrice * nextQty
       };
     }));
   };
