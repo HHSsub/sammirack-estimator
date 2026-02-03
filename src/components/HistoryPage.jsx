@@ -12,6 +12,7 @@ import {
 } from '../utils/realtimeAdminSync';
 import { regenerateBOMFromDisplayName, setBomDataForRegeneration } from '../utils/bomRegeneration';
 import { generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
+import { documentsAPI } from '../services/apiClient';  // ✅ 이 줄 추가
 
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
@@ -513,7 +514,14 @@ const HistoryPage = () => {
 
     try {
       // 1) 서버에서 전체 문서 데이터 가져오기
-      const fullDoc = await documentsAPI.getById(item.id);
+      let docId = item.id;
+      if (!docId.includes('_')) {
+        docId = `${item.type}_${docId}`;
+        console.log('✅ doc_id 정규화:', docId);
+      }
+
+      const response = await documentsAPI.getById(docId);
+      const fullDoc = response.data;
       console.log('📄 서버에서 받은 전체 문서:', fullDoc);
 
       // 2) Cart 복원
@@ -610,7 +618,6 @@ const HistoryPage = () => {
 
       // 5) Context에 반영
       setCart(cart);
-      setBOM(materials);
 
       // 6) 편집 데이터 구성
       const editingData = {

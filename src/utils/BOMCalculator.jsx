@@ -6,7 +6,7 @@ const COMPONENT_NAME_MAP = {
   'upright_frame_st': '스텐드 수직프레임',
   'shelf_st': '스텐드 선반',
   'bolt_set_st': '스텐드 볼트세트',
-  
+
   // 하이랙 부품
   'upright_frame_hr_270': '하이랙 수직프레임(270kg)',
   'upright_frame_hr_450': '하이랙 수직프레임(450kg)',
@@ -52,21 +52,21 @@ export class BOMCalculatorCore {
     const components = [];
     const levelCount = parseInt(level.replace('단', ''), 10) || 0;
 
-    components.push({ 
+    components.push({
       code: 'upright_frame_st',
       quantity: 4,
       options: { height },
       spec: `높이 ${height}`
     });
 
-    components.push({ 
+    components.push({
       code: 'shelf_st',
       quantity: levelCount,
       options: { size },
       spec: `크기 ${size}`
     });
 
-    components.push({ 
+    components.push({
       code: 'bolt_set_st',
       quantity: 1,
       options: {},
@@ -86,21 +86,21 @@ export class BOMCalculatorCore {
     const is450kg = color.includes('450kg');
 
     if (is500kg) {
-      components.push({ 
+      components.push({
         code: 'upright_frame_hr_500',
         quantity: 2,
         options: { height },
         spec: `높이 ${height}`
       });
 
-      components.push({ 
+      components.push({
         code: 'load_beam_hr_500',
         quantity: levelCount * 2,
         options: { size },
         spec: `크기 ${size}`
       });
 
-      components.push({ 
+      components.push({
         code: 'safety_pin_hr',
         quantity: levelCount * 4,
         options: {},
@@ -109,29 +109,29 @@ export class BOMCalculatorCore {
     } else {
       const poleCode = is450kg ? 'upright_frame_hr_450' : 'upright_frame_hr_270';
       const shelfCode = is450kg ? 'shelf_hr_450' : 'shelf_hr_270';
-      
-      components.push({ 
+
+      components.push({
         code: poleCode,
         quantity: 4,
         options: { height },
         spec: `높이 ${height}`
       });
 
-      components.push({ 
+      components.push({
         code: shelfCode,
         quantity: levelCount,
         options: { size },
         spec: `크기 ${size}`
       });
 
-      components.push({ 
+      components.push({
         code: 'cross_beam_hr',
         quantity: levelCount * 2,
         options: { size },
         spec: `크기 ${size}`
       });
 
-      components.push({ 
+      components.push({
         code: 'safety_pin_hr',
         quantity: levelCount * 4,
         options: {},
@@ -150,7 +150,7 @@ export class BOMCalculatorCore {
     const { size, height, level, formType } = selections;
     const bomList = bomData[productType];
 
-    const matchedBOM = bomList.find(item => 
+    const matchedBOM = bomList.find(item =>
       item.size === size &&
       item.height === height &&
       item.level === level &&

@@ -113,40 +113,119 @@ const HomePage = ({ currentUser }) => {
   const editingData = location.state || {};
   const isEditMode = !!editingData.editingDocumentId;
 
-  // ✅ 편집 모드 시 cart 및 materials(BOM) 초기화
   useEffect(() => {
     if (isEditMode && editingData.cart) {
       console.log('🔍🔍🔍 HomePage: 편집 모드 데이터 복원 🔍🔍🔍');
       console.log('📄 editingData:', editingData);
-      console.log('🛒 cart:', editingData.cart);
-      console.log('📦 materials:', editingData.materials);
+      console.log('🛒 원본 cart:', editingData.cart);
+      console.log('📦 원본 materials:', editingData.materials);
 
-      setCart(editingData.cart);
+      // ✅ Admin 가격 로드 후 Cart 복원
+      (async () => {
+        try {
+          const { loadAdminPrices, generatePartId } = await import('./utils/unifiedPriceManager');
+          const adminPrices = await loadAdminPrices();
+          console.log('📊 불러온 Admin 가격:', Object.keys(adminPrices).length, '개');
 
-      // ✅ materials도 ProductContext에 반영 (중요!)
-      // ProductContext에는 setCartBOM 함수가 없으므로
-      // 대신 180~183번째 줄의 totalBomForDisplay 로직이 이를 처리함
+          // ✅ 깊은 복사 + Admin 가격 적용
+          const deepCopiedCart = editingData.cart.map((item, index) => {
+            const copiedItem = {
+              ...item,
+              extraOptions: item.extraOptions ? [...item.extraOptions] : [],
+              customMaterials: item.customMaterials ? item.customMaterials.map(m => ({ ...m })) : [],
+              bom: item.bom ? item.bom.map(b => ({ ...b })) : []
+            };
 
-      // extraOptions 복원
-      const allExtraOptions = [];
-      editingData.cart.forEach(item => {
-        if (item.extraOptions && Array.isArray(item.extraOptions)) {
-          allExtraOptions.push(...item.extraOptions);
+            console.log(`\n🔍 [Item ${index + 1}] ${copiedItem.displayName || copiedItem.name}`);
+
+            // 1순위: customPrice (사용자 직접 수정)
+            if (copiedItem.customPrice !== undefined && copiedItem.customPrice !== null && copiedItem.customPrice > 0) {
+              console.log(`  ✅ customPrice 우선: ${copiedItem.customPrice}원`);
+              return {
+                ...copiedItem,
+                unitPrice: copiedItem.customPrice,
+                totalPrice: copiedItem.customPrice * (copiedItem.quantity || 1)
+              };
+            }
+
+            // 2순위: Admin 가격
+            const partId = generatePartId(copiedItem);
+            const adminPrice = adminPrices[partId];
+
+            if (adminPrice && adminPrice.price > 0) {
+              console.log(`  ✅ Admin 가격 적용: ${adminPrice.price}원`);
+              return {
+                ...copiedItem,
+                unitPrice: adminPrice.price,
+                totalPrice: adminPrice.price * (copiedItem.quantity || 1)
+              };
+            }
+
+            // 3순위: 기존 가격 유지
+            console.log(`  ⚠️ 기존 가격 유지: ${copiedItem.unitPrice || 0}원`);
+            return copiedItem;
+          });
+
+          console.log('🆕 깊은 복사 + 가격 적용 완료:', deepCopiedCart);
+          console.log('🔍 배열 참조 확인:', deepCopiedCart === editingData.cart ? '❌ 같은 참조' : '✅ 다른 참조');
+
+          setCart(deepCopiedCart);
+
+          // extraOptions 복원
+          const allExtraOptions = [];
+          deepCopiedCart.forEach(item => {
+            if (item.extraOptions && Array.isArray(item.extraOptions)) {
+              allExtraOptions.push(...item.extraOptions);
+            }
+          });
+          if (allExtraOptions.length > 0) {
+            const uniqueExtraOptions = Array.from(new Set(allExtraOptions));
+            handleExtraOptionChange(uniqueExtraOptions);
+          }
+
+          console.log('✅ HomePage: 편집 모드 복원 완료');
+          console.log('🛒 최종 cart 개수:', deepCopiedCart.length, '개');
+          console.log('📦 최종 materials 개수:', editingData.materials?.length || 0, '개');
+
+        } catch (error) {
+          console.error('❌ Admin 가격 적용 실패:', error);
+
+          // 에러 발생 시 기본 깊은 복사만 수행
+          const deepCopiedCart = editingData.cart.map(item => ({
+            ...item,
+            extraOptions: item.extraOptions ? [...item.extraOptions] : [],
+            customMaterials: item.customMaterials ? item.customMaterials.map(m => ({ ...m })) : [],
+            bom: item.bom ? item.bom.map(b => ({ ...b })) : []
+          }));
+          setCart(deepCopiedCart);
         }
-      });
-      if (allExtraOptions.length > 0) {
-        const uniqueExtraOptions = Array.from(new Set(allExtraOptions));
-        handleExtraOptionChange(uniqueExtraOptions);
-      }
-
-      console.log('✅ HomePage: 편집 모드 복원 완료');
-      console.log('🛒 최종 cart:', editingData.cart.length, '개');
-      console.log('📦 최종 materials:', editingData.materials?.length || 0, '개');
+      })();
     }
   }, [isEditMode, editingData.cart, editingData.materials, setCart, handleExtraOptionChange]);
 
 
+
   const getFinalPrice = () => {
+    // ✅ 편집 모드일 때는 cart의 totalPrice 합산 (customPrice 반영됨)
+    if (isEditMode && cart.length > 0) {
+      const total = cart.reduce((sum, item) => {
+        // customPrice 최우선
+        if (item.customPrice !== undefined && item.customPrice !== null && item.customPrice > 0) {
+          return sum + (item.customPrice * (item.quantity || 1));
+        }
+        // unitPrice
+        if (item.unitPrice !== undefined && item.unitPrice !== null && item.unitPrice > 0) {
+          return sum + (item.unitPrice * (item.quantity || 1));
+        }
+        // totalPrice 직접 사용
+        return sum + (item.totalPrice || 0);
+      }, 0);
+
+      console.log('💰 편집 모드 최종 가격:', total, '원');
+      return total;
+    }
+
+    // ✅ 일반 모드 (기존 로직 유지)
     if (!currentBOM || currentBOM.length === 0) {
       return currentPrice;
     }
@@ -166,6 +245,7 @@ const HomePage = ({ currentUser }) => {
 
     return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
   };
+
 
   useEffect(() => {
     const handleStorageChange = () => {

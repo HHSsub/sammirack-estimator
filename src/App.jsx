@@ -133,6 +133,63 @@ const HomePage = ({ currentUser }) => {
     }
   }, [isEditMode, editingData.cart, setCart, handleExtraOptionChange]);
 
+  // 📌 Admin 가격 변경 시 BOM 업데이트
+  useEffect(() => {
+    const handleAdminPriceUpdate = async () => {
+      console.log('💰 Admin 가격 변경 감지 - BOM 업데이트 시작');
+
+      if (cart.length === 0) return;
+
+      try {
+        const { loadAdminPrices, generatePartId } = await import('./utils/unifiedPriceManager');
+        const adminPrices = await loadAdminPrices();
+
+        // Cart 가격 업데이트
+        const updatedCart = cart.map(item => {
+          const partId = generatePartId(item);
+          const adminPrice = adminPrices[partId];
+          if (adminPrice && adminPrice.price > 0) {
+            return {
+              ...item,
+              unitPrice: adminPrice.price,
+              totalPrice: adminPrice.price * item.quantity
+            };
+          }
+          return item;
+        });
+
+        // BOM 가격 업데이트
+        const updatedBOM = cartBOMView.map(mat => {
+          const partId = generatePartId(mat);
+          const adminPrice = adminPrices[partId];
+          if (adminPrice && adminPrice.price > 0) {
+            return {
+              ...mat,
+              unitPrice: adminPrice.price,
+              totalPrice: adminPrice.price * mat.quantity
+            };
+          }
+          return mat;
+        });
+
+        setCart(updatedCart);
+
+        console.log('✅ Admin 가격 업데이트 완료');
+      } catch (error) {
+        console.error('❌ Admin 가격 업데이트 실패:', error);
+      }
+    };
+
+    window.addEventListener('adminPriceUpdate', handleAdminPriceUpdate);
+    window.addEventListener('storage', handleAdminPriceUpdate);
+
+    return () => {
+      window.removeEventListener('adminPriceUpdate', handleAdminPriceUpdate);
+      window.removeEventListener('storage', handleAdminPriceUpdate);
+    };
+  }, [cart, cartBOMView, setCart]);
+
+
   const getFinalPrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
       return currentPrice;
