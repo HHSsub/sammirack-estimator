@@ -1,6 +1,6 @@
 // src/components/MaterialSelector.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { loadAllMaterials, getEffectivePrice } from '../utils/unifiedPriceManager';
+import { loadAllMaterials, getEffectivePrice, generateInventoryPartId } from '../utils/unifiedPriceManager';
 import './MaterialSelector.css';
 
 const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
@@ -135,6 +135,17 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
       // 관리자 단가 적용
       const effectivePrice = getEffectivePrice(selectedMaterial, adminPrices);
 
+      const inventoryPartId = generateInventoryPartId({
+        rackType: selectedMaterial.rackType || '기타',
+        name: selectedMaterial.name || '',
+        specification: selectedMaterial.specification || '',
+        colorWeight: selectedMaterial.colorWeight || '',
+        color: selectedMaterial.color || '',
+        version: selectedMaterial.version || '' // 파렛트랙 신형 대응
+      });
+
+      console.log(`✅ MaterialSelector: 생성된 inventoryPartId = "${inventoryPartId}"`);
+
       onAdd({
         name: selectedMaterial.name,
         specification: selectedMaterial.specification || '',
@@ -146,7 +157,8 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         rackType: selectedMaterial.rackType || '기타',
         colorWeight: selectedMaterial.colorWeight || '',
         color: selectedMaterial.color || '',
-        partId: selectedMaterial.partId || ''
+        partId: selectedMaterial.partId || '',
+        inventoryPartId: inventoryPartId  // ✅ 핵심 추가!!!
       });
 
       // 선택은 유지, 수량만 초기화
