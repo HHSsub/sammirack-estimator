@@ -141,14 +141,16 @@ const HomePage = ({ currentUser }) => {
             console.log(`\n🔍 [Item ${index + 1}] ${newItem.displayName || newItem.name}`);
 
             // 1순위: customPrice (사용자 직접 수정)
-            if (newItem.customPrice !== undefined && newItem.customPrice !== null && newItem.customPrice > 0) {
-              console.log(`  ✅ customPrice 우선: ${newItem.customPrice}원`);
-              newItem.unitPrice = newItem.customPrice;
-              newItem.totalPrice = newItem.customPrice * (newItem.quantity || 1);
+            // ✅ 수정: item.price도 확인 (서버에서 불러온 가격)
+            const savedPrice = newItem.customPrice || item.price || 0;
+            if (savedPrice > 0) {
+              console.log(`  ✅ 저장된 가격 적용: ${savedPrice}원 (customPrice=${newItem.customPrice}, price=${item.price})`);
+              newItem.customPrice = savedPrice;
+              newItem.unitPrice = savedPrice;
+              newItem.totalPrice = savedPrice * (newItem.quantity || 1);
               newItem.price = newItem.totalPrice;
               return newItem;
             }
-
             // 2순위: Admin 가격
             const partId = generatePartId(newItem);
             const adminPrice = adminPrices[partId];
@@ -203,7 +205,8 @@ const HomePage = ({ currentUser }) => {
         }
       })();
     }
-  }, [isEditMode, editingData.cart, editingData.materials, setCart, handleExtraOptionChange]);
+    // }, [isEditMode, editingData.cart, editingData.materials, setCart, handleExtraOptionChange]);
+  }, [isEditMode]);
 
 
 
@@ -264,7 +267,7 @@ const HomePage = ({ currentUser }) => {
   }, []);
 
   const finalPrice = getFinalPrice();
-  const canAddItem = finalPrice > 0;
+  const canAddItem = isEditMode ? true : (finalPrice > 0);  // ✅ 편집 모드에서는 항상 추가 가능
   const canProceed = cart.length > 0;
 
   // ✅ 편집 모드일 때 materials가 비어있으면 cart의 BOM에서 재생성
