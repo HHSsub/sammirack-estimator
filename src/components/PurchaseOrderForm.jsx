@@ -725,10 +725,8 @@ const PurchaseOrderForm = () => {
 
   // ✅ 실제 인쇄 로직 분리
   const proceedWithPrint = async () => {
-    // ✅ 1. 브라우저 인쇄 다이얼로그 표시
     window.print();
 
-    // ✅ 2. 인쇄 다이얼로그가 닫힌 후 재고 감소 여부 확인
     setTimeout(async () => {
       const confirmDeduct = window.confirm(
         '인쇄가 완료되었습니까?\n\n' +
@@ -737,15 +735,22 @@ const PurchaseOrderForm = () => {
       );
 
       if (confirmDeduct && cart && cart.length > 0) {
-        let materialsForDeduct;
-
+        // ✅ cart에 bom 있으면 그냥 cart만 넘기고 materialsOverride는 undefined
         if (cart.some(i => i.bom && i.bom.length > 0)) {
-          console.log('✅ cart.bom 존재 → cart 사용');
-          materialsForDeduct = cart;
-        } else if (formData.materials && formData.materials.length > 0) {
+          console.log('✅ cart.bom 존재 → cart만 전달');
+          const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, undefined);
+
+          if (result.success) {
+            alert('✅ 재고가 감소되었습니다.');
+          } else {
+            alert(`❌ 재고 감소 실패: ${result.message}`);
+          }
+        }
+        // ✅ cart에 bom 없으면 formData.materials를 cart 형식으로 변환
+        else if (formData.materials && formData.materials.length > 0) {
           console.log('⚠️ cart.bom 없음 → formData.materials 변환');
 
-          materialsForDeduct = formData.materials
+          const materialsAsCart = formData.materials
             .filter(m => m && !m.isService && m.inventoryPartId && m.inventoryPartId !== '--')
             .map(m => ({
               bom: [{
@@ -758,49 +763,21 @@ const PurchaseOrderForm = () => {
               }]
             }));
 
-          console.log('📊 변환 결과:', materialsForDeduct.length, '개');
-          if (materialsForDeduct.length === 0) materialsForDeduct = undefined;
-        } else {
-          materialsForDeduct = undefined;
-        }
+          console.log('📊 변환된 cart:', materialsAsCart.length, '개');
 
-        console.log('🔍🔍🔍 재고 감소 직전 materials 확인:', formData.materials.map(m => ({
-          name: m.name,
-          inventoryPartId: m.inventoryPartId
-        })));
-        const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, materialsForDeduct);
+          if (materialsAsCart.length > 0) {
+            const result = await deductInventoryOnPrint(materialsAsCart, '청구서', formData.documentNumber, undefined);
 
-        if (result.success) {
-          let message = '✅ 재고가 감소되었습니다.\n\n';
-
-          // ✅ 정상 감소된 부품
-          const normalParts = result.deductedParts.filter(p => !p.wasShortage);
-          const shortageParts = result.deductedParts.filter(p => p.wasShortage);
-
-          if (normalParts.length > 0) {
-            message += `📦 정상 감소: ${normalParts.length}개 부품\n`;
-          }
-
-          // ✅ 부족하여 0으로 처리된 부품
-          if (shortageParts.length > 0) {
-            message += `⚠️ 재고 부족 (0으로 처리): ${shortageParts.length}개 부품\n\n`;
-
-            // 최대 3개만 표시
-            const displayParts = shortageParts.slice(0, 3);
-            displayParts.forEach(p => {
-              message += `  • ${p.name}: ${p.deducted}개 감소 → 재고 0\n`;
-            });
-
-            if (shortageParts.length > 3) {
-              message += `  • 외 ${shortageParts.length - 3}개 부품...\n`;
+            if (result.success) {
+              alert('✅ 재고가 감소되었습니다.');
+            } else {
+              alert(`❌ 재고 감소 실패: ${result.message}`);
             }
-
-            message += '\n재고 관리 탭에서 부족한 부품을 확인하세요.';
+          } else {
+            alert('⚠️ 재고 감소 대상이 없습니다.');
           }
-
-          alert(message);
         } else {
-          alert(`❌ 재고 감소 실패: ${result.message}`);
+          alert('⚠️ 재고 감소 대상이 없습니다.');
         }
       } else {
         alert('재고가 감소되지 않았습니다.');
