@@ -18,20 +18,20 @@ class RealtimeAdminSync {
   constructor() {
     this.isOnline = navigator.onLine;
     this.maxRetries = 3;
-    
+
     this.saveTimeout = null;
     this.lastSaveTime = 0;
     this.pendingSave = false;
     this.debounceDelay = 1000;
-    
+
     this.consecutiveFailures = 0;
     this.blockedUntil = 0;
-    
+
     this.setupEventListeners();
     this.initBroadcastChannel();
-    
+
     this.initialSync();
-    
+
     setInterval(() => {
       this.loadFromServer();
     }, 5 * 60 * 1000);
@@ -51,9 +51,9 @@ class RealtimeAdminSync {
       this.channel = new BroadcastChannel('admin-sync');
       this.channel.addEventListener('message', (event) => {
         const { type, data, source } = event.data;
-        
+
         if (source === this.getInstanceId()) return;
-        
+
         switch (type) {
           case 'inventory-updated':
             this.handleInventoryUpdate(data);
@@ -115,7 +115,7 @@ class RealtimeAdminSync {
     if (now < this.blockedUntil) {
       const waitSeconds = Math.ceil((this.blockedUntil - now) / 1000);
       console.log(`⏸️ 서버 차단 중. ${waitSeconds}초 후 자동 재시도됩니다.`);
-      
+
       if (!this.saveTimeout) {
         this.saveTimeout = setTimeout(() => {
           this.debouncedSave();
@@ -135,7 +135,7 @@ class RealtimeAdminSync {
     this.saveTimeout = setTimeout(async () => {
       const timeSinceLastSave = Date.now() - this.lastSaveTime;
       const minInterval = 800;
-      
+
       if (timeSinceLastSave < minInterval) {
         const waitTime = minInterval - timeSinceLastSave;
         console.log(`⏳ Rate limit 방지: ${Math.ceil(waitTime)}ms 추가 대기`);
@@ -157,41 +157,41 @@ class RealtimeAdminSync {
       try {
         await this.saveToServerWithMerge();
         console.log('✅ 서버 저장 완료');
-        
+
         this.consecutiveFailures = 0;
         this.blockedUntil = 0;
-        
+
         return true;
       } catch (error) {
         console.error(`❌ 저장 시도 ${attempt}/${this.maxRetries} 실패:`, error.message);
 
         if (error.message.includes('429') || error.message.includes('503')) {
           this.consecutiveFailures++;
-          
+
           const baseWait = 60000;
           const exponentialWait = baseWait * Math.pow(2, this.consecutiveFailures - 1);
           const maxWait = 300000;
           const waitTime = Math.min(exponentialWait, maxWait);
-          
+
           this.blockedUntil = Date.now() + waitTime;
-          
+
           console.error('🚫 서버 Rate Limit 감지');
           console.error(`   연속 실패: ${this.consecutiveFailures}회`);
-          console.error(`   대기 시간: ${Math.ceil(waitTime/1000)}초`);
-          
+          console.error(`   대기 시간: ${Math.ceil(waitTime / 1000)}초`);
+
           window.dispatchEvent(new CustomEvent('serverBlocked', {
             detail: {
-              waitSeconds: Math.ceil(waitTime/1000),
+              waitSeconds: Math.ceil(waitTime / 1000),
               unblockTime: new Date(this.blockedUntil)
             }
           }));
-          
+
           break;
         }
 
         if (attempt < this.maxRetries) {
           const waitTime = attempt * 3000;
-          console.log(`⏳ ${waitTime/1000}초 후 재시도...`);
+          console.log(`⏳ ${waitTime / 1000}초 후 재시도...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
@@ -214,24 +214,24 @@ class RealtimeAdminSync {
   async loadFromServer() {
     try {
       console.log('🔄 Gabia 서버에서 데이터 로드 중...');
-      
+
       const [inventoryRes, pricesRes, documentsRes, activityRes] = await Promise.all([
         inventoryAPI.getAll().catch(err => { console.error('재고 로드 실패:', err); return { data: {} }; }),
         pricesAPI.getAll().catch(err => { console.error('가격 로드 실패:', err); return { data: {} }; }),
         documentsAPI.getAll().catch(err => { console.error('문서 로드 실패:', err); return { data: {} }; }),
         activityAPI.getRecent(1000).catch(err => { console.error('활동 로그 로드 실패:', err); return { data: [] }; })
       ]);
-  
+
       const inventoryData = inventoryRes.data || {};
       localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventoryData));
       this.broadcastUpdate('inventory-updated', inventoryData);
-  
+
       const serverPrices = pricesRes.data || {};
       const localPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
       const mergedPrices = this.mergeByTimestamp(serverPrices, localPrices);
       localStorage.setItem(ADMIN_PRICES_KEY, JSON.stringify(mergedPrices));
       this.broadcastUpdate('prices-updated', mergedPrices);
-  
+
       const serverDocumentsRaw = documentsRes.data || {};
       const serverDocuments = {};
       for (const [docIdKey, doc] of Object.entries(serverDocumentsRaw)) {
@@ -245,17 +245,17 @@ class RealtimeAdminSync {
       localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
       this.syncToLegacyKeys(mergedDocuments);
       this.broadcastUpdate('documents-updated', mergedDocuments);
-      
+
       const activityData = activityRes.data || [];
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
-  
+
       console.log('✅ Gabia 서버 데이터 로드 완료');
       console.log(`   재고: ${Object.keys(inventoryData).length}개`);
       console.log(`   가격: ${Object.keys(mergedPrices).length}개`);
       console.log(`   문서: ${Object.keys(mergedDocuments).length}개`);
       console.log(`   활동: ${activityData.length}개`);
       return true;
-      
+
     } catch (error) {
       console.error('❌ Gabia 서버 데이터 로드 실패:', error);
       throw error;
@@ -266,14 +266,14 @@ class RealtimeAdminSync {
     try {
       const localLegacyDocuments = this.getLocalLegacyDocuments();
       const localDocCount = Object.keys(localLegacyDocuments).length;
-      
+
       if (localDocCount === 0) {
         console.log('📄 업로드할 로컬 문서 없음');
         return;
       }
 
       console.log(`📄 로컬 문서 ${localDocCount}개 서버 업로드 시작...`);
-      
+
       const creatorInfo = await this.getCreatorInfo();
       for (const docKey in localLegacyDocuments) {
         if (!localLegacyDocuments[docKey].createdBy) {
@@ -286,16 +286,16 @@ class RealtimeAdminSync {
 
       const serverDocuments = await this.getServerDocuments();
       console.log(`📄 서버 기존 문서: ${Object.keys(serverDocuments).length}개`);
-      
+
       const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localLegacyDocuments);
       console.log(`📄 병합 후 총 문서: ${Object.keys(mergedDocuments).length}개`);
-      
+
       localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
-      
+
       await this.saveToServerWithMerge();
-      
+
       console.log('✅ 로컬 문서 서버 업로드 완료');
-      
+
     } catch (error) {
       console.error('❌ 로컬 문서 업로드 실패:', error);
     }
@@ -303,13 +303,13 @@ class RealtimeAdminSync {
 
   getLocalLegacyDocuments() {
     const documents = {};
-    
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (
         key && (
-          key.startsWith('estimate_') || 
-          key.startsWith('purchase_') || 
+          key.startsWith('estimate_') ||
+          key.startsWith('purchase_') ||
           key.startsWith('delivery_')
         )
       ) {
@@ -324,51 +324,67 @@ class RealtimeAdminSync {
         }
       }
     }
-    
+
     return documents;
   }
 
   mergeDocumentsByTimestamp(serverDocs, localDocs) {
     const merged = { ...serverDocs };
-    
+
     for (const docKey in localDocs) {
       const localDoc = localDocs[docKey];
       const serverDoc = merged[docKey];
-      
+
       if (!serverDoc) {
+        // 서버에 없는 경우 (새로 생성된 것)
         merged[docKey] = localDoc;
       } else {
-        const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
-        const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
-        
-        if (localTime > serverTime) {
-          merged[docKey] = localDoc;
+        // ✅ Zombie 방지 로직: 서버가 삭제된 상태라면, 로컬이 '복구(restore)'된게 아니면 서버 승리
+        if (serverDoc.deleted) {
+          const serverDeleteTime = new Date(serverDoc.deletedAt || serverDoc.updatedAt || 0).getTime();
+          const localRestoreTime = localDoc.restoredAt ? new Date(localDoc.restoredAt).getTime() : 0;
+
+          // 로컬에서 명시적으로 복구했고, 그 복구 시점이 서버 삭제보다 뒤라면 로컬이 이김
+          if (localRestoreTime > serverDeleteTime) {
+            merged[docKey] = localDoc;
+          } else {
+            // 그 외에는 서버의 '삭제됨' 상태를 유지 (로컬이 아무리 최신이어도 무시)
+            merged[docKey] = serverDoc;
+          }
+        } else {
+          // 일반적인 업데이트 경쟁 (둘 다 살아있을 때)
+          const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
+          const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
+
+          if (localTime > serverTime) {
+            merged[docKey] = localDoc;
+          }
         }
       }
     }
-    
+
     return merged;
   }
 
   mergeByTimestamp(serverData, localData) {
     const merged = { ...serverData };
-    
+
     for (const key in localData) {
       const localItem = localData[key];
       const serverItem = merged[key];
-      
+
       if (!serverItem) {
         merged[key] = localItem;
       } else {
         const serverTime = new Date(serverItem.timestamp || 0).getTime();
         const localTime = new Date(localItem.timestamp || 0).getTime();
-        
+
         if (localTime > serverTime) {
           merged[key] = localItem;
         }
       }
     }
-    
+
     return merged;
   }
 
@@ -386,9 +402,9 @@ class RealtimeAdminSync {
   async saveToServerWithMerge() {
     try {
       console.log('💾 Gabia 서버에 데이터 저장 시작...');
-      
+
       const serverDocuments = await this.getServerDocuments();
-      
+
       const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
       const inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '{}');
       const adminPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
@@ -406,17 +422,17 @@ class RealtimeAdminSync {
         activityLog = [];
       }
       const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
-      
+
       localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
       this.syncToLegacyKeys(mergedDocuments);
 
       const userIP = await this.getUserIP();
-      
+
       // ✅ 배열 검증
       if (!Array.isArray(activityLog)) {
         activityLog = [];
       }
-      
+
       activityLog.unshift({
         timestamp: new Date().toISOString(),
         action: 'data_sync',
@@ -429,24 +445,52 @@ class RealtimeAdminSync {
         activityLog.splice(1000);
       }
 
+      // ✅ 최적화: 변경된 문서만 필터링하여 저장 (Diff Sync)
+      const documentsToSave = {};
+      let changedCount = 0;
+
+      for (const [key, doc] of Object.entries(mergedDocuments)) {
+        const serverDoc = serverDocuments[key];
+
+        // 1. 서버에 없는 새로운 문서
+        if (!serverDoc) {
+          documentsToSave[key] = doc;
+          changedCount++;
+          continue;
+        }
+
+        // 2. 로컬에서 수정된 문서 (timestamp 비교)
+        const localTime = new Date(doc.updatedAt || doc.createdAt || 0).getTime();
+        const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
+
+        // 로컬이 더 최신이거나, 삭제 상태가 다른 경우 저장
+        if (localTime > serverTime || doc.deleted !== serverDoc.deleted) {
+          documentsToSave[key] = doc;
+          changedCount++;
+        }
+      }
+
+      console.log(`⚡ 변경된 문서 ${changedCount}개만 서버에 저장합니다. (전체: ${Object.keys(mergedDocuments).length}개)`);
+
       await Promise.all([
         inventoryAPI.update(inventory).catch(err => console.error('재고 저장 실패:', err)),
         this.saveAllPrices(adminPrices).catch(err => console.error('가격 저장 실패:', err)),
-        this.saveAllDocuments(mergedDocuments).catch(err => console.error('문서 저장 실패:', err)),
+        // ✅ 수정: 전체 문서 대신 변경된 문서만 저장
+        this.saveAllDocuments(documentsToSave).catch(err => console.error('문서 저장 실패:', err)),
         activityAPI.log('data_sync', {
           dataTypes: ['inventory', 'prices', 'documents'],
           documentCount: Object.keys(mergedDocuments).length
         }).catch(err => console.error('활동 로그 저장 실패:', err))
       ]);
 
-      console.log(`✅ Gabia 서버에 데이터 저장 완료 (문서 ${Object.keys(mergedDocuments).length}개)`);
-      
+      console.log(`✅ Gabia 서버에 데이터 저장 완료 (문서 ${Object.keys(mergedDocuments).length}개 중 ${changedCount}개 업데이트)`);
+
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
-      
+
       this.broadcastUpdate('documents-updated', mergedDocuments);
-      
+
       return true;
-      
+
     } catch (error) {
       console.error('❌ Gabia 서버 저장 실패:', error);
       throw error;
@@ -484,7 +528,7 @@ class RealtimeAdminSync {
     for (let i = 0; i < validEntries.length; i += 5) {
       const batch = validEntries.slice(i, i + 5);
       await Promise.all(
-        batch.map(([partId, data]) => 
+        batch.map(([partId, data]) =>
           pricesAPI.update(partId, {
             price: Number(data.price),
             timestamp: data.timestamp,
@@ -507,9 +551,10 @@ class RealtimeAdminSync {
       const batch = docEntries.slice(i, i + 10);
       await Promise.all(
         batch.map(([docKey, doc]) => {
-          const [type, ...idParts] = docKey.split('_');
-          const docId = idParts.join('_');
-          return documentsAPI.save(docId, { ...doc, docId, type }).catch(err => 
+          // ✅ Fix: ID 충돌 방지를 위해 접두사가 포함된 docKey를 그대로 docId로 사용
+          // 기존: const [type, ...idParts] = docKey.split('_'); const docId = idParts.join('_');
+          const docId = docKey;
+          return documentsAPI.save(docId, { ...doc, docId, type: doc.type }).catch(err =>
             console.error(`문서 저장 실패 (${docKey}):`, err)
           );
         })
@@ -613,7 +658,7 @@ export const loadAdminPrices = () => {
 export const saveAdminPriceSync = async (partId, price, partInfo = {}, userInfo = {}) => {
   try {
     const adminPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
-    
+
     if (price && price > 0) {
       adminPrices[partId] = {
         price: Number(price),
@@ -646,11 +691,11 @@ export const loadAllDocuments = (includeDeleted = false) => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
     const docArray = Object.values(documents);
-    
+
     if (includeDeleted) {
       return docArray;
     }
-    
+
     return docArray.filter(doc => !doc.deleted);
   } catch (error) {
     console.error('문서 로드 실패:', error);
@@ -677,27 +722,27 @@ export const saveDocumentSync = async (document) => {
 
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
     const docKey = `${document.type}_${document.id}`;
-    
+
     if (!documents[docKey] && syncInstance) {
       document.createdBy = await syncInstance.getCreatorInfo();
     }
-    
+
     document.updatedAt = new Date().toISOString();
     document.syncedAt = new Date().toISOString();
-    
+
     documents[docKey] = document;
-    
+
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
     localStorage.setItem(docKey, JSON.stringify(document));
-    
+
     if (syncInstance) {
       syncInstance.broadcastUpdate('documents-updated', documents);
       syncInstance.debouncedSave();
     }
-    
+
     console.log(`📄 문서 저장 완료: ${docKey}`);
     return true;
-    
+
   } catch (error) {
     console.error('문서 저장 실패:', error);
     return false;
@@ -708,31 +753,33 @@ export const deleteDocumentSync = async (docId, docType) => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
     const docKey = `${docType}_${docId}`;
-    
+
     if (!documents[docKey]) {
       console.warn('삭제할 문서를 찾을 수 없음:', docKey);
       return false;
     }
-    
+
     documents[docKey].deleted = true;
     documents[docKey].deletedAt = new Date().toISOString();
     documents[docKey].updatedAt = new Date().toISOString();
-    
+
     if (syncInstance) {
       documents[docKey].deletedBy = await syncInstance.getCreatorInfo();
     }
-    
+
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
-    localStorage.removeItem(docKey);
-    
+    // ✅ Fix: 삭제된 상태를 서버로 전송하기 위해 localStorage에서 즉시 제거하지 않음
+    // (removeItem을 하면 서버 저장 시 '로컬 데이터 없음'으로 간주되어 Active된 서버 데이터가 이겨버림)
+    // localStorage.removeItem(docKey); 
+
     if (syncInstance) {
       syncInstance.broadcastUpdate('documents-updated', documents);
       syncInstance.debouncedSave();
     }
-    
+
     console.log(`🗑️ 문서 소프트 삭제 완료: ${docKey}`);
     return true;
-    
+
   } catch (error) {
     console.error('문서 삭제 실패:', error);
     return false;
@@ -743,34 +790,34 @@ export const restoreDocumentSync = async (docId, docType) => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
     const docKey = `${docType}_${docId}`;
-    
+
     if (!documents[docKey]) {
       console.warn('복구할 문서를 찾을 수 없음:', docKey);
       return false;
     }
-    
+
     delete documents[docKey].deleted;
     delete documents[docKey].deletedAt;
     delete documents[docKey].deletedBy;
-    
+
     documents[docKey].restoredAt = new Date().toISOString();
     documents[docKey].updatedAt = new Date().toISOString();
-    
+
     if (syncInstance) {
       documents[docKey].restoredBy = await syncInstance.getCreatorInfo();
     }
-    
+
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
     localStorage.setItem(docKey, JSON.stringify(documents[docKey]));
-    
+
     if (syncInstance) {
       syncInstance.broadcastUpdate('documents-updated', documents);
       syncInstance.debouncedSave();
     }
-    
+
     console.log(`♻️ 문서 복구 완료: ${docKey}`);
     return true;
-    
+
   } catch (error) {
     console.error('문서 복구 실패:', error);
     return false;
@@ -781,25 +828,25 @@ export const permanentDeleteDocumentSync = async (docId, docType) => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
     const docKey = `${docType}_${docId}`;
-    
+
     if (!documents[docKey]) {
       console.warn('영구 삭제할 문서를 찾을 수 없음:', docKey);
       return false;
     }
-    
+
     delete documents[docKey];
-    
+
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
     localStorage.removeItem(docKey);
-    
+
     if (syncInstance) {
       syncInstance.broadcastUpdate('documents-updated', documents);
       syncInstance.debouncedSave();
     }
-    
+
     console.log(`🔥 문서 영구 삭제 완료: ${docKey}`);
     return true;
-    
+
   } catch (error) {
     console.error('문서 영구 삭제 실패:', error);
     return false;

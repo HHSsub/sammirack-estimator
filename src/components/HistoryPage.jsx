@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HistoryPage.css';
 import {
@@ -21,7 +21,7 @@ import { generatePartId } from '../utils/unifiedPriceManager';
  * - Convert estimates to orders
  * - Print documents including delivery notes
  * - Edit and delete documents including delivery notes
- * - ✅ 서버 동기화 (GitHub Gist)
+ * - ✅ 서버 동기화 (gabia)
  * - ✅ 삭제된 문서 목록 보기 및 복구
  * - ✅ 컬럼별 정렬 기능
  * - ✅ 메모 기능 (상태 대체)
@@ -30,7 +30,6 @@ const HistoryPage = () => {
   const navigate = useNavigate();
   // State for history items (estimates, orders, delivery notes)
   const [historyItems, setHistoryItems] = useState([]);
-  const [filteredItems, setFilteredItems] = useState([]);
   // State for filters
   const [filters, setFilters] = useState({
     documentType: 'all',
@@ -76,10 +75,6 @@ const HistoryPage = () => {
     };
   }, []);
 
-  // Filter items whenever filters or history items change
-  useEffect(() => {
-    filterItems();
-  }, [filters, historyItems]);
 
   /**
    * ✅ Load history data from synced documents
@@ -105,7 +100,7 @@ const HistoryPage = () => {
       setHistoryItems(documentsWithMemo);
       setLastSyncTime(new Date());
 
-      console.log(`📄 문서 로드 완료: ${documentsWithMemo.length}개 (유령문서 제외)`);
+      console.log(`📄 문서 로드 완료: ${documentsWithMemo.length} 개(유령문서 제외)`);
     } catch (error) {
       console.error('Error loading history:', error);
     }
@@ -121,7 +116,7 @@ const HistoryPage = () => {
         return new Date(b.deletedAt || 0) - new Date(a.deletedAt || 0);
       });
       setDeletedItems(deleted);
-      console.log(`🗑️ 삭제된 문서 로드: ${deleted.length}개`);
+      console.log(`🗑️ 삭제된 문서 로드: ${deleted.length} 개`);
     } catch (error) {
       console.error('삭제된 문서 로드 실패:', error);
     }
@@ -162,10 +157,60 @@ const HistoryPage = () => {
   };
 
   /**
-   * ✅ 정렬된 아이템 반환
+   * ✅ 검색 및 필터링 최적화 (useMemo)
+   * 기존: useEffect + State 업데이트로 인한 이중 렌더링 및 렉 발생 원인 제거
    */
-  const getSortedItems = (items) => {
-    const sorted = [...items].sort((a, b) => {
+  const filteredItems = useMemo(() => {
+    let result = [...historyItems];
+
+    // Filter by document type
+    if (filters.documentType !== 'all') {
+      result = result.filter(item => item.type === filters.documentType);
+    }
+
+    // Filter by document number
+    if (filters.documentNumber) {
+      const searchTerm = filters.documentNumber.toLowerCase().trim();
+      result = result.filter(item => {
+        // ✅ [중요] 현재 문서 유형에 따라 실제로 화면에 표시되는 '거래번호' 필드에서만 찾습니다.
+        // 이를 통해 검색어 중복 매칭(test 입력 시 엉뚱한 결과)을 방지합니다.
+        let visibleId = '';
+        if (item.type === 'estimate') visibleId = item.estimateNumber;
+        else if (item.type === 'purchase') visibleId = item.purchaseNumber;
+        else visibleId = item.documentNumber;
+
+        const idStr = String(visibleId || '').toLowerCase();
+        return idStr.includes(searchTerm);
+      });
+    }
+
+    // ✅ Filter by date range (문자열 비교)
+    if (filters.dateFrom) {
+      result = result.filter(item => {
+        if (!item.date) return false;
+        const itemDateStr = item.date.split('T')[0];
+        return itemDateStr >= filters.dateFrom;
+      });
+    }
+
+    if (filters.dateTo) {
+      result = result.filter(item => {
+        if (!item.date) return false;
+        const itemDateStr = item.date.split('T')[0];
+        return itemDateStr <= filters.dateTo;
+      });
+    }
+
+    return result;
+  }, [filters, historyItems]);
+
+
+  /**
+   * ✅ 정렬 최적화 (useMemo)
+   * 정렬도 렌더링마다 수행하지 않고, filteredItems나 정렬조건이 바뀔 때만 수행
+   */
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
       let aValue, bValue;
 
       switch (sortColumn) {
@@ -216,50 +261,10 @@ const HistoryPage = () => {
       // 숫자 비교
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
+  }, [filteredItems, sortColumn, sortDirection]);
 
-    return sorted;
-  };
-
-  /**
-   * Apply filters to history items
-   */
-  const filterItems = () => {
-    let filtered = [...historyItems];
-
-    // Filter by document type
-    if (filters.documentType !== 'all') {
-      filtered = filtered.filter(item => item.type === filters.documentType);
-    }
-
-    // Filter by document number
-    if (filters.documentNumber) {
-      const searchTerm = filters.documentNumber.toLowerCase();
-      filtered = filtered.filter(item =>
-        (item.estimateNumber && item.estimateNumber.toLowerCase().includes(searchTerm)) ||
-        (item.purchaseNumber && item.purchaseNumber.toLowerCase().includes(searchTerm)) ||
-        (item.documentNumber && item.documentNumber.toLowerCase().includes(searchTerm))
-      );
-    }
-
-    // ✅ Filter by date range (문자열 비교로 수정)
-    if (filters.dateFrom) {
-      filtered = filtered.filter(item => {
-        if (!item.date) return false;
-        const itemDateStr = item.date.split('T')[0]; // ISO 날짜에서 날짜 부분만 추출
-        return itemDateStr >= filters.dateFrom;
-      });
-    }
-
-    if (filters.dateTo) {
-      filtered = filtered.filter(item => {
-        if (!item.date) return false;
-        const itemDateStr = item.date.split('T')[0]; // ISO 날짜에서 날짜 부분만 추출
-        return itemDateStr <= filters.dateTo;
-      });
-    }
-
-    setFilteredItems(filtered);
-  };
+  // Dummy function to prevent errors if invoked elsewhere (though it shouldn't be)
+  const filterItems = useCallback(() => { }, []);
 
   /**
    * Handle filter changes
@@ -291,8 +296,8 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
 
     const confirmDelete = window.confirm(
-      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 삭제하시겠습니까? 
-      ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 삭제하시겠습니까 ?
+  ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
       
 ※ 삭제된 문서는 '삭제된 문서 보기'에서 복구할 수 있습니다.`
     );
@@ -303,15 +308,25 @@ const HistoryPage = () => {
         const success = await deleteDocumentSync(item.id, item.type);
 
         if (success) {
-          // Update state
-          setHistoryItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+          // ✅ UI 즉시 반영 (강제 업데이트) - 이 부분이 실행되어야 화면에서 사라집니다
+          console.log(`⚡ UI 강제 삭제 처리: ${item.id} (${item.type})`);
+
+          setHistoryItems(prev => {
+            const updatedList = prev.filter(i => {
+              // ID와 타입이 모두 일치하는 항목을 제거
+              const isMatch = (i.id == item.id) && (i.type === item.type);
+              return !isMatch;
+            });
+            console.log(`📉 목록 개수 변화: ${prev.length} -> ${updatedList.length} `);
+            return updatedList;
+          });
 
           if (selectedItem && selectedItem.id === item.id && selectedItem.type === item.type) {
             setSelectedItem(null);
             setView('list');
           }
 
-          console.log('✅ 문서 삭제 완료 (복구 가능)');
+          console.log('✅ 문서 삭제 로직 완료');
         } else {
           alert('문서 삭제에 실패했습니다.');
         }
@@ -329,8 +344,8 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
 
     const confirmRestore = window.confirm(
-      `이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 복구하시겠습니까?
-      ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}`
+      `이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 복구하시겠습니까 ?
+  ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''} `
     );
 
     if (confirmRestore) {
@@ -360,9 +375,9 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
 
     const confirmDelete = window.confirm(
-      `⚠️ 경고: 이 문서를 영구적으로 삭제하시겠습니까?
-      
-${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+      `⚠️ 경고: 이 문서를 영구적으로 삭제하시겠습니까 ?
+
+  ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
 
 이 작업은 되돌릴 수 없습니다!`
     );
@@ -444,8 +459,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
           if ((!colorWeight || !colorWeight.includes('(볼트식)')) && extractedColor) {
             const weightMatch = (mat.specification || '').match(/(\d+kg)/);
             const weight = weightMatch ? weightMatch[0] : ''; // 위험한 기본값 제거
-            colorWeight = `${extractedColor}(볼트식)${weight}`;
-            console.log(`  ✅ colorWeight 재생성 (볼트식 추가): "${colorWeight}"`);
+            colorWeight = `${extractedColor} (볼트식)${weight} `;
+            console.log(`  ✅ colorWeight 재생성(볼트식 추가): "${colorWeight}"`);
           }
 
           // specification 재구성
@@ -472,13 +487,13 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   depth = matchedSpec.depth;
                   console.log(`  🔹 기둥 깊이 정보 복구 성공: ${width}x${depth} (from item: ${matchedSpec.name})`);
                 } else {
-                  console.log(`  ⚠️ 매칭되는 하이랙 제품을 찾을 수 없음 (H:${height}, W:${width}) - ID 재생성 불가 가능성 있음`);
+                  console.log(`  ⚠️ 매칭되는 하이랙 제품을 찾을 수 없음(H: ${height}, W: ${width}) - ID 재생성 불가 가능성 있음`);
                 }
               }
 
               if (width && depth && height) {
                 // ✅ 올바른 형식: "사이즈{폭}x{깊이}높이{높이}{무게}"
-                specification = `사이즈${width}x${depth}높이${height}${weight}`;
+                specification = `사이즈${width}x${depth}높이${height}${weight} `;
                 console.log(`  ✅ specification 재구성: "${specification}"`);
               }
             }
@@ -486,7 +501,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
 
           // inventoryPartId 재생성
           if (colorWeight) {
-            inventoryPartId = `하이랙-${baseName}${colorWeight}-${specification}`;
+            inventoryPartId = `하이랙 - ${baseName}${colorWeight} -${specification} `;
             console.log(`🔄 inventoryPartId 재생성: "${mat.inventoryPartId}" → "${inventoryPartId}"`);
           } else {
             console.log(`  ⚠️ colorWeight 없음 - 재생성 건너뛰기`);
@@ -570,7 +585,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
 
     console.log('📋 청구서 생성:', { cart, totalBom, estimateData });
 
-    navigate(`/purchase-order/new`, { state: { cart, totalBom, estimateData } });
+    navigate(`/ purchase - order / new `, { state: { cart, totalBom, estimateData } });
   };
 
   /**
@@ -605,7 +620,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     } else {
       // ✅ cart 없으면 items 변환
       finalCart = (item.items || []).map(itemData => ({
-        id: `edit_${Date.now()}_${Math.random()}`,
+        id: `edit_${Date.now()}_${Math.random()} `,
         name: itemData.name,
         displayName: itemData.name,
         quantity: Number(itemData.quantity) || 1,
@@ -654,85 +669,85 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
     if (item.type === 'estimate') {
       // 견적서 인쇄용 HTML
       printHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>견적서</title>
-          <style>
-            @media print {
-              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-              .print-header { text-align: center; margin-bottom: 30px; }
-              .print-header h1 { font-size: 24px; margin: 0; }
-              .info-table, .quote-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-              .info-table td, .quote-table th, .quote-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-              .quote-table th { background-color: #f0f0f0; text-align: center; }
-              .right { text-align: right; }
-              .label { background-color: #f8f9fa; font-weight: bold; }
-              .notes-section { margin-top: 20px; }
-              .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
+  < !DOCTYPE html >
+    <html>
+      <head>
+        <title>견적서</title>
+        <style>
+          @media print {
+            body {margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+          .print-header {text - align: center; margin-bottom: 30px; }
+          .print-header h1 {font - size: 24px; margin: 0; }
+          .info-table, .quote-table, .total-table {width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .info-table td, .quote-table th, .quote-table td, .total-table td {border: 1px solid #000; padding: 8px; }
+          .quote-table th {background - color: #f0f0f0; text-align: center; }
+          .right {text - align: right; }
+          .label {background - color: #f8f9fa; font-weight: bold; }
+          .notes-section {margin - top: 20px; }
+          .form-company {text - align: center; margin-top: 30px; font-weight: bold; }
             }
-          </style>
-        </head>
-        <body>
-          <div class="print-header">
-            <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-            <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
-          </div>
+        </style>
+      </head>
+      <body>
+        <div class="print-header">
+          <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
+          <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
+        </div>
 
-          <table class="info-table">
-            <tbody>
-              <tr>
-                <td class="label">견적일자</td>
-                <td>${printData.date}</td>
-                <td class="label">사업자등록번호</td>
-                <td>232-81-01750</td>
-              </tr>
-              <tr>
-                <td class="label">상호명</td>
-                <td>${printData.customerName || printData.companyName || ''}</td>
-                <td class="label">상호</td>
-                <td>삼미앵글랙산업</td>
-              </tr>
-              <tr>
-                <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
-                  아래와 같이 견적합니다 (부가세, 운임비 별도)
-                </td>
-                <td class="label">대표자</td>
-                <td>박이삭</td>
-              </tr>
-              <tr>
-                <td class="label">소재지</td>
-                <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
-              </tr>
-              <tr>
-                <td class="label">TEL</td>
-                <td>(02)2611-4597</td>
-              </tr>
-              <tr>
-                <td class="label">FAX</td>
-                <td>(02)2611-4595</td>
-              </tr>
-              <tr>
-                <td class="label">홈페이지</td>
-                <td>http://www.ssmake.com</td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="info-table">
+          <tbody>
+            <tr>
+              <td class="label">견적일자</td>
+              <td>${printData.date}</td>
+              <td class="label">사업자등록번호</td>
+              <td>232-81-01750</td>
+            </tr>
+            <tr>
+              <td class="label">상호명</td>
+              <td>${printData.customerName || printData.companyName || ''}</td>
+              <td class="label">상호</td>
+              <td>삼미앵글랙산업</td>
+            </tr>
+            <tr>
+              <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
+                아래와 같이 견적합니다 (부가세, 운임비 별도)
+              </td>
+              <td class="label">대표자</td>
+              <td>박이삭</td>
+            </tr>
+            <tr>
+              <td class="label">소재지</td>
+              <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
+            </tr>
+            <tr>
+              <td class="label">TEL</td>
+              <td>(02)2611-4597</td>
+            </tr>
+            <tr>
+              <td class="label">FAX</td>
+              <td>(02)2611-4595</td>
+            </tr>
+            <tr>
+              <td class="label">홈페이지</td>
+              <td>http://www.ssmake.com</td>
+            </tr>
+          </tbody>
+        </table>
 
-          <table class="quote-table">
-            <thead>
-              <tr>
-                <th>NO</th>
-                <th>품명</th>
-                <th>단위</th>
-                <th>수량</th>
-                <th>단가</th>
-                <th>공급가</th>
-                <th>비고</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(printData.items || []).map((item, index) => `
+        <table class="quote-table">
+          <thead>
+            <tr>
+              <th>NO</th>
+              <th>품명</th>
+              <th>단위</th>
+              <th>수량</th>
+              <th>단가</th>
+              <th>공급가</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(printData.items || []).map((item, index) => `
                 <tr>
                   <td>${index + 1}</td>
                   <td>${item.name || ''}</td>
@@ -743,119 +758,119 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   <td>${item.note || ''}</td>
                 </tr>
               `).join('')}
-            </tbody>
-          </table>
+          </tbody>
+        </table>
 
-          <table class="total-table">
-            <tbody>
-              <tr>
-                <td class="label">소계</td>
-                <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td class="label">부가세</td>
-                <td class="right">${(printData.tax || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td class="label"><strong>합계</strong></td>
-                <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="total-table">
+          <tbody>
+            <tr>
+              <td class="label">소계</td>
+              <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="label">부가세</td>
+              <td class="right">${(printData.tax || 0).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="label"><strong>합계</strong></td>
+              <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
+            </tr>
+          </tbody>
+        </table>
 
-          ${printData.notes ? `
+        ${printData.notes ? `
             <div class="notes-section">
               <strong>비고:</strong><br>
               ${printData.notes.replace(/\n/g, '<br>')}
             </div>
           ` : ''}
 
-          <div class="form-company">(주)삼미앵글랙산업</div>
-        </body>
-        </html>
-      `;
+        <div class="form-company">(주)삼미앵글랙산업</div>
+      </body>
+    </html>
+`;
     } else if (item.type === 'delivery') {
       // 거래명세서 인쇄용 HTML (견적서와 디자인 동일)
       printHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>거래명세서</title>
-          <style>
-            @media print {
-              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-              .print-header { text-align: center; margin-bottom: 30px; }
-              .print-header h1 { font-size: 24px; margin: 0; }
-              .info-table, .quote-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-              .info-table td, .quote-table th, .quote-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-              .quote-table th { background-color: #f0f0f0; text-align: center; }
-              .right { text-align: right; }
-              .label { background-color: #f8f9fa; font-weight: bold; }
-              .notes-section { margin-top: 20px; }
-              .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
+  < !DOCTYPE html >
+    <html>
+      <head>
+        <title>거래명세서</title>
+        <style>
+          @media print {
+            body {margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+          .print-header {text - align: center; margin-bottom: 30px; }
+          .print-header h1 {font - size: 24px; margin: 0; }
+          .info-table, .quote-table, .total-table {width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .info-table td, .quote-table th, .quote-table td, .total-table td {border: 1px solid #000; padding: 8px; }
+          .quote-table th {background - color: #f0f0f0; text-align: center; }
+          .right {text - align: right; }
+          .label {background - color: #f8f9fa; font-weight: bold; }
+          .notes-section {margin - top: 20px; }
+          .form-company {text - align: center; margin-top: 30px; font-weight: bold; }
             }
-          </style>
-        </head>
-        <body>
-          <div class="print-header">
-            <h1>거&nbsp;&nbsp;래&nbsp;&nbsp;명&nbsp;&nbsp;세&nbsp;&nbsp;서</h1>
-            <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
-          </div>
+        </style>
+      </head>
+      <body>
+        <div class="print-header">
+          <h1>거&nbsp;&nbsp;래&nbsp;&nbsp;명&nbsp;&nbsp;세&nbsp;&nbsp;서</h1>
+          <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
+        </div>
 
-          <table class="info-table">
-            <tbody>
-              <tr>
-                <td class="label">견적일자</td>
-                <td>${printData.date}</td>
-                <td class="label">사업자등록번호</td>
-                <td>232-81-01750</td>
-              </tr>
-              <tr>
-                <td class="label">상호명</td>
-                <td>${printData.customerName || printData.companyName || ''}</td>
-                <td class="label">상호</td>
-                <td>삼미앵글랙산업</td>
-              </tr>
-              <tr>
-                <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
-                  아래와 같이 견적합니다 (부가세, 운임비 별도)
-                </td>
-                <td class="label">대표자</td>
-                <td>박이삭</td>
-              </tr>
-              <tr>
-                <td class="label">소재지</td>
-                <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
-              </tr>
-              <tr>
-                <td class="label">TEL</td>
-                <td>(02)2611-4597</td>
-              </tr>
-              <tr>
-                <td class="label">FAX</td>
-                <td>(02)2611-4595</td>
-              </tr>
-              <tr>
-                <td class="label">홈페이지</td>
-                <td>http://www.ssmake.com</td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="info-table">
+          <tbody>
+            <tr>
+              <td class="label">견적일자</td>
+              <td>${printData.date}</td>
+              <td class="label">사업자등록번호</td>
+              <td>232-81-01750</td>
+            </tr>
+            <tr>
+              <td class="label">상호명</td>
+              <td>${printData.customerName || printData.companyName || ''}</td>
+              <td class="label">상호</td>
+              <td>삼미앵글랙산업</td>
+            </tr>
+            <tr>
+              <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
+                아래와 같이 견적합니다 (부가세, 운임비 별도)
+              </td>
+              <td class="label">대표자</td>
+              <td>박이삭</td>
+            </tr>
+            <tr>
+              <td class="label">소재지</td>
+              <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
+            </tr>
+            <tr>
+              <td class="label">TEL</td>
+              <td>(02)2611-4597</td>
+            </tr>
+            <tr>
+              <td class="label">FAX</td>
+              <td>(02)2611-4595</td>
+            </tr>
+            <tr>
+              <td class="label">홈페이지</td>
+              <td>http://www.ssmake.com</td>
+            </tr>
+          </tbody>
+        </table>
 
-          <table class="quote-table">
-            <thead>
-              <tr>
-                <th>NO</th>
-                <th>품명</th>
-                <th>단위</th>
-                <th>수량</th>
-                <th>단가</th>
-                <th>공급가</th>
-                <th>비고</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(printData.items || []).map((item, index) => `
+        <table class="quote-table">
+          <thead>
+            <tr>
+              <th>NO</th>
+              <th>품명</th>
+              <th>단위</th>
+              <th>수량</th>
+              <th>단가</th>
+              <th>공급가</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(printData.items || []).map((item, index) => `
                 <tr>
                   <td>${index + 1}</td>
                   <td>${item.name || ''}</td>
@@ -866,121 +881,121 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   <td>${item.note || ''}</td>
                 </tr>
               `).join('')}
-            </tbody>
-          </table>
+          </tbody>
+        </table>
 
-          <table class="total-table">
-            <tbody>
-              <tr>
-                <td class="label">소계</td>
-                <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td class="label">부가세</td>
-                <td class="right">${(printData.tax || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td class="label"><strong>합계</strong></td>
-                <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="total-table">
+          <tbody>
+            <tr>
+              <td class="label">소계</td>
+              <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="label">부가세</td>
+              <td class="right">${(printData.tax || 0).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="label"><strong>합계</strong></td>
+              <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
+            </tr>
+          </tbody>
+        </table>
 
-          ${printData.notes ? `
+        ${printData.notes ? `
             <div class="notes-section">
               <strong>비고:</strong><br>
               ${printData.notes.replace(/\n/g, '<br>')}
             </div>
           ` : ''}
 
-          <div class="form-company">(주)삼미앵글랙산업</div>
-        </body>
-        </html>
-      `;
+        <div class="form-company">(주)삼미앵글랙산업</div>
+      </body>
+    </html>
+`;
     } else if (item.type === 'purchase') {
       // 청구서 인쇄용 HTML
       printHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>청구서</title>
-          <style>
-            @media print {
-              body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-              .print-header { text-align: center; margin-bottom: 30px; }
-              .print-header h1 { font-size: 24px; margin: 0; }
-              .info-table, .order-table, .material-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-              .info-table td, .order-table th, .order-table td, .material-table th, .material-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-              .order-table th, .material-table th { background-color: #f0f0f0; text-align: center; }
-              .right { text-align: right; }
-              .label { background-color: #f8f9fa; font-weight: bold; }
-              .section-title { margin-top: 30px; margin-bottom: 10px; font-size: 18px; font-weight: bold; }
-              .notes-section { margin-top: 20px; }
-              .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
+  < !DOCTYPE html >
+    <html>
+      <head>
+        <title>청구서</title>
+        <style>
+          @media print {
+            body {margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+          .print-header {text - align: center; margin-bottom: 30px; }
+          .print-header h1 {font - size: 24px; margin: 0; }
+          .info-table, .order-table, .material-table, .total-table {width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          .info-table td, .order-table th, .order-table td, .material-table th, .material-table td, .total-table td {border: 1px solid #000; padding: 8px; }
+          .order-table th, .material-table th {background - color: #f0f0f0; text-align: center; }
+          .right {text - align: right; }
+          .label {background - color: #f8f9fa; font-weight: bold; }
+          .section-title {margin - top: 30px; margin-bottom: 10px; font-size: 18px; font-weight: bold; }
+          .notes-section {margin - top: 20px; }
+          .form-company {text - align: center; margin-top: 30px; font-weight: bold; }
             }
-          </style>
-        </head>
-        <body>
-          <div class="print-header">
-            <h1>청&nbsp;&nbsp;&nbsp;&nbsp;구&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-            <div>거래번호: ${printData.purchaseNumber || ''}</div>
-          </div>
+        </style>
+      </head>
+      <body>
+        <div class="print-header">
+          <h1>청&nbsp;&nbsp;&nbsp;&nbsp;구&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
+          <div>거래번호: ${printData.purchaseNumber || ''}</div>
+        </div>
 
-          <table class="info-table">
-            <tbody>
-              <tr>
-                <td class="label">거래일자</td>
-                <td>${printData.date}</td>
-                <td class="label">거래번호</td>
-                <td>${printData.purchaseNumber || ''}</td>
-              </tr>
-              <tr>
-                <td class="label">상호명</td>
-                <td>${printData.customerName || printData.companyName || ''}</td>
-                <td class="label">상호</td>
-                <td>삼미앵글랙산업</td>
-              </tr>
-              <tr>
-                <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 18px 0; background: #f8f9fa;">
-                  아래와 같이 청구합니다 (부가세, 운임비 별도)
-                </td>
-                <td class="label">대표자</td>
-                <td>박이삭</td>
-              </tr>
-              <tr>
-                <td class="label">소재지</td>
-                <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
-              </tr>
-              <tr>
-                <td class="label">TEL</td>
-                <td>(02)2611-4597</td>
-              </tr>
-              <tr>
-                <td class="label">FAX</td>
-                <td>(02)2611-4595</td>
-              </tr>
-              <tr>
-                <td class="label">홈페이지</td>
-                <td>http://www.ssmake.com</td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="info-table">
+          <tbody>
+            <tr>
+              <td class="label">거래일자</td>
+              <td>${printData.date}</td>
+              <td class="label">거래번호</td>
+              <td>${printData.purchaseNumber || ''}</td>
+            </tr>
+            <tr>
+              <td class="label">상호명</td>
+              <td>${printData.customerName || printData.companyName || ''}</td>
+              <td class="label">상호</td>
+              <td>삼미앵글랙산업</td>
+            </tr>
+            <tr>
+              <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 18px 0; background: #f8f9fa;">
+                아래와 같이 청구합니다 (부가세, 운임비 별도)
+              </td>
+              <td class="label">대표자</td>
+              <td>박이삭</td>
+            </tr>
+            <tr>
+              <td class="label">소재지</td>
+              <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
+            </tr>
+            <tr>
+              <td class="label">TEL</td>
+              <td>(02)2611-4597</td>
+            </tr>
+            <tr>
+              <td class="label">FAX</td>
+              <td>(02)2611-4595</td>
+            </tr>
+            <tr>
+              <td class="label">홈페이지</td>
+              <td>http://www.ssmake.com</td>
+            </tr>
+          </tbody>
+        </table>
 
-          <h3 class="section-title">청구 명세</h3>
-          <table class="order-table">
-            <thead>
-              <tr>
-                <th>NO</th>
-                <th>품명</th>
-                <th>단위</th>
-                <th>수량</th>
-                <th>단가</th>
-                <th>공급가</th>
-                <th>비고</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(printData.items || []).map((item, index) => `
+        <h3 class="section-title">청구 명세</h3>
+        <table class="order-table">
+          <thead>
+            <tr>
+              <th>NO</th>
+              <th>품명</th>
+              <th>단위</th>
+              <th>수량</th>
+              <th>단가</th>
+              <th>공급가</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(printData.items || []).map((item, index) => `
                 <tr>
                   <td>${index + 1}</td>
                   <td>${item.name || ''}</td>
@@ -991,10 +1006,10 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
                   <td>${item.note || ''}</td>
                 </tr>
               `).join('')}
-            </tbody>
-          </table>
+          </tbody>
+        </table>
 
-          ${(printData.materials && printData.materials.length > 0) ? `
+        ${(printData.materials && printData.materials.length > 0) ? `
             <h3 class="section-title">원자재 명세서</h3>
             <table class="material-table">
               <thead>
@@ -1024,34 +1039,34 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
             </table>
           ` : ''}
 
-          <table class="total-table">
-            <tbody>
-              <tr>
-                <td class="label">소계</td>
-                <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td class="label">부가세</td>
-                <td class="right">${(printData.tax || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td class="label"><strong>합계</strong></td>
-                <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
-              </tr>
-            </tbody>
-          </table>
+        <table class="total-table">
+          <tbody>
+            <tr>
+              <td class="label">소계</td>
+              <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="label">부가세</td>
+              <td class="right">${(printData.tax || 0).toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td class="label"><strong>합계</strong></td>
+              <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
+            </tr>
+          </tbody>
+        </table>
 
-          ${printData.notes ? `
+        ${printData.notes ? `
             <div class="notes-section">
               <strong>비고:</strong><br>
               ${printData.notes.replace(/\n/g, '<br>')}
             </div>
           ` : ''}
 
-          <div class="form-company">(주)삼미앵글랙산업</div>
-        </body>
-        </html>
-      `;
+        <div class="form-company">(주)삼미앵글랙산업</div>
+      </body>
+    </html>
+`;
     }
 
     printWindow.document.write(printHTML);
@@ -1105,7 +1120,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
 
     try {
       const date = new Date(dateString);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      return `${date.getFullYear()} -${String(date.getMonth() + 1).padStart(2, '0')} -${String(date.getDate()).padStart(2, '0')} `;
     } catch {
       return dateString;
     }
@@ -1119,7 +1134,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
 
     try {
       const date = new Date(dateString);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      return `${date.getFullYear()} -${String(date.getMonth() + 1).padStart(2, '0')} -${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')} `;
     } catch {
       return dateString;
     }
@@ -1311,7 +1326,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
 
           {deletedItems.map((item) => (
             <div
-              key={`deleted_${item.type}_${item.id}`}
+              key={`deleted_${item.type}_${item.id} `}
               className="list-item deleted-item"
             >
               <div className="item-cell document-type">
@@ -1359,7 +1374,8 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
    * Render list of history items
    */
   const renderItemsList = () => {
-    const sortedItems = getSortedItems(filteredItems);
+    // const sortedItems = getSortedItems(filteredItems); // Removed
+    // sortedItems is now a memoized value
 
     return (
       <div className="history-list">
@@ -1395,7 +1411,7 @@ ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? it
         ) : (
           sortedItems.map((item) => (
             <div
-              key={`${item.type}_${item.id}`}
+              key={`${item.type}_${item.id} `}
               className="list-item"
               onClick={() => {
                 setSelectedItem(item);

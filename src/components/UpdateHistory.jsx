@@ -15,8 +15,10 @@ import '../styles/UpdateHistory.css';
 const UpdateHistory = () => {
   // 업데이트 이력 배열 (최신순 정렬)
   const updates = [
-    { date: '2025-01-27', content: '가비아 서버 대이동, DB가비아에 구축 및 홈페이지 주소 변경, 각종 안정성 테스트진행' },    
-    { date: '2025-01-26', content: '경량랙 3색상 재고 신규추가, 재고 동기화 점검 및 수정, 자재추가 품목추가 드롭다운 신규기능 추가 및 버튼 위치 조정' },    
+    { date: '2025-02-01', content: '문서관리탭 기능 전반적 검토, 유령문서 삭제 및 삭제/검색기능 최적화 진행' },
+    { date: '2025-01-27', content: '재고관리연동 오류 수정 및 안정화 작업 진행' },
+    { date: '2025-01-27', content: '가비아 서버 대이동, DB가비아에 구축 및 홈페이지 주소 변경, 각종 안정성 테스트진행' },
+    { date: '2025-01-26', content: '경량랙 3색상 재고 신규추가, 재고 동기화 점검 및 수정, 자재추가 품목추가 드롭다운 신규기능 추가 및 버튼 위치 조정' },
     { date: '2025-01-15', content: '팩스 글자색, 배치, 글자크기간격조정. 스텐랙선반 재고 원복, 하이랙 부품이름 색깔포함, 하이랙 색깔별 로드빔 분리' },
     { date: '2025-01-12', content: '기둥 갯수 계산 및 합치기 로직 수정 (하이랙)' },
     { date: '2025-01-08', content: '청구서·거래명세서 원자재 테이블 열 간격 조정, 문서 작성 시 수량 입력 UI 개선(3자리 이상), 팩스 발송 상단 주요 테이블 텍스트 검정색·굵은 글씨 적용, 경량랙 색상 옵션 추가(아이보리·블랙·실버), 재고 관리 버튼 반응성 검증 및 버그 수정, 스텐랙 재고 중복 제거 및 재고 감소 연동 테스트 완료, 문서 하단 비고란 글자 크기 확대, 문서 상단 메모 영역 길이 확장(약 30%), 파렛트랙 기타 추가옵션4(550kg) 삭제 및 하이랙 용어 통일(600kg), 파렛트랙 철판형 로드빔 구형·신형 추가 및 기타 추가옵션 구조 조정, 기타 추가옵션 장바구니 내 "추가옵션" 스티커 표시로 시각적 구분, 하이랙 기타 추가옵션 재고 연동 오류 수정 및 호환성 테스트 완료' },
@@ -29,10 +31,10 @@ const UpdateHistory = () => {
   // 페이지네이션 설정
   const itemsPerPage = 3; // 한 페이지에 보여줄 항목 수
   const [currentPage, setCurrentPage] = useState(0); // 기본값: 최신 페이지 (0)
-  
+
   // 각 항목의 토글 상태 관리 (기본값: 모두 닫힘)
   const [expandedItems, setExpandedItems] = useState(new Set());
-  
+
   // 토글 함수
   const toggleItem = (index) => {
     const newExpanded = new Set(expandedItems);
@@ -43,29 +45,29 @@ const UpdateHistory = () => {
     }
     setExpandedItems(newExpanded);
   };
-  
+
   // 총 페이지 수 계산
   const totalPages = Math.ceil(updates.length / itemsPerPage);
-  
+
   // 현재 페이지에 표시할 업데이트 항목 계산
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentUpdates = updates.slice(startIndex, endIndex);
-  
+
   // 위 화살표: 최신 이력으로 이동 (currentPage 감소)
   const goToNewer = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
     }
   };
-  
+
   // 아래 화살표: 과거 이력으로 이동 (currentPage 증가)
   const goToOlder = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
-  
+
   // 첫 페이지(최신)인지 확인
   const isFirstPage = currentPage === 0;
   // 마지막 페이지(과거)인지 확인
@@ -98,11 +100,11 @@ const UpdateHistory = () => {
           )}
         </div>
         <p className="update-description">
-          시스템 개선사항 및 버그 수정 내역을 확인할 수 있습니다. 
+          시스템 개선사항 및 버그 수정 내역을 확인할 수 있습니다.
           건의사항이나 버그는 관리자에게 문의해주세요.
         </p>
       </div>
-      
+
       <div className="update-history-list">
         {updates.length === 0 ? (
           <div className="no-updates">
@@ -138,7 +140,7 @@ const UpdateHistory = () => {
           </>
         )}
       </div>
-      
+
       <div className="update-history-footer">
         <p>💡 건의사항이나 버그 발견 시 관리자에게 연락 바랍니다. (Tel : 010-6317-4543) </p>
       </div>
