@@ -951,9 +951,11 @@ const PurchaseOrderForm = () => {
 
         // ✅ FAX 전송 성공 후 재고 감소
         if (cart && cart.length > 0) {
-          const materialsForDeductFax = (cart.every(i => !i.bom?.length) && formData.materials?.length)
-            ? formData.materials.filter(m => !m.isService)
-            : undefined;
+          const materialsForDeduct = !cart.every(i => !i.bom?.length)
+            ? cart
+            : (formData.materials?.length > 0
+              ? formData.materials.filter(m => m && !m.isService && m.inventoryPartId)  // ← 필터 강화
+              : undefined);
           const deductResult = await deductInventoryOnPrint(cart, '청구서(FAX)', formData.documentNumber, materialsForDeductFax);
 
           if (deductResult.success) {
