@@ -123,11 +123,11 @@ const DeliveryNoteForm = () => {
 
   // 기존 저장 데이터 로드 (편집 모드 또는 editingDocumentId가 있을 때)
   useEffect(() => {
-    // ✅ 수정: editingDocumentId가 있으면 해당 문서를 localStorage에서 로드
     const docIdToLoad = isEditMode ? id : editingDocumentId;
+    const docTypeToLoad = isEditMode ? 'delivery' : (editingDocumentType || 'estimate');
 
     if (docIdToLoad) {
-      const storageKey = `delivery_${docIdToLoad}`;
+      const storageKey = `${docTypeToLoad}_${docIdToLoad}`;
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {
@@ -176,7 +176,7 @@ const DeliveryNoteForm = () => {
       cartInitializedRef.current = true;
       adminPricesRef.current = loadAdminPricesDirect();
 
-      const cartItems = cart.map(item => {
+      const restoredCartItems = cart.map(item => {
         const qty = item.quantity || 1;
         // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
         const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
@@ -244,7 +244,7 @@ const DeliveryNoteForm = () => {
         }
       });
 
-      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
+      const allItems = [...restoredCartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
 
       // ✅ BOM 추출: totalBom 또는 materials 확인
       let bomMaterials = [];

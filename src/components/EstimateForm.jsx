@@ -103,11 +103,11 @@ const EstimateForm = () => {
 
   // ✅ 기존 문서 로드 (편집 모드 또는 editingDocumentId가 있을 때)
   useEffect(() => {
-    // ✅ 수정: editingDocumentId가 있으면 해당 문서를 localStorage에서 로드
     const docIdToLoad = isEditMode ? id : editingDocumentId;
+    const docTypeToLoad = isEditMode ? 'estimate' : (editingDocumentType || 'estimate');
 
     if (docIdToLoad) {
-      const storageKey = `estimate_${docIdToLoad}`;
+      const storageKey = `${docTypeToLoad}_${docIdToLoad}`;
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {
@@ -151,7 +151,7 @@ const EstimateForm = () => {
 
           // ✅ 편집 후 진입 시 state.cart로 items 보정 (비어 있으면)
           if (editingDocumentId && cart && cart.length > 0 && (!data.items || data.items.length === 0 || (data.items.length === 1 && !data.items[0].name))) {
-            const cartItems = cart.map(item => {
+            const loadedCartItems = cart.map(item => {
               const qty = item.quantity || 1;
               const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
               return {
@@ -163,7 +163,7 @@ const EstimateForm = () => {
                 note: ''
               };
             });
-            data.items = cartItems;
+            data.items = loadedCartItems;
           }
 
           // ✅ 저장된 cart에서 extraOptions 복원
@@ -199,7 +199,7 @@ const EstimateForm = () => {
   useEffect(() => {
     if (!isEditMode && cart.length > 0 && !cartInitializedRef.current) {
       cartInitializedRef.current = true;
-      const cartItems = cart.map(item => {
+      const restoredCartItems = cart.map(item => {
         const qty = item.quantity || 1;
         // ✅ 원래 unitPrice 있으면 보존, 없으면 계산
         const unitPrice = item.unitPrice || Math.round((item.price || 0) / (qty || 1));
@@ -267,7 +267,7 @@ const EstimateForm = () => {
         }
       });
 
-      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
+      const allItems = [...restoredCartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
 
       // ✅ BOM 추출: totalBom 또는 materials 확인
       let bomMaterials = [];

@@ -684,11 +684,8 @@ const HistoryPage = () => {
       }
     };
 
-    const targetPath = item.type === 'purchase' ? `/purchase-order/edit/${item.id}` :
-      item.type === 'estimate' ? `/estimate/edit/${item.id}` :
-        item.type === 'delivery' ? `/delivery-note/edit/${item.id}` : '/';
-
-    navigate(targetPath, { state: editingData });
+    // ✅ 편집 시에는 무조건 홈(/)으로 이동하여 장바구니 기반으로 편집
+    navigate('/', { state: editingData });
   };
 
   /**

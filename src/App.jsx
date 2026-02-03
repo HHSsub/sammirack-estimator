@@ -85,14 +85,14 @@ function App() {
         </Routes>
       </main>
       <footer className="app-footer"><p>© 2025 (주)삼미앵글. All rights reserved.</p></footer>
-       
+
       {showPasswordChange && (
-        <PasswordChange 
+        <PasswordChange
           currentUser={currentUser}
-          onClose={handlePasswordChangeClose} 
+          onClose={handlePasswordChangeClose}
         />
       )}
-      
+
       <ShortageInventoryManager isAdmin={currentUser?.role === 'admin'} />
     </div>
   );
@@ -101,23 +101,23 @@ function App() {
 const HomePage = ({ currentUser }) => {
   const location = useLocation();  // ✅ 추가
   const navigate = useNavigate();  // ✅ 추가
-  const { 
-    currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView, 
+  const {
+    currentPrice, currentBOM, addToCart, cart, cartBOM, cartBOMView,
     selectedType, selectedOptions, setCart, handleExtraOptionChange  // ✅ handleExtraOptionChange 추가
   } = useProducts();
   const [showCurrentBOM, setShowCurrentBOM] = useState(true);
   const [showTotalBOM, setShowTotalBOM] = useState(true);
   const [adminPricesVersion, setAdminPricesVersion] = useState(0);
-  
+
   // ✅ 편집 상태 확인
   const editingData = location.state || {};
   const isEditMode = !!editingData.editingDocumentId;
-  
+
   // ✅ 편집 모드 시 cart 및 extraOptions 초기화
   useEffect(() => {
     if (isEditMode && editingData.cart) {
       setCart(editingData.cart);
-      
+
       // ✅ cart에서 extraOptions 추출하여 복원
       const allExtraOptions = [];
       editingData.cart.forEach(item => {
@@ -137,10 +137,10 @@ const HomePage = ({ currentUser }) => {
     if (!currentBOM || currentBOM.length === 0) {
       return currentPrice;
     }
-    
+
     let hasAdminPrice = false;
     let totalPrice = 0;
-    
+
     currentBOM.forEach(item => {
       const adminPrice = localStorage.getItem(`adminPrice_${item.id}`);
       if (adminPrice !== null && !isNaN(parseInt(adminPrice))) {
@@ -150,7 +150,7 @@ const HomePage = ({ currentUser }) => {
         totalPrice += (item.price || 0) * (item.quantity || 0);
       }
     });
-    
+
     return (hasAdminPrice && totalPrice > 0) ? totalPrice : currentPrice;
   };
 
@@ -161,7 +161,7 @@ const HomePage = ({ currentUser }) => {
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('adminPriceUpdate', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('adminPriceUpdate', handleStorageChange);
@@ -186,7 +186,7 @@ const HomePage = ({ currentUser }) => {
     ].filter(Boolean).join(" ");
   };
 
-return (
+  return (
     <div className="app-container">
       {/* ✅ 편집 모드 표시 */}
       {isEditMode && (
@@ -202,10 +202,10 @@ return (
         }}>
           <div>
             <strong>📝 문서 편집 모드</strong>
-            <p style={{margin: '4px 0 0 0', fontSize: '14px'}}>
-              거래번호: <strong>{editingData.editingDocumentData?.documentNumber}</strong> | 
-              유형: {editingData.editingDocumentType === 'estimate' ? '견적서' : 
-                     editingData.editingDocumentType === 'purchase' ? '청구서' : '거래명세서'}
+            <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>
+              거래번호: <strong>{editingData.editingDocumentData?.documentNumber}</strong> |
+              유형: {editingData.editingDocumentType === 'estimate' ? '견적서' :
+                editingData.editingDocumentType === 'purchase' ? '청구서' : '거래명세서'}
             </p>
           </div>
           <button
@@ -223,15 +223,15 @@ return (
           </button>
         </div>
       )}
-      
+
       <h2>랙 제품 견적</h2>
-      
+
       <div className="main-layout">
         <div className="left-section" style={{ flex: '1', marginRight: '20px' }}>
           <div className="option-section">
             <OptionSelector />
           </div>
-          
+
           <div className="price-section">
             <div className="price-display">
               <h3>현재 항목 예상 가격</h3>
@@ -256,67 +256,79 @@ return (
       <CartDisplay />
 
       {canProceed && (
-              <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                <Link 
-                  to="/estimate/new"
-                  state={{ 
-                    cart, 
-                    cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
-                    totalBom: totalBomForDisplay,
-                    // ✅ 편집 모드 데이터 전달
-                    ...(isEditMode ? {
-                      customItems: editingData.customItems || [],
-                      customMaterials: editingData.customMaterials || [],
-                      editingDocumentId: editingData.editingDocumentId,
-                      editingDocumentData: editingData.editingDocumentData || {}
-                    } : {})
-                  }}
-                  className={`create-estimate-button`}
-                >
-                  견적서 작성
-                </Link>
-                <Link 
-                  to="/delivery-note/new"
-                  state={{ 
-                    cart, 
-                    cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
-                    totalBom: totalBomForDisplay,
-                    // ✅ 편집 모드 데이터 전달 (조건문 제거)
-                    ...(isEditMode ? {
-                      customItems: editingData.customItems || [],
-                      customMaterials: editingData.customMaterials || [],
-                      editingDocumentId: editingData.editingDocumentId,
-                      editingDocumentData: editingData.editingDocumentData || {}
-                    } : {})
-                  }}
-                  className={`create-delivery-note-button`}
-                >
-                  거래명세서 작성
-                </Link>
-                <Link 
-                  to="/purchase-order/new"
-                  state={{ 
-                    cart, 
-                    cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0), 
-                    totalBom: totalBomForDisplay,
-                    // ✅ 편집 모드 데이터 전달 (조건문 제거)
-                    ...(isEditMode ? {
-                      customItems: editingData.customItems || [],
-                      customMaterials: editingData.customMaterials || [],
-                      editingDocumentId: editingData.editingDocumentId,
-                      editingDocumentData: editingData.editingDocumentData || {}
-                    } : {})
-                  }}
-                  className={`create-order-button`}
-                >
-                  청구서 작성
-                </Link>
-              </div>
-            )}
+        <div className="action-buttons mt-4" style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <Link
+            to="/estimate/new"
+            state={{
+              cart,
+              cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
+              // ✅ 편집 모드 데이터 전달
+              ...(isEditMode ? {
+                materials: editingData.materials || [],
+                totalBom: (editingData.materials && editingData.materials.length > 0) ? editingData.materials : totalBomForDisplay,
+                customItems: editingData.customItems || [],
+                customMaterials: editingData.customMaterials || [],
+                editingDocumentId: editingData.editingDocumentId,
+                editingDocumentType: editingData.editingDocumentType,
+                editingDocumentData: editingData.editingDocumentData || {}
+              } : {
+                totalBom: totalBomForDisplay
+              })
+            }}
+            className={`create-estimate-button`}
+          >
+            견적서 작성
+          </Link>
+          <Link
+            to="/delivery-note/new"
+            state={{
+              cart,
+              cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
+              // ✅ 편집 모드 데이터 전달 (조건문 제거)
+              ...(isEditMode ? {
+                materials: editingData.materials || [],
+                totalBom: (editingData.materials && editingData.materials.length > 0) ? editingData.materials : totalBomForDisplay,
+                customItems: editingData.customItems || [],
+                customMaterials: editingData.customMaterials || [],
+                editingDocumentId: editingData.editingDocumentId,
+                editingDocumentType: editingData.editingDocumentType,
+                editingDocumentData: editingData.editingDocumentData || {}
+              } : {
+                totalBom: totalBomForDisplay
+              })
+            }}
+            className={`create-delivery-note-button`}
+          >
+            거래명세서 작성
+          </Link>
+          <Link
+            to="/purchase-order/new"
+            state={{
+              cart,
+              cartTotal: cart.reduce((sum, i) => sum + (i.price ?? 0), 0),
+              // ✅ 편집 모드 데이터 전달 (조건문 제거)
+              ...(isEditMode ? {
+                materials: editingData.materials || [],
+                totalBom: (editingData.materials && editingData.materials.length > 0) ? editingData.materials : totalBomForDisplay,
+                customItems: editingData.customItems || [],
+                customMaterials: editingData.customMaterials || [],
+                editingDocumentId: editingData.editingDocumentId,
+                editingDocumentType: editingData.editingDocumentType,
+                editingDocumentData: editingData.editingDocumentData || {}
+              } : {
+                totalBom: totalBomForDisplay
+              })
+            }}
+            className={`create-order-button`}
+          >
+            청구서 작성
+          </Link>
+        </div>
+      )}
       {showTotalBOM && (
-        <BOMDisplay 
-          bom={totalBomForDisplay} 
-          title="전체 부품 목록 (BOM)" 
+        <BOMDisplay
+          bom={totalBomForDisplay}
+          title="전체 부품 목록 (BOM)"
           currentUser={currentUser}
           selectedRackOption={getCurrentRackOptionName()}
         />
