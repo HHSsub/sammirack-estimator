@@ -1,6 +1,6 @@
 // src/components/MaterialSelector.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { loadAllMaterials, getEffectivePrice, generateInventoryPartId } from '../utils/unifiedPriceManager';
+import { loadAllMaterials, getEffectivePrice } from '../utils/unifiedPriceManager';
 import './MaterialSelector.css';
 
 const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
@@ -135,16 +135,14 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
       // 관리자 단가 적용
       const effectivePrice = getEffectivePrice(selectedMaterial, adminPrices);
 
-      const inventoryPartId = generateInventoryPartId({
-        rackType: selectedMaterial.rackType || '기타',
-        name: selectedMaterial.name || '',
-        specification: selectedMaterial.specification || '',
-        colorWeight: selectedMaterial.colorWeight || '',
-        color: selectedMaterial.color || '',
-        version: selectedMaterial.version || '' // 파렛트랙 신형 대응
-      });
+      // CSV에서 이미 올바른 partId를 불러왔으므로 그대로 사용
+      const inventoryPartId = selectedMaterial.partId || '';
 
-      console.log(`✅ MaterialSelector: 생성된 inventoryPartId = "${inventoryPartId}"`);
+      console.log(`✅ MaterialSelector: CSV 부품ID 사용 = "${inventoryPartId}"`);
+      console.log(`📦 onAdd로 전달하는 데이터:`, {   // ← 이 줄 추가!
+        name: selectedMaterial.name,
+        inventoryPartId: inventoryPartId
+      });
 
       onAdd({
         name: selectedMaterial.name,
@@ -153,12 +151,9 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         unitPrice: effectivePrice,
         totalPrice: quantity * effectivePrice,
         note: '',
-        // ✅ 재고 매핑을 위한 메타데이터 추가
         rackType: selectedMaterial.rackType || '기타',
-        colorWeight: selectedMaterial.colorWeight || '',
-        color: selectedMaterial.color || '',
         partId: selectedMaterial.partId || '',
-        inventoryPartId: inventoryPartId  // ✅ 핵심 추가!!!
+        inventoryPartId: inventoryPartId
       });
 
       // 선택은 유지, 수량만 초기화
