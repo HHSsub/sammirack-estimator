@@ -430,7 +430,7 @@ class RealtimeAdminSync {
     // legacy 키 정리 (오래된 .0 키들 등 삭제 유도)
     for (const docKey in documents) {
       const doc = documents[docKey];
-      if (doc && !doc.deleted) {
+      if (doc && doc.deleted !== true && doc.deleted !== 1) {
         // ✅ 정규화된 키로만 저장
         const normKey = `${doc.type}_${String(doc.id).replace(/\.0$/, '')}`;
         localStorage.setItem(normKey, JSON.stringify(doc));
@@ -439,7 +439,7 @@ class RealtimeAdminSync {
         if (docKey !== normKey) {
           localStorage.removeItem(docKey);
         }
-      } else if (doc && doc.deleted) {
+      } else if (doc && (doc.deleted === true || doc.deleted === 1)) {
         localStorage.removeItem(docKey);
         // .0 붙은 구형 키도 삭제 시도
         localStorage.removeItem(docKey + '.0');
@@ -745,7 +745,7 @@ export const loadAllDocuments = (includeDeleted = false) => {
       return docArray;
     }
 
-    return docArray.filter(doc => !doc.deleted);
+    return docArray.filter(doc => doc.deleted !== true && doc.deleted !== 1);
   } catch (error) {
     console.error('문서 로드 실패:', error);
     return [];
@@ -755,7 +755,7 @@ export const loadAllDocuments = (includeDeleted = false) => {
 export const loadDeletedDocuments = () => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
-    return Object.values(documents).filter(doc => doc.deleted === true);
+    return Object.values(documents).filter(doc => doc.deleted === true || doc.deleted === 1);
   } catch (error) {
     console.error('삭제된 문서 로드 실패:', error);
     return [];
