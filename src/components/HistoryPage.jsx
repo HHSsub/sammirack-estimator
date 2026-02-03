@@ -616,9 +616,6 @@ const HistoryPage = () => {
       console.log('💰 가격 재적용 완료 - Cart:', cart);
       console.log('💰 가격 재적용 완료 - Materials:', materials);
 
-      // 5) Context에 반영
-      setCart(cart);
-
       // 6) 편집 데이터 구성
       const editingData = {
         cart,
