@@ -737,36 +737,55 @@ const PurchaseOrderForm = () => {
       );
 
       if (confirmDeduct && cart && cart.length > 0) {
-        // ✅ 재고 감소 실행 (청구서 생성 플로우: cart에 bom 없으면 formData.materials 사용)
-        const materialsForDeduct = (() => {
-          // 1) cart에 bom이 있으면 cart 사용
-          if (!cart.every(i => !i.bom?.length)) {
-            return cart;
-          }
+        // ✅ cart.bom 우선, 없으면 formData.materials 사용
+        let materialsForDeduct;
 
-          // 2) cart에 bom 없으면 formData.materials에서 정확히 필터링
-          if (formData.materials?.length > 0) {
-            const filtered = formData.materials.filter(m => {
-              // undefined, null 제거
-              if (!m) return false;
-              // 서비스 항목 제거
-              if (m.isService) return false;
-              // inventoryPartId 없는 항목 제거
-              if (!m.inventoryPartId || m.inventoryPartId === '--') return false;
+        if (cart && cart.length > 0 && cart.some(i => i.bom && i.bom.length > 0)) {
+          // 1) cart에 BOM 있음 → cart 그대로 사용
+          console.log('✅ cart.bom 존재 → cart 사용');
+          materialsForDeduct = cart;
+        } else if (formData.materials && formData.materials.length > 0) {
+          // 2) cart.bom 없음 → formData.materials 필터링
+          console.log('⚠️ cart.bom 없음 → formData.materials 사용');
+
+          materialsForDeduct = formData.materials
+            .filter(m => {
+              if (!m) {
+                console.log('    ❌ undefined/null 제거');
+                return false;
+              }
+              if (m.isService) {
+                console.log('    ❌ 서비스 항목:', m.name);
+                return false;
+              }
+              if (!m.inventoryPartId || m.inventoryPartId === '--' || m.inventoryPartId === 'undefined') {
+                console.log('    ❌ 잘못된 inventoryPartId:', m.name, '→', m.inventoryPartId);
+                return false;
+              }
+              console.log('    ✅', m.name, '→', m.inventoryPartId);
               return true;
-            });
+            })
+            .map(m => ({
+              bom: [{
+                name: m.name,
+                rackType: m.rackType,
+                specification: m.specification || '',
+                colorWeight: m.colorWeight || '',
+                quantity: m.quantity,
+                inventoryPartId: m.inventoryPartId  // ✅ 이미 있는 ID 그대로 사용
+              }]
+            }));
 
-            console.log('🔍 재고 감소 대상 필터링 결과:', filtered.map(m => ({
-              name: m.name,
-              inventoryPartId: m.inventoryPartId,
-              quantity: m.quantity
-            })));
+          console.log('📊 최종 재고 감소 대상:', materialsForDeduct.length, '개');
 
-            return filtered.length > 0 ? filtered : undefined;
+          if (materialsForDeduct.length === 0) {
+            materialsForDeduct = undefined;
           }
+        } else {
+          console.log('⚠️ 재고 감소 대상 없음');
+          materialsForDeduct = undefined;
+        }
 
-          return undefined;
-        })();
 
         console.log('🔍🔍🔍 재고 감소 직전 materials 확인:', formData.materials.map(m => ({
           name: m.name,
