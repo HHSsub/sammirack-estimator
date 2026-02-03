@@ -1,5 +1,5 @@
 // src/components/MaterialSelector.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { loadAllMaterials, getEffectivePrice } from '../utils/unifiedPriceManager';
 import './MaterialSelector.css';
 
@@ -61,34 +61,36 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
     }
   };
 
-  // 필터링된 자재 목록
-  const filteredMaterials = allMaterials.filter(material => {
-    // 랙 타입 필터
-    if (selectedRackType && material.rackType !== selectedRackType) {
-      return false;
-    }
-
-    // 검색어 필터
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const matchName = (material.name || '').toLowerCase().includes(term);
-      const matchSpec = (material.specification || '').toLowerCase().includes(term);
-      const matchPartId = (material.partId || '').toLowerCase().includes(term);
-      if (!matchName && !matchSpec && !matchPartId) {
+  // 필터링된 자재 목록 (useMemo로 최적화 및 안정성 확보)
+  const filteredMaterials = useMemo(() => {
+    return allMaterials.filter(material => {
+      // 랙 타입 필터
+      if (selectedRackType && material.rackType !== selectedRackType) {
         return false;
       }
-    }
 
-    // 재고 있는 것만 보기
-    if (showOnlyInStock) {
-      const stock = inventory[material.partId] || 0;
-      if (stock <= 0) {
-        return false;
+      // 검색어 필터
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const matchName = (material.name || '').toLowerCase().includes(term);
+        const matchSpec = (material.specification || '').toLowerCase().includes(term);
+        const matchPartId = (material.partId || '').toLowerCase().includes(term);
+        if (!matchName && !matchSpec && !matchPartId) {
+          return false;
+        }
       }
-    }
 
-    return true;
-  });
+      // 재고 있는 것만 보기
+      if (showOnlyInStock) {
+        const stock = inventory[material.partId] || 0;
+        if (stock <= 0) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allMaterials, selectedRackType, searchTerm, showOnlyInStock, inventory]);
 
   // 랙 타입 목록 추출
   const rackTypes = [...new Set(allMaterials.map(m => m.rackType))].sort();
@@ -286,53 +288,58 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
             {filteredMaterials.length}개 자재
           </div>
 
-          <div className="material-list">
-            {filteredMaterials.map(mat => {
-              const stock = inventory[mat.partId] || 0;
-              const hasStock = stock > 0;
-              const isSelected = selectedMaterial?.partId === mat.partId;
+          <div className="material-list-container">
+            <div className="material-list">
+              {filteredMaterials.map((mat, idx) => {
+                const stock = inventory[mat.partId] || 0;
+                const hasStock = stock > 0;
+                const isSelected = selectedMaterial?.partId === mat.partId;
 
-              return (
-                <div
-                  key={mat.partId}
-                  className={`material-item ${isSelected ? 'selected' : ''}`}
-                  onClick={() => handleSelectMaterial(mat)}
-                >
-                  <div className="material-radio">
-                    <input
-                      type="radio"
-                      name="material"
-                      checked={isSelected}
-                      readOnly
-                    />
-                  </div>
-                  <div className="material-info">
-                    <div className="material-name">{mat.name}</div>
-                    {mat.specification && (
-                      <div className="material-spec">{mat.specification}</div>
-                    )}
-                    <div className="material-meta">
-                      {mat.hasAdminPrice && (
-                        <span className="admin-price-badge">관리자가</span>
+                return (
+                  <div
+                    key={`${mat.partId || 'unknown'}-${idx}`}
+                    className={`material-item ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleSelectMaterial(mat)}
+                  >
+                    <div className="material-radio">
+                      <input
+                        type="radio"
+                        name="material"
+                        checked={isSelected}
+                        readOnly
+                      />
+                    </div>
+                    <div className="material-info">
+                      <div className="material-name">{mat.name}</div>
+                      {mat.specification && (
+                        <div className="material-spec">{mat.specification}</div>
                       )}
-                      <span className={`stock-badge ${hasStock ? 'in-stock' : 'out-of-stock'}`}>
-                        재고: {stock}
-                      </span>
-                      {mat.price > 0 && (
-                        <span className="price-badge">
-                          {mat.price.toLocaleString()}원
+                      <div className="material-meta">
+                        {mat.hasAdminPrice && (
+                          <span className="admin-price-badge">관리자가</span>
+                        )}
+                        <span className={`stock-badge ${hasStock ? 'in-stock' : 'out-of-stock'}`}>
+                          재고: {stock}
                         </span>
-                      )}
+                        {(mat.price !== undefined && mat.price !== null) && (
+                          <span className="price-badge">
+                            {Number(mat.price).toLocaleString()}원
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+              {filteredMaterials.length === 0 && (
+                <div className="empty-message">조건에 맞는 자재가 없습니다.</div>
+              )}
+            </div>
           </div>
 
           {selectedMaterial && (
             <div className="selected-info">
-              선택: {selectedMaterial.name} ({selectedMaterial.price.toLocaleString()}원)
+              선택: {selectedMaterial.name} ({Number(selectedMaterial.price || 0).toLocaleString()}원)
             </div>
           )}
 

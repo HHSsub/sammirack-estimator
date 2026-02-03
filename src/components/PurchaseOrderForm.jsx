@@ -451,18 +451,26 @@ const PurchaseOrderForm = () => {
         ? `${materialData.name} (${materialData.specification})`
         : materialData.name;
 
-      setFormData(prev => ({
-        ...prev,
-        items: [...prev.items, {
-          name: itemDisplayName,
-          unit: '개',
-          quantity: materialData.quantity,
-          unitPrice: materialData.unitPrice,
-          totalPrice: materialData.totalPrice,
-          note: materialData.note || ''
-        }],
-        materials: [...prev.materials, materialWithId]
-      }));
+      setFormData(prev => {
+        const nextState = {
+          ...prev,
+          items: [...prev.items, {
+            name: itemDisplayName,
+            unit: '개',
+            quantity: materialData.quantity,
+            unitPrice: materialData.unitPrice,
+            totalPrice: materialData.totalPrice,
+            note: materialData.note || ''
+          }]
+        };
+
+        // 서비스 항목(공임, 운임)이 아닐 때만 원자재 명세서(BOM)에 추가
+        if (!materialWithId.isService) {
+          nextState.materials = [...prev.materials, materialWithId];
+        }
+
+        return nextState;
+      });
     } else {
       // ✅ 자재로만 추가
       setFormData(prev => ({
