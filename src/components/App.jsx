@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';  // ✅ useLocation, useNavigate 추가
 import './App.css';
 import { useProducts } from './contexts/ProductContext';
@@ -129,42 +129,44 @@ const HomePage = ({ currentUser }) => {
 
           // ✅ 깊은 복사 + Admin 가격 적용
           const deepCopiedCart = editingData.cart.map((item, index) => {
-            const copiedItem = {
+            // ✅ 먼저 완전한 깊은 복사 수행 (id는 고유하게 재생성)
+            const newItem = {
               ...item,
+              id: item.id || `${Date.now()}_${index}`,  // ✅ 고유 ID 보장
               extraOptions: item.extraOptions ? [...item.extraOptions] : [],
               customMaterials: item.customMaterials ? item.customMaterials.map(m => ({ ...m })) : [],
               bom: item.bom ? item.bom.map(b => ({ ...b })) : []
             };
 
-            console.log(`\n🔍 [Item ${index + 1}] ${copiedItem.displayName || copiedItem.name}`);
+            console.log(`\n🔍 [Item ${index + 1}] ${newItem.displayName || newItem.name}`);
 
             // 1순위: customPrice (사용자 직접 수정)
-            if (copiedItem.customPrice !== undefined && copiedItem.customPrice !== null && copiedItem.customPrice > 0) {
-              console.log(`  ✅ customPrice 우선: ${copiedItem.customPrice}원`);
-              return {
-                ...copiedItem,
-                unitPrice: copiedItem.customPrice,
-                totalPrice: copiedItem.customPrice * (copiedItem.quantity || 1)
-              };
+            if (newItem.customPrice !== undefined && newItem.customPrice !== null && newItem.customPrice > 0) {
+              console.log(`  ✅ customPrice 우선: ${newItem.customPrice}원`);
+              newItem.unitPrice = newItem.customPrice;
+              newItem.totalPrice = newItem.customPrice * (newItem.quantity || 1);
+              newItem.price = newItem.totalPrice;
+              return newItem;
             }
 
             // 2순위: Admin 가격
-            const partId = generatePartId(copiedItem);
+            const partId = generatePartId(newItem);
             const adminPrice = adminPrices[partId];
 
             if (adminPrice && adminPrice.price > 0) {
               console.log(`  ✅ Admin 가격 적용: ${adminPrice.price}원`);
-              return {
-                ...copiedItem,
-                unitPrice: adminPrice.price,
-                totalPrice: adminPrice.price * (copiedItem.quantity || 1)
-              };
+              newItem.unitPrice = adminPrice.price;
+              newItem.totalPrice = adminPrice.price * (newItem.quantity || 1);
+              newItem.price = newItem.totalPrice;
+              return newItem;
             }
 
             // 3순위: 기존 가격 유지
-            console.log(`  ⚠️ 기존 가격 유지: ${copiedItem.unitPrice || 0}원`);
-            return copiedItem;
+            console.log(`  ⚠️ 기존 가격 유지: ${newItem.unitPrice || 0}원`);
+            newItem.price = newItem.totalPrice || newItem.price || 0;
+            return newItem;
           });
+
 
           console.log('🆕 깊은 복사 + 가격 적용 완료:', deepCopiedCart);
           console.log('🔍 배열 참조 확인:', deepCopiedCart === editingData.cart ? '❌ 같은 참조' : '✅ 다른 참조');

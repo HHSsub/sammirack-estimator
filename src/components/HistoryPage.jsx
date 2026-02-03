@@ -532,10 +532,13 @@ const HistoryPage = () => {
           displayName: itm.displayName || itm.name || '',
           quantity: Number(itm.quantity) || 1,
           unitPrice: Number(itm.unitPrice) || 0,
-          totalPrice: Number(itm.totalPrice) || 0
+          totalPrice: Number(itm.totalPrice) || 0,
+          customPrice: Number(itm.customPrice) || 0,  // ✅ customPrice 보존!
+          price: Number(itm.totalPrice) || Number(itm.price) || 0  // ✅ price 필드 보존!
         }));
       }
       console.log('📦 복원된 cart:', cart);
+
 
       // 3) Materials 복원 + BOM 재생성
       let materials = [];
@@ -581,6 +584,18 @@ const HistoryPage = () => {
 
       // Cart에 Admin 가격 적용
       cart = cart.map(cartItem => {
+        // ✅ 1순위: customPrice가 있으면 보존!
+        if (cartItem.customPrice !== undefined && cartItem.customPrice !== null && cartItem.customPrice > 0) {
+          console.log(`  ⚠️ customPrice 보존: ${cartItem.displayName} - ${cartItem.customPrice}원`);
+          return {
+            ...cartItem,
+            unitPrice: cartItem.customPrice,
+            totalPrice: cartItem.customPrice * cartItem.quantity,
+            price: cartItem.customPrice * cartItem.quantity
+          };
+        }
+
+        // ✅ 2순위: Admin 가격 적용
         const partId = generatePartId(cartItem);
         const adminPrice = adminPrices[partId];
         if (adminPrice && adminPrice.price > 0) {
@@ -590,11 +605,19 @@ const HistoryPage = () => {
           return {
             ...cartItem,
             unitPrice: newUnitPrice,
-            totalPrice: newTotalPrice
+            totalPrice: newTotalPrice,
+            price: newTotalPrice
           };
         }
-        return cartItem;
+
+        // ✅ 3순위: 기존 가격 유지
+        console.log(`  ⚠️ 기존 가격 유지: ${cartItem.displayName}`);
+        return {
+          ...cartItem,
+          price: cartItem.totalPrice || cartItem.price || 0
+        };
       });
+
 
       // Materials에 Admin 가격 적용
       materials = materials.map(mat => {
