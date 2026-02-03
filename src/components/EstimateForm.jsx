@@ -15,7 +15,7 @@ import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
-import ItemSelector from './ItemSelector';  // 26.01.27 추가 (품목셀렉터)
+import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
 
 // ✅ PROVIDER는 고정 (도장 이미지 포함)
 const PROVIDER = {
@@ -67,8 +67,9 @@ const EstimateForm = () => {
     message: '',
     onConfirm: null
   });
-  // 드롭다운 품목셀렉터 
-  const [showItemSelector, setShowItemSelector] = useState(false);
+  const [showMaterialSelector, setShowMaterialSelector] = useState(false);
+  const [selectorTarget, setSelectorTarget] = useState('material'); // 'item' or 'material'
+
   const documentNumberInputRef = useRef(null);
   const cartInitializedRef = useRef(false);
 
@@ -387,15 +388,56 @@ const EstimateForm = () => {
   //   }));
   // };
   const addItem = () => {
-    setShowItemSelector(true);  // 드롭다운식으로 변경 (26_01_27) 
+    setSelectorTarget('item');
+    setShowMaterialSelector(true);
   };
 
-  const handleItemAdd = (itemData) => {
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, itemData]
-    }));
-    // 패널은 유지 (닫지 않음)
+
+  const handleMaterialAdd = (materialData) => {
+    // ✅ inventoryPartId 생성 (재고 감소용)
+    const materialWithId = {
+      ...materialData,
+      inventoryPartId: materialData.isService ? null : (materialData.inventoryPartId || generateInventoryPartId({
+        rackType: materialData.rackType || '기타',
+        name: materialData.name,
+        specification: materialData.specification || '',
+        colorWeight: materialData.colorWeight || ''
+      }))
+    };
+
+    if (selectorTarget === 'item') {
+      // ✅ 품목으로 추가할 때는 표시 이름을 "품명 (규격)" 형태로 구성
+      const itemDisplayName = materialData.specification
+        ? `${materialData.name} (${materialData.specification})`
+        : materialData.name;
+
+      setFormData(prev => {
+        const nextState = {
+          ...prev,
+          items: [...prev.items, {
+            name: itemDisplayName,
+            unit: '개',
+            quantity: materialData.quantity,
+            unitPrice: materialData.unitPrice,
+            totalPrice: materialData.totalPrice,
+            note: materialData.note || ''
+          }]
+        };
+
+        // 서비스 항목(공임, 운임)이 아닐 때만 원자재 명세서(BOM)에 추가
+        if (!materialWithId.isService) {
+          nextState.materials = [...prev.materials, materialWithId];
+        }
+
+        return nextState;
+      });
+    } else {
+      // ✅ 자재로만 추가
+      setFormData(prev => ({
+        ...prev,
+        materials: [...prev.materials, materialWithId]
+      }));
+    }
   };
 
   const removeItem = (idx) => {
@@ -817,20 +859,14 @@ const EstimateForm = () => {
       </table>
 
       {!(showFaxModal || showSettingsModal) && (
-        <div className="item-controls no-print">
-          <button
-            type="button"
-            onClick={addItem}
-            className="add-item-btn"
-          >
-            + 품목 추가
-          </button>
+        <div className="item-controls no-print" style={{ marginBottom: 18, display: (showFaxModal || showSettingsModal) ? 'none' : 'block' }}>
+          <button type="button" onClick={addItem} className="add-item-btn">+ 품목 추가</button>
         </div>
       )}
-      <ItemSelector
-        isOpen={showItemSelector}
-        onClose={() => setShowItemSelector(false)}
-        onAdd={handleItemAdd}
+      <MaterialSelector
+        isOpen={showMaterialSelector}
+        onClose={() => setShowMaterialSelector(false)}
+        onAdd={handleMaterialAdd}
       />
       <table className="form-table total-table">
         <tbody>

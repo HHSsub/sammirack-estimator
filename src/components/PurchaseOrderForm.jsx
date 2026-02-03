@@ -90,7 +90,7 @@ const PurchaseOrderForm = () => {
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
-    materials: [],
+    materials: materials || totalBom || [], // ✅ state.materials 우선, 없으면 totalBom
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
@@ -98,6 +98,7 @@ const PurchaseOrderForm = () => {
     topMemo: editingDocumentData.topMemo || estimateData.topMemo || '',
     documentSettings: null  // ✅ 이 문서의 회사정보
   });
+
 
   // ✅ 관리자 체크 및 전역 설정 로드
   useEffect(() => {
@@ -220,6 +221,11 @@ const PurchaseOrderForm = () => {
             topMemo: data.topMemo || editingDocumentData.topMemo || estimateData.topMemo || data.topMemo,
             documentSettings: data.documentSettings || null
           };
+
+          // ✅ materials 디버깅 로그 추가
+          console.log('🔍🔍🔍 PurchaseOrderForm: 문서 로드 완료 🔍🔍🔍');
+          console.log('📦 최종 materials:', data.materials);
+          console.log('📦 materials 개수:', data.materials?.length || 0);
 
           setFormData(mergedData);
 

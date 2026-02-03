@@ -508,49 +508,144 @@ const HistoryPage = () => {
   /**
    * ✅ 수정 버튼 - 홈 화면으로 이동하여 장바구니 기반 편집
    */
-  const editItem = (item) => {
-    if (!item) return;
+  const editItem = async (item) => {
+    console.log('📝 편집 시작:', item);
 
-    // ID 정규화 (.0 제거)
-    const normId = String(item.id).replace(/\.0$/, '');
+    try {
+      // 1) 서버에서 전체 문서 데이터 가져오기
+      const fullDoc = await documentsAPI.getById(item.id);
+      console.log('📄 서버에서 받은 전체 문서:', fullDoc);
 
-    let materials = item.materials || [];
-    const cart = ((item.cart && item.cart.length > 0) ? item.cart : (item.items || [])).map(it => ({
-      ...it,
-      displayName: it.displayName || it.name || ''
-    }));
-
-    // 원자재 유실 시 재생성
-    if (materials.length === 0 && cart.length > 0) {
-      console.log(`🔄 편집 중 원자재 재생성 (${item.documentNumber})`);
-      const regenerated = [];
-      cart.forEach(cartItem => {
-        const bom = regenerateBOMFromDisplayName(cartItem.displayName || cartItem.name || '');
-        if (bom && bom.length > 0) {
-          regenerated.push(...bom.map(b => ({
-            ...b,
-            quantity: b.quantity * (cartItem.quantity || 1)
-          })));
-        }
-      });
-      if (regenerated.length > 0) materials = regenerated;
-    }
-
-    const editingData = {
-      isEditMode: true,
-      cart: cart,
-      materials: materials,
-      editingDocumentId: normId,
-      editingDocumentType: item.type || 'estimate',
-      editingDocumentData: {
-        ...item,
-        id: normId
+      // 2) Cart 복원
+      let cart = [];
+      if (fullDoc.items && Array.isArray(fullDoc.items) && fullDoc.items.length > 0) {
+        cart = fullDoc.items.map(itm => ({
+          ...itm,
+          displayName: itm.displayName || itm.name || '',
+          quantity: Number(itm.quantity) || 1,
+          unitPrice: Number(itm.unitPrice) || 0,
+          totalPrice: Number(itm.totalPrice) || 0
+        }));
       }
-    };
+      console.log('📦 복원된 cart:', cart);
 
-    console.log('🔄 편집 모드 전환:', editingData);
-    navigate('/', { state: editingData });
+      // 3) Materials 복원 + BOM 재생성
+      let materials = [];
+      if (fullDoc.materials && Array.isArray(fullDoc.materials) && fullDoc.materials.length > 0) {
+        materials = fullDoc.materials.map(mat => ({
+          ...mat,
+          quantity: Number(mat.quantity) || 0,
+          unitPrice: Number(mat.unitPrice) || 0,
+          totalPrice: Number(mat.totalPrice) || 0
+        }));
+        console.log('✅ 기존 materials 복원:', materials);
+      } else if (cart.length > 0) {
+        // BOM 재생성
+        console.log('⚠️ materials 비어있음 - cart에서 BOM 재생성');
+        materials = [];
+        cart.forEach(cartItem => {
+          const displayName = cartItem.displayName || cartItem.name || '';
+          if (displayName) {
+            try {
+              const bomItems = regenerateBOMFromDisplayName(displayName);
+              const itemQty = Number(cartItem.quantity) || 1;
+              bomItems.forEach(bomItem => {
+                materials.push({
+                  ...bomItem,
+                  quantity: (bomItem.quantity || 0) * itemQty,
+                  unitPrice: Number(bomItem.unitPrice) || 0,
+                  totalPrice: Number(bomItem.totalPrice) || 0
+                });
+              });
+            } catch (err) {
+              console.error('❌ BOM 재생성 실패:', displayName, err);
+            }
+          }
+        });
+        console.log('✅ BOM 재생성 완료:', materials);
+      }
+
+      // 4) Admin 가격 재적용
+      console.log('💰 Admin 가격 재적용 시작...');
+      const { loadAdminPrices, generatePartId } = await import('../utils/unifiedPriceManager');
+      const adminPrices = await loadAdminPrices();
+      console.log('📊 불러온 Admin 가격:', adminPrices);
+
+      // Cart에 Admin 가격 적용
+      cart = cart.map(cartItem => {
+        const partId = generatePartId(cartItem);
+        const adminPrice = adminPrices[partId];
+        if (adminPrice && adminPrice.price > 0) {
+          const newUnitPrice = adminPrice.price;
+          const newTotalPrice = newUnitPrice * cartItem.quantity;
+          console.log(`✅ Cart 가격 업데이트: ${cartItem.displayName} - ${newUnitPrice}원`);
+          return {
+            ...cartItem,
+            unitPrice: newUnitPrice,
+            totalPrice: newTotalPrice
+          };
+        }
+        return cartItem;
+      });
+
+      // Materials에 Admin 가격 적용
+      materials = materials.map(mat => {
+        const partId = generatePartId(mat);
+        const adminPrice = adminPrices[partId];
+        if (adminPrice && adminPrice.price > 0) {
+          const newUnitPrice = adminPrice.price;
+          const newTotalPrice = newUnitPrice * mat.quantity;
+          console.log(`✅ Material 가격 업데이트: ${mat.name} - ${newUnitPrice}원`);
+          return {
+            ...mat,
+            unitPrice: newUnitPrice,
+            totalPrice: newTotalPrice
+          };
+        }
+        return mat;
+      });
+
+      console.log('💰 가격 재적용 완료 - Cart:', cart);
+      console.log('💰 가격 재적용 완료 - Materials:', materials);
+
+      // 5) Context에 반영
+      setCart(cart);
+      setBOM(materials);
+
+      // 6) 편집 데이터 구성
+      const editingData = {
+        cart,
+        totalBom: materials,
+        materials: materials,
+        editingDocumentId: fullDoc.id,
+        editingDocumentType: fullDoc.type || 'estimate',
+        editingDocumentData: {
+          ...fullDoc,
+          items: cart,
+          materials: materials
+        }
+      };
+
+      console.log('🚀 편집 데이터로 이동:', editingData);
+
+      // 7) 문서 타입에 따라 경로 이동
+      const docType = fullDoc.type || 'estimate';
+
+      if (docType === 'purchase') {
+        navigate('/purchase-order/new', { state: editingData });
+      } else if (docType === 'delivery') {
+        navigate('/delivery-note/new', { state: editingData });
+      } else {
+        navigate('/estimate/new', { state: editingData });
+      }
+
+    } catch (error) {
+      console.error('❌ 편집 실패:', error);
+      alert('문서를 불러오는데 실패했습니다: ' + error.message);
+    }
   };
+
+
 
 
   /**

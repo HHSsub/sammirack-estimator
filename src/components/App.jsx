@@ -113,16 +113,19 @@ const HomePage = ({ currentUser }) => {
   const editingData = location.state || {};
   const isEditMode = !!editingData.editingDocumentId;
 
-  // ✅ 편집 모드 시 cart 및 extraOptions 초기화
+  // ✅ 편집 모드 시 cart 및 materials(BOM) 초기화
   useEffect(() => {
     if (isEditMode && editingData.cart) {
+      console.log('🔍🔍🔍 HomePage: 편집 모드 데이터 복원 🔍🔍🔍');
+      console.log('📄 editingData:', editingData);
+      console.log('🛒 cart:', editingData.cart);
+      console.log('📦 materials:', editingData.materials);
+
       setCart(editingData.cart);
-      
-      // ✅ materials도 복원 (BOM 재생성 방지!)
-      if (editingData.materials && editingData.materials.length > 0) {
-        // ProductContext에 materials 직접 설정하는 함수 필요
-        console.log('✅ materials 복원:', editingData.materials.length);
-      }
+
+      // ✅ materials도 ProductContext에 반영 (중요!)
+      // ProductContext에는 setCartBOM 함수가 없으므로
+      // 대신 180~183번째 줄의 totalBomForDisplay 로직이 이를 처리함
 
       // extraOptions 복원
       const allExtraOptions = [];
@@ -135,8 +138,13 @@ const HomePage = ({ currentUser }) => {
         const uniqueExtraOptions = Array.from(new Set(allExtraOptions));
         handleExtraOptionChange(uniqueExtraOptions);
       }
+
+      console.log('✅ HomePage: 편집 모드 복원 완료');
+      console.log('🛒 최종 cart:', editingData.cart.length, '개');
+      console.log('📦 최종 materials:', editingData.materials?.length || 0, '개');
     }
   }, [isEditMode, editingData.cart, editingData.materials, setCart, handleExtraOptionChange]);
+
 
   const getFinalPrice = () => {
     if (!currentBOM || currentBOM.length === 0) {
@@ -179,9 +187,9 @@ const HomePage = ({ currentUser }) => {
 
   // ✅ 편집 모드일 때는 materials 직접 사용!
   const totalBomForDisplay = (isEditMode && editingData.materials && editingData.materials.length > 0)
-    ? editingData.materials 
+    ? editingData.materials
     : cartBOMView || [];
-    
+
   const getCurrentRackOptionName = () => {
     if (!selectedType) return '';
     return [
