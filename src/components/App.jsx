@@ -267,10 +267,31 @@ const HomePage = ({ currentUser }) => {
   const canAddItem = finalPrice > 0;
   const canProceed = cart.length > 0;
 
-  // ✅ 편집 모드일 때는 materials 직접 사용!
-  const totalBomForDisplay = (isEditMode && editingData.materials && editingData.materials.length > 0)
-    ? editingData.materials
-    : cartBOMView || [];
+  // ✅ 편집 모드일 때 materials가 비어있으면 cart의 BOM에서 재생성
+  const totalBomForDisplay = useMemo(() => {
+    if (isEditMode) {
+      // 1) editingData.materials가 있으면 그대로 사용
+      if (editingData.materials && editingData.materials.length > 0) {
+        console.log('✅ 기존 materials 사용:', editingData.materials.length, '개');
+        return editingData.materials;
+      }
+      // 2) materials가 없으면 cart의 BOM에서 재생성
+      if (cart && cart.length > 0) {
+        console.log('🔄 cart의 BOM에서 재생성 시작...');
+        const regeneratedBOM = [];
+        cart.forEach(item => {
+          if (item.bom && item.bom.length > 0) {
+            regeneratedBOM.push(...item.bom);
+            console.log(`  - ${item.displayName}: ${item.bom.length}개 부품 추가`);
+          }
+        });
+        console.log('✅ BOM 재생성 완료:', regeneratedBOM.length, '개');
+        return regeneratedBOM;
+      }
+    }
+    // 3) 일반 모드에서는 cartBOMView 사용
+    return cartBOMView || [];
+  }, [isEditMode, editingData.materials, cart, cartBOMView]);
 
   const getCurrentRackOptionName = () => {
     if (!selectedType) return '';
