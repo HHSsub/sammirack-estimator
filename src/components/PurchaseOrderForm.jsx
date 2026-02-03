@@ -306,7 +306,7 @@ const PurchaseOrderForm = () => {
         }
       });
 
-      const allItems = [...cartItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
+      const allItems = [...initialItems, ...customItems, ...extraOptionItems, ...customMaterialItems];
 
       // ✅ BOM 추출: totalBom 또는 materials 확인
       let bomMaterials = [];
