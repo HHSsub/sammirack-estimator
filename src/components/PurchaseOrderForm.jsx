@@ -743,10 +743,37 @@ const PurchaseOrderForm = () => {
       );
 
       if (confirmDeduct && cart && cart.length > 0) {
-        // ✅ cart에 bom 있으면 그냥 cart만 넘기고 materialsOverride는 undefined
-        if (cart.some(i => i.bom && i.bom.length > 0)) {
-          console.log('✅ cart.bom 존재 → cart만 전달');
-          const result = await deductInventoryOnPrint(cart, '청구서', formData.documentNumber, undefined);
+        // ✅ cart.bom + formData.materials 합치기
+        const hasBom = cart.some(i => i.bom && i.bom.length > 0);
+
+        if (hasBom || (formData.materials && formData.materials.length > 0)) {
+          console.log('✅ 재고 감소 대상 준비');
+
+          // 1. cart.bom 추출
+          const cartBomItems = cart.flatMap(item =>
+            (item.bom && Array.isArray(item.bom)) ? item.bom : []
+          );
+
+          // 2. formData.materials 필터링 (서비스 제외, inventoryPartId 있는 것만)
+          const additionalMaterials = (formData.materials || []).filter(m =>
+            m && !m.isService && m.inventoryPartId && m.inventoryPartId !== '--'
+          );
+
+          console.log('📦 cart.bom:', cartBomItems.length, '개');
+          console.log('📦 추가 자재:', additionalMaterials.length, '개');
+
+          // 3. 합치기
+          const allMaterials = [...cartBomItems, ...additionalMaterials];
+
+          console.log('📦 최종 재고 감소 대상:', allMaterials.length, '개');
+
+          // 4. cart 형식으로 변환
+          const syntheticCart = [{
+            bom: allMaterials
+          }];
+
+          const result = await deductInventoryOnPrint(syntheticCart, '청구서', formData.documentNumber, undefined);
+
 
           if (result.success) {
             alert('✅ 재고가 감소되었습니다.');
