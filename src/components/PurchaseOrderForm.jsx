@@ -490,16 +490,24 @@ const PurchaseOrderForm = () => {
 
 
   const handleMaterialAdd = (materialData) => {
+    // ✅✅✅ 디버깅: 전달받은 데이터 확인
+    console.log('🔍 handleMaterialAdd 받은 데이터:', {
+      name: materialData.name,
+      inventoryPartId: materialData.inventoryPartId,
+      partId: materialData.partId,
+      전체: materialData
+    });
     // ✅ inventoryPartId 생성 (재고 감소용)
     const materialWithId = {
       ...materialData,
-      inventoryPartId: materialData.isService ? null : (materialData.inventoryPartId || generateInventoryPartId({
+      inventoryPartId: materialData.isService ? null : (materialData.inventoryPartId || materialData.partId || generateInventoryPartId({
         rackType: materialData.rackType || '기타',
         name: materialData.name,
         specification: materialData.specification || '',
         colorWeight: materialData.colorWeight || ''
       }))
     };
+    console.log('🔍 최종 inventoryPartId:', materialWithId.inventoryPartId);
 
     if (selectorTarget === 'item') {
       // ✅ 품목으로 추가할 때는 표시 이름을 "품명 (규격)" 형태로 구성
@@ -1089,13 +1097,13 @@ const PurchaseOrderForm = () => {
               inventoryPartId = bomItem.inventoryPartId;
               console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
             } else {
-              inventoryPartId = generateInventoryPartId({
+              inventoryPartId = materialData.partId || generateInventoryPartId({
                 rackType: bomItem.rackType || '',
                 name: bomItem.name || '',
                 specification: bomItem.specification || '',
                 colorWeight: bomItem.colorWeight || ''
               });
-              console.log(`  🔑 generateInventoryPartId로 생성: "${inventoryPartId}"`);
+              console.log(` 🔑 materialData.partId사용 또는 generateInventoryPartId로 생성: "${inventoryPartId}"`);
             }
 
             const requiredQty = Number(bomItem.quantity) || 0;
