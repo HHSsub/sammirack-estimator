@@ -754,13 +754,44 @@ const PurchaseOrderForm = () => {
             (item.bom && Array.isArray(item.bom)) ? item.bom : []
           );
 
-          // 2. formData.materials 필터링 (서비스 제외, inventoryPartId 있는 것만)
-          const additionalMaterials = (formData.materials || []).filter(m =>
-            m && !m.isService && m.inventoryPartId && m.inventoryPartId !== '--'
-          );
+          // 2. formData.materials 처리 - _inventoryList 펼치기
+          const additionalMaterials = [];
+          (formData.materials || []).forEach(m => {
+            if (m.isService) return; // 서비스 제외
+
+            // ✅ _inventoryList가 있으면 펼쳐서 개별 처리
+            if (m._inventoryList && Array.isArray(m._inventoryList) && m._inventoryList.length > 0) {
+              m._inventoryList.forEach(invItem => {
+                if (invItem.inventoryPartId && invItem.inventoryPartId !== '--') {
+                  additionalMaterials.push({
+                    ...m,
+                    inventoryPartId: invItem.inventoryPartId,
+                    quantity: invItem.quantity,
+                    colorWeight: invItem.colorWeight,
+                    color: invItem.color,
+                    specification: invItem.specification || m.specification,
+                    rackType: invItem.rackType || m.rackType,
+                    name: m.name,
+                    version: invItem.version
+                  });
+                }
+              });
+            } else {
+              // ✅ _inventoryList 없으면 기존 방식 (하위 호환)
+              if (m.inventoryPartId && m.inventoryPartId !== '--') {
+                additionalMaterials.push(m);
+              } else if (m._inventoryPartId && m._inventoryPartId !== '--') {
+                // ✅ _inventoryPartId 사용 (단일 inventoryPartId)
+                additionalMaterials.push({
+                  ...m,
+                  inventoryPartId: m._inventoryPartId
+                });
+              }
+            }
+          });
 
           console.log('📦 cart.bom:', cartBomItems.length, '개');
-          console.log('📦 추가 자재:', additionalMaterials.length, '개');
+          console.log('📦 추가 자재 (펼친 후):', additionalMaterials.length, '개');
 
           // 3. 합치기
           const allMaterials = [...cartBomItems, ...additionalMaterials];
