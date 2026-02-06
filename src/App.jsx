@@ -292,24 +292,15 @@ const HomePage = ({ currentUser }) => {
       return editingData.materials;
     }
 
-    // 2순위: cart에서 BOM 추출
-    if (cart && cart.length > 0) {
-      const regeneratedBOM = [];
-      cart.forEach(item => {
-        if (item.bom && item.bom.length > 0) {
-          regeneratedBOM.push(...item.bom);
-          console.log(`  - ${item.displayName || item.name}: ${item.bom.length}개 부품 추가`);
-        }
-      });
-
-      if (regeneratedBOM.length > 0) {
-        console.log('✅ cart.bom 사용:', regeneratedBOM.length, '개');
-        return regeneratedBOM;
-      }
+    // 2순위: cart가 있으면 병합된 cartBOMView 사용 (동일 partId 부품 합산)
+    // ✅ _inventoryList가 포함되어 있어 재고 감소 시 개별 inventoryPartId로 정확히 차감됨
+    if (cart && cart.length > 0 && cartBOMView && cartBOMView.length > 0) {
+      console.log('✅ cartBOMView 사용 (병합됨):', cartBOMView.length, '개');
+      return cartBOMView;
     }
 
     // 3순위: cartBOMView 사용 (fallback)
-    console.log('⚠️ cartBOMView 사용:', cartBOMView?.length, '개');
+    console.log('⚠️ cartBOMView fallback:', cartBOMView?.length, '개');
     return cartBOMView || [];
   }, [isEditMode, editingData.materials, cart, cartBOMView]);
 
