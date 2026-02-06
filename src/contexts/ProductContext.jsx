@@ -2245,17 +2245,15 @@ export const ProductProvider = ({ children }) => {
     }));
   };
 
-  // ✅ BOM 병합 유틸 (같은 partId 자동 합산)
-  // ✅ 수정된 mergeDuplicateParts - partId로 그룹핑하되 inventoryPartId별 상세 정보 유지
+  // ✅ BOM 병합 유틸 (같은 inventoryPartId 자동 합산 - 색상별 분리)
+  // ✅ 수정: inventoryPartId로 그룹핑 (색상별 분리 표시)
   function mergeDuplicateParts(bomArray) {
     const merged = {};
 
     for (const item of bomArray) {
-      // ✅ 가격관리용 partId로 그룹핑
-      const displayKey = generatePartId(item);
-
-      // ✅ 재고관리용 inventoryPartId 생성
+      // ✅ 재고관리용 inventoryPartId로 그룹핑 (색상별 분리 표시)
       const inventoryKey = generateInventoryPartId(item);
+      const displayKey = inventoryKey;
 
       if (!merged[displayKey]) {
         merged[displayKey] = {
@@ -2294,18 +2292,16 @@ export const ProductProvider = ({ children }) => {
   }
 
 
-  // ✅ 수정된 cartBOMView - partId로 그룹핑하되 inventoryPartId별 상세 정보 유지
+  // ✅ 수정된 cartBOMView - inventoryPartId로 그룹핑 (색상별 분리 표시)
   const cartBOMView = useMemo(() => {
     const bomMap = new Map();
 
     cart.forEach(item => {
       if (item.bom && Array.isArray(item.bom)) {
         item.bom.forEach(bomItem => {
-          // ✅ 가격관리용 partId로 그룹핑
-          const displayKey = generatePartId(bomItem);
-
-          // ✅ 재고관리용 inventoryPartId 생성
+          // ✅ 재고관리용 inventoryPartId로 그룹핑 (색상별 분리 표시)
           const inventoryKey = generateInventoryPartId(bomItem);
+          const displayKey = inventoryKey;
 
           if (bomMap.has(displayKey)) {
             const existing = bomMap.get(displayKey);
