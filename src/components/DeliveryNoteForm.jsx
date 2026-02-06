@@ -29,6 +29,17 @@ const PROVIDER = {
   stampImage: `${import.meta.env.BASE_URL}images/도장.png`
 };
 
+// ✅ 경량랙 색상 표시용 함수 (색상+부품명 조합)
+const getMaterialDisplayName = (mat) => {
+  const name = mat.name || '';
+  // 경량랙 + 색상 있음 + 안전핀/안전좌 제외
+  if (mat.rackType === '경량랙' && mat.color &&
+    !['안전핀', '안전좌'].includes(mat.name)) {
+    return `${mat.color}${name}`;  // "아이보리기둥", "블랙선반" 등
+  }
+  return name;
+};
+
 const DeliveryNoteForm = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -908,7 +919,7 @@ const DeliveryNoteForm = () => {
           {formData.materials.map((m, idx) => (
             <tr key={`mat-${idx}`}>
               <td>{idx + 1}</td>
-              <td><input type="text" value={m.name} onChange={e => upMat(idx, 'name', e.target.value)} placeholder="부품명" /></td>
+              <td><input type="text" value={getMaterialDisplayName(m)} onChange={e => upMat(idx, 'name', e.target.value)} placeholder="부품명" /></td>
               <td className="spec-cell">
                 <input
                   type="text"
