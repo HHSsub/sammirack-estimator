@@ -117,6 +117,8 @@ const PurchaseOrderForm = () => {
     inventoryDeductedBy: null
   });
 
+  // ✅ [중요] 세션 중 생성된 ID를 기억하여 중복 생성 방지
+  const savedDocumentIdRef = useRef(null);
 
   // ✅ 관리자 체크 및 전역 설정 로드
   useEffect(() => {
@@ -611,6 +613,9 @@ const PurchaseOrderForm = () => {
     if (editingDocumentId) {
       // 편집 모드: 기존 ID 재사용
       itemId = editingDocumentId;
+    } else if (savedDocumentIdRef.current) {
+      // ✅ [Fix] 이미 세션(저장/인쇄 등) 중에 ID가 생성되었다면 그것을 사용 (중복방지)
+      itemId = savedDocumentIdRef.current;
     } else if (isEditMode) {
       // 기존 편집 모드 (URL 기반)
       itemId = id;
@@ -619,18 +624,23 @@ const PurchaseOrderForm = () => {
       existingDoc = findDocumentByNumber(formData.documentNumber, 'purchase');
       if (existingDoc) {
         // 동일 거래번호 발견 -> 덮어쓰기 확인 다이얼로그 표시
-        setConfirmDialog({
-          show: true,
-          message: `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n기존 문서를 덮어쓰시겠습니까?`,
-          onConfirm: async () => { // Changed to async
-            const savedId = await proceedWithSave(existingDoc.id, existingDoc); // Capture returned ID
-            if (savedId) {
-              // If save was successful, close dialog
-              setConfirmDialog({ show: false });
+        // 단, 이미 내가 방금 저장한 그 놈이면 pass
+        if (existingDoc.id !== savedDocumentIdRef.current) {
+          setConfirmDialog({
+            show: true,
+            message: `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n기존 문서를 덮어쓰시겠습니까?`,
+            onConfirm: async () => {
+              const savedId = await proceedWithSave(existingDoc.id, existingDoc);
+              if (savedId) {
+                setConfirmDialog({ show: false });
+                savedDocumentIdRef.current = savedId; // 저장된 ID 기억
+              }
             }
-          }
-        });
-        return null; // 확인 다이얼로그에서 처리
+          });
+          return null;
+        } else {
+          itemId = existingDoc.id; // 내꺼 그냥 덮어쓰기
+        }
       } else {
         // 새 문서
         itemId = `purchase_${Date.now()}`;  // ✅ prefix 추가
@@ -638,7 +648,11 @@ const PurchaseOrderForm = () => {
     }
 
     // 저장 로직 실행
-    return await proceedWithSave(itemId, existingDoc); // Return the ID from proceedWithSave
+    const resultId = await proceedWithSave(itemId, existingDoc);
+    if (resultId) {
+      savedDocumentIdRef.current = resultId; // ✅ 성공 시 ID 기억
+    }
+    return resultId;
   };
 
   // ✅ 저장 로직 분리
@@ -863,19 +877,27 @@ const PurchaseOrderForm = () => {
 
 
           if (result.success) {
-            // ✅ 재고 감소 완료 상태 업데이트
-            await updateDocumentInventoryStatus(formData.id, {
-              inventoryDeducted: true,
-              inventoryDeductedAt: new Date().toISOString()
-            });
+            // ✅ 문서 저장 (중복 방지 적용됨)
+            const savedDocId = await handleSave(true); // true = autoSave flag to avoid navigation if needed, or false. Let's use false to be safe but the ref handles it.
 
-            // ✅ UI 즉시 업데이트
-            setFormData(prev => ({
-              ...prev,
-              inventoryDeducted: true,
-              inventoryDeductedAt: new Date().toISOString()
-            }));
-            alert('✅ 재고가 감소되었습니다.');
+            if (savedDocId) {
+              // ✅ 본체에 ID가 확실히 생겼으므로 업데이트
+              await updateDocumentInventoryStatus(savedDocId, {
+                inventoryDeducted: true,
+                inventoryDeductedAt: new Date().toISOString()
+              });
+
+              // ✅ UI 즉시 업데이트
+              setFormData(prev => ({
+                ...prev,
+                id: savedDocId, // ID도 확실히 세팅
+                docId: savedDocId,
+                inventoryDeducted: true,
+                inventoryDeductedAt: new Date().toISOString()
+              }));
+
+              alert('✅ 재고가 감소되었습니다.');
+            }
           } else {
             alert(`❌ 재고 감소 실패: ${result.message}`);
           }
@@ -903,19 +925,27 @@ const PurchaseOrderForm = () => {
             const result = await deductInventoryOnPrint(materialsAsCart, '청구서', formData.documentNumber, undefined);
 
             if (result.success) {
-              // ✅ 재고 감소 완료 상태 업데이트
-              await updateDocumentInventoryStatus(formData.id, {
-                inventoryDeducted: true,
-                inventoryDeductedAt: new Date().toISOString()
-              });
+              // ✅ 문서 저장 (중복 방지 적용됨)
+              const savedDocId = await handleSave(true);
 
-              // ✅ UI 즉시 업데이트
-              setFormData(prev => ({
-                ...prev,
-                inventoryDeducted: true,
-                inventoryDeductedAt: new Date().toISOString()
-              }));
-              alert('✅ 재고가 감소되었습니다.');
+              if (savedDocId) {
+                // ✅ 재고 감소 완료 상태 업데이트
+                await updateDocumentInventoryStatus(savedDocId, {
+                  inventoryDeducted: true,
+                  inventoryDeductedAt: new Date().toISOString()
+                });
+
+                // ✅ UI 즉시 업데이트
+                setFormData(prev => ({
+                  ...prev,
+                  id: savedDocId,
+                  docId: savedDocId,
+                  inventoryDeducted: true,
+                  inventoryDeductedAt: new Date().toISOString()
+                }));
+
+                alert('✅ 재고가 감소되었습니다.');
+              }
             } else {
               alert(`❌ 재고 감소 실패: ${result.message}`);
             }
