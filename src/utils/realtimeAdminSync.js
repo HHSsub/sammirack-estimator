@@ -369,7 +369,16 @@ class RealtimeAdminSync {
     for (const key in localDocs) {
       const doc = localDocs[key];
       const type = doc.type || (key.indexOf('_') >= 0 ? key.split('_')[0] : 'estimate');
-      const id = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key)).replace(/\.0$/, '');
+      // ✅ 강력한 ID 정규화: 접두사 중복 제거 (purchase_purchase_... 방지)
+      let rawId = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key));
+      rawId = rawId.replace(/\.0$/, ''); // .0 제거
+
+      // 만약 ID 자체가 type으로 시작하면 제거 (재귀적 제거 방지 위해 1회만)
+      if (rawId.startsWith(`${type}_`)) {
+        rawId = rawId.substring(type.length + 1);
+      }
+
+      const id = rawId;
       const normKey = `${type}_${id}`;
 
       const localDoc = { ...doc, id, type };
@@ -432,13 +441,29 @@ class RealtimeAdminSync {
       const doc = documents[docKey];
       if (doc && doc.deleted !== true && doc.deleted !== 1) {
         // ✅ 정규화된 키로만 저장
-        const normKey = `${doc.type}_${String(doc.id).replace(/\.0$/, '')}`;
+        const idStr = String(doc.id).replace(/\.0$/, '');
+        // ID에 type 접두사가 붙어있다면 제거
+        const realId = idStr.startsWith(`${doc.type}_`) ? idStr.substring(doc.type.length + 1) : idStr;
+
+        const normKey = `${doc.type}_${realId}`;
+
+        // 데이터 내부 ID도 정규화
+        doc.id = realId;
+
         localStorage.setItem(normKey, JSON.stringify(doc));
 
         // 만약 docKey가 정규화된 키와 다르면 구버전 키 삭제
         if (docKey !== normKey) {
+          console.warn(`🧹 Legacy/Duplicate key cleanup: ${docKey} -> ${normKey}`);
           localStorage.removeItem(docKey);
         }
+
+        // 🚨 purchase_purchase_... 같은 이중 접두사 키 삭제
+        if (docKey.startsWith(`${doc.type}_${doc.type}_`)) {
+          console.warn(`🔥 Double prefix key detected and removed: ${docKey}`);
+          localStorage.removeItem(docKey);
+        }
+
       } else if (doc && (doc.deleted === true || doc.deleted === 1)) {
         localStorage.removeItem(docKey);
         // .0 붙은 구형 키도 삭제 시도
@@ -600,10 +625,30 @@ class RealtimeAdminSync {
       await Promise.all(
         batch.map(([docKey, doc]) => {
           // ✅ .0 제거하여 서버에 전송
-          const normalizedDocId = docKey.replace(/\.0$/, '');
-          const docId = normalizedDocId;
-          // ✅ id는 prefix 포함된 전체 ID 사용 (예: purchase_1770876851437)
-          const cleanedDoc = { ...doc, id: docId, docId, type: doc.type };
+          // ✅ .0 제거 및 이중 접두사 방지하여 서버에 전송
+          const type = doc.type;
+          let idStr = String(docKey).replace(/\.0$/, '');
+
+          // 키에서 ID 추출 (type_ 제거)
+          if (idStr.startsWith(`${type}_`)) {
+            idStr = idStr.substring(type.length + 1);
+          }
+          // 혹시 ID가 또 type_으로 시작하면 또 제거 (이중 접두사 해결)
+          if (idStr.startsWith(`${type}_`)) {
+            idStr = idStr.substring(type.length + 1);
+          }
+
+          const docId = `${type}_${idStr}`; // 올바른 전체 ID (type_id)
+          const pureId = idStr; // 순수 숫자 ID
+
+          // ✅ id는 prefix 포함된 전체 ID 사용, 문서는 정규화된 ID 저장
+          const cleanedDoc = { ...doc, id: docId, docId, type: type };
+
+          // 내부의 id 필드가 이중 접두사를 가지지 않도록
+          if (cleanedDoc.id.startsWith(`${type}_${type}_`)) {
+            cleanedDoc.id = cleanedDoc.id.replace(`${type}_${type}_`, `${type}_`);
+          }
+
           return documentsAPI.save(docId, cleanedDoc).catch(err =>
             console.error(`문서 저장 실패 (${docKey}):`, err)
           );
@@ -771,30 +816,59 @@ export const saveDocumentSync = async (document) => {
     }
 
     // ✅ ID 강제 정규화
-    const normalizedId = String(document.id).replace(/\.0$/, '');
+    // ✅ ID 강제 정규화 (이중 접두사 방지)
+    let normalizedId = String(document.id).replace(/\.0$/, '');
+
+    // 이미 type_ 접두사가 있으면, type_ 접두사를 제거하지 않고 그대로 둠? 
+    // 아니, key 생성을 위해 일단 분리한다.
+    if (normalizedId.startsWith(`${document.type}_`)) {
+      // 이미 prefix가 있는 경우, 내부 ID는 유지하되 키 생성시 중복 안되게 주의
+    } else {
+      // prefix가 없는 경우 (이럴 일은 거의 없어야 함)
+      normalizedId = `${document.type}_${normalizedId}`;
+    }
+
+    // 최종적으로 document.id는 'type_숫자' 형태여야 함
     document.id = normalizedId;
 
-    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
-    const docKey = `${document.type}_${normalizedId}`;
+    // 키는 document.id 그대로 사용 (이미 type_ 포함됨)
+    const docKey = normalizedId;
 
-    if (!documents[docKey] && syncInstance) {
+    // 🚨 방어 코드: 혹시라도 purchase_purchase_ 꼴이 되었다면 수정
+    if (docKey.startsWith(`${document.type}_${document.type}_`)) {
+      const fixedId = docKey.replace(`${document.type}_${document.type}_`, `${document.type}_`);
+      console.warn(`🔧 Fixed double prefix ID: ${docKey} -> ${fixedId}`);
+      document.id = fixedId;
+      // docKey 재할당 불가하므로 아래에서 fixedId 사용 유도...를 위해 변수명 통일 필요하지만
+      // const 재할당 불가하므로 여기서 return false하고 재귀호출? 은 위험.
+      // 그냥 덮어쓰기
+      // (const docKey 선언부를 let으로 바꾸거나, 아래 로직에서 document.id를 사용)
+    }
+
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    // const docKey = ... (위에서 정의함, 하지만 수정 필요)
+
+    // 재정의
+    const finalKey = document.id;
+
+    if (!documents[finalKey] && syncInstance) {
       document.createdBy = await syncInstance.getCreatorInfo();
     }
 
     document.updatedAt = new Date().toISOString();
     document.syncedAt = new Date().toISOString();
 
-    documents[docKey] = document;
+    documents[finalKey] = document;
 
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
-    localStorage.setItem(docKey, JSON.stringify(document));
+    localStorage.setItem(finalKey, JSON.stringify(document));
 
     if (syncInstance) {
       syncInstance.broadcastUpdate('documents-updated', documents);
       syncInstance.debouncedSave();
     }
 
-    console.log(`📄 문서 저장 완료: ${docKey}`);
+    console.log(`📄 문서 저장 완료: ${finalKey}`);
     return true;
 
   } catch (error) {

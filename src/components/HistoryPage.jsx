@@ -114,8 +114,15 @@ const HistoryPage = () => {
 
       syncedDocuments.forEach(doc => {
         // ID 정규화 (.0 제거 및 문자열화)
-        const normId = String(doc.id || '').replace(/\.0$/, '');
+        // ID 정규화 (.0 제거 및 문자열화)
+        let normId = String(doc.id || '').replace(/\.0$/, '');
         const type = doc.type || 'estimate';
+
+        // 만약 ID가 type_으로 시작하면 제거 (순수 ID 추출)
+        if (normId.startsWith(`${type}_`)) {
+          normId = normId.substring(type.length + 1);
+        }
+
         const docKey = `${type}_${normId}`;
 
         const existing = deduplicatedMap.get(docKey);

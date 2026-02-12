@@ -113,8 +113,16 @@ const EstimateForm = () => {
 
     if (docIdToLoad) {
       // ✅ .0 접미사 방지를 위해 ID를 문자열로 정규화
+      // ✅ .0 접미사 방지를 위해 ID를 문자열로 정규화
       const normalizedId = docIdToLoad.replace(/\.0$/, '');
-      const storageKey = `${docTypeToLoad}_${normalizedId}`;
+
+      // ✅ [Fix] 저장 키 생성 시 중복 접두사 방지
+      let storageKey;
+      if (normalizedId.startsWith(`${docTypeToLoad}_`)) {
+        storageKey = normalizedId;
+      } else {
+        storageKey = `${docTypeToLoad}_${normalizedId}`;
+      }
       const saved = localStorage.getItem(storageKey);
       if (saved) {
         try {
