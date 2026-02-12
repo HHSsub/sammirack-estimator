@@ -561,7 +561,10 @@ const EstimateForm = () => {
           tax: newEstimate.tax,
           totalAmount: newEstimate.totalAmount,
           notes: newEstimate.notes,
-          topMemo: newEstimate.topMemo
+          topMemo: newEstimate.topMemo,
+          inventoryDeducted: newEstimate.inventoryDeducted,
+          inventoryDeductedAt: newEstimate.inventoryDeductedAt,
+          inventoryDeductedBy: newEstimate.inventoryDeductedBy
         });
       } catch (err) {
         console.error('문서 즉시 서버 저장 실패:', err);

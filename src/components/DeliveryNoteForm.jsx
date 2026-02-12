@@ -595,7 +595,10 @@ const DeliveryNoteForm = () => {
           tax: newDoc.tax,
           totalAmount: newDoc.totalAmount,
           notes: newDoc.notes,
-          topMemo: newDoc.topMemo
+          topMemo: newDoc.topMemo,
+          inventoryDeducted: newDoc.inventoryDeducted,
+          inventoryDeductedAt: newDoc.inventoryDeductedAt,
+          inventoryDeductedBy: newDoc.inventoryDeductedBy
         });
       } catch (err) {
         console.error('문서 즉시 서버 저장 실패:', err);

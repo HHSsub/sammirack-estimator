@@ -236,11 +236,21 @@ class RealtimeAdminSync {
       const serverDocuments = {};
       for (const [docIdKey, doc] of Object.entries(serverDocumentsRaw)) {
         let type = doc.type || (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_')[0] : 'estimate');
-        let id = doc.id != null ? doc.id : (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_').slice(1).join('_') : docIdKey);
 
-        // ✅ ID 정규화 (.0 제거 및 문자열화)
-        id = String(id).replace(/\.0$/, '');
-        const normKey = `${type}_${id}`;
+        // ✅ [Fix] 서버 데이터 로드 시 ID 정규화 (무조건 prefix_id 형태)
+        let id = String(doc.id || (docIdKey.indexOf('_') >= 0 ? docIdKey.split('_').slice(1).join('_') : docIdKey)).replace(/\.0$/, '');
+
+        // 1. 접두사 확인 및 추가
+        if (!id.startsWith(`${type}_`)) {
+          id = `${type}_${id}`;
+        }
+
+        // 2. 이중 접두사 제거
+        if (id.startsWith(`${type}_${type}_`)) {
+          id = id.replace(`${type}_${type}_`, `${type}_`);
+        }
+
+        const normKey = id;
 
         // 중복 시 더 최신 데이터 유지
         if (!serverDocuments[normKey] ||
@@ -353,59 +363,85 @@ class RealtimeAdminSync {
       return k;
     };
 
-    // 1. 서버 문서 먼저 정규화하여 채우기
+    // 1. 서버 문서 정규화 및 병합
     for (const key in serverDocs) {
       const doc = serverDocs[key];
       const type = doc.type || (key.indexOf('_') >= 0 ? key.split('_')[0] : 'estimate');
-      const id = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key)).replace(/\.0$/, '');
-      const normKey = `${type}_${id}`;
+
+      // ✅ [Fix] ID 처리 로직 개선
+      // 1. .0 제거
+      let id = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key)).replace(/\.0$/, '');
+
+      // 2. ID에 type 접두사가 포함되어 있는지 확인
+      // 만약 id가 "purchase_123"이고 type이 "purchase"라면, 그대로 유지
+      // 만약 id가 "123"이고 type이 "purchase"라면, "purchase_123"으로 변환하지 않고 "123"을 ID로 사용하되 키는 "purchase_123"
+
+      // 하지만 시스템 일관성을 위해 내부 ID도 full ID (purchase_123)로 통일하는 것이 안전함
+      // 기존 로직: id = 123, normKey = purchase_123
+      // 새 로직: id가 접두사를 포함하지 않으면 붙여준다?
+      // 사용자 요청: "prefix_번호"가 유일하게 허용되는 형태. 
+      // 즉 document.id는 반드시 "purchase_123" 이어야 함.
+
+      if (!id.startsWith(`${type}_`)) {
+        id = `${type}_${id}`;
+      }
+
+      // 3. 이중 접두사 방지 (혹시 purchase_purchase_123 형태라면 수정)
+      if (id.startsWith(`${type}_${type}_`)) {
+        id = id.replace(`${type}_${type}_`, `${type}_`);
+      }
+
+      const normKey = id; // 키도 ID와 동일하게 설정
 
       if (!merged[normKey] || new Date(doc.updatedAt || 0) > new Date(merged[normKey].updatedAt || 0)) {
         merged[normKey] = { ...doc, id, type };
       }
     }
 
-    // 2. 로컬 문서 정규화하여 병합
+    // 2. 로컬 문서 정규화 및 병합
     for (const key in localDocs) {
       const doc = localDocs[key];
       const type = doc.type || (key.indexOf('_') >= 0 ? key.split('_')[0] : 'estimate');
-      // ✅ 강력한 ID 정규화: 접두사 중복 제거 (purchase_purchase_... 방지)
-      let rawId = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key));
-      rawId = rawId.replace(/\.0$/, ''); // .0 제거
 
-      // 만약 ID 자체가 type으로 시작하면 제거 (재귀적 제거 방지 위해 1회만)
-      if (rawId.startsWith(`${type}_`)) {
-        rawId = rawId.substring(type.length + 1);
+      // 1. .0 제거
+      let id = String(doc.id || (key.indexOf('_') >= 0 ? key.split('_').slice(1).join('_') : key)).replace(/\.0$/, '');
+
+      // 2. 접두사 확인 및 추가
+      if (!id.startsWith(`${type}_`)) {
+        id = `${type}_${id}`;
       }
 
-      const id = rawId;
-      const normKey = `${type}_${id}`;
+      // 3. 이중 접두사 방지
+      if (id.startsWith(`${type}_${type}_`)) {
+        id = id.replace(`${type}_${type}_`, `${type}_`);
+      }
 
+      const normKey = id;
       const localDoc = { ...doc, id, type };
       const serverDoc = merged[normKey];
 
       if (!serverDoc) {
         merged[normKey] = localDoc;
       } else {
-        // Zombie 방지 로직: 서버가 삭제된 상태라면 로컬 restore 확인
+        // Zombie 방지 로직
         if (serverDoc.deleted) {
           const serverDeleteTime = new Date(serverDoc.deletedAt || serverDoc.updatedAt || 0).getTime();
           const localRestoreTime = localDoc.restoredAt ? new Date(localDoc.restoredAt).getTime() : 0;
 
-          // 로컬에서 명시적으로 복구했고, 그 복구 시점이 서버 삭제보다 뒤라면 로컬이 이김
           if (localRestoreTime > serverDeleteTime) {
             merged[normKey] = localDoc;
           } else {
-            // 그 외에는 서버의 '삭제됨' 상태를 유지 (로컬이 아무리 최신이어도 무시)
             merged[normKey] = serverDoc;
           }
         } else {
+          // 타임스탬프 비교 (서버가 Truth, 하지만 로컬이 최신이면 로컬 반영 -> 그리고 즉시 서버로 보내짐)
           const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
           const localTime = new Date(localDoc.updatedAt || localDoc.createdAt || 0).getTime();
 
           if (localTime > serverTime) {
             merged[normKey] = localDoc;
           }
+          // else: 서버가 더 최신이거나 같으면 서버 데이터 유지
         }
       }
     }
@@ -440,6 +476,36 @@ class RealtimeAdminSync {
     for (const docKey in documents) {
       const doc = documents[docKey];
       if (doc && doc.deleted !== true && doc.deleted !== 1) {
+        // 1. .0 키 정리
+        if (docKey.endsWith('.0')) {
+          const cleanKey = docKey.replace(/\.0$/, '');
+          // 새 키로 저장
+          if (!localStorage.getItem(cleanKey)) {
+            localStorage.setItem(cleanKey, JSON.stringify(doc));
+          }
+          // 구 키 삭제
+          localStorage.removeItem(docKey);
+          console.log(`🧹 Legacy key cleanup: ${docKey} -> ${cleanKey}`);
+        }
+
+        // 2. 이중 접두사 키 정리 (purchase_purchase_123)
+        // doc.type이 있으면 그것을 기준으로 체크
+        if (doc.type) {
+          const doublePrefix = `${doc.type}_${doc.type}_`;
+          if (docKey.startsWith(doublePrefix)) {
+            const cleanKey = docKey.replace(doublePrefix, `${doc.type}_`);
+            // 새 키로 저장 (데이터 마이그레이션)
+            if (!localStorage.getItem(cleanKey)) {
+              // ID도 내부적으로 수정해야 함
+              const cleanDoc = { ...doc, id: cleanKey };
+              localStorage.setItem(cleanKey, JSON.stringify(cleanDoc));
+            }
+            // 구 키 삭제
+            localStorage.removeItem(docKey);
+            console.log(`🔥 Double prefix key detected and removed: ${docKey}`);
+          }
+        }
+
         // ✅ 정규화된 키로만 저장
         const idStr = String(doc.id).replace(/\.0$/, '');
         // ID에 type 접두사가 붙어있다면 제거
@@ -624,30 +690,30 @@ class RealtimeAdminSync {
       const batch = docEntries.slice(i, i + 10);
       await Promise.all(
         batch.map(([docKey, doc]) => {
-          // ✅ .0 제거하여 서버에 전송
-          // ✅ .0 제거 및 이중 접두사 방지하여 서버에 전송
           const type = doc.type;
+
+          // ✅ [Fix] ID 일관성 유지 (prefix_id 형태 보장)
           let idStr = String(docKey).replace(/\.0$/, '');
 
-          // 키에서 ID 추출 (type_ 제거)
-          if (idStr.startsWith(`${type}_`)) {
-            idStr = idStr.substring(type.length + 1);
-          }
-          // 혹시 ID가 또 type_으로 시작하면 또 제거 (이중 접두사 해결)
-          if (idStr.startsWith(`${type}_`)) {
-            idStr = idStr.substring(type.length + 1);
+          // 1. 접두사 확인 (없으면 추가)
+          if (!idStr.startsWith(`${type}_`)) {
+            idStr = `${type}_${idStr}`;
           }
 
-          const docId = `${type}_${idStr}`; // 올바른 전체 ID (type_id)
-          const pureId = idStr; // 순수 숫자 ID
-
-          // ✅ id는 prefix 포함된 전체 ID 사용, 문서는 정규화된 ID 저장
-          const cleanedDoc = { ...doc, id: docId, docId, type: type };
-
-          // 내부의 id 필드가 이중 접두사를 가지지 않도록
-          if (cleanedDoc.id.startsWith(`${type}_${type}_`)) {
-            cleanedDoc.id = cleanedDoc.id.replace(`${type}_${type}_`, `${type}_`);
+          // 2. 이중 접두사 수정
+          if (idStr.startsWith(`${type}_${type}_`)) {
+            idStr = idStr.replace(`${type}_${type}_`, `${type}_`);
           }
+
+          const docId = idStr; // 최종 ID
+
+          // id 필드와 docId 필드 모두 full ID로 저장
+          const cleanedDoc = {
+            ...doc,
+            id: docId,
+            docId: docId,
+            type: type
+          };
 
           return documentsAPI.save(docId, cleanedDoc).catch(err =>
             console.error(`문서 저장 실패 (${docKey}):`, err)
@@ -884,8 +950,24 @@ export const saveDocumentSync = async (document) => {
  */
 export async function updateDocumentInventoryStatus(docId, statusInfo) {
   try {
-    // 1. 로컬스토리지에서 문서 로드
-    const docData = localStorage.getItem(docId);
+    // 1. 로컬스토리지에서 문서 로드 (ID 유연성 확보)
+    let docData = localStorage.getItem(docId);
+    let finalDocId = docId;
+
+    if (!docData) {
+      // 혹시 prefix가 빠진 ID가 들어왔다면 접두사 붙여서 재시도
+      const prefixes = ['purchase', 'estimate', 'delivery'];
+      for (const prefix of prefixes) {
+        const tryKey = `${prefix}_${docId}`;
+        docData = localStorage.getItem(tryKey);
+        if (docData) {
+          finalDocId = tryKey;
+          console.log(`🔧 ID 자동 보정: ${docId} -> ${finalDocId}`);
+          break;
+        }
+      }
+    }
+
     if (!docData) {
       console.warn(`⚠️ 문서를 찾을 수 없음: ${docId}`);
       return false;
@@ -900,15 +982,43 @@ export async function updateDocumentInventoryStatus(docId, statusInfo) {
     doc.updatedAt = new Date().toISOString();
 
     // 3. 로컬스토리지 저장
-    localStorage.setItem(docId, JSON.stringify(doc));
-    console.log(` ✅ 재고 상태 업데이트: ${docId} → ${statusInfo.inventoryDeducted ? '완료' : '미완료'}`);
+    localStorage.setItem(finalDocId, JSON.stringify(doc));
+    console.log(` ✅ 재고 상태 업데이트: ${finalDocId} → ${statusInfo.inventoryDeducted ? '완료' : '미완료'}`);
 
-    // 4. 서버 동기화
+    // 4. 서버 동기화 (Queue 방식)
     await saveDocumentSync(doc);
 
-    // 5. 이벤트 발송 (다른 컴포넌트에서 UI 업데이트)
+    // 5. 🚨 [CRITICAL] 서버 즉시 저장 (Race Condition 방지)
+    // Queue가 아니라 즉시 쏴버려서 서버 타임스탬프를 갱신하거나 최신 데이터로 만듦
+    try {
+      // documentsAPI.save 사용 시 ID 정규화 주의
+      await documentsAPI.save(doc.id, {
+        docId: doc.id,
+        type: doc.type,
+        date: doc.date,
+        documentNumber: doc.documentNumber || doc.purchaseNumber || doc.deliveryNumber || doc.estimateNumber,
+        companyName: doc.companyName,
+        bizNumber: doc.bizNumber,
+        items: doc.items || [],
+        materials: doc.materials || [],
+        subtotal: doc.subtotal,
+        tax: doc.tax,
+        totalAmount: doc.totalAmount,
+        notes: doc.notes,
+        topMemo: doc.topMemo,
+        // ✅ 핵심: 재고 상태 포함
+        inventoryDeducted: doc.inventoryDeducted,
+        inventoryDeductedAt: doc.inventoryDeductedAt,
+        inventoryDeductedBy: doc.inventoryDeductedBy
+      });
+      console.log(`🚀 재고 상태 서버 즉시 전송 완료: ${finalDocId}`);
+    } catch (serverErr) {
+      console.error('❌ 재고 상태 서버 즉시 전송 실패 (백그라운드 싱크에 의존):', serverErr);
+    }
+
+    // 6. 이벤트 발송 (다른 컴포넌트에서 UI 업데이트)
     window.dispatchEvent(new CustomEvent('documentInventoryStatusUpdated', {
-      detail: { docId, ...statusInfo }
+      detail: { docId: finalDocId, ...statusInfo }
     }));
 
     return true;

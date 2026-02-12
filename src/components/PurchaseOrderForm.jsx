@@ -723,7 +723,10 @@ const PurchaseOrderForm = () => {
           tax: newOrder.tax,
           totalAmount: newOrder.totalAmount,
           notes: newOrder.notes,
-          topMemo: newOrder.topMemo
+          topMemo: newOrder.topMemo,
+          inventoryDeducted: newOrder.inventoryDeducted,
+          inventoryDeductedAt: newOrder.inventoryDeductedAt,
+          inventoryDeductedBy: newOrder.inventoryDeductedBy
         });
       } catch (err) {
         console.error('문서 즉시 서버 저장 실패:', err);
