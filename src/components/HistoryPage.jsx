@@ -11,7 +11,7 @@ import {
   forceServerSync
 } from '../utils/realtimeAdminSync';
 import { regenerateBOMFromDisplayName, setBomDataForRegeneration } from '../utils/bomRegeneration';
-import { generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
+import { generateInventoryPartId, generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
 import { documentsAPI } from '../services/apiClient';  // ✅ 이 줄 추가
 
 /**
@@ -479,7 +479,27 @@ const HistoryPage = () => {
       }
     }
 
-    // 3. 하이랙 특수 로직 (기법/규격 보정)
+    // ✅ 3. materials에 inventoryPartId 추가 (재고 감소 필수!)
+    materials = materials.map(mat => {
+      const inventoryPartId = generateInventoryPartId({
+        rackType: mat.rackType || '',
+        name: mat.name || '',
+        specification: mat.specification || '',
+        colorWeight: mat.colorWeight || '',
+        color: mat.color || ''
+      });
+
+      console.log(`  🔑 InvID 생성: ${mat.name} → ${inventoryPartId}`);
+
+      return {
+        ...mat,
+        inventoryPartId
+      };
+    });
+
+    console.log(`✅ 변환 완료: cart ${cart.length}개, materials ${materials.length}개`);
+
+    // 4. 하이랙 특수 로직 (기법/규격 보정)
     // (기존에 있었던 복잡한 spec parsing 로직 중 필수적인 부분만 유지하거나, 
     // 이미 regenerateBOMFromDisplayName에서 처리된다면 생략 가능하지만 
     // 안정성을 위해 기본적인 메타정보는 구성함)
