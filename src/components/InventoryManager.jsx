@@ -61,7 +61,7 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
 
     const deductedParts = [];
     const warnings = [];
-    const updates = {};
+    const deductions = {}; // ✅ 감소량 수집용 객체
 
     // ✅ 2. 처리할 BOM/원자재 목록: materialsOverride 있으면 사용, 없으면 cartItems[].bom
     const bomItemsToProcess = (materialsOverride && Array.isArray(materialsOverride) && materialsOverride.length > 0)
@@ -242,25 +242,14 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
       console.log(`    📈 필요 수량: ${requiredQty}개`);
 
       if (requiredQty > 0) {
-        if (currentStock >= requiredQty) {
-          // ✅ 충분한 재고 - 정상 감소
-          const newStock = currentStock - requiredQty;
-          updates[inventoryPartId] = newStock;
+        // ✅ 감소량만 수집 (절대값 계산 안 함)
+        if (!deductions[inventoryPartId]) {
+          deductions[inventoryPartId] = 0;
+        }
+        deductions[inventoryPartId] += requiredQty;
 
-          deductedParts.push({
-            partId: inventoryPartId,
-            name: bomItem.name,
-            specification: bomItem.specification || '',
-            rackType: bomItem.rackType || '',
-            deducted: requiredQty,
-            remainingStock: newStock
-          });
-          console.log(`    ✅ 재고 감소: ${currentStock} → ${newStock}`);
-        } else {
-          // ✅ 부족한 재고 - 0으로 설정 (음수 방지)
-          const actualDeducted = currentStock; // 실제 감소 수량
-          updates[inventoryPartId] = 0; // 0으로 설정
-
+        // 부족 예상 체크 (서버에서도 체크하지만 미리 경고)
+        if (currentStock < requiredQty) {
           warnings.push({
             partId: inventoryPartId,
             name: bomItem.name,
@@ -268,42 +257,76 @@ export const deductInventoryOnPrint = async (cartItems, documentType = 'document
             rackType: bomItem.rackType || '',
             required: requiredQty,
             available: currentStock,
-            shortage: requiredQty - currentStock,
-            actualDeducted: actualDeducted // 실제 감소된 수량
+            shortage: requiredQty - currentStock
           });
-
-          deductedParts.push({
-            partId: inventoryPartId,
-            name: bomItem.name,
-            specification: bomItem.specification || '',
-            rackType: bomItem.rackType || '',
-            deducted: actualDeducted,
-            remainingStock: 0,
-            wasShortage: true
-          });
-
-          console.log(`    ⚠️ 재고 부족: ${currentStock} → 0 (부족: ${requiredQty - currentStock}개)`);
+          console.log(`    ⚠️ 재고 부족 예상: ${currentStock} < ${requiredQty} (부족: ${requiredQty - currentStock}개)`);
+        } else {
+          console.log(`    ✅ 재고 충분: ${currentStock} >= ${requiredQty}`);
         }
       }
     });
 
-    // ✅ 3. 로컬스토리지 업데이트
+    console.log('\n📊 수집된 감소량:', deductions);
+    console.log('📊 수집된 감소량 항목 수:', Object.keys(deductions).length);
+
+    if (Object.keys(deductions).length === 0) {
+      console.log('⚠️ 재고 감소할 항목이 없습니다.');
+      return {
+        success: true,
+        message: '재고 감소할 항목이 없습니다.',
+        deductedParts: [],
+        warnings: []
+      };
+    }
+
+    // ✅ 3. 서버에 원자적 차감 요청 (Race Condition 방지)
+    console.log('\n🚀 서버에 원자적 재고 차감 요청...');
+    const response = await inventoryService.deductInventory(deductions, documentNumber);
+
+    if (!response.success) {
+      console.error('❌ 서버 재고 차감 실패:', response.error);
+      throw new Error(response.error || '서버 재고 차감 실패');
+    }
+
+    console.log('✅ 서버 재고 차감 완료:', response.results);
+
+    // ✅ 4. 로컬스토리지 업데이트 (서버 응답 기반)
     const localInventory = JSON.parse(localStorage.getItem('inventory_data') || '{}');
-    Object.assign(localInventory, updates);
+    Object.assign(localInventory, response.results);
     localStorage.setItem('inventory_data', JSON.stringify(localInventory));
 
     console.log('💾 로컬스토리지 재고 업데이트 완료');
-
-    // ✅ 재고가 변경된 부분(updates)만 서버로 전송
-    await inventoryService.updateInventory(updates);  // ← localInventory → updates
-    console.log('✅ 서버 재고 업데이트 완료');
 
     // ✅ 5. inventoryUpdated 이벤트 발생
     window.dispatchEvent(new CustomEvent('inventoryUpdated', {
       detail: { inventory: localInventory }
     }));
 
-    // ✅ 6. 결과 반환
+    // ✅ 6. 결과 정리
+    for (const [partId, newQty] of Object.entries(response.results)) {
+      const deducted = deductions[partId] || 0;
+      const originalQty = (serverInventory[partId] || 0);
+
+      deductedParts.push({
+        partId,
+        name: bomItemsToProcess.find(b => generateInventoryPartId(b) === partId || b.inventoryPartId === partId)?.name || partId,
+        deducted,
+        remainingStock: newQty,
+        wasShortage: newQty === 0 && deducted > 0
+      });
+    }
+
+    // ✅ 서버 경고 추가 (재고 부족)
+    if (response.warnings && response.warnings.length > 0) {
+      warnings.push(...response.warnings.map(w => ({
+        partId: w.partId,
+        name: w.partId,
+        required: w.requested,
+        available: w.available,
+        shortage: w.requested - w.available
+      })));
+    }
+
     console.log('\n📊 재고 감소 완료:', {
       감소된부품: deductedParts.length,
       부족경고: warnings.length

@@ -13,7 +13,13 @@ export const apiClient = axios.create({
 // 재고 API
 export const inventoryAPI = {
   getAll: () => apiClient.get('/inventory'),
-  update: (updates) => apiClient.post('/inventory/update', updates)
+  update: (updates) => apiClient.post('/inventory/update', updates),
+  // ✅ 원자적 재고 차감 (Race Condition 방지)
+  deduct: (deductions, documentId, userIp = null) =>
+    apiClient.post('/inventory/deduct', { deductions, documentId, userIp }),
+  // ✅ 재고 복구 (취소/롤백용)
+  restore: (restorations, documentId, userIp = null) =>
+    apiClient.post('/inventory/restore', { restorations, documentId, userIp })
 };
 
 // 가격 API
