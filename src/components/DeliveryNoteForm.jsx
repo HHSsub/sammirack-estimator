@@ -95,21 +95,24 @@ const DeliveryNoteForm = () => {
   const [pdfBase64, setPdfBase64] = useState(null);
 
   const [formData, setFormData] = useState({
-    date: editingDocumentData.date || new Date().toISOString().split('T')[0],
-    documentNumber: editingDocumentData.documentNumber || '',
+    date: editingDocumentData.date || estimateData.date || new Date().toISOString().split('T')[0],
+    documentNumber: editingDocumentData.documentNumber || estimateData.estimateNumber || '',
     orderNumber: '',
-    companyName: editingDocumentData.companyName || '',
-    bizNumber: editingDocumentData.bizNumber || '',
+    companyName: editingDocumentData.companyName || estimateData.companyName || '',
+    bizNumber: editingDocumentData.bizNumber || estimateData.bizNumber || '',
     items: [
       { name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }
     ],
-    materials: [],
+    materials: materials || totalBom || [],
     subtotal: 0,
     tax: 0,
     totalAmount: 0,
-    notes: editingDocumentData.notes || '',      // ✅ 수정
-    topMemo: editingDocumentData.topMemo || '',   // ✅ 수정
-    documentSettings: null  // ✅ 이 문서의 회사정보
+    notes: editingDocumentData.notes || estimateData.notes || '',      // ✅ 수정
+    topMemo: editingDocumentData.topMemo || estimateData.topMemo || '',   // ✅ 수정
+    documentSettings: null,  // ✅ 이 문서의 회사정보
+    // ✅ 재고 감소 상태 필드 (표시용)
+    inventoryDeducted: false,
+    inventoryDeductedAt: null
   });
 
   // ✅ 관리자 체크 및 전역 설정 로드
