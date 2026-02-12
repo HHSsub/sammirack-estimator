@@ -270,8 +270,6 @@ const PurchaseOrderForm = () => {
           console.log('📦 최종 materials:', data.materials);
           console.log('📦 materials 개수:', data.materials?.length || 0);
 
-          setFormData(mergedData);
-
           // ✅ 문서 로드 완료 플래그 설정 (새 cart 반영 방지)
           cartInitializedRef.current = true;
         } catch (e) {
@@ -645,7 +643,8 @@ const PurchaseOrderForm = () => {
 
   // ✅ 저장 로직 분리
   const proceedWithSave = async (itemId, existingDoc) => {
-    const storageKey = `purchase_${itemId}`;
+    // ✅ itemId는 이미 'purchase_1234567890' 형태이므로 그대로 사용
+    const storageKey = itemId.startsWith('purchase_') ? itemId : `purchase_${itemId}`;
 
     // ✅ cart에서 extraOptions 추출 (문서 저장 시 포함)
     const cartWithExtraOptions = cart.map(item => ({
@@ -653,31 +652,38 @@ const PurchaseOrderForm = () => {
       extraOptions: item.extraOptions || []
     }));
 
+    const currentSettings = getDocumentSettings();
+    const documentSettings = {
+      bizNumber: currentSettings.bizNumber,
+      companyName: currentSettings.companyName,
+      ceo: currentSettings.ceo,
+      address: currentSettings.address,
+      homepage: currentSettings.homepage || "http://www.ssmake.com",
+      tel: currentSettings.tel,
+      fax: currentSettings.fax
+    };
+
     const newOrder = {
       ...formData,
-      id: itemId,
+      id: itemId,  // ✅ 이미 prefix 포함된 ID 사용
       type: 'purchase',
       status: formData.status || '진행 중',
       purchaseNumber: formData.documentNumber,
-      // ✅ 문서 설정: 편집=기존유지, 신규=현재전역설정
-      documentSettings: (existingDoc || isEditMode || editingDocumentId)
-        ? (formData.documentSettings || currentGlobalSettings)
-        : currentGlobalSettings,
       customerName: formData.companyName,
       productType: formData.items[0]?.name || '',
       quantity: formData.items.reduce((s, it) => s + (parseInt(it.quantity) || 0), 0),
       unitPrice: formData.items[0] ? (parseInt(formData.items[0].unitPrice) || 0) : 0,
       totalPrice: formData.totalAmount,
       updatedAt: new Date().toISOString(),
-      // ✅ extraOptions 저장 (문서 로드 시 복원용)
+      documentSettings: (existingDoc || isEditMode || editingDocumentId)
+        ? (formData.documentSettings || documentSettings)
+        : documentSettings,
       cart: cartWithExtraOptions,
-      ...(isEditMode ? {} : { createdAt: new Date().toISOString() })
+      ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
     };
 
-    // ✅ 레거시 키 저장 (하위 호환)
     localStorage.setItem(storageKey, JSON.stringify(newOrder));
 
-    // ✅ 서버 동기화 저장 (필수!)
     const success = await saveDocumentSync(newOrder);
 
     if (success) {
@@ -710,13 +716,14 @@ const PurchaseOrderForm = () => {
       // ✅ 문서 업데이트 이벤트 발생
       window.dispatchEvent(new Event('documentsupdated'));
 
-      return itemId;  // ✅ docId 반환
+      return itemId;  // ✅ prefix 포함된 docId 반환
     } else {
       setToast({
         show: true,
         message: '저장 중 오류가 발생했습니다.',
         type: 'error'
       });
+      return null;
     }
   };
 
@@ -856,16 +863,19 @@ const PurchaseOrderForm = () => {
 
 
           if (result.success) {
+            // ✅ 재고 감소 완료 상태 업데이트
+            await updateDocumentInventoryStatus(formData.id, {
+              inventoryDeducted: true,
+              inventoryDeductedAt: new Date().toISOString()
+            });
+
+            // ✅ UI 즉시 업데이트
+            setFormData(prev => ({
+              ...prev,
+              inventoryDeducted: true,
+              inventoryDeductedAt: new Date().toISOString()
+            }));
             alert('✅ 재고가 감소되었습니다.');
-            // ✅ 문서 저장 후 실제 docId 사용
-            const savedDocId = await handleSave();
-            if (savedDocId) {
-              // ✅ 재고 감소 완료 상태 업데이트
-              await updateDocumentInventoryStatus(savedDocId, {
-                inventoryDeducted: true,
-                inventoryDeductedAt: new Date().toISOString()
-              });
-            }
           } else {
             alert(`❌ 재고 감소 실패: ${result.message}`);
           }
@@ -893,16 +903,19 @@ const PurchaseOrderForm = () => {
             const result = await deductInventoryOnPrint(materialsAsCart, '청구서', formData.documentNumber, undefined);
 
             if (result.success) {
+              // ✅ 재고 감소 완료 상태 업데이트
+              await updateDocumentInventoryStatus(formData.id, {
+                inventoryDeducted: true,
+                inventoryDeductedAt: new Date().toISOString()
+              });
+
+              // ✅ UI 즉시 업데이트
+              setFormData(prev => ({
+                ...prev,
+                inventoryDeducted: true,
+                inventoryDeductedAt: new Date().toISOString()
+              }));
               alert('✅ 재고가 감소되었습니다.');
-              // ✅ 문서 저장 후 실제 docId 사용
-              const savedDocId = await handleSave();
-              if (savedDocId) {
-                // ✅ 재고 감소 완료 상태 업데이트
-                await updateDocumentInventoryStatus(savedDocId, {
-                  inventoryDeducted: true,
-                  inventoryDeductedAt: new Date().toISOString()
-                });
-              }
             } else {
               alert(`❌ 재고 감소 실패: ${result.message}`);
             }
@@ -1368,11 +1381,8 @@ const PurchaseOrderForm = () => {
                           updateFormData('purchaseNumber', e.target.value);
                         }}
                         placeholder=""
-                        style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: formData.inventoryDeducted ? '#22c55e' : '#000000', width: '100%' }}
+                        style={{ padding: '3px 4px', fontSize: '16px', fontWeight: 'bold', color: formData.inventoryDeducted ? '#22c55e' : '#000000', width: '100%' }}
                       />
-                      {formData.inventoryDeducted && (
-                        <span className="inventory-status-badge">재고감소완료</span>
-                      )}
                     </div>
                   </div>
                 </div>

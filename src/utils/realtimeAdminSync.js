@@ -602,7 +602,8 @@ class RealtimeAdminSync {
           // ✅ .0 제거하여 서버에 전송
           const normalizedDocId = docKey.replace(/\.0$/, '');
           const docId = normalizedDocId;
-          const cleanedDoc = { ...doc, id: docId.split('_').slice(1).join('_'), docId, type: doc.type };
+          // ✅ id는 prefix 포함된 전체 ID 사용 (예: purchase_1770876851437)
+          const cleanedDoc = { ...doc, id: docId, docId, type: doc.type };
           return documentsAPI.save(docId, cleanedDoc).catch(err =>
             console.error(`문서 저장 실패 (${docKey}):`, err)
           );
