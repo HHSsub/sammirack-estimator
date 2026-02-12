@@ -1,0 +1,8391 @@
+[
+  {
+    "timestamp": "2026-01-27T09:38:56.286Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 452
+  },
+  {
+    "timestamp": "2026-01-27T08:57:41.175Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 452
+  },
+  {
+    "timestamp": "2026-01-27T08:36:57.720Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:23:16.744Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:23:08.667Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:22:52.464Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:22:48.434Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:22:38.054Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:22:14.026Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:21:42.128Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:21:23.170Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:21:12.625Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:21:03.587Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:20:57.016Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:20:49.228Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:20:36.715Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:20:27.524Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:20:13.975Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:20:06.358Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:19:46.265Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:19:39.849Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:19:11.627Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:19:03.838Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:18:46.885Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:18:16.630Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:18:09.528Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:17:53.151Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T07:17:44.815Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T05:12:31.699Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-27T04:17:37.749Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-27T01:51:37.145Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "id": 1769478696742,
+    "action": "LOGIN",
+    "timestamp": "2026-01-27T01:51:36.742Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769478696742_k12ndpgh4",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-27T01:51:36.742Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769478696742_k12ndpgh4"
+    }
+  },
+  {
+    "timestamp": "2026-01-27T00:52:53.950Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "id": 1769475172779,
+    "action": "LOGIN",
+    "timestamp": "2026-01-27T00:52:52.779Z",
+    "username": "admin",
+    "ip": "59.15.127.33",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769475172779_j69o85eh8",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-27T00:52:52.779Z",
+      "ip": "59.15.127.33",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769475172779_j69o85eh8"
+    }
+  },
+  {
+    "timestamp": "2026-01-26T19:27:29.493Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "id": 1769455632796,
+    "action": "LOGIN",
+    "timestamp": "2026-01-26T19:27:12.796Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769455632796_84k5togha",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-26T19:27:12.796Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769455632796_84k5togha"
+    }
+  },
+  {
+    "timestamp": "2026-01-26T16:32:03.354Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T16:22:31.257Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T16:18:11.512Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T16:06:02.218Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T15:55:00.178Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T15:47:35.074Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T15:31:43.502Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "id": 1769441476968,
+    "action": "LOGIN",
+    "timestamp": "2026-01-26T15:31:16.968Z",
+    "username": "admin",
+    "ip": "211.209.101.195",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36",
+    "sessionId": "1769441476968_kd4kskmed",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-26T15:31:16.968Z",
+      "ip": "211.209.101.195",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36",
+      "sessionId": "1769441476968_kd4kskmed"
+    }
+  },
+  {
+    "timestamp": "2026-01-26T15:23:44.747Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T15:18:53.453Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T13:09:55.238Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T11:03:54.271Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:55:55.665Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:39:17.205Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:39:09.102Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:39:03.729Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:38:56.217Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:38:48.966Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:38:33.749Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:38:27.073Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:37:46.478Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:37:32.865Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:37:27.178Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:36:01.921Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:35:13.810Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:35:06.217Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:34:41.203Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:34:29.729Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:34:17.798Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:34:09.256Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:07:04.482Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:06:12.833Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:06:02.479Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:05:47.958Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:05:41.869Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:04:59.880Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:04:41.299Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T08:01:59.334Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "id": 1769413882288,
+    "action": "LOGIN",
+    "timestamp": "2026-01-26T07:51:22.288Z",
+    "username": "admin",
+    "ip": "49.167.4.14",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1769413882287_t9sxp6wii",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-26T07:51:22.287Z",
+      "ip": "49.167.4.14",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1769413882287_t9sxp6wii"
+    }
+  },
+  {
+    "timestamp": "2026-01-26T07:32:41.103Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 450
+  },
+  {
+    "timestamp": "2026-01-26T06:20:34.194Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:20:24.939Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:20:11.094Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:20:03.413Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:19:16.507Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:19:08.842Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:18:41.669Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:18:29.852Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:18:19.832Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:17:36.631Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:17:13.414Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:16:37.992Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:16:29.655Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:16:20.287Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:15:54.464Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:15:48.025Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:15:07.409Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:15:00.901Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:14:54.374Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:14:34.725Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:14:28.675Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:14:20.738Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:10:45.530Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:10:39.055Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:10:27.510Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:10:14.491Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:10:01.849Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T06:09:49.122Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T05:26:11.422Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 449
+  },
+  {
+    "timestamp": "2026-01-26T05:23:25.052Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "id": 1769405004727,
+    "action": "LOGIN",
+    "timestamp": "2026-01-26T05:23:24.727Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769405004727_6dwabh1ja",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-26T05:23:24.727Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769405004727_6dwabh1ja"
+    }
+  },
+  {
+    "timestamp": "2026-01-26T04:44:05.169Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-26T03:19:12.586Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-26T02:59:47.736Z",
+    "action": "data_sync",
+    "userIP": "49.167.4.14",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-26T02:21:52.071Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-26T01:27:23.161Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:27:16.989Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:26:51.659Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:26:42.918Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:26:35.725Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:26:28.956Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:26:10.888Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:25:58.722Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:25:48.390Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:25:21.847Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:25:12.619Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:24:22.139Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:24:14.109Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:24:06.458Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:23:37.850Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:23:29.794Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:23:23.719Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:21:45.645Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:21:39.461Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:21:23.706Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:21:14.462Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:20:48.480Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:20:42.786Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:20:18.076Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:20:11.403Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:19:38.636Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:19:30.795Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:18:24.729Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:18:14.323Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:18:07.454Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-26T01:10:55.337Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-26T00:02:35.424Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-25T15:07:50.119Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:07:43.796Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:07:37.999Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:07:19.103Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:07:08.595Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:58.695Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:54.259Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:48.036Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:43.665Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:39.068Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:31.909Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:22.926Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:18.413Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:12.412Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:06:06.278Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T15:05:57.316Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 451
+  },
+  {
+    "timestamp": "2026-01-25T14:56:05.732Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-25T14:56:01.412Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 448
+  },
+  {
+    "timestamp": "2026-01-25T14:46:51.853Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 445
+  },
+  {
+    "timestamp": "2026-01-25T14:45:05.703Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 444
+  },
+  {
+    "timestamp": "2026-01-25T14:45:01.403Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 444
+  },
+  {
+    "timestamp": "2026-01-25T14:44:27.619Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 444
+  },
+  {
+    "timestamp": "2026-01-25T14:44:21.332Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 444
+  },
+  {
+    "timestamp": "2026-01-25T14:44:17.125Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 444
+  },
+  {
+    "timestamp": "2026-01-24T02:18:54.492Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 440
+  },
+  {
+    "timestamp": "2026-01-24T02:17:25.499Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "id": 1769221045107,
+    "action": "LOGIN",
+    "timestamp": "2026-01-24T02:17:25.107Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769221045107_2v509urrg",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-24T02:17:25.107Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769221045107_2v509urrg"
+    }
+  },
+  {
+    "timestamp": "2026-01-23T20:20:12.980Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T07:10:08.889Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T07:06:45.421Z",
+    "action": "data_sync",
+    "userIP": "211.234.188.144",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T07:06:03.978Z",
+    "action": "data_sync",
+    "userIP": "211.234.188.144",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T07:00:55.228Z",
+    "action": "data_sync",
+    "userIP": "211.234.188.144",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T06:51:14.973Z",
+    "action": "data_sync",
+    "userIP": "211.234.188.144",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "id": 1769151071764,
+    "action": "LOGIN",
+    "timestamp": "2026-01-23T06:51:11.764Z",
+    "username": "admin",
+    "ip": "211.234.188.144",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1769151071763_fdub0sd4b",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-23T06:51:11.763Z",
+      "ip": "211.234.188.144",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1769151071763_fdub0sd4b"
+    }
+  },
+  {
+    "timestamp": "2026-01-23T06:47:42.656Z",
+    "action": "data_sync",
+    "userIP": "unknown",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T06:38:28.154Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 439
+  },
+  {
+    "timestamp": "2026-01-23T05:40:49.563Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 438
+  },
+  {
+    "timestamp": "2026-01-23T05:19:30.312Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 437
+  },
+  {
+    "timestamp": "2026-01-23T05:02:36.363Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 436
+  },
+  {
+    "timestamp": "2026-01-23T05:00:22.078Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 435
+  },
+  {
+    "id": 1769144421207,
+    "action": "LOGIN",
+    "timestamp": "2026-01-23T05:00:21.207Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769144421207_pz87g3or0",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-23T05:00:21.207Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769144421207_pz87g3or0"
+    }
+  },
+  {
+    "timestamp": "2026-01-23T04:47:27.160Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 435
+  },
+  {
+    "timestamp": "2026-01-23T04:45:57.784Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 434
+  },
+  {
+    "timestamp": "2026-01-23T04:44:36.357Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 433
+  },
+  {
+    "id": 1769143476029,
+    "action": "LOGIN",
+    "timestamp": "2026-01-23T04:44:36.029Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769143476028_gjo3xl4mm",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-23T04:44:36.028Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769143476028_gjo3xl4mm"
+    }
+  },
+  {
+    "timestamp": "2026-01-22T07:10:38.015Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 433
+  },
+  {
+    "timestamp": "2026-01-22T06:46:10.808Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 432
+  },
+  {
+    "id": 1769064370444,
+    "action": "LOGIN",
+    "timestamp": "2026-01-22T06:46:10.444Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769064370444_4g4ejzen9",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-22T06:46:10.444Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769064370444_4g4ejzen9"
+    }
+  },
+  {
+    "timestamp": "2026-01-22T06:16:52.472Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 432
+  },
+  {
+    "timestamp": "2026-01-22T06:13:36.924Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 432
+  },
+  {
+    "id": 1769062415654,
+    "action": "LOGIN",
+    "timestamp": "2026-01-22T06:13:35.654Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1769062415653_uyxkjlt9x",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-22T06:13:35.653Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1769062415653_uyxkjlt9x"
+    }
+  },
+  {
+    "timestamp": "2026-01-21T10:54:25.609Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 432
+  },
+  {
+    "timestamp": "2026-01-21T10:53:20.021Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 431
+  },
+  {
+    "timestamp": "2026-01-21T10:52:18.795Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 430
+  },
+  {
+    "timestamp": "2026-01-21T10:51:28.215Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 429
+  },
+  {
+    "timestamp": "2026-01-21T07:08:50.892Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 428
+  },
+  {
+    "timestamp": "2026-01-21T07:02:29.078Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 428
+  },
+  {
+    "timestamp": "2026-01-21T07:02:19.940Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 427
+  },
+  {
+    "timestamp": "2026-01-21T07:00:14.690Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 426
+  },
+  {
+    "timestamp": "2026-01-21T06:59:22.481Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 425
+  },
+  {
+    "timestamp": "2026-01-21T06:58:25.215Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 424
+  },
+  {
+    "timestamp": "2026-01-21T06:11:29.568Z",
+    "action": "data_sync",
+    "userIP": "121.140.168.85",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 422
+  },
+  {
+    "timestamp": "2026-01-21T04:50:48.913Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 422
+  },
+  {
+    "timestamp": "2026-01-21T04:48:01.145Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 421
+  },
+  {
+    "id": 1768970880191,
+    "action": "LOGIN",
+    "timestamp": "2026-01-21T04:48:00.191Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1768970880190_rsxo3jm4t",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-21T04:48:00.190Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1768970880190_rsxo3jm4t"
+    }
+  },
+  {
+    "timestamp": "2026-01-21T01:55:19.716Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 421
+  },
+  {
+    "timestamp": "2026-01-20T20:58:30.358Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 421
+  },
+  {
+    "timestamp": "2026-01-20T11:42:13.957Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 421
+  },
+  {
+    "timestamp": "2026-01-20T11:40:16.027Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 420
+  },
+  {
+    "timestamp": "2026-01-20T11:38:48.217Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 419
+  },
+  {
+    "timestamp": "2026-01-20T11:36:31.292Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 418
+  },
+  {
+    "timestamp": "2026-01-20T11:35:15.051Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 417
+  },
+  {
+    "timestamp": "2026-01-20T08:47:35.940Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 418
+  },
+  {
+    "timestamp": "2026-01-20T08:18:42.228Z",
+    "action": "data_sync",
+    "userIP": "211.106.164.194",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 417
+  },
+  {
+    "timestamp": "2026-01-20T08:18:34.718Z",
+    "action": "data_sync",
+    "userIP": "211.106.164.194",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 417
+  },
+  {
+    "timestamp": "2026-01-20T08:18:16.107Z",
+    "action": "data_sync",
+    "userIP": "211.106.164.194",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T08:17:37.192Z",
+    "action": "data_sync",
+    "userIP": "211.106.164.194",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T08:17:01.479Z",
+    "action": "data_sync",
+    "userIP": "211.106.164.194",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T07:41:45.132Z",
+    "action": "data_sync",
+    "userIP": "211.106.164.194",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T07:33:50.003Z",
+    "action": "data_sync",
+    "userIP": "211.117.24.132",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T07:03:59.599Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T07:03:54.791Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 416
+  },
+  {
+    "timestamp": "2026-01-20T07:03:39.970Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 415
+  },
+  {
+    "timestamp": "2026-01-20T06:02:10.971Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 414
+  },
+  {
+    "timestamp": "2026-01-20T00:06:40.487Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 413
+  },
+  {
+    "id": 1768867600118,
+    "action": "LOGIN",
+    "timestamp": "2026-01-20T00:06:40.118Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1768867600118_exgpcqywn",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-20T00:06:40.117Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1768867600118_exgpcqywn"
+    }
+  },
+  {
+    "timestamp": "2026-01-19T11:16:46.250Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 413
+  },
+  {
+    "timestamp": "2026-01-19T11:11:35.038Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 410
+  },
+  {
+    "timestamp": "2026-01-19T11:05:34.988Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 406
+  },
+  {
+    "timestamp": "2026-01-19T11:04:25.532Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 405
+  },
+  {
+    "timestamp": "2026-01-19T11:02:29.648Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 404
+  },
+  {
+    "timestamp": "2026-01-19T10:34:11.474Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 403
+  },
+  {
+    "timestamp": "2026-01-19T10:33:11.599Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 403
+  },
+  {
+    "timestamp": "2026-01-19T08:14:39.694Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 402
+  },
+  {
+    "timestamp": "2026-01-19T07:45:35.930Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 401
+  },
+  {
+    "timestamp": "2026-01-19T07:45:29.270Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 401
+  },
+  {
+    "timestamp": "2026-01-19T07:44:55.890Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 401
+  },
+  {
+    "timestamp": "2026-01-19T06:34:11.414Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 400
+  },
+  {
+    "timestamp": "2026-01-19T06:34:00.492Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 400
+  },
+  {
+    "timestamp": "2026-01-19T06:33:37.449Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T06:19:06.881Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T06:18:50.971Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T05:28:52.821Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T05:14:41.907Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T05:11:34.999Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:42:19.593Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:42:08.324Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:37:57.438Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:36:45.018Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:36:25.139Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:31:57.352Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T04:21:35.949Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 400
+  },
+  {
+    "timestamp": "2026-01-19T04:12:50.250Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 399
+  },
+  {
+    "timestamp": "2026-01-19T03:20:36.852Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 398
+  },
+  {
+    "timestamp": "2026-01-19T03:20:23.116Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 398
+  },
+  {
+    "timestamp": "2026-01-19T03:20:12.244Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 397
+  },
+  {
+    "timestamp": "2026-01-19T03:19:55.911Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 397
+  },
+  {
+    "timestamp": "2026-01-19T03:08:10.298Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 397
+  },
+  {
+    "timestamp": "2026-01-19T02:09:01.482Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 397
+  },
+  {
+    "timestamp": "2026-01-19T02:07:34.283Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 396
+  },
+  {
+    "timestamp": "2026-01-19T01:44:25.818Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 395
+  },
+  {
+    "timestamp": "2026-01-19T01:33:17.490Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 393
+  },
+  {
+    "timestamp": "2026-01-19T01:28:39.486Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 392
+  },
+  {
+    "timestamp": "2026-01-19T00:47:11.691Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 392
+  },
+  {
+    "timestamp": "2026-01-18T23:49:27.312Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 391
+  },
+  {
+    "timestamp": "2026-01-18T23:47:52.073Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 390
+  },
+  {
+    "id": 1768780071754,
+    "action": "LOGIN",
+    "timestamp": "2026-01-18T23:47:51.754Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+    "sessionId": "1768780071754_xus5i6fom",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-18T23:47:51.754Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+      "sessionId": "1768780071754_xus5i6fom"
+    }
+  },
+  {
+    "timestamp": "2026-01-18T23:41:42.397Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 390
+  },
+  {
+    "timestamp": "2026-01-18T13:07:25.471Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 390
+  },
+  {
+    "timestamp": "2026-01-17T00:29:37.733Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 389
+  },
+  {
+    "timestamp": "2026-01-16T20:35:53.352Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 389
+  },
+  {
+    "timestamp": "2026-01-16T11:08:11.885Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 389
+  },
+  {
+    "timestamp": "2026-01-16T08:27:06.638Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 391
+  },
+  {
+    "timestamp": "2026-01-16T08:26:57.337Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 391
+  },
+  {
+    "timestamp": "2026-01-16T08:25:35.289Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 391
+  },
+  {
+    "timestamp": "2026-01-16T08:25:00.123Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 391
+  },
+  {
+    "timestamp": "2026-01-16T08:24:34.145Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 390
+  },
+  {
+    "timestamp": "2026-01-16T07:24:11.637Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 388
+  },
+  {
+    "timestamp": "2026-01-16T00:10:38.642Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 387
+  },
+  {
+    "timestamp": "2026-01-16T00:10:23.090Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 387
+  },
+  {
+    "timestamp": "2026-01-16T00:08:32.477Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 386
+  },
+  {
+    "timestamp": "2026-01-15T12:10:10.391Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 387
+  },
+  {
+    "timestamp": "2026-01-15T12:08:21.541Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 386
+  },
+  {
+    "timestamp": "2026-01-15T12:06:52.299Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 385
+  },
+  {
+    "timestamp": "2026-01-15T12:06:02.061Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 384
+  },
+  {
+    "timestamp": "2026-01-15T09:31:13.805Z",
+    "action": "data_sync",
+    "userIP": "211.235.65.145",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 368
+  },
+  {
+    "timestamp": "2026-01-15T00:00:50.046Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 368
+  },
+  {
+    "timestamp": "2026-01-14T23:31:37.754Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T23:31:29.945Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T23:31:23.742Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T23:31:16.655Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T23:31:10.127Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T23:31:04.445Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T23:30:11.829Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T19:06:57.509Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 369
+  },
+  {
+    "timestamp": "2026-01-14T19:01:17.503Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 366
+  },
+  {
+    "timestamp": "2026-01-14T18:59:42.638Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 365
+  },
+  {
+    "timestamp": "2026-01-14T18:50:30.117Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 362
+  },
+  {
+    "timestamp": "2026-01-14T18:49:40.716Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 362
+  },
+  {
+    "timestamp": "2026-01-14T18:38:55.694Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 360
+  },
+  {
+    "timestamp": "2026-01-14T18:37:18.836Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 359
+  },
+  {
+    "timestamp": "2026-01-14T18:37:13.615Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 359
+  },
+  {
+    "timestamp": "2026-01-14T18:22:08.327Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 356
+  },
+  {
+    "timestamp": "2026-01-14T10:23:05.855Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 356
+  },
+  {
+    "timestamp": "2026-01-14T07:17:50.428Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 356
+  },
+  {
+    "timestamp": "2026-01-14T07:16:17.323Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 356
+  },
+  {
+    "timestamp": "2026-01-14T07:11:19.904Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 355
+  },
+  {
+    "timestamp": "2026-01-14T06:54:53.585Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 355
+  },
+  {
+    "timestamp": "2026-01-14T06:44:19.404Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 354
+  },
+  {
+    "timestamp": "2026-01-14T06:37:14.058Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 354
+  },
+  {
+    "timestamp": "2026-01-14T06:37:09.586Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 354
+  },
+  {
+    "timestamp": "2026-01-14T06:21:03.824Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 353
+  },
+  {
+    "timestamp": "2026-01-14T06:16:21.060Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 353
+  },
+  {
+    "timestamp": "2026-01-14T05:41:03.435Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 352
+  },
+  {
+    "timestamp": "2026-01-14T04:07:16.090Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 352
+  },
+  {
+    "id": 1768363635560,
+    "action": "LOGIN",
+    "timestamp": "2026-01-14T04:07:15.560Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1768363635560_bnb8e86u4",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-14T04:07:15.560Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1768363635560_bnb8e86u4"
+    }
+  },
+  {
+    "timestamp": "2026-01-14T03:45:59.271Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 352
+  },
+  {
+    "timestamp": "2026-01-14T01:12:09.922Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 347
+  },
+  {
+    "timestamp": "2026-01-14T01:11:03.464Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 347
+  },
+  {
+    "timestamp": "2026-01-14T01:01:55.668Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 346
+  },
+  {
+    "timestamp": "2026-01-14T01:00:56.689Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 345
+  },
+  {
+    "timestamp": "2026-01-13T20:33:35.753Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 345
+  },
+  {
+    "timestamp": "2026-01-13T07:58:39.867Z",
+    "action": "data_sync",
+    "userIP": "63.117.14.11",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 345
+  },
+  {
+    "timestamp": "2026-01-13T07:58:18.848Z",
+    "action": "data_sync",
+    "userIP": "121.132.135.37",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 345
+  },
+  {
+    "timestamp": "2026-01-13T07:44:43.970Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 345
+  },
+  {
+    "timestamp": "2026-01-13T07:05:51.270Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 343
+  },
+  {
+    "timestamp": "2026-01-13T06:07:25.804Z",
+    "action": "data_sync",
+    "userIP": "115.95.248.71",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 342
+  },
+  {
+    "timestamp": "2026-01-13T03:53:32.003Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 342
+  },
+  {
+    "timestamp": "2026-01-13T03:52:44.725Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 341
+  },
+  {
+    "timestamp": "2026-01-13T03:38:36.021Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 341
+  },
+  {
+    "timestamp": "2026-01-13T03:36:55.581Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 340
+  },
+  {
+    "timestamp": "2026-01-13T03:35:47.846Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 339
+  },
+  {
+    "timestamp": "2026-01-13T01:41:24.438Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 336
+  },
+  {
+    "timestamp": "2026-01-13T01:40:24.687Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 335
+  },
+  {
+    "timestamp": "2026-01-13T01:38:47.023Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 335
+  },
+  {
+    "timestamp": "2026-01-13T00:47:49.987Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 334
+  },
+  {
+    "timestamp": "2026-01-13T00:32:01.735Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 333
+  },
+  {
+    "id": 1768264226989,
+    "action": "LOGIN",
+    "timestamp": "2026-01-13T00:30:26.989Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1768264226989_5jsta9s37",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-13T00:30:26.989Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1768264226989_5jsta9s37"
+    }
+  },
+  {
+    "timestamp": "2026-01-12T20:14:24.573Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 332
+  },
+  {
+    "timestamp": "2026-01-12T06:08:09.983Z",
+    "action": "data_sync",
+    "userIP": "63.124.68.8",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 332
+  },
+  {
+    "timestamp": "2026-01-12T04:52:47.051Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 332
+  },
+  {
+    "timestamp": "2026-01-12T04:37:38.871Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 331
+  },
+  {
+    "timestamp": "2026-01-12T04:36:11.302Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 330
+  },
+  {
+    "timestamp": "2026-01-12T02:14:35.773Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 330
+  },
+  {
+    "timestamp": "2026-01-12T02:14:24.099Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 330
+  },
+  {
+    "timestamp": "2026-01-12T00:58:59.096Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 329
+  },
+  {
+    "timestamp": "2026-01-12T00:56:32.631Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 328
+  },
+  {
+    "id": 1768179391757,
+    "action": "LOGIN",
+    "timestamp": "2026-01-12T00:56:31.757Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1768179391756_8hkw7c06k",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-12T00:56:31.756Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1768179391756_8hkw7c06k"
+    }
+  },
+  {
+    "timestamp": "2026-01-09T09:04:20.506Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 328
+  },
+  {
+    "timestamp": "2026-01-09T09:01:20.949Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 328
+  },
+  {
+    "timestamp": "2026-01-09T07:47:40.034Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 328
+  },
+  {
+    "timestamp": "2026-01-09T06:43:26.508Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 326
+  },
+  {
+    "timestamp": "2026-01-09T04:15:44.628Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 326
+  },
+  {
+    "timestamp": "2026-01-09T03:12:50.925Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 326
+  },
+  {
+    "timestamp": "2026-01-09T03:11:12.661Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 325
+  },
+  {
+    "timestamp": "2026-01-09T01:10:02.224Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 325
+  },
+  {
+    "timestamp": "2026-01-09T00:49:47.108Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 325
+  },
+  {
+    "timestamp": "2026-01-09T00:48:40.482Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 325
+  },
+  {
+    "timestamp": "2026-01-09T00:16:28.199Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 324
+  },
+  {
+    "id": 1767917787746,
+    "action": "LOGIN",
+    "timestamp": "2026-01-09T00:16:27.746Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767917787745_w19sjccif",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-09T00:16:27.745Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767917787745_w19sjccif"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T23:38:05.911Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 324
+  },
+  {
+    "timestamp": "2026-01-08T22:21:41.389Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 324
+  },
+  {
+    "timestamp": "2026-01-08T12:58:08.296Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 325
+  },
+  {
+    "timestamp": "2026-01-08T11:50:07.050Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T10:32:43.153Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767868362078,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T10:32:42.078Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767868362078_tp38ye7r9",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T10:32:42.078Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767868362078_tp38ye7r9"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T10:28:03.321Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T10:18:46.973Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T10:11:02.882Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767867061203,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T10:11:01.203Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767867061203_c3i0skutb",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T10:11:01.202Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767867061203_c3i0skutb"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T10:07:06.353Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T10:00:28.047Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767866425482,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T10:00:25.482Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767866425482_m41mllo70",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T10:00:25.482Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767866425482_m41mllo70"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T09:51:29.036Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T09:44:25.940Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767865464610,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T09:44:24.610Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767865464610_wkppgf37s",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T09:44:24.610Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767865464610_wkppgf37s"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T09:38:18.226Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767865096948,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T09:38:16.948Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767865096947_ma59ojn2o",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T09:38:16.947Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767865096947_ma59ojn2o"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T09:31:02.143Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T09:25:20.418Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767864315893,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T09:25:15.893Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767864315892_x9ukd6pti",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T09:25:15.892Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767864315892_x9ukd6pti"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T09:15:48.272Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T09:15:18.975Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T09:11:21.708Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "id": 1767863476073,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T09:11:16.073Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767863476073_4m0xmc323",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T09:11:16.073Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767863476073_4m0xmc323"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T08:55:12.353Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T08:42:44.637Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T08:26:49.196Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T07:53:34.416Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T07:47:00.192Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "id": 1767858417678,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T07:46:57.678Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767858417678_33tpgi7zd",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T07:46:57.678Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767858417678_33tpgi7zd"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T07:39:32.913Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T06:46:06.376Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T06:30:41.311Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T06:12:16.771Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T06:05:05.404Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T05:57:42.408Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T05:57:12.266Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "id": 1767851828363,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T05:57:08.363Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767851828363_rvg6n5tm9",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T05:57:08.363Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767851828363_rvg6n5tm9"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T05:52:37.338Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 320
+  },
+  {
+    "timestamp": "2026-01-08T05:13:16.755Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T05:09:37.797Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 321
+  },
+  {
+    "timestamp": "2026-01-08T05:00:12.078Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 318
+  },
+  {
+    "id": 1767848410739,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T05:00:10.739Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767848410739_6lqqdf05d",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T05:00:10.739Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767848410739_6lqqdf05d"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T04:52:28.490Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 318
+  },
+  {
+    "timestamp": "2026-01-08T04:33:56.197Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 318
+  },
+  {
+    "id": 1767846834725,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T04:33:54.725Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767846834724_owxm11faq",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T04:33:54.724Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767846834724_owxm11faq"
+    }
+  },
+  {
+    "timestamp": "2026-01-08T04:30:27.777Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 319
+  },
+  {
+    "timestamp": "2026-01-08T04:28:58.183Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 318
+  },
+  {
+    "timestamp": "2026-01-08T04:28:44.724Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 318
+  },
+  {
+    "timestamp": "2026-01-08T04:28:27.613Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 318
+  },
+  {
+    "timestamp": "2026-01-08T04:27:32.378Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 317
+  },
+  {
+    "timestamp": "2026-01-08T04:22:26.849Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 316
+  },
+  {
+    "timestamp": "2026-01-08T03:28:34.438Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T03:28:25.464Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T03:07:37.067Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T03:06:22.753Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T02:56:09.517Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T02:27:17.752Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T02:26:49.068Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T01:53:06.802Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T01:22:43.151Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T01:12:35.297Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 315
+  },
+  {
+    "timestamp": "2026-01-08T00:52:27.246Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 314
+  },
+  {
+    "timestamp": "2026-01-08T00:22:11.560Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 314
+  },
+  {
+    "id": 1767831730693,
+    "action": "LOGIN",
+    "timestamp": "2026-01-08T00:22:10.693Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767831730692_r0flxcfh1",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-08T00:22:10.692Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767831730692_r0flxcfh1"
+    }
+  },
+  {
+    "timestamp": "2026-01-07T20:26:55.033Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 314
+  },
+  {
+    "timestamp": "2026-01-07T11:27:14.632Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 314
+  },
+  {
+    "timestamp": "2026-01-07T11:26:54.441Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 314
+  },
+  {
+    "timestamp": "2026-01-07T11:26:32.234Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 314
+  },
+  {
+    "timestamp": "2026-01-07T11:19:41.117Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 311
+  },
+  {
+    "timestamp": "2026-01-07T11:03:12.371Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 310
+  },
+  {
+    "timestamp": "2026-01-07T10:41:25.236Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 309
+  },
+  {
+    "timestamp": "2026-01-07T09:38:53.377Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 309
+  },
+  {
+    "timestamp": "2026-01-07T08:45:54.225Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 309
+  },
+  {
+    "timestamp": "2026-01-07T08:31:03.057Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 308
+  },
+  {
+    "timestamp": "2026-01-07T07:40:11.944Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 308
+  },
+  {
+    "timestamp": "2026-01-07T07:35:43.323Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 308
+  },
+  {
+    "timestamp": "2026-01-07T03:26:31.741Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 307
+  },
+  {
+    "timestamp": "2026-01-07T02:44:58.293Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 306
+  },
+  {
+    "timestamp": "2026-01-07T02:36:23.881Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 305
+  },
+  {
+    "timestamp": "2026-01-07T02:22:38.957Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 305
+  },
+  {
+    "timestamp": "2026-01-07T02:07:20.601Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 305
+  },
+  {
+    "timestamp": "2026-01-07T01:20:27.870Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 304
+  },
+  {
+    "timestamp": "2026-01-07T00:41:16.179Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 303
+  },
+  {
+    "timestamp": "2026-01-07T00:31:02.384Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 302
+  },
+  {
+    "id": 1767745861902,
+    "action": "LOGIN",
+    "timestamp": "2026-01-07T00:31:01.902Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767745861902_qnzc00hqx",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-07T00:31:01.902Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767745861902_qnzc00hqx"
+    }
+  },
+  {
+    "timestamp": "2026-01-07T00:07:12.668Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 302
+  },
+  {
+    "timestamp": "2026-01-06T23:50:18.460Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 302
+  },
+  {
+    "id": 1767743325579,
+    "action": "LOGIN",
+    "timestamp": "2026-01-06T23:48:45.579Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767743325579_cz0tnube9",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-06T23:48:45.579Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767743325579_cz0tnube9"
+    }
+  },
+  {
+    "timestamp": "2026-01-06T20:02:02.157Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 301
+  },
+  {
+    "timestamp": "2026-01-06T13:39:26.132Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 301
+  },
+  {
+    "timestamp": "2026-01-06T12:09:43.897Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 300
+  },
+  {
+    "timestamp": "2026-01-06T12:09:15.132Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 300
+  },
+  {
+    "timestamp": "2026-01-06T12:08:47.258Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 300
+  },
+  {
+    "timestamp": "2026-01-06T12:05:40.445Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 300
+  },
+  {
+    "timestamp": "2026-01-06T12:01:43.512Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 298
+  },
+  {
+    "timestamp": "2026-01-06T10:26:38.482Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 297
+  },
+  {
+    "timestamp": "2026-01-06T08:43:04.587Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 296
+  },
+  {
+    "timestamp": "2026-01-06T08:32:57.599Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 296
+  },
+  {
+    "timestamp": "2026-01-06T08:22:11.809Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 295
+  },
+  {
+    "timestamp": "2026-01-06T08:05:02.183Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 295
+  },
+  {
+    "timestamp": "2026-01-06T06:44:59.482Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 294
+  },
+  {
+    "timestamp": "2026-01-06T05:52:16.518Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 293
+  },
+  {
+    "timestamp": "2026-01-06T05:26:49.107Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 292
+  },
+  {
+    "timestamp": "2026-01-06T04:02:56.109Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 291
+  },
+  {
+    "timestamp": "2026-01-06T03:57:24.789Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 291
+  },
+  {
+    "timestamp": "2026-01-06T02:08:16.428Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 290
+  },
+  {
+    "timestamp": "2026-01-06T02:00:56.266Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 289
+  },
+  {
+    "timestamp": "2026-01-06T01:45:27.744Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 289
+  },
+  {
+    "timestamp": "2026-01-06T00:47:03.713Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 287
+  },
+  {
+    "timestamp": "2026-01-06T00:42:18.634Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 286
+  },
+  {
+    "timestamp": "2026-01-06T00:08:40.819Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 286
+  },
+  {
+    "timestamp": "2026-01-05T23:52:08.521Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 286
+  },
+  {
+    "timestamp": "2026-01-05T23:40:54.024Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 286
+  },
+  {
+    "timestamp": "2026-01-05T23:33:33.232Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 285
+  },
+  {
+    "timestamp": "2026-01-05T23:33:09.777Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 285
+  },
+  {
+    "timestamp": "2026-01-05T23:27:45.424Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 284
+  },
+  {
+    "timestamp": "2026-01-05T23:27:23.392Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 284
+  },
+  {
+    "timestamp": "2026-01-05T23:26:56.384Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 284
+  },
+  {
+    "timestamp": "2026-01-05T22:32:25.536Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 284
+  },
+  {
+    "timestamp": "2026-01-05T21:49:58.709Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 284
+  },
+  {
+    "timestamp": "2026-01-05T21:48:05.154Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 283
+  },
+  {
+    "timestamp": "2026-01-05T21:44:51.220Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 282
+  },
+  {
+    "timestamp": "2026-01-05T21:42:45.087Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 281
+  },
+  {
+    "timestamp": "2026-01-05T21:34:28.983Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 279
+  },
+  {
+    "timestamp": "2026-01-05T21:32:40.484Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 278
+  },
+  {
+    "timestamp": "2026-01-05T21:11:11.865Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 276
+  },
+  {
+    "timestamp": "2026-01-05T12:22:40.821Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 276
+  },
+  {
+    "timestamp": "2026-01-05T10:04:55.914Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 276
+  },
+  {
+    "timestamp": "2026-01-05T08:54:35.438Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 275
+  },
+  {
+    "timestamp": "2026-01-05T08:28:56.701Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 274
+  },
+  {
+    "timestamp": "2026-01-05T07:17:01.640Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 273
+  },
+  {
+    "timestamp": "2026-01-05T07:14:34.701Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 273
+  },
+  {
+    "timestamp": "2026-01-05T07:14:16.352Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 273
+  },
+  {
+    "timestamp": "2026-01-05T05:50:44.828Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 273
+  },
+  {
+    "timestamp": "2026-01-05T05:43:42.535Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 272
+  },
+  {
+    "timestamp": "2026-01-05T05:33:53.905Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 269
+  },
+  {
+    "timestamp": "2026-01-05T05:19:08.893Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 268
+  },
+  {
+    "timestamp": "2026-01-05T04:49:44.342Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 267
+  },
+  {
+    "timestamp": "2026-01-05T02:06:27.141Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 266
+  },
+  {
+    "timestamp": "2026-01-05T02:05:43.701Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 266
+  },
+  {
+    "timestamp": "2026-01-05T02:03:56.631Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 265
+  },
+  {
+    "timestamp": "2026-01-05T01:37:42.862Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 264
+  },
+  {
+    "id": 1767577062085,
+    "action": "LOGIN",
+    "timestamp": "2026-01-05T01:37:42.085Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767577062085_zpwj3b3ca",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-05T01:37:42.085Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767577062085_zpwj3b3ca"
+    }
+  },
+  {
+    "timestamp": "2026-01-05T00:51:35.531Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 264
+  },
+  {
+    "timestamp": "2026-01-05T00:29:45.205Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 263
+  },
+  {
+    "timestamp": "2026-01-04T23:53:38.270Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 263
+  },
+  {
+    "timestamp": "2026-01-04T23:08:40.444Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 263
+  },
+  {
+    "timestamp": "2026-01-04T22:28:04.231Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 263
+  },
+  {
+    "timestamp": "2026-01-04T22:21:14.822Z",
+    "action": "data_sync",
+    "userIP": "211.209.101.195",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 263
+  },
+  {
+    "timestamp": "2026-01-04T13:25:44.871Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 263
+  },
+  {
+    "timestamp": "2026-01-04T06:56:34.083Z",
+    "action": "data_sync",
+    "userIP": "183.96.161.196",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 261
+  },
+  {
+    "timestamp": "2026-01-04T05:52:03.487Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 260
+  },
+  {
+    "timestamp": "2026-01-04T05:49:56.052Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 259
+  },
+  {
+    "timestamp": "2026-01-04T05:37:00.253Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 255
+  },
+  {
+    "timestamp": "2026-01-03T20:35:53.430Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T20:35:48.143Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T05:07:58.774Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T04:50:15.361Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T04:48:59.597Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T03:47:52.004Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T03:45:51.920Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-03T03:44:13.856Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "id": 1767411853376,
+    "action": "LOGIN",
+    "timestamp": "2026-01-03T03:44:13.376Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767411853376_4aai35zxf",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-03T03:44:13.376Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767411853376_4aai35zxf"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T09:06:38.866Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "id": 1767344797436,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T09:06:37.436Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767344797436_teg6sdy3w",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T09:06:37.436Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767344797436_teg6sdy3w"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T09:00:49.790Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "id": 1767344446939,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T09:00:46.939Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767344446939_i5pp4o7zb",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T09:00:46.938Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767344446939_i5pp4o7zb"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T08:55:30.890Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-02T08:54:29.963Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 254
+  },
+  {
+    "timestamp": "2026-01-02T08:52:36.253Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 253
+  },
+  {
+    "timestamp": "2026-01-02T08:52:03.901Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 253
+  },
+  {
+    "timestamp": "2026-01-02T08:51:49.710Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 253
+  },
+  {
+    "timestamp": "2026-01-02T08:47:33.751Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 253
+  },
+  {
+    "timestamp": "2026-01-02T08:47:18.771Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 253
+  },
+  {
+    "id": 1767343638042,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T08:47:18.042Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767343638042_qc99eoet5",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T08:47:18.042Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767343638042_qc99eoet5"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T08:41:19.018Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 253
+  },
+  {
+    "timestamp": "2026-01-02T08:40:41.685Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 252
+  },
+  {
+    "timestamp": "2026-01-02T08:40:20.271Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "timestamp": "2026-01-02T08:38:25.958Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "id": 1767343104417,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T08:38:24.417Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767343104416_y1h6ig4eu",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T08:38:24.416Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767343104416_y1h6ig4eu"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T08:33:29.476Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "timestamp": "2026-01-02T08:19:01.767Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "timestamp": "2026-01-02T08:16:42.228Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "timestamp": "2026-01-02T08:01:58.234Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "id": 1767340917190,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T08:01:57.190Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767340917190_kbqgmunj0",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T08:01:57.190Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767340917190_kbqgmunj0"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T08:00:30.271Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 251
+  },
+  {
+    "timestamp": "2026-01-02T07:52:15.796Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 250
+  },
+  {
+    "id": 1767340332321,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T07:52:12.321Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767340332321_ebkuwmu8t",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T07:52:12.321Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767340332321_ebkuwmu8t"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T07:43:54.045Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 250
+  },
+  {
+    "id": 1767339832828,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T07:43:52.828Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767339832827_bz0su3gm3",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T07:43:52.827Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767339832827_bz0su3gm3"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T07:18:08.261Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 250
+  },
+  {
+    "timestamp": "2026-01-02T06:38:17.881Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 249
+  },
+  {
+    "timestamp": "2026-01-02T06:30:03.980Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 249
+  },
+  {
+    "timestamp": "2026-01-02T06:22:08.213Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 249
+  },
+  {
+    "timestamp": "2026-01-02T06:15:16.584Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "timestamp": "2026-01-02T06:11:09.352Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "timestamp": "2026-01-02T06:06:05.358Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "timestamp": "2026-01-02T05:51:55.476Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "timestamp": "2026-01-02T05:45:02.159Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "id": 1767332701377,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T05:45:01.377Z",
+    "username": "admin",
+    "ip": "59.15.127.171",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+    "sessionId": "1767332701377_w6zvs6lmy",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T05:45:01.377Z",
+      "ip": "59.15.127.171",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "sessionId": "1767332701377_w6zvs6lmy"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T05:27:20.261Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "timestamp": "2026-01-02T05:20:17.669Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 248
+  },
+  {
+    "timestamp": "2026-01-02T05:03:40.914Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T04:52:22.612Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T04:39:48.743Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T04:23:10.533Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T04:17:05.160Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T04:06:22.831Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T03:56:31.691Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T03:42:21.233Z",
+    "action": "data_sync",
+    "userIP": "59.15.127.171",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T03:31:15.694Z",
+    "action": "data_sync",
+    "userIP": "175.113.74.8",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T02:00:03.480Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T01:51:34.115Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 247
+  },
+  {
+    "timestamp": "2026-01-02T01:47:11.616Z",
+    "action": "data_sync",
+    "userIP": "125.133.97.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 246
+  },
+  {
+    "id": 1767318430893,
+    "action": "LOGIN",
+    "timestamp": "2026-01-02T01:47:10.893Z",
+    "username": "admin",
+    "ip": "125.133.97.88",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767318430892_n3re8qsa6",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2026-01-02T01:47:10.892Z",
+      "ip": "125.133.97.88",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767318430892_n3re8qsa6"
+    }
+  },
+  {
+    "timestamp": "2026-01-02T01:26:20.241Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 246
+  },
+  {
+    "timestamp": "2026-01-02T00:59:40.377Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 245
+  },
+  {
+    "timestamp": "2026-01-02T00:59:00.945Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 244
+  },
+  {
+    "timestamp": "2026-01-02T00:26:12.999Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2026-01-01T23:55:52.312Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2026-01-01T14:50:50.689Z",
+    "action": "data_sync",
+    "userIP": "118.128.132.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2026-01-01T14:44:37.426Z",
+    "action": "data_sync",
+    "userIP": "118.128.132.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2026-01-01T14:37:59.618Z",
+    "action": "data_sync",
+    "userIP": "118.128.132.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2026-01-01T12:59:17.596Z",
+    "action": "data_sync",
+    "userIP": "118.128.132.88",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2025-12-31T19:57:56.267Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2025-12-31T19:57:51.846Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2025-12-31T08:08:35.488Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2025-12-31T04:09:08.727Z",
+    "action": "data_sync",
+    "userIP": "183.102.6.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 243
+  },
+  {
+    "timestamp": "2025-12-31T04:07:30.639Z",
+    "action": "data_sync",
+    "userIP": "183.102.6.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 242
+  },
+  {
+    "id": 1767154050191,
+    "action": "LOGIN",
+    "timestamp": "2025-12-31T04:07:30.191Z",
+    "username": "admin",
+    "ip": "183.102.6.33",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767154050191_ehf7b5qud",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-31T04:07:30.191Z",
+      "ip": "183.102.6.33",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767154050191_ehf7b5qud"
+    }
+  },
+  {
+    "timestamp": "2025-12-31T02:31:06.772Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 242
+  },
+  {
+    "timestamp": "2025-12-31T01:51:17.710Z",
+    "action": "data_sync",
+    "userIP": "183.102.6.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "id": 1767145876863,
+    "action": "LOGIN",
+    "timestamp": "2025-12-31T01:51:16.863Z",
+    "username": "admin",
+    "ip": "183.102.6.33",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767145876863_zwl4fffnz",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-31T01:51:16.863Z",
+      "ip": "183.102.6.33",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767145876863_zwl4fffnz"
+    }
+  },
+  {
+    "timestamp": "2025-12-30T12:29:58.606Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "timestamp": "2025-12-30T09:12:59.465Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 240
+  },
+  {
+    "timestamp": "2025-12-30T09:08:14.693Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 240
+  },
+  {
+    "timestamp": "2025-12-30T08:47:59.387Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 240
+  },
+  {
+    "timestamp": "2025-12-30T07:12:18.072Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 239
+  },
+  {
+    "timestamp": "2025-12-30T05:54:50.927Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 239
+  },
+  {
+    "timestamp": "2025-12-30T05:30:21.402Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 239
+  },
+  {
+    "timestamp": "2025-12-30T05:25:22.006Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 239
+  },
+  {
+    "timestamp": "2025-12-30T01:04:40.531Z",
+    "action": "data_sync",
+    "userIP": "183.102.6.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  },
+  {
+    "id": 1767056679725,
+    "action": "LOGIN",
+    "timestamp": "2025-12-30T01:04:39.725Z",
+    "username": "admin",
+    "ip": "183.102.6.33",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1767056679725_fd9a6z7au",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-30T01:04:39.725Z",
+      "ip": "183.102.6.33",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1767056679725_fd9a6z7au"
+    }
+  },
+  {
+    "timestamp": "2025-12-29T21:24:03.980Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  },
+  {
+    "timestamp": "2025-12-29T21:02:44.832Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  },
+  {
+    "timestamp": "2025-12-29T20:17:33.275Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  },
+  {
+    "timestamp": "2025-12-29T07:35:14.559Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  },
+  {
+    "timestamp": "2025-12-29T04:49:54.831Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 237
+  },
+  {
+    "timestamp": "2025-12-29T04:44:41.617Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-29T01:53:32.222Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-28T23:56:43.852Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-28T23:46:46.575Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-28T08:25:36.922Z",
+    "action": "data_sync",
+    "userIP": "211.234.197.244",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 231
+  },
+  {
+    "timestamp": "2025-12-28T08:18:52.921Z",
+    "action": "data_sync",
+    "userIP": "211.234.197.244",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 231
+  },
+  {
+    "timestamp": "2025-12-28T07:57:04.766Z",
+    "action": "data_sync",
+    "userIP": "211.234.197.244",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 231
+  },
+  {
+    "id": 1766908612596,
+    "action": "LOGIN",
+    "timestamp": "2025-12-28T07:56:52.596Z",
+    "username": "admin",
+    "ip": "211.234.197.244",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766908612596_8tymn2ptq",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-28T07:56:52.596Z",
+      "ip": "211.234.197.244",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766908612596_8tymn2ptq"
+    }
+  },
+  {
+    "timestamp": "2025-12-28T05:42:46.175Z",
+    "action": "data_sync",
+    "userIP": "211.234.197.158",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 231
+  },
+  {
+    "timestamp": "2025-12-28T05:42:26.791Z",
+    "action": "data_sync",
+    "userIP": "211.234.197.158",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 235
+  },
+  {
+    "timestamp": "2025-12-28T00:57:08.088Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-27T23:00:32.679Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-27T03:33:15.355Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-27T00:49:53.390Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-26T23:21:04.220Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-26T09:44:05.467Z",
+    "action": "data_sync",
+    "userIP": "183.102.6.33",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "id": 1766742244582,
+    "action": "LOGIN",
+    "timestamp": "2025-12-26T09:44:04.582Z",
+    "username": "admin",
+    "ip": "183.102.6.33",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766742244581_y60b0y2wi",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-26T09:44:04.581Z",
+      "ip": "183.102.6.33",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766742244581_y60b0y2wi"
+    }
+  },
+  {
+    "timestamp": "2025-12-26T08:16:44.033Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 230
+  },
+  {
+    "timestamp": "2025-12-26T08:08:53.542Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 230
+  },
+  {
+    "timestamp": "2025-12-26T03:08:11.742Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 229
+  },
+  {
+    "timestamp": "2025-12-26T03:06:35.662Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 229
+  },
+  {
+    "timestamp": "2025-12-26T03:05:53.200Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 229
+  },
+  {
+    "timestamp": "2025-12-26T03:05:25.141Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 229
+  },
+  {
+    "timestamp": "2025-12-26T03:05:14.633Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 229
+  },
+  {
+    "timestamp": "2025-12-26T02:57:26.778Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 228
+  },
+  {
+    "timestamp": "2025-12-26T02:56:32.075Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 228
+  },
+  {
+    "timestamp": "2025-12-26T02:46:31.698Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 228
+  },
+  {
+    "timestamp": "2025-12-26T02:46:07.165Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 228
+  },
+  {
+    "timestamp": "2025-12-26T02:45:05.178Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 228
+  },
+  {
+    "timestamp": "2025-12-26T02:43:15.275Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 228
+  },
+  {
+    "timestamp": "2025-12-26T00:14:59.535Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 226
+  },
+  {
+    "timestamp": "2025-12-25T23:49:53.336Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 226
+  },
+  {
+    "timestamp": "2025-12-25T23:29:28.750Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 226
+  },
+  {
+    "timestamp": "2025-12-25T13:18:02.328Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 226
+  },
+  {
+    "timestamp": "2025-12-25T10:41:48.755Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-25T10:41:07.970Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-25T10:40:45.574Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 236
+  },
+  {
+    "timestamp": "2025-12-24T12:37:46.418Z",
+    "action": "data_sync",
+    "userIP": "175.197.30.20",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 233
+  },
+  {
+    "timestamp": "2025-12-24T12:36:50.443Z",
+    "action": "data_sync",
+    "userIP": "175.197.30.20",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 242
+  },
+  {
+    "timestamp": "2025-12-24T10:25:51.972Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "timestamp": "2025-12-24T08:03:44.650Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "timestamp": "2025-12-24T08:03:28.006Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "timestamp": "2025-12-24T08:02:01.165Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "id": 1766563224197,
+    "action": "LOGIN",
+    "timestamp": "2025-12-24T08:00:24.197Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766563224196_boulwc4xu",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-24T08:00:24.196Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766563224196_boulwc4xu"
+    }
+  },
+  {
+    "timestamp": "2025-12-24T06:39:28.726Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 241
+  },
+  {
+    "id": 1766558179221,
+    "action": "LOGIN",
+    "timestamp": "2025-12-24T06:36:19.221Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766558179221_heyll3u20",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-24T06:36:19.221Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766558179221_heyll3u20"
+    }
+  },
+  {
+    "id": 1766551906710,
+    "action": "LOGIN",
+    "timestamp": "2025-12-24T04:51:46.710Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766551906709_meozhu73l",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-24T04:51:46.709Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766551906709_meozhu73l"
+    }
+  },
+  {
+    "id": 1766551894988,
+    "action": "LOGIN",
+    "timestamp": "2025-12-24T04:51:34.988Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766551894988_67dyoi7qd",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-24T04:51:34.988Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766551894988_67dyoi7qd"
+    }
+  },
+  {
+    "id": 1766541521296,
+    "action": "LOGIN",
+    "timestamp": "2025-12-24T01:58:41.296Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766541521296_xdqooi5pb",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-24T01:58:41.296Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766541521296_xdqooi5pb"
+    }
+  },
+  {
+    "timestamp": "2025-12-24T00:30:37.110Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 240
+  },
+  {
+    "id": 1766535870996,
+    "action": "LOGIN",
+    "timestamp": "2025-12-24T00:24:30.996Z",
+    "username": "admin",
+    "ip": "218.237.227.92",
+    "location": "Unknown",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+    "sessionId": "1766535870995_atf9oe72e",
+    "details": {
+      "username": "admin",
+      "role": "admin",
+      "loginTime": "2025-12-24T00:24:30.995Z",
+      "ip": "218.237.227.92",
+      "location": "Unknown",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "sessionId": "1766535870995_atf9oe72e"
+    }
+  },
+  {
+    "timestamp": "2025-12-23T06:39:52.828Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 239
+  },
+  {
+    "timestamp": "2025-12-23T06:17:10.501Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  },
+  {
+    "timestamp": "2025-12-23T06:15:18.153Z",
+    "action": "data_sync",
+    "userIP": "218.237.227.92",
+    "dataTypes": [
+      "inventory",
+      "prices",
+      "history",
+      "documents"
+    ],
+    "documentCount": 238
+  }
+]

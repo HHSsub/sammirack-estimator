@@ -1276,13 +1276,13 @@ const PurchaseOrderForm = () => {
               inventoryPartId = bomItem.inventoryPartId;
               console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
             } else {
-              inventoryPartId = materialData.partId || generateInventoryPartId({
+              inventoryPartId = bomItem.partId || generateInventoryPartId({
                 rackType: bomItem.rackType || '',
                 name: bomItem.name || '',
                 specification: bomItem.specification || '',
                 colorWeight: bomItem.colorWeight || ''
               });
-              console.log(` 🔑 materialData.partId사용 또는 generateInventoryPartId로 생성: "${inventoryPartId}"`);
+              console.log(` 🔑 파트 ID 사용 또는 generateInventoryPartId로 생성: "${inventoryPartId}"`);
             }
 
             const requiredQty = Number(bomItem.quantity) || 0;

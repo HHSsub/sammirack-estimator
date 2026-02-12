@@ -22,53 +22,40 @@ const INVENTORY_KEY = 'inventory_data';
 const RACK_OPTIONS_KEY = 'rack_options_registry';
 const EXTRA_OPTIONS_PRICES_KEY = 'extra_options_prices';
 
-console.log("DEBUG_MARKER_V2"); // 이 줄이 있으면 새 코드임
+console.log("DEBUG_MARKER_V4_STRICT_Patterns"); // 최종 수정판
+
+
 
 // ✅ 표준 partID 생성 함수 (단가 관리용 - 색상 제거)
 export const generatePartId = (item) => {
-  if (!item) {
-    console.warn('generatePartId: item이 undefined입니다');
-    return 'unknown-part';
-  }
+  if (!item) return 'unknown-part';
+  let { rackType = '', name = '', specification = '' } = item;
 
-  let { rackType = '', name = '', specification = '', version = '' } = item;
+  // 부품명 정제
+  let cleanName = String(name || '')
+    .replace(/\s+/g, '')   // 모든 공백 제거
+    .replace(/\*/g, 'x');  // *를 x로 통일
 
-  // ✅ 파렛트랙 전용: version이 "신형"이면 rackType 변경
-  if (rackType === '파렛트랙' && version === '신형') {
-    rackType = '파렛트랙신형';
-  }
-
-  // 부품명 처리
-  let cleanName = String(name)
-    .replace(/[()]/g, '')  // 괄호 제거
-    .replace(/\s+/g, '')   // 공백 제거
-    .replace(/\*/g, 'x');  // * → x 변환 (700*300 → 700x300)
-
-  // 하이랙 전용: 색상 제거 (단가 통합 관리)
-  if (rackType === '하이랙') {
+  // 하이랙/경량랙 색상 및 괄호 제거 로직 복구
+  if (rackType === '하이랙' || rackType === '경량랙') {
     cleanName = cleanName
-      .replace(/메트그레이/g, '')  // 메트그레이 제거
-      .replace(/매트그레이/g, '')  // 매트그레이 제거
-      .replace(/오렌지/g, '')        // 오렌지 제거
-      .replace(/블루/g, '');          // 블루 제거
+      .replace(/블루|오렌지|화이트|그레이|블랙|아이보리|메트그레이|매트그레이|메트블랙|매트블루|실버/g, '')
+      .replace(/[()]/g, '');
+  } else {
+    // 기타 제품군 괄호 제거
+    cleanName = cleanName.replace(/[()]/g, '');
   }
 
-  // 경량랙 전용: 색상 제거 (단가 통합 관리)
-  if (rackType === '경량랙') {
-    cleanName = cleanName
-      .replace(/아이보리/g, '')
-      .replace(/블랙/g, '')
-      .replace(/실버/g, '');
-  }
-
-  // 소문자 변환 (H4500 → h4500)
+  // 소문자 변환
   cleanName = cleanName.toLowerCase();
 
-  // 규격 처리
+  // 규격 정제
   if (specification && String(specification).trim()) {
-    const cleanSpec = String(specification)
-      .replace(/\s+/g, '')  // 공백 제거
-      .toLowerCase();       // 소문자 변환
+    let cleanSpec = String(specification)
+      .replace(/\s+/g, '')
+      .replace(/\*/g, 'x')
+      .toLowerCase();
+
     return `${rackType}-${cleanName}-${cleanSpec}`;
   } else {
     return `${rackType}-${cleanName}-`;
@@ -87,42 +74,20 @@ export const generateInventoryPartId = (item) => {
     rackType = '파렛트랙신형';
   }
 
-  // ✅ 하이랙 전용: colorWeight가 있으면 부품명에 색상 포함
-  // ⚠️ 중요: name에 이미 색상 정보가 포함되어 있으면 제거 후 colorWeight 추가
+  // ✅ 부품명 처리 (괄호 제거는 랙타입별로 다르게 적용)
   let cleanName = String(name)
-    .replace(/[()]/g, '')
     .replace(/\s+/g, '')
     .replace(/\*/g, 'x');
 
-  // ✅ 하이랙이고 (colorWeight가 있거나, 이름에 색상이 포함된 경우)
+  // 하이랙이 아니면 기존대로 괄호 제거
+  if (rackType !== '하이랙') {
+    cleanName = cleanName.replace(/[()]/g, '');
+  }
+
+  // ✅ 하이랙 전용: 속성 보존 및 기둥 식별
   if (rackType === '하이랙') {
-    // ⚠️ 중요: name에서 부품명만 추출 (기둥, 선반, 로드빔)
-    const partNameMatch = cleanName.match(/(기둥|선반|로드빔|빔)/i);
-
-    if (partNameMatch) {
-      // 부품명만 먼저 뽑음 (예: "기둥")
-      let purePartName = partNameMatch[1].toLowerCase();
-
-      // colorWeight가 있으면 그걸 쓰고, 없으면 기존 이름에서 색상만 추출 시도
-      let cleanColor = '';
-      if (colorWeight) {
-        // ✅ 괄호와 대소문자 보존, 공백만 제거
-        // 예: "메트그레이(볼트식)270kg" → "메트그레이(볼트식)270kg"
-        cleanColor = String(colorWeight).replace(/\s+/g, '');
-      } else {
-        // colorWeight가 없을 경우를 대비해 기존 name에서 색상 키워드 추출
-        const colorMatch = cleanName.match(/(메트그레이|매트그레이|블루|오렌지)/i);
-        cleanColor = colorMatch ? colorMatch[0].toLowerCase() : '';
-      }
-
-      // 최종 결합: "기둥" + "메트그레이(볼트식)270kg"
-      cleanName = `${purePartName}${cleanColor}`;
-    } else {
-      // 부품명을 찾을 수 없으면 색상 정보만 제거
-      cleanName = cleanName
-        .replace(/^(메트그레이|매트그레이|블루|오렌지)/i, '')
-        .replace(/(메트그레이|매트그레이|블루|오렌지)/gi, '');
-    }
+    // ⚠️ 중요: 하이랙은 괄호와 속성(볼트식, 무게 등)을 보존함.
+    // 기존의 복잡한 색상 추출 로직 대신, 원본 이름을 최대한 유지하되 공백만 정제.
   }
   // ✅ 경량랙 전용: color가 있으면 부품명에 색상 포함
   if (rackType === '경량랙' && color) {
@@ -137,8 +102,7 @@ export const generateInventoryPartId = (item) => {
       .replace(/\s+/g, '')
       .toLowerCase();
 
-    // ✅ 스텐랙 선반: WxD 모두 포함하여 재고 관리 (변경됨)
-    // 예: "사이즈43x90" → "사이즈43x90", "사이즈50x75" → "사이즈50x75"
+
 
     return `${rackType}-${cleanName}-${cleanSpec}`;
   } else {
