@@ -11,7 +11,7 @@
  */
 export const extractColorFromColorWeight = (colorWeight, partName = '') => {
   if (!colorWeight) return '';
-  
+
   if (colorWeight.includes('메트그레이') || colorWeight.includes('매트그레이')) {
     return '메트그레이';
   } else if (colorWeight.includes('블루') && colorWeight.includes('오렌지')) {
@@ -28,7 +28,7 @@ export const extractColorFromColorWeight = (colorWeight, partName = '') => {
   } else if (colorWeight.includes('오렌지')) {
     return '오렌지';
   }
-  
+
   return '';
 };
 
@@ -39,8 +39,8 @@ export const extractColorFromColorWeight = (colorWeight, partName = '') => {
  */
 export const removeColorFromPartName = (partName) => {
   if (!partName) return '';
-  // "메트그레이 기둥" → "기둥", "오렌지 선반" → "선반"
-  return partName.replace(/^(메트그레이|매트그레이|블루|오렌지)\s+/, '');
+  // "기둥 메트그레이" → "기둥", "선반 오렌지" → "선반"
+  return partName.replace(/\s+(메트그레이|매트그레이|블루|오렌지)$/, '');
 };
 
 /**
@@ -50,7 +50,7 @@ export const removeColorFromPartName = (partName) => {
  */
 export const extractPartNameFromCleanName = (cleanName) => {
   if (!cleanName) return '';
-  
+
   if (cleanName.includes('기둥')) {
     return '기둥';
   } else if (cleanName.includes('선반')) {
@@ -58,7 +58,7 @@ export const extractPartNameFromCleanName = (cleanName) => {
   } else if (cleanName.includes('로드빔') || cleanName.includes('빔')) {
     return '로드빔';
   }
-  
+
   return '';
 };
 
@@ -69,12 +69,12 @@ export const extractPartNameFromCleanName = (cleanName) => {
  */
 export const generateStainlessRackDisplayName = (opt) => {
   if (!opt) return '';
-  
+
   // bom에 정확한 이름이 있으면 사용
   if (opt.bom && opt.bom.length > 0 && opt.bom[0].name) {
     return opt.bom[0].name;
   }
-  
+
   // opt.name이 숫자만 있으면 부품 종류 추가
   if (opt.name && !opt.name.includes('선반') && !opt.name.includes('기둥')) {
     if (opt.name.match(/\d+x\d+/)) {
@@ -83,7 +83,7 @@ export const generateStainlessRackDisplayName = (opt) => {
       return `${opt.name} 기둥`;
     }
   }
-  
+
   // 기본값: opt.name 그대로 반환
   return opt.name || '';
 };
@@ -96,16 +96,16 @@ export const generateStainlessRackDisplayName = (opt) => {
  */
 export const generateHighRackDisplayName = (bomName, colorWeight) => {
   if (!bomName) return '';
-  
+
   // 부품 종류 추출
   const partName = extractPartNameFromCleanName(bomName);
   if (!partName) return bomName; // 부품 종류를 찾을 수 없으면 원본 반환
-  
+
   // 색상 추출
   const colorText = extractColorFromColorWeight(colorWeight, partName);
-  
+
   if (colorText) {
-    return `${colorText} ${partName}`;
+    return `${partName} ${colorText}`;
   } else {
     return partName;
   }
@@ -119,16 +119,16 @@ export const generateHighRackDisplayName = (bomName, colorWeight) => {
  */
 export const generateHighRackDisplayNameFromCleanName = (cleanName, colorWeight) => {
   if (!cleanName) return '';
-  
+
   // 부품 종류 추출
   const partName = extractPartNameFromCleanName(cleanName);
   if (!partName) return cleanName; // 부품 종류를 찾을 수 없으면 원본 반환
-  
+
   // 색상 추출
   const colorText = extractColorFromColorWeight(colorWeight, partName);
-  
+
   if (colorText) {
-    return `${colorText} ${partName}`;
+    return `${partName} ${colorText}`;
   } else {
     return partName;
   }
@@ -161,9 +161,9 @@ export const generateHighRackDisplayNameFromBaseName = (baseName, finalColorWeig
         colorText = '오렌지';
       }
     }
-    
+
     if (colorText) {
-      return `${colorText} ${baseName}`;
+      return `${baseName} ${colorText}`;
     } else {
       return baseName;
     }
@@ -181,13 +181,13 @@ export const generateHighRackDisplayNameFromBaseName = (baseName, finalColorWeig
  */
 export const generateBOMDisplayName = (rackType, opt, cleanName = '', colorWeight = '') => {
   if (!rackType || !opt) return opt?.name || '';
-  
+
   if (rackType === '스텐랙') {
     return generateStainlessRackDisplayName(opt);
   } else if (rackType === '하이랙') {
     return generateHighRackDisplayName(cleanName, colorWeight);
   }
-  
+
   // 기본값: opt.name 그대로 반환
   return opt.name || '';
 };
@@ -201,11 +201,11 @@ export const generateBOMDisplayName = (rackType, opt, cleanName = '', colorWeigh
  */
 export const getExtraOptionDisplayInfo = (rackType, optId, extraProducts) => {
   if (!rackType || !optId || !extraProducts) return null;
-  
+
   const optIdStr = String(optId);
   let optName = '';
   let optPrice = 0;
-  
+
   // extraProducts에서 해당 ID 찾기
   if (extraProducts[rackType]) {
     Object.values(extraProducts[rackType]).forEach(category => {
@@ -214,7 +214,7 @@ export const getExtraOptionDisplayInfo = (rackType, optId, extraProducts) => {
         if (found) {
           optName = found.name || '';
           optPrice = found.price || 0;
-          
+
           // ✅ 스텐랙: opt.name이 "50x90"만 있을 때 "50x90 선반" 형식으로 생성
           if (rackType === '스텐랙') {
             if (found.bom && found.bom.length > 0 && found.bom[0].name) {
@@ -231,11 +231,11 @@ export const getExtraOptionDisplayInfo = (rackType, optId, extraProducts) => {
       }
     });
   }
-  
+
   if (optName) {
     return { name: optName, price: optPrice };
   }
-  
+
   return null;
 };
 

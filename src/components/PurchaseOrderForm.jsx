@@ -4,7 +4,7 @@ import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHelper';
 import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
-import { generatePartId, generateInventoryPartId } from '../utils/unifiedPriceManager';
+import { generatePartId, generateInventoryPartId, mapExtraToBaseInventoryPart } from '../utils/unifiedPriceManager';
 import {
   saveDocumentSync,
   updateDocumentInventoryStatus
@@ -1276,13 +1276,15 @@ const PurchaseOrderForm = () => {
               inventoryPartId = bomItem.inventoryPartId;
               console.log(`  🔑 BOM에서 inventoryPartId 사용: "${inventoryPartId}"`);
             } else {
-              inventoryPartId = bomItem.partId || generateInventoryPartId({
+              // ✅ 중요: partId는 단가용이므로 재고 체크 시 절대 사용하지 않음!
+              const rawId = generateInventoryPartId({
                 rackType: bomItem.rackType || '',
                 name: bomItem.name || '',
                 specification: bomItem.specification || '',
                 colorWeight: bomItem.colorWeight || ''
               });
-              console.log(` 🔑 파트 ID 사용 또는 generateInventoryPartId로 생성: "${inventoryPartId}"`);
+              inventoryPartId = mapExtraToBaseInventoryPart(rawId);
+              console.log(` 🔑 generateInventoryPartId로 생성: "${inventoryPartId}" (원본: "${rawId}")`);
             }
 
             const requiredQty = Number(bomItem.quantity) || 0;
@@ -1321,12 +1323,13 @@ const PurchaseOrderForm = () => {
             if (material.inventoryPartId) {
               inventoryPartId = material.inventoryPartId;
             } else {
-              inventoryPartId = generateInventoryPartId({
+              const rawId = generateInventoryPartId({
                 rackType: material.rackType || '',
                 name: material.name || '',
                 specification: material.specification || '',
                 colorWeight: material.colorWeight || ''
               });
+              inventoryPartId = mapExtraToBaseInventoryPart(rawId);
             }
 
             const requiredQty = Number(material.quantity) || 0;

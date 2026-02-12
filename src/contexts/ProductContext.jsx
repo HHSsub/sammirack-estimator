@@ -1025,10 +1025,9 @@ export const ProductProvider = ({ children }) => {
                   bomName = generateHighRackDisplayName(bomName, bomColorWeight);
                 }
 
-                // BOM 항목의 inventoryPartId 생성 (색상 제거된 부품명 사용)
-                // ⚠️ 중요: bomName은 이미 색상 정보가 포함된 표시용 이름이므로,
-                // inventoryPartId 생성 시에는 색상을 제거한 기본 부품명만 사용
-                const bomNameForInventory = removeColorFromPartName(bomName);
+                // BOM 항목의 inventoryPartId 생성
+                // ⚠️ 중요: 하이랙 재고는 색상 정보가 핵심이므로 색상을 제거하지 않음!
+                const bomNameForInventory = bomRackType === '하이랙' ? bomName : removeColorFromPartName(bomName);
 
                 const bomInventoryPartId = generateInventoryPartId({
                   rackType: bomRackType,

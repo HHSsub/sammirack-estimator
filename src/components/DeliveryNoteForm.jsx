@@ -16,6 +16,7 @@ import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts �
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 import ItemSelector from './ItemSelector';      // 26_01_27 품목셀렉터 추가
 import MaterialSelector from './MaterialSelector';  // 26_01_27 재고셀렉터 추가
+import { generateInventoryPartId, mapExtraToBaseInventoryPart } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 
 const PROVIDER = {
@@ -488,12 +489,15 @@ const DeliveryNoteForm = () => {
     // ✅ inventoryPartId 생성 (청구서쪽에서 재고감소용)
     const materialWithId = {
       ...materialData,
-      inventoryPartId: generateInventoryPartId({
-        rackType: materialData.rackType || '기타',
-        name: materialData.name,
-        specification: materialData.specification || '',
-        colorWeight: materialData.colorWeight || ''
-      })
+      inventoryPartId: (() => {
+        const rawId = generateInventoryPartId({
+          rackType: materialData.rackType || '기타',
+          name: materialData.name,
+          specification: materialData.specification || '',
+          colorWeight: materialData.colorWeight || ''
+        });
+        return mapExtraToBaseInventoryPart(rawId);
+      })()
     };
 
     setFormData(prev => ({

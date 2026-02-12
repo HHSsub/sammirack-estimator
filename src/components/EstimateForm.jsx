@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { exportToExcel, generateFileName } from '../utils/excelExport';
 import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
-import { generateInventoryPartId } from '../utils/unifiedPriceManager';
+import { generateInventoryPartId, mapExtraToBaseInventoryPart } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 import { saveDocumentSync } from '../utils/realtimeAdminSync';
 import { documentsAPI } from '../services/apiClient';
@@ -408,12 +408,15 @@ const EstimateForm = () => {
     // ✅ inventoryPartId 생성 (재고 감소용)
     const materialWithId = {
       ...materialData,
-      inventoryPartId: materialData.isService ? null : (materialData.inventoryPartId || generateInventoryPartId({
-        rackType: materialData.rackType || '기타',
-        name: materialData.name,
-        specification: materialData.specification || '',
-        colorWeight: materialData.colorWeight || ''
-      }))
+      inventoryPartId: materialData.isService ? null : (materialData.inventoryPartId || (() => {
+        const rawId = generateInventoryPartId({
+          rackType: materialData.rackType || '기타',
+          name: materialData.name,
+          specification: materialData.specification || '',
+          colorWeight: materialData.colorWeight || ''
+        });
+        return mapExtraToBaseInventoryPart(rawId);
+      })())
     };
 
     if (selectorTarget === 'item') {
