@@ -8,7 +8,8 @@ import {
   deleteDocumentSync,
   restoreDocumentSync,
   permanentDeleteDocumentSync,
-  forceServerSync
+  forceServerSync,
+  isTransactionDeducted
 } from '../utils/realtimeAdminSync';
 import { regenerateBOMFromDisplayName, setBomDataForRegeneration } from '../utils/bomRegeneration';
 import { generateInventoryPartId, generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
@@ -1435,7 +1436,7 @@ const HistoryPage = () => {
           sortedItems.map((item) => (
             <div
               key={`${item.type}_${item.id}`}
-              className={`list-item ${item.inventoryDeducted ? 'inventory-deducted' : ''}`}
+              className={`list-item ${(item.inventoryDeducted || isTransactionDeducted(item.estimateNumber || item.purchaseNumber || item.documentNumber)) ? 'inventory-deducted' : ''}`}
               onClick={() => {
                 setSelectedItem(item);
                 setView('details');

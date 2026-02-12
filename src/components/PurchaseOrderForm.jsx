@@ -7,7 +7,8 @@ import '../styles/PurchaseOrderForm.css';
 import { generatePartId, generateInventoryPartId, mapExtraToBaseInventoryPart } from '../utils/unifiedPriceManager';
 import {
   saveDocumentSync,
-  updateDocumentInventoryStatus
+  updateDocumentInventoryStatus,
+  isTransactionDeducted
 } from '../utils/realtimeAdminSync';
 import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
@@ -259,6 +260,11 @@ const PurchaseOrderForm = () => {
           // ✅ 편집 후 진입 시 state.editingDocumentData로 메타정보 보정 (비어 있으면)
           const materialsToUse = data.materials; // Use the potentially regenerated/corrected materials
 
+          // ✅ [CRITICAL] 재고 감소 상태 복정: editingDocumentData > data 순으로 우선순위 부여
+          const finalInventoryDeducted = editingDocumentData?.inventoryDeducted !== undefined
+            ? editingDocumentData.inventoryDeducted
+            : (data.inventoryDeducted || false);
+
           setFormData({
             ...data,
             date: data.date || editingDocumentData.date || data.date,
@@ -269,10 +275,10 @@ const PurchaseOrderForm = () => {
             topMemo: data.topMemo || editingDocumentData.topMemo || data.topMemo,
             materials: materialsToUse,
             documentSettings: data.documentSettings || null,
-            // ✅ 재고 감소 상태 복원
-            inventoryDeducted: data.inventoryDeducted || false,
-            inventoryDeductedAt: data.inventoryDeductedAt || null,
-            inventoryDeductedBy: data.inventoryDeductedBy || null
+            // ✅ 재고 감소 상태 복원 (병합 로직 강화)
+            inventoryDeducted: finalInventoryDeducted,
+            inventoryDeductedAt: editingDocumentData?.inventoryDeductedAt || data.inventoryDeductedAt || null,
+            inventoryDeductedBy: editingDocumentData?.inventoryDeductedBy || data.inventoryDeductedBy || null
           });
 
           // ✅ materials 디버깅 로그 추가
@@ -685,6 +691,13 @@ const PurchaseOrderForm = () => {
       fax: currentSettings.fax
     };
 
+    // ✅ [Fix] 저장 시 기존 재고 감소 상태 유지 (덮어쓰기 방지)
+    const finalInventoryStatus = {
+      inventoryDeducted: formData.inventoryDeducted || (existingDoc ? existingDoc.inventoryDeducted : false),
+      inventoryDeductedAt: formData.inventoryDeductedAt || (existingDoc ? existingDoc.inventoryDeductedAt : null),
+      inventoryDeductedBy: formData.inventoryDeductedBy || (existingDoc ? existingDoc.inventoryDeductedBy : null)
+    };
+
     const newOrder = {
       ...formData,
       id: itemId,  // ✅ 이미 prefix 포함된 ID 사용
@@ -701,6 +714,7 @@ const PurchaseOrderForm = () => {
         ? (formData.documentSettings || documentSettings)
         : documentSettings,
       cart: cartWithExtraOptions,
+      ...finalInventoryStatus,
       ...(existingDoc || isEditMode || editingDocumentId ? {} : { createdAt: new Date().toISOString() })
     };
 
@@ -1418,14 +1432,20 @@ const PurchaseOrderForm = () => {
                         ref={documentNumberInputRef}
                         type="text"
                         value={formData.documentNumber}
-                        className={formData.inventoryDeducted ? 'inventory-deducted-field' : ''}
+                        className={(formData.inventoryDeducted || isTransactionDeducted(formData.documentNumber)) ? 'inventory-deducted-field' : ''}
                         onChange={e => {
                           documentNumberInputRef.current?.classList.remove('invalid');
                           updateFormData('documentNumber', e.target.value);
                           updateFormData('purchaseNumber', e.target.value);
                         }}
                         placeholder=""
-                        style={{ padding: '3px 4px', fontSize: '16px', fontWeight: 'bold', color: formData.inventoryDeducted ? '#22c55e' : '#000000', width: '100%' }}
+                        style={{
+                          padding: '3px 4px',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          color: (formData.inventoryDeducted || isTransactionDeducted(formData.documentNumber)) ? '#22c55e' : '#000000',
+                          width: '100%'
+                        }}
                       />
                     </div>
                   </div>

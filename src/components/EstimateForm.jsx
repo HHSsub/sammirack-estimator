@@ -5,7 +5,7 @@ import { showInventoryResult } from './InventoryManager';
 import '../styles/EstimateForm.css';
 import { generateInventoryPartId, mapExtraToBaseInventoryPart } from '../utils/unifiedPriceManager';
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
-import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { saveDocumentSync, isTransactionDeducted } from '../utils/realtimeAdminSync';
 import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
@@ -88,9 +88,10 @@ const EstimateForm = () => {
     notes: editingDocumentData.notes || '',
     topMemo: editingDocumentData.topMemo || '',
     documentSettings: null,  // ✅ 이 문서 저장 당시의 회사 정보 (도장 제외)
-    // ✅ 재고 감소 상태 필드 (표시용)
-    inventoryDeducted: false,
-    inventoryDeductedAt: null
+    // ✅ 재고 감소 상태 필드 추가
+    inventoryDeducted: editingDocumentData.inventoryDeducted || false,
+    inventoryDeductedAt: editingDocumentData.inventoryDeductedAt || null,
+    inventoryDeductedBy: editingDocumentData.inventoryDeductedBy || null
   });
 
   // ✅ 관리자 체크
@@ -746,9 +747,16 @@ const EstimateForm = () => {
                       onChange={e => {
                         documentNumberInputRef.current?.classList.remove('invalid');
                         updateFormData('documentNumber', e.target.value);
+                        updateFormData('estimateNumber', e.target.value);
                       }}
                       placeholder=""
-                      style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: '#000000', width: '100%' }}
+                      style={{
+                        padding: '3px 4px',
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        color: (formData.inventoryDeducted || isTransactionDeducted(formData.documentNumber || formData.estimateNumber)) ? '#22c55e' : '#000000',
+                        width: '100%'
+                      }}
                     />
                   </div>
                 </div>

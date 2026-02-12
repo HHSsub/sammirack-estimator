@@ -5,7 +5,7 @@ import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHel
 import { showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils'; // ✅ 추가
-import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import { saveDocumentSync, isTransactionDeducted } from '../utils/realtimeAdminSync';
 import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
@@ -109,11 +109,12 @@ const DeliveryNoteForm = () => {
     tax: 0,
     totalAmount: 0,
     notes: editingDocumentData.notes || estimateData.notes || '',      // ✅ 수정
-    topMemo: editingDocumentData.topMemo || estimateData.topMemo || '',   // ✅ 수정
+    topMemo: editingDocumentData.topMemo || estimateData.topMemo || '',
     documentSettings: null,  // ✅ 이 문서의 회사정보
-    // ✅ 재고 감소 상태 필드 (표시용)
-    inventoryDeducted: false,
-    inventoryDeductedAt: null
+    // ✅ 재고 감소 상태 필드 추가
+    inventoryDeducted: editingDocumentData.inventoryDeducted || false,
+    inventoryDeductedAt: editingDocumentData.inventoryDeductedAt || null,
+    inventoryDeductedBy: editingDocumentData.inventoryDeductedBy || null
   });
 
   // ✅ 관리자 체크 및 전역 설정 로드
@@ -784,9 +785,15 @@ const DeliveryNoteForm = () => {
                       onChange={e => {
                         documentNumberInputRef.current?.classList.remove('invalid');
                         updateFormData('documentNumber', e.target.value);
-                        updateFormData('orderNumber', e.target.value);
+                        updateFormData('deliveryNumber', e.target.value);
                       }}
-                      style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: '#000000', width: '100%' }}
+                      style={{
+                        padding: '3px 4px',
+                        fontSize: '18px',
+                        fontWeight: 'bold',
+                        color: (formData.inventoryDeducted || isTransactionDeducted(formData.documentNumber || formData.deliveryNumber)) ? '#22c55e' : '#000000',
+                        width: '100%'
+                      }}
                     />
                   </div>
                 </div>

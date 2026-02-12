@@ -1144,6 +1144,27 @@ export const getDocumentById = (docId, docType) => {
   }
 };
 
+/**
+ * 특정 거래번호(documentNumber)가 재고 처리되었는지 확인
+ * (문서 종류에 상관없이 하나라도 처리되었으면 true)
+ */
+export const isTransactionDeducted = (docNumber) => {
+  if (!docNumber) return false;
+  try {
+    const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
+    const targetNum = String(docNumber).trim();
+
+    // 모든 문서를 순회하며 해당 거래번호의 재고 상태 확인
+    return Object.values(documents).some(doc => {
+      const docNum = String(doc.documentNumber || doc.purchaseNumber || doc.deliveryNumber || doc.estimateNumber || '').trim();
+      return docNum === targetNum && doc.inventoryDeducted === true && !doc.deleted;
+    });
+  } catch (error) {
+    console.error('거래번호 재고상태 확인 실패:', error);
+    return false;
+  }
+};
+
 if (typeof window !== 'undefined') {
   initRealtimeSync();
 }
