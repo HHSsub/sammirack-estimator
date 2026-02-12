@@ -377,31 +377,32 @@
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .filter-group {
     width: 100%;
   }
 }
 
 @media (max-width: 900px) {
+
   .list-header,
   .list-item {
     font-size: 14px;
   }
-  
+
   .header-cell,
   .item-cell {
     padding: 8px 6px;
   }
-  
+
   .document-id {
     width: 20%;
   }
-  
+
   .date {
     display: none;
   }
-  
+
   .product {
     width: 22%;
   }
@@ -411,35 +412,35 @@
   .document-type {
     display: none;
   }
-  
+
   .product {
     display: none;
   }
-  
+
   .document-id {
     width: 30%;
   }
-  
+
   .customer {
     width: 25%;
   }
-  
+
   .price {
     width: 15%;
   }
-  
+
   .status {
     width: 15%;
   }
-  
+
   .actions {
     width: 15%;
   }
-  
+
   .details-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .details-item.full-width {
     grid-column: span 1;
   }
@@ -595,6 +596,7 @@
 }
 
 @media (max-width: 1200px) {
+
   .header-cell.creator,
   .item-cell.creator {
     display: none;
@@ -606,15 +608,28 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .sync-status {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .deleted-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
+}
+
+/* ✅ 재고 감소 완료 표시 스타일 */
+.list-item.inventory-deducted .document-id {
+  background-color: #d1fae5;
+  /* 연한 초록색 배경 */
+  font-weight: 600;
+}
+
+.list-item.inventory-deducted .document-id::after {
+  content: ' ✓';
+  color: #10b981;
+  font-weight: bold;
 }

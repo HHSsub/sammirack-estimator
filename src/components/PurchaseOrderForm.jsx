@@ -5,7 +5,10 @@ import { loadAdminPricesDirect, resolveAdminPrice } from '../utils/adminPriceHel
 import { deductInventoryOnPrint, showInventoryResult } from './InventoryManager';
 import '../styles/PurchaseOrderForm.css';
 import { generatePartId, generateInventoryPartId } from '../utils/unifiedPriceManager';
-import { saveDocumentSync } from '../utils/realtimeAdminSync';
+import {
+  saveDocumentSync,
+  updateDocumentInventoryStatus
+} from '../utils/realtimeAdminSync';
 import { documentsAPI } from '../services/apiClient';
 import { getDocumentSettings } from '../utils/documentSettings';
 import DocumentSettingsModal from './DocumentSettingsModal';
@@ -107,7 +110,11 @@ const PurchaseOrderForm = () => {
     totalAmount: 0,
     notes: editingDocumentData.notes || estimateData.notes || '',
     topMemo: editingDocumentData.topMemo || estimateData.topMemo || '',
-    documentSettings: null  // ✅ 이 문서의 회사정보
+    documentSettings: null,  // ✅ 이 문서의 회사정보
+    // ✅ 재고 감소 상태 필드 추가
+    inventoryDeducted: false,
+    inventoryDeductedAt: null,
+    inventoryDeductedBy: null
   });
 
 
@@ -126,6 +133,24 @@ const PurchaseOrderForm = () => {
     const globalSettings = getDocumentSettings();
     setCurrentGlobalSettings(globalSettings);
   }, []);
+
+  // ✅ 재고 감소 상태 업데이트 이벤트 리스너
+  useEffect(() => {
+    const handleStatusUpdate = (e) => {
+      const currentDocId = isEditMode ? `purchase_${id}` : (editingDocumentId || formData.id);
+      if (e.detail.docId === currentDocId) {
+        setFormData(prev => ({
+          ...prev,
+          inventoryDeducted: e.detail.inventoryDeducted,
+          inventoryDeductedAt: e.detail.inventoryDeductedAt,
+          inventoryDeductedBy: e.detail.inventoryDeductedBy
+        }));
+      }
+    };
+
+    window.addEventListener('documentInventoryStatusUpdated', handleStatusUpdate);
+    return () => window.removeEventListener('documentInventoryStatusUpdated', handleStatusUpdate);
+  }, [isEditMode, id, editingDocumentId, formData.id]);
 
   // 기존 저장 문서 로드 (편집 모드 또는 editingDocumentId가 있을 때)
   useEffect(() => {
@@ -222,16 +247,23 @@ const PurchaseOrderForm = () => {
           }
 
           // ✅ 편집 후 진입 시 state.editingDocumentData로 메타정보 보정 (비어 있으면)
-          const mergedData = {
+          const materialsToUse = data.materials; // Use the potentially regenerated/corrected materials
+
+          setFormData({
             ...data,
-            date: data.date || editingDocumentData.date || estimateData.date || data.date,
-            documentNumber: data.documentNumber || data.purchaseNumber || editingDocumentData.documentNumber || estimateData.estimateNumber || data.documentNumber,
-            companyName: data.companyName || editingDocumentData.companyName || estimateData.companyName || data.companyName,
-            bizNumber: data.bizNumber || editingDocumentData.bizNumber || estimateData.bizNumber || data.bizNumber,
-            notes: data.notes || editingDocumentData.notes || estimateData.notes || data.notes,
-            topMemo: data.topMemo || editingDocumentData.topMemo || estimateData.topMemo || data.topMemo,
-            documentSettings: data.documentSettings || null
-          };
+            date: data.date || editingDocumentData.date || data.date,
+            documentNumber: data.documentNumber || editingDocumentData.documentNumber || data.documentNumber,
+            companyName: data.companyName || editingDocumentData.companyName || data.companyName,
+            bizNumber: data.bizNumber || editingDocumentData.bizNumber || data.bizNumber,
+            notes: data.notes || editingDocumentData.notes || data.notes,
+            topMemo: data.topMemo || editingDocumentData.topMemo || data.topMemo,
+            materials: materialsToUse,
+            documentSettings: data.documentSettings || null,
+            // ✅ 재고 감소 상태 복원
+            inventoryDeducted: data.inventoryDeducted || false,
+            inventoryDeductedAt: data.inventoryDeductedAt || null,
+            inventoryDeductedBy: data.inventoryDeductedBy || null
+          });
 
           // ✅ materials 디버깅 로그 추가
           console.log('🔍🔍🔍 PurchaseOrderForm: 문서 로드 완료 🔍🔍🔍');
@@ -592,19 +624,23 @@ const PurchaseOrderForm = () => {
         setConfirmDialog({
           show: true,
           message: `거래번호 "${formData.documentNumber}"가 이미 존재합니다.\n기존 문서를 덮어쓰시겠습니까?`,
-          onConfirm: () => {
-            proceedWithSave(existingDoc.id, existingDoc);
+          onConfirm: async () => { // Changed to async
+            const savedId = await proceedWithSave(existingDoc.id, existingDoc); // Capture returned ID
+            if (savedId) {
+              // If save was successful, close dialog
+              setConfirmDialog({ show: false });
+            }
           }
         });
-        return; // 확인 다이얼로그에서 처리
+        return null; // 확인 다이얼로그에서 처리
       } else {
         // 새 문서
-        itemId = Date.now();
+        itemId = `purchase_${Date.now()}`;  // ✅ prefix 추가
       }
     }
 
     // 저장 로직 실행
-    await proceedWithSave(itemId, existingDoc);
+    return await proceedWithSave(itemId, existingDoc); // Return the ID from proceedWithSave
   };
 
   // ✅ 저장 로직 분리
@@ -673,6 +709,8 @@ const PurchaseOrderForm = () => {
 
       // ✅ 문서 업데이트 이벤트 발생
       window.dispatchEvent(new Event('documentsupdated'));
+
+      return itemId;  // ✅ docId 반환
     } else {
       setToast({
         show: true,
@@ -819,6 +857,15 @@ const PurchaseOrderForm = () => {
 
           if (result.success) {
             alert('✅ 재고가 감소되었습니다.');
+            // ✅ 문서 저장 후 실제 docId 사용
+            const savedDocId = await handleSave();
+            if (savedDocId) {
+              // ✅ 재고 감소 완료 상태 업데이트
+              await updateDocumentInventoryStatus(savedDocId, {
+                inventoryDeducted: true,
+                inventoryDeductedAt: new Date().toISOString()
+              });
+            }
           } else {
             alert(`❌ 재고 감소 실패: ${result.message}`);
           }
@@ -847,6 +894,15 @@ const PurchaseOrderForm = () => {
 
             if (result.success) {
               alert('✅ 재고가 감소되었습니다.');
+              // ✅ 문서 저장 후 실제 docId 사용
+              const savedDocId = await handleSave();
+              if (savedDocId) {
+                // ✅ 재고 감소 완료 상태 업데이트
+                await updateDocumentInventoryStatus(savedDocId, {
+                  inventoryDeducted: true,
+                  inventoryDeductedAt: new Date().toISOString()
+                });
+              }
             } else {
               alert(`❌ 재고 감소 실패: ${result.message}`);
             }
@@ -1300,18 +1356,24 @@ const PurchaseOrderForm = () => {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', flex: '0 0 45%', paddingLeft: '4px' }}>
                     <label style={{ fontSize: '11px', fontWeight: 600, marginBottom: 2 }}>거래번호</label>
-                    <input
-                      ref={documentNumberInputRef}
-                      type="text"
-                      value={formData.documentNumber}
-                      onChange={e => {
-                        documentNumberInputRef.current?.classList.remove('invalid');
-                        updateFormData('documentNumber', e.target.value);
-                        updateFormData('purchaseNumber', e.target.value);
-                      }}
-                      placeholder=""
-                      style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: '#000000', width: '100%' }}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        ref={documentNumberInputRef}
+                        type="text"
+                        value={formData.documentNumber}
+                        className={formData.inventoryDeducted ? 'inventory-deducted-field' : ''}
+                        onChange={e => {
+                          documentNumberInputRef.current?.classList.remove('invalid');
+                          updateFormData('documentNumber', e.target.value);
+                          updateFormData('purchaseNumber', e.target.value);
+                        }}
+                        placeholder=""
+                        style={{ padding: '3px 4px', fontSize: '18px', fontWeight: 'bold', color: formData.inventoryDeducted ? '#22c55e' : '#000000', width: '100%' }}
+                      />
+                      {formData.inventoryDeducted && (
+                        <span className="inventory-status-badge">재고감소완료</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </td>

@@ -87,7 +87,10 @@ const EstimateForm = () => {
     totalAmount: 0,
     notes: editingDocumentData.notes || '',
     topMemo: editingDocumentData.topMemo || '',
-    documentSettings: null  // ✅ 이 문서 저장 당시의 회사 정보 (도장 제외)
+    documentSettings: null,  // ✅ 이 문서 저장 당시의 회사 정보 (도장 제외)
+    // ✅ 재고 감소 상태 필드 (표시용)
+    inventoryDeducted: false,
+    inventoryDeductedAt: null
   });
 
   // ✅ 관리자 체크
@@ -479,7 +482,7 @@ const EstimateForm = () => {
         });
         return; // 확인 다이얼로그에서 처리
       } else {
-        itemId = Date.now();
+        itemId = `estimate_${Date.now()}`;  // ✅ prefix 추가
       }
     }
 

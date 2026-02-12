@@ -802,6 +802,48 @@ export const saveDocumentSync = async (document) => {
   }
 };
 
+/**
+ * 재고 감소 완료 상태 업데이트
+ * @param {string} docId - 실제 문서 ID (예: 'purchase_1770876851437')
+ * @param {object} statusInfo - 상태 정보 {inventoryDeducted, inventoryDeductedAt, inventoryDeductedBy}
+ */
+export async function updateDocumentInventoryStatus(docId, statusInfo) {
+  try {
+    // 1. 로컬스토리지에서 문서 로드
+    const docData = localStorage.getItem(docId);
+    if (!docData) {
+      console.warn(`⚠️ 문서를 찾을 수 없음: ${docId}`);
+      return false;
+    }
+
+    const doc = JSON.parse(docData);
+
+    // 2. 상태 업데이트
+    doc.inventoryDeducted = statusInfo.inventoryDeducted || false;
+    doc.inventoryDeductedAt = statusInfo.inventoryDeductedAt || new Date().toISOString();
+    doc.inventoryDeductedBy = statusInfo.inventoryDeductedBy || 'system';
+    doc.updatedAt = new Date().toISOString();
+
+    // 3. 로컬스토리지 저장
+    localStorage.setItem(docId, JSON.stringify(doc));
+    console.log(` ✅ 재고 상태 업데이트: ${docId} → ${statusInfo.inventoryDeducted ? '완료' : '미완료'}`);
+
+    // 4. 서버 동기화
+    await saveDocumentSync(doc);
+
+    // 5. 이벤트 발송 (다른 컴포넌트에서 UI 업데이트)
+    window.dispatchEvent(new CustomEvent('documentInventoryStatusUpdated', {
+      detail: { docId, ...statusInfo }
+    }));
+
+    return true;
+  } catch (error) {
+    console.error('❌ 재고 상태 업데이트 실패:', error);
+    return false;
+  }
+}
+
+
 export const deleteDocumentSync = async (docId, docType) => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');

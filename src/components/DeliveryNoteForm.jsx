@@ -524,7 +524,7 @@ const DeliveryNoteForm = () => {
         });
         return; // 확인 다이얼로그에서 처리
       } else {
-        itemId = Date.now();
+        itemId = `delivery_${Date.now()}`;  // ✅ prefix 추가
       }
     }
 

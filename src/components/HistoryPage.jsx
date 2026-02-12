@@ -86,8 +86,17 @@ const HistoryPage = () => {
 
     window.addEventListener('documentsupdated', handleDocumentsUpdate);
 
+    // ✅ 재고 감소 상태 업데이트 이벤트 리스너
+    const handleInventoryStatusUpdate = () => {
+      console.log('📦 재고 상태 업데이트 감지 - 목록 새로고침');
+      loadHistory();
+    };
+
+    window.addEventListener('documentInventoryStatusUpdated', handleInventoryStatusUpdate);
+
     return () => {
       window.removeEventListener('documentsupdated', handleDocumentsUpdate);
+      window.removeEventListener('documentInventoryStatusUpdated', handleInventoryStatusUpdate);
     };
   }, []);
 
@@ -1418,8 +1427,8 @@ const HistoryPage = () => {
         ) : (
           sortedItems.map((item) => (
             <div
-              key={`${item.type}_${item.id} `}
-              className="list-item"
+              key={`${item.type}_${item.id}`}
+              className={`list-item ${item.inventoryDeducted ? 'inventory-deducted' : ''}`}
               onClick={() => {
                 setSelectedItem(item);
                 setView('details');
