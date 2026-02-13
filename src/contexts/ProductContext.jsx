@@ -37,7 +37,7 @@ const EXTRA_OPTIONS = {
     height: ["1500", "2000", "2500", "3000", "3500", "4000", "H4500", "H5000", "H5500", "H6000"],
     size: ["2090x800", "2090x1000"]
   },
-  하이랙: { size: ["45x150"], level: ["5단", "6단"] },
+  하이랙: { size: [], level: ["5단", "6단"] },
   스텐랙: { level: ["5단", "6단"], height: ["210"] },
   경량랙: { height: ["H750"] }
 };
@@ -851,6 +851,7 @@ export const ProductProvider = ({ children }) => {
       if (selectedType !== '하이랙') return null;
 
       // 카테고리명에서 색상 확인
+      if (categoryName?.includes('아이보리')) return '아이보리(볼트식)';
       if (categoryName?.includes('매트그레이') || categoryName?.includes('메트그레이')) return '메트그레이(볼트식)';
       if (categoryName?.includes('블루+오렌지') || categoryName?.includes('블루') || categoryName?.includes('오렌지')) {
         // 추가상품6의 경우 로드빔은 다른 형식
@@ -861,6 +862,7 @@ export const ProductProvider = ({ children }) => {
       }
 
       // 이름에서 색상 확인
+      if (name?.includes('아이보리')) return '아이보리(볼트식)';
       if (name?.includes('매트그레이') || name?.includes('메트그레이')) return '메트그레이(볼트식)';
       if (name?.includes('블루') || name?.includes('오렌지')) {
         if (name?.includes('빔') || name?.includes('로드빔')) {

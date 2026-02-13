@@ -60,8 +60,16 @@ export const generatePartId = (item) => {
     // 규격 정제
     let cleanSpec = String(specification || '')
       .replace(/\s+/g, '')
-      .replace(/\*/g, 'x')
-      .replace(/(270|450|600)kg/g, ''); // 단가용이므로 중량 제거
+      .replace(/\*/g, 'x');
+
+    // [New Rule] 하이랙 기둥은 Depth 무시 (60x108 -> 60x)
+    if (baseName === '기둥') {
+      // 사이즈60x108... -> 사이즈60x...
+      // 중량 제거 안 함 (60x108높이...270kg -> 60x높이...270kg)
+      cleanSpec = cleanSpec.replace(/사이즈(\d+)x\d+/, '사이즈$1x');
+    }
+
+    // DB 키는 중량 포함: 하이랙-기둥-높이200270kg
 
     return `하이랙-${baseName}-${cleanSpec}`;
   }
@@ -110,13 +118,22 @@ export const generateInventoryPartId = (item) => {
     else baseName = cleanName;
 
     // 색상 및 속성 정해진 패턴으로 구성
+    // 색상 및 속성 정해진 패턴으로 구성
     let colorAttr = '';
-    if (cleanName.includes('메트그레이') || cleanName.includes('매트그레이')) {
+
+    // 색상 감지 대상 문자열 (이름 + 색상 속성)
+    const targetStr = String(cleanName + (item.color || '') + (item.colorWeight || ''));
+
+    if (targetStr.includes('아이보리')) {
+      colorAttr = '아이보리(볼트식)';
+    } else if (targetStr.includes('메트그레이') || targetStr.includes('매트그레이')) {
       colorAttr = '메트그레이(볼트식)';
-    } else if (cleanName.includes('블루') && cleanName.includes('오렌지')) {
-      if (baseName === '로드빔' && cleanName.includes('빔')) {
+    } else if (targetStr.includes('블루') || targetStr.includes('오렌지')) {
+      // 600kg 빔/로드빔 특수 케이스
+      if ((baseName === '로드빔' || targetStr.includes('빔')) && targetStr.includes('600kg')) {
         colorAttr = '블루(기둥.선반)+오렌지(빔)';
       } else {
+        // 기본 270kg/450kg 등은 통합 색상명 사용
         colorAttr = '블루(기둥)+오렌지(가로대)(볼트식)';
       }
     }
@@ -136,8 +153,13 @@ export const generateInventoryPartId = (item) => {
 
     if (baseName === '기둥') {
       // 기둥: 사이즈WxD높이H[중량] (DB: 사이즈60x높이200270kg)
+      // [New Rule] Depth 무시 (60x108 -> 60x)
       const match = cleanSpec.match(/(\d+x\d*|\d+)높이(\d+)/) || cleanSpec.match(/(\d+x\d*|\d+)(\d+)/);
-      const sizePart = match ? match[1] : (cleanSpec.includes('x') ? cleanSpec : '60x108');
+      let sizePart = match ? match[1] : (cleanSpec.includes('x') ? cleanSpec : '60x108');
+
+      // 60x108 -> 60x
+      sizePart = sizePart.replace(/(\d+)x\d+/, '$1x');
+
       const heightPart = match ? match[2] : '150';
       finalSpec = `사이즈${sizePart}높이${heightPart}${weightAttr}`;
     } else if (baseName === '선반') {
@@ -262,6 +284,10 @@ export const EXTRA_TO_BASE_INVENTORY_MAPPING = {
   '하이랙-기둥60x200매트그레이-': '하이랙-기둥메트그레이(볼트식)270kg-사이즈60x108높이200270kg',
 
   // ========================================
+  // 하이랙 270kg 아이보리 선반/기둥 매핑 (삭제됨 - 사용자 미요청)
+  // ========================================
+
+  // ========================================
   // 하이랙 450kg 매핑 - 추가상품4 (메트그레이)
   // ========================================
   '하이랙-기둥60x150450kg-': '하이랙-기둥메트그레이(볼트식)450kg-사이즈60x108높이150450kg',
@@ -351,6 +377,10 @@ export const EXTRA_TO_BASE_PARTID_MAPPING = {
   '하이랙-45x200메트그레이기둥-': '하이랙-기둥-높이200270kg',
   '하이랙-60x150메트그레이기둥-': '하이랙-기둥-높이150270kg',
   '하이랙-60x200메트그레이기둥-': '하이랙-기둥-높이200270kg',
+
+  // ========================================
+  // 하이랙 270kg 아이보리 선반/기둥 (partId) 매핑 (삭제됨)
+  // ========================================
 
   // ========================================
   // 하이랙 450kg

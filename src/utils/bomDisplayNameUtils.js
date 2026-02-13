@@ -12,7 +12,9 @@
 export const extractColorFromColorWeight = (colorWeight, partName = '') => {
   if (!colorWeight) return '';
 
-  if (colorWeight.includes('메트그레이') || colorWeight.includes('매트그레이')) {
+  if (colorWeight.includes('아이보리')) {
+    return '아이보리';
+  } else if (colorWeight.includes('메트그레이') || colorWeight.includes('매트그레이')) {
     return '메트그레이';
   } else if (colorWeight.includes('블루') && colorWeight.includes('오렌지')) {
     // 블루+오렌지 조합인 경우 부품 종류에 따라 색상 결정
@@ -40,7 +42,7 @@ export const extractColorFromColorWeight = (colorWeight, partName = '') => {
 export const removeColorFromPartName = (partName) => {
   if (!partName) return '';
   // "기둥 메트그레이" → "기둥", "선반 오렌지" → "선반"
-  return partName.replace(/\s+(메트그레이|매트그레이|블루|오렌지)$/, '');
+  return partName.replace(/\s+(아이보리|메트그레이|매트그레이|블루|오렌지)$/, '');
 };
 
 /**
@@ -146,7 +148,9 @@ export const generateHighRackDisplayNameFromBaseName = (baseName, finalColorWeig
     // colorWeight에서 색상 추출
     let colorText = '';
     if (finalColorWeight) {
-      if (finalColorWeight.includes('메트그레이') || finalColorWeight.includes('매트그레이')) {
+      if (finalColorWeight.includes('아이보리')) {
+        colorText = '아이보리';
+      } else if (finalColorWeight.includes('메트그레이') || finalColorWeight.includes('매트그레이')) {
         colorText = '메트그레이';
       } else if (finalColorWeight.includes('블루') && finalColorWeight.includes('오렌지')) {
         // 블루+오렌지 조합인 경우 부품 종류에 따라 색상 결정
