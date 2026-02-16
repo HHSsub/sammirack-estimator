@@ -219,8 +219,8 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
                 const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
                 const qty = Number(item.quantity ?? 0);
 
-                // BOM에서 이미 계산된 totalPrice 사용
-                const total = Number(item.totalPrice ?? 0);
+                // ✅ 관리자 단가가 있으면 즉시 반영 (BOM 재생성 불필요)
+                const total = effectiveUnitPrice * qty;
 
                 return (
                   <tr key={key} style={{ borderBottom: '1px solid #ddd' }}>

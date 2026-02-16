@@ -3,12 +3,45 @@
 // 사용법: node scripts/unify_high_rack_depth.js [DB_PATH]
 // 기본 DB_PATH: /home/rocky/db/sammi.db
 
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-// 환경 변수 또는 인자에서 DB 경로 확인
-const DB_PATH = process.argv[2] || process.env.DB_PATH || '/home/rocky/db/sammi.db';
+let sqlite3;
+try {
+    // 1. 기본 경로 시도 (현재 폴더의 node_modules)
+    sqlite3 = require('sqlite3').verbose();
+} catch (e1) {
+    try {
+        // 2. sammirack-api 폴더의 node_modules 시도 (서버 배포 구조 가정)
+        // __dirname이 scripts 폴더일 경우 ../sammirack-api/node_modules/sqlite3
+        const apiModulePath = path.resolve(__dirname, '../sammirack-api/node_modules/sqlite3');
+        if (fs.existsSync(apiModulePath)) {
+            sqlite3 = require(apiModulePath).verbose();
+        } else {
+            throw new Error('Module not found in sammirack-api');
+        }
+    } catch (e2) {
+        try {
+            // 3. 상위 폴더의 node_modules 시도
+            const parentModulePath = path.resolve(__dirname, '../node_modules/sqlite3');
+            if (fs.existsSync(parentModulePath)) {
+                sqlite3 = require(parentModulePath).verbose();
+            } else {
+                throw new Error('Module not found in parent');
+            }
+        } catch (e3) {
+            console.error('❌ sqlite3 모듈을 찾을 수 없습니다.');
+            console.error('   이 스크립트는 sqlite3 모듈이 필요합니다.');
+            console.error('   해결 방법:');
+            console.error('   1. sammirack-api 폴더에서 npm install을 실행했는지 확인하세요.');
+            console.error('   2. 또는 scripts 폴더에서 다음을 실행하세요: npm install sqlite3');
+            process.exit(1);
+        }
+    }
+}
+
+// 절대경로로 DB 경로 활용 
+const DB_PATH = '/home/rocky/db/sammi.db';
 
 if (!fs.existsSync(DB_PATH)) {
     console.error(`❌ 데이터베이스 파일을 찾을 수 없습니다: ${DB_PATH}`);
@@ -81,9 +114,9 @@ async function migrate() {
             // SQLite는 ON CONFLICT 사용 가능하나 버전 따라 다르므로 조회 후 처리 안전하게
             const existing = await all("SELECT quantity FROM inventory WHERE part_id = ?", [newId]);
             if (existing.length > 0) {
-                await run("UPDATE inventory SET quantity = quantity + ? WHERE part_id = ?", [qty, newId]);
+                await run("UPDATE inventory SET quantity = quantity + ?, updated_at = datetime('now', 'localtime') WHERE part_id = ?", [qty, newId]);
             } else {
-                await run("INSERT INTO inventory (part_id, quantity) VALUES (?, ?)", [newId, qty]);
+                await run("INSERT INTO inventory (part_id, quantity, updated_at) VALUES (?, ?, datetime('now', 'localtime'))", [newId, qty]);
             }
         }
         console.log('   ✅ Inventory 테이블 마이그레이션 완료');
