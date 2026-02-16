@@ -214,10 +214,22 @@ export default function BOMDisplay({ bom, title, currentUser, selectedRackOption
               {sortedBom.map((item, index) => {
                 // 안전한 키 생성
                 const key = `${item.rackType || 'unknown'} ${item.size || ''} ${item.name || 'noname'}-${index}`;
-                const partId = generatePartId(item);
+                // ✅ BOM에 저장된 partId 우선 사용 (AdminPriceEditor 저장 키와 일치)
+                const partId = item.partId || generatePartId(item);
+                const generatedId = generatePartId(item);
                 const effectiveUnitPrice = getEffectiveUnitPrice(item);
-                const hasAdminPrice = adminPrices[partId] && adminPrices[partId].price > 0;
+                const hasAdminPrice = (adminPrices[partId] && adminPrices[partId].price > 0) ||
+                  (item.partId && adminPrices[generatedId]?.price > 0);
                 const qty = Number(item.quantity ?? 0);
+
+                // 🔍 디버깅: BOM 항목별 partId 비교
+                if (index === 0 || item.partId !== generatedId) {
+                  console.log(`🔍 [BOM #${index}] ${item.name || 'unknown'}`);
+                  console.log(`   item.partId (저장): "${item.partId || '없음'}"`);
+                  console.log(`   generatePartId:     "${generatedId}"`);
+                  console.log(`   사용된 partId:      "${partId}"`);
+                  console.log(`   관리자단가 존재: ${hasAdminPrice} | effectivePrice: ${effectiveUnitPrice} | 기본단가: ${item.unitPrice || 0}`);
+                }
 
                 // ✅ 관리자 단가가 있으면 즉시 반영 (BOM 재생성 불필요)
                 const total = effectiveUnitPrice * qty;

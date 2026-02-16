@@ -526,11 +526,29 @@ export const saveAdminPrice = (partId, price, partInfo = {}) => {
 
 // ✅ 실제 사용할 단가 계산 (우선순위: 관리자 수정 > 기존 단가)
 export const getEffectivePrice = (item) => {
-  const partId = generatePartId(item);
+  // ✅ BOM에 이미 저장된 partId가 있으면 우선 사용 (AdminPriceEditor 저장 키와 일치시킴)
+  const storedPartId = item.partId || null;
+  const generatedPartId = generatePartId(item);
+  const partId = storedPartId || generatedPartId;
   const adminPrices = loadAdminPrices();
 
+  // 🔍 디버깅: partId 비교 로그
+  if (storedPartId && storedPartId !== generatedPartId) {
+    console.warn(`⚠️ [getEffectivePrice] partId 불일치 감지!`);
+    console.warn(`  item.partId (저장된):  "${storedPartId}"`);
+    console.warn(`  generatePartId (생성): "${generatedPartId}"`);
+    console.warn(`  item: ${item.rackType} ${item.name} ${item.specification || ''}`);
+  }
+
   if (adminPrices[partId]?.price > 0) {
+    console.log(`✅ [getEffectivePrice] 관리자단가 적용: "${partId}" → ${adminPrices[partId].price}원 (기본: ${item.unitPrice || 0}원)`);
     return adminPrices[partId].price;
+  }
+
+  // ✅ fallback: partId와 generatePartId가 다를 수 있으므로 둘 다 확인
+  if (storedPartId && generatedPartId !== partId && adminPrices[generatedPartId]?.price > 0) {
+    console.log(`✅ [getEffectivePrice] fallback 관리자단가 적용: "${generatedPartId}" → ${adminPrices[generatedPartId].price}원`);
+    return adminPrices[generatedPartId].price;
   }
 
   return Number(item.unitPrice) || 0;
