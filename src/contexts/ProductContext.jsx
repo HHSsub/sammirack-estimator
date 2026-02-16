@@ -2328,7 +2328,7 @@ export const ProductProvider = ({ children }) => {
           } else {
             bomMap.set(displayKey, {
               ...bomItem,
-              partId: displayKey,
+              partId: bomItem.partId || generatePartId(bomItem), // ✅ 가격관리용 partId 보존 (색상 제거, inventoryId로 덮어쓰지 않음)
               quantity: bomItem.quantity || 0,
               totalPrice: bomItem.totalPrice || 0,
               unitPrice: bomItem.unitPrice || bomItem.unit_price || 0,
