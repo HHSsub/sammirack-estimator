@@ -1,0 +1,16 @@
+[Unit]
+Description=삼미랙 스마트스토어 실시간 주문 리스너
+After=network.target
+
+[Service]
+Type=simple
+User=rocky
+WorkingDirectory=/home/rocky/네이버커머스_청구서자동연결
+ExecStart=/usr/bin/python3 /home/rocky/네이버커머스_청구서자동연결/order_listener.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/rocky/order_listener.log
+StandardError=append:/home/rocky/order_listener.log
+
+[Install]
+WantedBy=multi-user.target
