@@ -37,7 +37,9 @@ from config import (
     POLL_INTERVAL_SECONDS,
     TOKEN_REFRESH_BUFFER_SECONDS,
     TOKEN_EXPIRES_IN_SECONDS,
+    SAMMIRACK_SERVER_URL,
 )
+
 
 # ─────────────────────────────────────────
 # KST 타임존 상수
@@ -357,74 +359,92 @@ def print_new_order(order):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# 5. 스마트스토어 파싱 (랙종류 + 옵션)
+# 5. 스마트스토어 파싱 (랙종류 필터링 + 옵션 파싱 + 그룹핑)
 # ═════════════════════════════════════════════════════════════════════════════
 
 import re as _re
 
-# 알려진 랙 종류 (상품명 앞에서 매핑)
-RACK_TYPE_MAP = {
-    "하이랙":     "하이랙",
-    "파렛트랙":   "파렛트랙",
-    "파래트랙":   "파렛트랙",
-    "파랫트랙":   "파렛트랙",
-    "중량랙":     "중량랙",
-    "경량랙":     "경량랙",
-    "스텐랙":     "스텐랙",
-    "올스텐랙":   "스텐랙",
-    "사이버랙":   "스텐랙",
-    "초스피드":   "경량랙",
-    "실버랙":     "경량랙",
+# ─── DRY_RUN 플래그 ────────────────────────────────────────────────────────
+# True : 콘솔 출력만 (DB 저장 안 함)  ← 1단계 기본값
+# False: 가비아 서버에 실제 POST       ← 2단계에서 전환
+DRY_RUN = True
+
+# ─── 지원 랙 타입 화이트리스트 ──────────────────────────────────────────────
+# admin_prices.json 기준 실제 존재하는 rack_type만 포함
+# 절대 다른 종류를 여기에 매핑(aliasing)하지 말 것
+SUPPORTED_RACK_PREFIXES = {
+    "하이랙":   "하이랙",
+    "파렛트랙": "파렛트랙",
+    "파래트랙": "파렛트랙",
+    "파랫트랙": "파렛트랙",
+    "중량랙":   "중량랙",
+    "경량랙":   "경량랙",
 }
 
+# ─── 비지원 랙 블랙리스트 (초스피드/실버랙/사이버랙/올스텐랙 등) ────────────
+# 이 키워드로 시작하는 주문은 리슨 단계에서 즉시 무시
+# 절대 다른 종류로 매핑하거나 분류하지 말 것
+UNSUPPORTED_RACK_PREFIXES = [
+    "초스피드", "실버랙", "사이버랙", "올스텐랙", "스텐랙",
+    "조립식 앵글", "앵글선반", "철제선반 경량", "철제선반 무볼트",
+]
 
-def extract_rack_type(product_name):
+# ─── 추가부품(addon) 판단 키워드 ─────────────────────────────────────────────
+ADDON_KEYWORDS = ["추가", "단추가", "선반추가", "기둥추가", "로드빔"]
+
+
+
+def is_supported_rack(product_name, option_str=""):
+    # type: (str, str) -> bool
+    """
+    스마트스토어 상품명(+옵션)이 sammirack-estimator 지원 랙 관련 주문인지 확인.
+    비지원 랙(초스피드/실버/사이버/올스텐/스텐)은 False → 주문 전체 skip.
+
+    단, 추가부품(선반추가/기둥추가/로드빔 등):
+    - 상품명 또는 옵션 중 하나라도 ADDON_KEYWORDS 포함 시 True (통과)
+    - 예) "1460(철판형 1단)" 상품명에는 없어도 옵션에 "로드빔+" 있으면 통과
+    """
+    name     = (product_name or "").strip()
+    opt_str  = (option_str or "").strip()
+    combined = name + " " + opt_str
+
+    # 추가부품 키워드 → 통과 (그룹 내 addon으로 처리)
+    for kw in ADDON_KEYWORDS:
+        if kw in combined:
+            return True
+
+    # 비지원 랙 블랙리스트
+    for prefix in UNSUPPORTED_RACK_PREFIXES:
+        if name.startswith(prefix):
+            return False
+    # 지원 랙 화이트리스트
+    for prefix in SUPPORTED_RACK_PREFIXES:
+        if name.startswith(prefix):
+            return True
+    # 알 수 없는 상품명도 skip (안전 우선)
+    return False
+
+
+
+def get_rack_type(product_name):
     # type: (str) -> str
-    """
-    상품명 맨 앞 단어로 랙 종류를 결정합니다.
-    뒤에 오는 SEO 키워드는 무시.
-
-    예) "하이랙 철제선반 앵글 중량랙 물류 ..." → "하이랙"
-        "파렛트랙 중량랙 앵글 ..."              → "파렛트랙"
-        "중량랙 무볼트 철제선반 ..."             → "중량랙"
-    """
+    """지원 랙의 정규화된 rackType 반환. 비지원이면 빈 문자열."""
     name = (product_name or "").strip()
-    for kw, rack_type in RACK_TYPE_MAP.items():
-        if name.startswith(kw):
+    for prefix, rack_type in SUPPORTED_RACK_PREFIXES.items():
+        if name.startswith(prefix):
             return rack_type
-    # 매핑 실패 시 첫 단어 반환
-    return name.split()[0] if name else "기타"
+    return ""
 
 
 def _strip_segment_label(seg):
     # type: (str) -> str
-    """
-    세그먼트 앞의 레이블을 제거합니다.
-    지원 패턴:
-      "A.색상: ..."   → "색상: ..."
-      "B.선반(...): ..."
-      "1 . 폭(앞뒤): ..."
-      "2 . 높이: ..."
-    """
-    # 영문/한글 한 글자 + 점/대시 + 공백 (예: A., B., C.)
     seg = _re.sub(r'^[A-Za-z]\s*[.\-]\s*', '', seg).strip()
-    # 숫자 레이블 (예: 1 . , 2 . )
     seg = _re.sub(r'^\d+\s*[.\-]\s*', '', seg).strip()
     return seg
 
 
 def _extract_size_numbers(val):
     # type: (str) -> list
-    """
-    규격 값에서 순수 치수 숫자만 추출합니다.
-    중량(kg) 숫자는 제외합니다.
-
-    예)
-      "60(폭)x200(가로)x200(높이)"  → [60, 200, 200]
-      "800x1480(연결)700kg선반형"    → [800, 1480]   ← 700kg 제외
-      "45x125"                       → [45, 125]
-    """
-    # kg 앞 숫자 제거 (예: 700kg, 2000Kg)
     val_no_weight = _re.sub(r'\d+\s*[kK][gG]', '', val)
     nums = _re.findall(r'\d+', val_no_weight)
     return [int(n) for n in nums]
@@ -432,7 +452,6 @@ def _extract_size_numbers(val):
 
 def _detect_connection_type(val):
     # type: (str) -> str
-    """연결형/독립형 여부 탐지"""
     if "연결" in val:
         return "연결형"
     if "독립" in val:
@@ -443,50 +462,31 @@ def _detect_connection_type(val):
 def parse_smartstore_option(option_str):
     # type: (str) -> dict
     """
-    스마트스토어 옵션 문자열을 파싱합니다.
-
-    반환 키:
-      rack_type_hint  - 연결형/독립형 힌트 (없을 수 있음)
-      color           - 색상 (예: "블루(기둥)+오렌지(가로대)(고중량)270kg")
-      width           - 폭 cm  (int)
-      length          - 가로 cm (int)
-      height          - 높이 cm (int)
-      dan             - 단수 (예: "4단")
-      extra_*         - 기타 옵션
-      원본옵션        - 원본 문자열
+    스마트스토어 옵션 문자열 파싱.
+    반환 키: rack_type_hint, color, width, length, height, dan, size_raw, extra_*, 원본옵션
     """
     if not option_str or option_str == "(옵션없음)":
         return {"원본옵션": option_str or ""}
 
     result = {"원본옵션": option_str}
-
     segments = [s.strip() for s in option_str.split("/")]
 
     for seg in segments:
         seg = _strip_segment_label(seg)
         if ":" not in seg:
             continue
-
         colon_idx = seg.index(":")
         raw_key = seg[:colon_idx].strip()
         raw_val = seg[colon_idx + 1:].strip()
-
         key_lower = raw_key.lower()
 
-        # ─── 색상 ───────────────────────────────────────────
         if "색상" in raw_key:
             result["color"] = raw_val
-
-        # ─── 규격 (폭/가로/높이) ────────────────────────────
         elif any(k in raw_key for k in ["선반", "폭", "규격", "사이즈", "길이"]) or "cm" in key_lower:
             nums = _extract_size_numbers(raw_val)
             conn = _detect_connection_type(raw_val)
             if conn:
                 result["rack_type_hint"] = conn
-
-            # 숫자 개수에 따라 폭/가로(/높이) 분배
-            # 파렛트랙: "폭x길이" 키 → nums[0]=폭, nums[1]=가로
-            # 하이랙:   "선반(폭+가로)x기둥(높이)" → nums[0]=폭, nums[1]=가로, nums[2]=높이
             if len(nums) >= 3:
                 result["width"]  = nums[0]
                 result["length"] = nums[1]
@@ -496,10 +496,7 @@ def parse_smartstore_option(option_str):
                 result["length"] = nums[1]
             elif len(nums) == 1:
                 result["width"]  = nums[0]
-
             result["size_raw"] = raw_val
-
-        # ─── 높이 (별도 키로 오는 경우, 파렛트랙 등) ────────
         elif "높이" in raw_key:
             nums = _extract_size_numbers(raw_val)
             if nums:
@@ -507,146 +504,372 @@ def parse_smartstore_option(option_str):
             conn = _detect_connection_type(raw_val)
             if conn and "rack_type_hint" not in result:
                 result["rack_type_hint"] = conn
-
-        # ─── 단수 ───────────────────────────────────────────
         elif "단수" in raw_key or raw_key == "단":
             result["dan"] = raw_val
-
-        # ─── 추가 단/선반 (단추가 상품 등) ──────────────────
         elif "추가" in raw_key or "단추가" in raw_key:
             result["extra_add"] = raw_val
-
-        # ─── 기타 ───────────────────────────────────────────
         else:
             result["extra_{}".format(raw_key)] = raw_val
 
     return result
 
 
-def build_purchase_order_item(order):
-    # type: (dict) -> dict
+def classify_row(order):
+    # type: (dict) -> str
     """
-    주문 dict → PurchaseOrderForm items[] 한 행.
+    주문 1행이 메인 랙인지 추가부품(addon)인지 분류.
 
-    DB의 items[].name 형식 (실제 purchase 문서 기준):
-      "{랙종류} {연결/독립형} {폭}x{가로} {높이} {단수} {색상}"
-      예) "하이랙 독립형 60x150 150 2단 아이보리(볼트식)270kg"
+    ★ 버그 수정: ADDON_KEYWORDS 체크가 반드시 최우선이어야 함.
+      이전 코드는 parse_option 결과 색상/규격 체크가 먼저 실행되어
+      '아이보리선반 단추가(볼트식)' 같은 상품이 items[]로 잘못 분류됨.
 
-    단추가/추가선반 등 단일 부품 주문은 상품명을 그대로 사용.
+    반환: "main" | "addon"
     """
-    product_name = order.get("상품명", "")
-    option_str   = order.get("옵션", "")
+    product_name = str(order.get("상품명", "") or "")
+    option_str   = str(order.get("옵션", "") or "")
+    combined     = product_name + " " + option_str
+
+    # ① ADDON 키워드 있으면 즉시 addon (색상/규격 체크 불필요)
+    for kw in ADDON_KEYWORDS:
+        if kw in combined:
+            return "addon"
+
+    # ② 지원 랙 이름으로 시작하면 파싱 없이 바로 main (파렛트랙 옵션 구조 호환)
+    for prefix in SUPPORTED_RACK_PREFIXES:
+        if product_name.strip().startswith(prefix):
+            return "main"
+
+    # ③ 색상 또는 규격(폭) 있으면 main
+    parsed = parse_smartstore_option(option_str)
+    return "main" if (parsed.get("color") or parsed.get("width") or parsed.get("size_raw")) else "addon"
+
+
+def _parse_payment_dt(dt_str):
+    # type: (str) -> Optional[datetime]
+    """결제완료시각 문자열을 파싱하여 datetime 반환."""
+    try:
+        dt_str2 = str(dt_str or "").strip()
+        if _re.search(r'[+-]\d{2}:\d{2}$', dt_str2):
+            return datetime.fromisoformat(dt_str2)
+        return datetime.strptime(dt_str2[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=KST)
+    except Exception:
+        return None
+
+
+def group_orders_by_session(orders):
+    # type: (List[dict]) -> List[List[dict]]
+    """
+    동일 구매자명 + 결제완료시각(분단위) 기준으로 주문을 묶습니다.
+    같은 분(minute) 내 같은 구매자 = 한 번의 장바구니 결제 = 1개 document.
+    """
+    groups = {}  # type: Dict[tuple, list]
+    for order in orders:
+        buyer  = str(order.get("구매자명", "") or "")
+        dt     = _parse_payment_dt(order.get("결제완료시각", ""))
+        tm_key = dt.strftime("%Y%m%d%H%M") if dt else ""
+        key    = (buyer, tm_key)
+        groups.setdefault(key, []).append(order)
+    return list(groups.values())
+
+
+def build_item_name(order):
+    # type: (dict) -> str
+    """주문 1행 → items[].name 문자열 생성."""
+    product_name = str(order.get("상품명", "") or "")
+    option_str   = str(order.get("옵션", "") or "")
     parsed       = parse_smartstore_option(option_str)
-    rack_type    = extract_rack_type(product_name)
+    rack_type    = get_rack_type(product_name)
 
-    qty   = int(order.get("주문수량", 1)) or 1
-    total = int(order.get("최종금액", 0))
+    if not parsed.get("color") and not parsed.get("width"):
+        return product_name  # 추가부품은 상품명 그대로
+
+    parts = [rack_type]
+    hint = parsed.get("rack_type_hint", "")
+    if hint:
+        parts.append(hint)
+    if parsed.get("width") and parsed.get("length"):
+        parts.append("{}x{}".format(parsed["width"], parsed["length"]))
+    if parsed.get("height"):
+        parts.append(str(parsed["height"]))
+    if parsed.get("dan"):
+        m = _re.match(r'(\d+단)', str(parsed["dan"]))
+        parts.append(m.group(1) if m else str(parsed["dan"]))
+    if parsed.get("color"):
+        parts.append(parsed["color"])
+    return " ".join(parts)
+
+
+def build_material_item(order, main_rack_type=""):
+    # type: (dict, str) -> dict
+    """
+    추가부품(addon) 주문 1행 → materials[] 한 행.
+    materials 구조: name / rackType / specification / quantity / unitPrice / totalPrice / note
+    """
+    product_name = str(order.get("상품명", "") or "")
+    option_str   = str(order.get("옵션", "") or "")
+    qty_str      = str(order.get("주문수량", "1") or "1")
+    total_str    = str(order.get("최종금액", "0") or "0")
+
+    try:
+        qty = int(qty_str)
+    except ValueError:
+        qty = 1
+    try:
+        total = int(total_str.replace(",", ""))
+    except ValueError:
+        total = 0
     unit_price = total // qty if qty else total
 
-    # 단추가/추가선반 같은 단일 부품 상품은 옵션에 색상/규격 없음
-    # → 상품명 자체가 품명 (예: "60X108(오렌지선반)")
-    is_addon = not parsed.get("color") and not parsed.get("width")
+    # 괄호 안 텍스트에서 부품명 추출 (예: "45X200(메트그레이선반)" → "메트그레이선반")
+    m = _re.search(r'[（(]([^）)]+)[）)]', product_name)
+    mat_name = m.group(1) if m else product_name
 
-    if is_addon:
-        item_name = product_name
-    else:
-        # DB 형식: "{랙종류} {연결/독립형} {폭}x{가로} {높이} {단수} {색상}"
-        parts = [rack_type]
+    # 규격: 상품명에서 숫자×숫자 추출
+    m2 = _re.search(r'(\d+)[xX×](\d+)', product_name)
+    spec = "{}x{}".format(m2.group(1), m2.group(2)) if m2 else product_name
 
-        hint = parsed.get("rack_type_hint", "")
-        if hint:
-            parts.append(hint)
-
-        if parsed.get("width") and parsed.get("length"):
-            parts.append("{}x{}".format(parsed["width"], parsed["length"]))
-
-        if parsed.get("height"):
-            parts.append(str(parsed["height"]))
-
-        if parsed.get("dan"):
-            # "4단" → "4단" 그대로
-            dan = parsed["dan"]
-            # "1단(철판형)" 같이 괄호 있으면 앞 숫자+단만 추출
-            m = _re.match(r'(\d+단)', dan)
-            parts.append(m.group(1) if m else dan)
-
-        if parsed.get("color"):
-            parts.append(parsed["color"])
-
-        item_name = " ".join(parts)
+    # 로드빔 계열 처리
+    if "로드빔" in option_str or "로드빔" in product_name:
+        mat_name = "로드빔 + 철판형"
+        mw = _re.search(r'(\d+)kg', option_str, _re.IGNORECASE)
+        if mw:
+            mat_name += " {}kg".format(mw.group(1))
+        mn = _re.search(r'(\d{3,4})\(', product_name)
+        spec = mn.group(1) if mn else spec
+    elif "선반" in mat_name:
+        mat_name = _re.sub(r'([가-힣])선반', r'\1 선반', mat_name)
+    elif "기둥" in mat_name:
+        mat_name = _re.sub(r'([가-힣])기둥', r'\1 기둥', mat_name)
 
     return {
-        "name":       item_name,
+        "name":          mat_name,
+        "rackType":      main_rack_type,
+        "specification": spec,
+        "quantity":      qty,
+        "unitPrice":     unit_price,
+        "totalPrice":    total,
+        "note":          "",
+    }
+
+
+def _safe_int(val):
+    # type: (object) -> int
+    try:
+        return int(str(val or "0").replace(",", ""))
+    except ValueError:
+        return 0
+
+
+def build_grouped_document(group):
+    # type: (List[dict]) -> dict
+    """
+    같은 세션으로 묶인 주문 그룹 → documents DB 한 행.
+
+    - 메인 랙 주문 → items[]
+    - 추가부품 주문 → materials[]
+    - 금액은 그룹 전체 합산
+    - doc_id는 그룹 내 가장 작은 상품주문번호 기준
+    - camelCase + snake_case 필드 동시 포함 (React 웹앱 + DB 양쪽 호환)
+    """
+    group_sorted = sorted(group, key=lambda r: str(r.get("상품주문번호", "")))
+
+    mains  = [r for r in group_sorted if classify_row(r) == "main"]
+    addons = [r for r in group_sorted if classify_row(r) == "addon"]
+
+    # 메인 랙이 없을 경우 전체를 main으로 처리 (단독 주문 등)
+    if not mains:
+        mains  = group_sorted
+        addons = []
+
+    main_rack_type = get_rack_type(mains[0].get("상품명", "")) if mains else ""
+
+    # items[] 생성
+    items = []
+    for r in mains:
+        qty   = _safe_int(r.get("주문수량", 1)) or 1
+        total = _safe_int(r.get("최종금액", 0))
+        items.append({
+            "name":       build_item_name(r),
+            "unit":       "개",
+            "quantity":   qty,
+            "unitPrice":  total // qty if qty else total,
+            "totalPrice": total,
+            "note":       str(r.get("옵션", "") or ""),
+        })
+
+    # materials[] 생성
+    materials = [build_material_item(r, main_rack_type) for r in addons]
+
+    # 금액 합산
+    subtotal     = sum(_safe_int(r.get("최종금액", 0)) for r in group_sorted)
+    tax          = round(subtotal * 0.1)
+    total_amount = subtotal + tax
+
+    # 대표 행 (가장 앞 주문)
+    first     = group_sorted[0]
+    order_id  = str(first.get("상품주문번호", ""))
+    now_iso   = datetime.now(KST).strftime("%Y-%m-%dT%H:%M:%S.000+09:00")
+    dt_str    = str(first.get("결제완료시각", "") or "")
+    date_part = dt_str.split("T")[0] if "T" in dt_str else datetime.now(KST).strftime("%Y-%m-%d")
+
+    doc_id      = "purchase_ss_{}".format(order_id)
+    doc_num     = "SS-{}".format(order_id[-10:]) if len(order_id) >= 10 else "SS-{}".format(order_id)
+    company     = str(first.get("수취인명") or first.get("구매자명") or "")
+    notes_str   = "배송지: {} | 연락처: {} | 수취인: {}".format(
+        str(first.get("배송지", "") or ""),
+        str(first.get("연락처", "") or ""),
+        str(first.get("수취인명", "") or ""),
+    )
+
+    return {
+        # ── DB 컬럼 (snake_case) ─────────────────────────────
+        "doc_id":          doc_id,
+        "date":            date_part,
+        "document_number": doc_num,
+        "company_name":    company,
+        "biz_number":      "",
+        "items":           items,
+        "materials":       materials,
+        "subtotal":        subtotal,
+        "tax":             tax,
+        "total_amount":    total_amount,
+        "notes":           notes_str,
+        "top_memo":        "",
+        "created_at":      now_iso,
+        "updated_at":      now_iso,
+        "type":            "purchase",
+        # ── React 웹앱 호환 추가 필드 (camelCase) ─────────────
+        # realtimeAdminSync.js 및 PurchaseOrderForm.jsx에서 id/type 필수
+        "id":              doc_id,
+        "documentNumber":  doc_num,
+        "companyName":     company,
+        "bizNumber":       "",
+        "totalAmount":     total_amount,
+        "topMemo":         "",
+        "purchaseNumber":  doc_num,
+        "customerName":    company,
+        "status":          "진행 중",
+        "createdAt":       now_iso,
+        "updatedAt":       now_iso,
+        # ── 디버깅 메타 (저장 시 제외) ───────────────────────
+        "_group_size":     len(group_sorted),
+        "_buyer":          str(first.get("구매자명", "") or ""),
+        "_mains_count":    len(mains),
+        "_addons_count":   len(addons),
+        "_rack_type":      main_rack_type,
+    }
+
+
+def print_dry_run(payload):
+    # type: (dict) -> None
+    """
+    드라이런 모드: 생성될 document 전체 구조를 콘솔에 출력합니다.
+    실제 DB 저장은 하지 않습니다 (DRY_RUN=True 상태).
+    """
+    print()
+    print("[DRY-RUN] " + "=" * 58)
+    print("  doc_id          : {}".format(payload["doc_id"]))
+    print("  document_number : {}".format(payload["document_number"]))
+    print("  date            : {}".format(payload["date"]))
+    print("  company_name    : {}".format(payload["company_name"]))
+    print("  type            : {}".format(payload["type"]))
+    print("  그룹 주문수     : {}건 (메인랙 {}행 / 추가부품 {}행)".format(
+        payload["_group_size"], payload["_mains_count"], payload["_addons_count"]
+    ))
+    print()
+    print("  [items] {}행:".format(len(payload["items"])))
+    for i, item in enumerate(payload["items"], 1):
+        print("    {} {}개  단가:{:,}  합계:{:,}".format(
+            item["name"], item["quantity"], item["unitPrice"], item["totalPrice"]
+        ))
+    print()
+    print("  [materials] {}행:".format(len(payload["materials"])))
+    for i, mat in enumerate(payload["materials"], 1):
+        print("    {} | {} | {} | {}개 | {:,}원".format(
+            mat["name"], mat["rackType"], mat["specification"],
+            mat["quantity"], mat["totalPrice"]
+        ))
+    print()
+    print("  subtotal   : {:,}원".format(payload["subtotal"]))
+    print("  tax        : {:,}원".format(payload["tax"]))
+    print("  total      : {:,}원".format(payload["total_amount"]))
+    print("  notes      : {}".format(payload["notes"][:80]))
+    print("[DRY-RUN] " + "=" * 58)
+    print("  ※ DRY_RUN=True: 실제 DB 저장 안 함. 확인 후 False로 전환")
+    print()
+
+
+# ── 하위 호환: 기존 단건 처리 함수 (2단계에서 제거 예정) ─────────────────────
+def build_purchase_order_item(order):
+    # type: (dict) -> dict
+    """[레거시] 단건 주문 → items[] 한 행. 2단계에서 build_grouped_document로 대체됨."""
+    qty   = int(order.get("주문수량", 1) or 1)
+    total = int(order.get("최종금액", 0) or 0)
+    return {
+        "name":       build_item_name(order),
         "unit":       "개",
         "quantity":   qty,
-        "unitPrice":  unit_price,
+        "unitPrice":  total // qty if qty else total,
         "totalPrice": total,
-        "note":       option_str,   # 원본 옵션 비고에 보존
+        "note":       str(order.get("옵션", "") or ""),
     }
 
 
 def build_purchase_order_payload(order):
     # type: (dict) -> dict
-    """
-    주문 dict → documents DB 행 + PurchaseOrderForm.formData 구조.
+    """[레거시] 단건 주문 → document 페이로드. 2단계에서 build_grouped_document로 대체됨."""
+    item    = build_purchase_order_item(order)
+    rack_type = get_rack_type(order.get("상품명", ""))
 
-    DB 스키마:
-      doc_id, date, document_number, company_name, biz_number,
-      items (JSON), materials (JSON),
-      subtotal, tax, total_amount, notes, top_memo,
-      created_at, updated_at, type
-    """
-    parsed   = parse_smartstore_option(order.get("옵션", ""))
-    item     = build_purchase_order_item(order)
-    rack_type = extract_rack_type(order.get("상품명", ""))
-
-    subtotal     = int(order.get("최종금액", 0))
+    subtotal     = int(order.get("최종금액", 0) or 0)
     tax          = round(subtotal * 0.1)
     total_amount = subtotal + tax
 
-    payment_date = order.get("결제완료시각", "") or ""
-    date_part = payment_date.split("T")[0] if "T" in payment_date else datetime.now(KST).strftime("%Y-%m-%d")
+    payment_date = str(order.get("결제완료시각", "") or "")
+    date_part    = payment_date.split("T")[0] if "T" in payment_date else datetime.now(KST).strftime("%Y-%m-%d")
 
     order_id   = str(order.get("상품주문번호", ""))
     doc_number = "SS-{}".format(order_id[-10:]) if len(order_id) >= 10 else "SS-{}".format(order_id)
     doc_id     = "purchase_ss_{}".format(order_id)
-
-    now_iso = datetime.now(KST).strftime("%Y-%m-%dT%H:%M:%S.000+09:00")
+    now_iso    = datetime.now(KST).strftime("%Y-%m-%dT%H:%M:%S.000+09:00")
 
     return {
-        # ── documents DB 컬럼 직접 매핑 ──────────────────────
         "doc_id":          doc_id,
         "date":            date_part,
         "document_number": doc_number,
-        "company_name":    order.get("구매자명", ""),
+        "company_name":    str(order.get("구매자명", "") or ""),
         "biz_number":      "",
         "items":           [item],
-        "materials":       [],          # BOM: sammirack-api 연동 후 채움
+        "materials":       [],
         "subtotal":        subtotal,
         "tax":             tax,
         "total_amount":    total_amount,
         "notes":           "배송지: {} | 연락처: {} | 수취인: {}".format(
-                               order.get("배송지", ""),
-                               order.get("연락처", ""),
-                               order.get("수취인명", "")
+                               str(order.get("배송지", "") or ""),
+                               str(order.get("연락처", "") or ""),
+                               str(order.get("수취인명", "") or ""),
                            ),
         "top_memo":        "",
         "created_at":      now_iso,
         "updated_at":      now_iso,
         "type":            "purchase",
-        # ── 파싱 결과 (디버깅용) ─────────────────────────────
         "_rack_type":      rack_type,
-        "_parsed_option":  parsed,
+        "_parsed_option":  parse_smartstore_option(str(order.get("옵션", "") or "")),
         "_smartstore":     order,
     }
 
 
 
+
+
+
+
+
 # ═════════════════════════════════════════════════════════════════════════════
-# 6. 저장 (CSV 단일 저장)
+# 6. 저장 (CSV + 가비아 DB)
 # ═════════════════════════════════════════════════════════════════════════════
 
-# CSV 컬럼 순서
+# CSV 컨럼 순서
 ORDER_CSV_FIELDS = [
     "상품주문번호",
     "결제완료시각",
@@ -677,6 +900,64 @@ def save_order_to_csv(order, log_dir):
     return csv_path
 
 
+def save_document_to_server(payload):
+    # type: (dict) -> bool
+    """
+    가비아 서버의 sammirack-estimator API에 documents를 POST합니다.
+    DRY_RUN=False 시에만 실제 호출됩니다.
+
+    API: POST {SAMMIRACK_SERVER_URL}/documents/save
+    Body: { docId: str, ...document_fields }
+
+    반환: True(성공) / False(실패)
+    """
+    if DRY_RUN:
+        print("[DRY-RUN] save_document_to_server 실제 호출 안 함 (DRY_RUN=True)")
+        return False
+
+    # _로 시작하는 디버깅 필드 제외 (설계 외 DB 저장 불필요)
+    doc_id = payload.get("doc_id") or payload.get("id", "")
+    clean_payload = {k: v for k, v in payload.items() if not k.startswith("_")}
+    clean_payload["docId"] = doc_id
+
+    # items / materials 는 JSON 문자열로 직렬화 후 전송
+    if isinstance(clean_payload.get("items"), list):
+        clean_payload["items"] = json.dumps(clean_payload["items"], ensure_ascii=False)
+    if isinstance(clean_payload.get("materials"), list):
+        clean_payload["materials"] = json.dumps(clean_payload["materials"], ensure_ascii=False)
+
+    url = "{}/documents/save".format(SAMMIRACK_SERVER_URL)
+    headers = {"Content-Type": "application/json"}
+
+    proxies = PROXIES if USE_PROXY else None
+
+    try:
+        resp = requests.post(
+            url,
+            json=clean_payload,
+            headers=headers,
+            proxies=proxies,
+            timeout=30,
+        )
+        if resp.status_code in (200, 201):
+            print("[DB-SAVE] 저장 성공: {} (HTTP {})".format(doc_id, resp.status_code))
+            return True
+        else:
+            print("[DB-ERROR] HTTP {} | {}".format(resp.status_code, resp.text[:200]))
+            return False
+    except requests.exceptions.ConnectionError:
+        print("[DB-ERROR] 서버 연결 실패: {}".format(url))
+        return False
+    except requests.exceptions.Timeout:
+        print("[DB-ERROR] 서버 응답 시간 초과 (30서)")
+        return False
+    except Exception as e:
+        print("[DB-ERROR] 예상치 못한 오류: {}".format(e))
+        return False
+
+
+
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -690,36 +971,43 @@ class OrderListener(object):
     동작:
       1. POLL_INTERVAL_SECONDS 마다 최근 결제 완료 주문 목록 조회
       2. 이전에 본 상품주문번호를 제외 → 새 주문만 필터링
-      3. 새 주문 발견 시 상세 조회 후 콘솔 출력 + 파일 저장
-      4. on_new_order 콜백이 등록된 경우 함께 호출 (자동화 연결용)
+      3. 비지원 낙 종류 필터링 (is_supported_rack)
+      4. 동일 구매자+분 기준 그룹핑 → 한 폴링에서 수신한 주문 → 그룹단위 처리
+      5. DRY_RUN=True:〼콘솔 드라이런 출력 / False:실제 DB POST
     """
 
     def __init__(self, on_new_order=None):
-        self.token_mgr = TokenManager()
-        self.on_new_order = on_new_order
-        self._seen_ids = set()   # type: set
-        self._running = False
+        self.token_mgr    = TokenManager()
+        self.on_new_order = on_new_order   # 레거시 콜백 (미사용)
+        self._seen_ids    = set()          # type: set
+        self._running     = False
+        self.log_dir      = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "order_logs"
+        )
+        os.makedirs(self.log_dir, exist_ok=True)
 
     def start(self):
-        """리스너를 시작합니다. Ctrl+C로 종료."""
+        """\ub9ac\uc2a4\ub108\ub97c \uc2dc\uc791\ud569\ub2c8\ub2e4. Ctrl+C\ub85c \uc885\ub8cc."""
         self._running = True
         self._setup_signal_handler()
 
         print()
-        print("=" * 60)
-        print("  삼미랙 스마트스토어 실시간 주문 리스너 시작")
-        print("  폴링 주기: {}초".format(POLL_INTERVAL_SECONDS))
+        print("=" * 62)
+        print("  \uc0bc\ubbf8\ub799 \uc2a4\ub9c8\ud2b8\uc2a4\ud1a0\uc5b4 \uc2e4\uc2dc\uac04 \uc8fc\ubb38 \ub9ac\uc2a4\ub108 \uc2dc\uc791")
+        print("  \ud3f4\ub9c1 \uc8fc\uae30: {}\ucd08".format(POLL_INTERVAL_SECONDS))
+        print("  \ubaa8\ub4dc: {}".format("[DRY-RUN] \ucf58\uc194 \ucd9c\ub825\ub9cc (DB \uc800\uc7a5 \uc548 \ud568)" if DRY_RUN else "[LIVE] \uc2e4\uc81c DB \uc800\uc7a5 \ud65c\uc131"))
         if USE_PROXY:
-            print("  프록시: 사용 중 ({})".format(PROXIES.get("https", "")))
+            print("  \ud504\ub85d\uc2dc: \uc0ac\uc6a9 \uc911 ({})".format(PROXIES.get("https", "")))
         else:
-            print("  프록시: 미사용 (서버 직접 요청)")
-        print("  종료: Ctrl+C")
-        print("=" * 60)
+            print("  \ud504\ub85d\uc2dc: \ubbf8\uc0ac\uc6a9 (\uc11c\ubc84 \uc9c1\uc811 \uc694\uccad)")
+        print("  sammirack API: {}".format(SAMMIRACK_SERVER_URL))
+        print("  \uc885\ub8cc: Ctrl+C")
+        print("=" * 62)
         print()
 
-        print("[INIT] 기존 주문 목록 초기화 중...")
+        print("[INIT] \uae30\uc874 \uc8fc\ubb38 \ubaa9\ub85d \ucd08\uae30\ud654 \uc911...")
         self._poll(init_run=True)
-        print("[INIT] 완료. 이 시각 이후의 새 주문부터 감지합니다.")
+        print("[INIT] \uc644\ub8cc. \uc774 \uc2dc\uac01 \uc774\ud6c4\uc758 \uc0c8 \uc8fc\ubb38\ubd80\ud130 \uac10\uc9c0\ud569\ub2c8\ub2e4.")
         print()
 
         while self._running:
@@ -729,7 +1017,7 @@ class OrderListener(object):
 
     def stop(self):
         self._running = False
-        print("\n[STOP] 리스너를 종료합니다...")
+        print("\n[STOP] \ub9ac\uc2a4\ub108\ub97c \uc885\ub8cc\ud569\ub2c8\ub2e4...")
 
     def _setup_signal_handler(self):
         def _handler(sig, frame):
@@ -738,100 +1026,100 @@ class OrderListener(object):
         signal.signal(signal.SIGINT, _handler)
 
     def _poll(self, init_run=False):
-        """한 번의 폴링 사이클을 실행합니다."""
+        """\ud55c \ubc88\uc758 \ud3f4\ub9c1 \uc0ac\uc774\ud074\uc744 \uc2e4\ud589\ud569\ub2c8\ub2e4."""
         now = datetime.now(KST)
 
         if init_run:
-            look_back_seconds = 600  # 초기: 최근 10분 조회 → seen 등록
+            look_back_seconds = 600
         else:
-            look_back_seconds = POLL_INTERVAL_SECONDS * 2  # 여유 2배
+            look_back_seconds = POLL_INTERVAL_SECONDS * 2
 
         from_dt = now - timedelta(seconds=look_back_seconds)
-        to_dt = now
+        to_dt   = now
 
         try:
             product_order_ids = fetch_recent_product_order_ids(
                 self.token_mgr, from_dt, to_dt
             )
         except Exception as e:
-            print("[ERROR] 주문 목록 조회 실패: {}".format(e))
+            print("[ERROR] \uc8fc\ubb38 \ubaa9\ub85d \uc870\ud68c \uc2e4\ud328: {}".format(e))
             return
 
         if not init_run:
             ts_str = now.strftime("%H:%M:%S")
-            print("[POLL] {} | 조회: {}건".format(ts_str, len(product_order_ids)), end="")
+            print("[POLL] {} | \uc870\ud68c: {}\uac74".format(ts_str, len(product_order_ids)), end="")
 
         new_ids = [pid for pid in product_order_ids if pid not in self._seen_ids]
         self._seen_ids.update(product_order_ids)
 
         if init_run:
-            print("  → 기존 주문 {}건 등록 완료".format(len(self._seen_ids)))
+            print("  \u2192 \uae30\uc874 \uc8fc\ubb38 {}\uac74 \ub4f1\ub85d \uc644\ub8cc".format(len(self._seen_ids)))
             return
 
         if not new_ids:
-            print("  → 새 주문 없음")
+            print("  \u2192 \uc0c8 \uc8fc\ubb38 \uc5c6\uc74c")
             return
 
-        print("  → [NEW] 새 주문 {}건 발견!".format(len(new_ids)))
+        print("  \u2192 [NEW] \uc0c8 \uc8fc\ubb38 {}\uac74 \ubc1c\uacac!".format(len(new_ids)))
 
         try:
             orders = fetch_order_details(self.token_mgr, new_ids)
         except Exception as e:
-            print("[ERROR] 주문 상세 조회 실패: {}".format(e))
+            print("[ERROR] \uc8fc\ubb38 \uc0c1\uc138 \uc870\ud68c \uc2e4\ud328: {}".format(e))
             return
 
+        # \ube44\uc9c0\uc6d0 \ub099 \ud544\ud130\ub9c1
+        supported = []
         for order in orders:
-            print_new_order(order)
-
-            if self.on_new_order:
+            pname = str(order.get("\uc0c1\ud488\uba85", "") or "")
+            optv  = str(order.get("\uc635\uc158", "") or "")
+            if is_supported_rack(pname, optv):
+                supported.append(order)
+                # CSV \uc800\uc7a5 (\ud655\uc778\uc6a9, \uc804\uccb4 \ub85c\uc6b0 \ub9e4)
                 try:
-                    self.on_new_order(order)
-                except Exception as cb_err:
-                    print("[CALLBACK-ERROR] {}".format(cb_err))
+                    save_order_to_csv(order, self.log_dir)
+                except Exception as csv_err:
+                    print("[CSV-ERROR] {}".format(csv_err))
+            else:
+                print("[SKIP] \ube44\uc9c0\uc6d0 \ub099: {}".format(pname[:50]))
+                print_new_order(order)  # \ucf58\uc194 \ucd9c\ub825\uc740 \uc720\uc9c0
+
+        if not supported:
+            return
+
+        # \ub3d9\uc77c \uc138\uc158 \uae30\uc900 \uadf8\ub8f9\ud551
+        groups = group_orders_by_session(supported)
+        print("[GROUP] {}\uac74 \u2192 {}\uac1c \uadf8\ub8f9".format(len(supported), len(groups)))
+
+        for group in groups:
+            for order in group:
+                print_new_order(order)
+            self.process_order_group(group)
+
+    def process_order_group(self, group):
+        # type: (list) -> None
+        """
+        \uadf8\ub8f9\ud551\ub41c \uc8fc\ubb38 \ubaa9\ub85d\uc744 document\uc73c\ub85c \uc804\ud658\ud569\ub2c8\ub2e4.
+
+        DRY_RUN=True : print_dry_run()\uc73c\ub85c \ucf58\uc194 \ucd9c\ub825\ub9cc
+        DRY_RUN=False: print_dry_run() \ud6c4 save_document_to_server()\ub97c \ud638\ucd9c
+        """
+        payload = build_grouped_document(group)
+        print_dry_run(payload)
+
+        if not DRY_RUN:
+            save_document_to_server(payload)
+
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# 7. 훅 (CSV 저장 + 향후 PurchaseOrderForm 자동 생성)
+# 7. 진입점
 # ═════════════════════════════════════════════════════════════════════════════
-
-def on_new_order_hook(order):
-    # type: (dict) -> None
-    """
-    새 주문 발생 시 자동 호출됩니다.
-      - 월별 누적 CSV 한 파일에 append
-      - PurchaseOrderForm 호환 페이로드 구성 (나중에 서버 API로 전송)
-    """
-    log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "order_logs")
-    os.makedirs(log_dir, exist_ok=True)
-
-    # ① CSV 저장 (하나만)
-    try:
-        csv_path = save_order_to_csv(order, log_dir)
-        print("[SAVE] {}".format(csv_path))
-    except Exception as e:
-        print("[SAVE-ERROR] {}".format(e))
-
-    # ② 청구서(PurchaseOrderForm / documents DB) 페이로드 구성 및 출력
-    payload = build_purchase_order_payload(order)
-    print("[PAYLOAD] doc_id={}".format(payload["doc_id"]))
-    print("  문서번호 : {}".format(payload["document_number"]))
-    print("  고객명   : {}".format(payload["company_name"]))
-    print("  랙종류   : {}".format(payload.get("_rack_type", "")))
-    print("  품목명   : {}".format(payload["items"][0]["name"] if payload["items"] else "-"))
-    print("  수량     : {}개".format(payload["items"][0]["quantity"] if payload["items"] else 0))
-    print("  공급가   : {:,}원  세액: {:,}원  합계: {:,}원".format(
-        payload["subtotal"], payload["tax"], payload["total_amount"]
-    ))
-    print("  비고     : {}".format(payload["notes"]))
-
-    # ── 향후 자동화 연결 포인트 ──────────────────────────────────────
-    # sammirack-api 서버에 청구서 자동 저장:
-    # import requests as req
-    # req.post("http://localhost:3000/api/documents", json=payload)
-    # ────────────────────────────────────────────────────────────────
-
+# NOTE: on_new_order_hook 제거 (2단계).
+#   _poll() 내부에서 is_supported_rack 필터 + group_orders_by_session 그룹핑 +
+#   process_order_group(DRY-RUN or DB 저장)을 직접 처리하므로 콜백 불필요.
 
 if __name__ == "__main__":
-    listener = OrderListener(on_new_order=on_new_order_hook)
+    listener = OrderListener()   # 콜백 없이 실행
     listener.start()
 

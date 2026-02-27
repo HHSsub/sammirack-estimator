@@ -43,7 +43,7 @@ PROXIES = {
 # [가비아 서버(139.150.11.53)에서 실행할 때]
 #   USE_PROXY = False  ← 서버 자체가 프록시이므로 직접 요청
 #
-USE_PROXY = False  # ← 가비아 서버에서 실행 시 False
+USE_PROXY = True  # ← 가비아 서버에서 실행 시 False
 
 # ====================================
 # 실시간 주문 리스너 설정
@@ -56,3 +56,11 @@ TOKEN_REFRESH_BUFFER_SECONDS = 300  # 5분 여유
 
 # 토큰 유효 시간 (초) - 네이버 커머스 API 기준 3시간
 TOKEN_EXPIRES_IN_SECONDS = 10800  # 3시간 = 3 * 60 * 60
+
+# ====================================
+# sammirack-estimator 서버 API URL
+# ====================================
+# 가비아 서버의 sammirack 웹앱 API (DRY_RUN=False 시 여기에 청구서 POST)
+# 가비아 서버(139.150.11.53)에서 실행할 때: http://localhost/api
+# 로컬 PC에서 직접 접근 시: http://139.150.11.53/api
+SAMMIRACK_SERVER_URL = "http://139.150.11.53/api"
