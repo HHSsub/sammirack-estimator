@@ -63,7 +63,15 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
 
   // 필터링된 자재 목록 (useMemo로 최적화 및 안정성 확보)
   const filteredMaterials = useMemo(() => {
-    return allMaterials.filter(material => {
+    const getHighRackPriority = (materialName = '') => {
+      if (materialName.includes('기둥')) return 0;
+      if (materialName.includes('로드빔') || materialName.includes('빔')) return 1;
+      return 2;
+    };
+
+    return allMaterials
+      .map((material, index) => ({ material, index }))
+      .filter(({ material }) => {
       // 랙 타입 필터
       if (selectedRackType && material.rackType !== selectedRackType) {
         return false;
@@ -88,8 +96,21 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         }
       }
 
-      return true;
-    });
+        return true;
+      })
+      .sort((a, b) => {
+        const aIsHighRack = a.material.rackType === '하이랙';
+        const bIsHighRack = b.material.rackType === '하이랙';
+
+        if (aIsHighRack && bIsHighRack) {
+          const priorityDiff =
+            getHighRackPriority(a.material.name) - getHighRackPriority(b.material.name);
+          if (priorityDiff !== 0) return priorityDiff;
+        }
+
+        return a.index - b.index;
+      })
+      .map(({ material }) => material);
   }, [allMaterials, selectedRackType, searchTerm, showOnlyInStock, inventory]);
 
   // 랙 타입 목록 추출
