@@ -397,6 +397,15 @@ button.remove-btn:disabled {
   transform: translateY(0);
 }
 
+.invoice-btn {
+  background: #6610f2;
+  color: #fff;
+}
+
+.invoice-btn:hover {
+  background: #520dc2;
+}
+
 
 /* PRINT */
 @media print {

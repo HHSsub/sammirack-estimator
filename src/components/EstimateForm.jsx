@@ -441,7 +441,26 @@ const EstimateForm = () => {
 
         // 서비스 항목(공임, 운임)이 아닐 때만 원자재 명세서(BOM)에 추가
         if (!materialWithId.isService) {
-          nextState.materials = [...prev.materials, materialWithId];
+          let materialsToAdd = [materialWithId];
+
+          // ✅ 추가상품: 기둥 세트인 경우 경사/수평브레싱도 함께 추가
+          if (materialData.additionalMaterials && materialData.additionalMaterials.length > 0) {
+            const additionalWithIds = materialData.additionalMaterials.map(additional => ({
+              ...additional,
+              inventoryPartId: additional.inventoryPartId || (() => {
+                const rawId = generateInventoryPartId({
+                  rackType: additional.rackType || '기타',
+                  name: additional.name,
+                  specification: additional.specification || '',
+                  colorWeight: additional.colorWeight || ''
+                });
+                return mapExtraToBaseInventoryPart(rawId);
+              })()
+            }));
+            materialsToAdd = [...materialsToAdd, ...additionalWithIds];
+          }
+
+          nextState.materials = [...prev.materials, ...materialsToAdd];
         }
 
         return nextState;
@@ -693,6 +712,79 @@ const EstimateForm = () => {
     setPdfBase64(null);
   };
 
+  const convertToPurchase = () => {
+    if (!formData.documentNumber.trim()) {
+      alert('거래번호(문서번호)를 입력해주세요.');
+      documentNumberInputRef.current?.focus();
+      return;
+    }
+
+    console.log('🔍 견적서→청구서 변환 시작:', formData.estimateNumber);
+
+    // 1. 카트 데이터 추출
+    const cart = (formData.cart && formData.cart.length > 0 ? formData.cart : formData.items || []).map(it => ({
+      ...it,
+      name: it.name || it.displayName || '',
+      displayName: it.displayName || it.name || '',
+      quantity: it.quantity || 1,
+      unitPrice: it.unitPrice || 0,
+      price: it.totalPrice || it.price || 0,
+      unit: it.unit || '개'
+    }));
+
+    // 2. 원자재(BOM) 추출 및 유실 시 재생성
+    let materials = formData.materials || [];
+    if (materials.length === 0 && cart.length > 0) {
+      console.log('🔄 원자재 유실 감지 - 재생성 시도');
+      const regenerated = [];
+      cart.forEach(cartItem => {
+        const bom = regenerateBOMFromDisplayName(cartItem.displayName || cartItem.name || '');
+        if (bom && bom.length > 0) {
+          regenerated.push(...bom.map(b => ({
+            ...b,
+            quantity: b.quantity * (cartItem.quantity || 1)
+          })));
+        }
+      });
+      if (regenerated.length > 0) {
+        materials = regenerated;
+      }
+    }
+
+    // ✅ 3. materials에 inventoryPartId 추가 (재고 감소 필수!)
+    materials = materials.map(mat => {
+      const inventoryPartId = generateInventoryPartId({
+        rackType: mat.rackType || '',
+        name: mat.name || '',
+        specification: mat.specification || '',
+        colorWeight: mat.colorWeight || '',
+        color: mat.color || ''
+      });
+
+      console.log(`  🔑 InvID 생성: ${mat.name} → ${inventoryPartId}`);
+
+      return {
+        ...mat,
+        inventoryPartId
+      };
+    });
+
+    console.log(`✅ 변환 완료: cart ${cart.length}개, materials ${materials.length}개`);
+
+    // 4. 청구서로 이동
+    navigate('/purchase-order/new', {
+      state: {
+        cart: cart,
+        totalBom: materials,
+        materials: materials,
+        estimateData: formData,
+        editingDocumentId: null,
+        editingDocumentType: 'estimate',
+        editingDocumentData: {}
+      }
+    });
+  };
+
   return (
     <div className="estimate-form-container">
       {isAdmin && (
@@ -930,6 +1022,7 @@ const EstimateForm = () => {
           저장하기
         </button>
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
+        <button type="button" onClick={convertToPurchase} className="invoice-btn">청구서 생성</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>

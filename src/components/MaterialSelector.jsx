@@ -72,29 +72,35 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
     return allMaterials
       .map((material, index) => ({ material, index }))
       .filter(({ material }) => {
-      // 랙 타입 필터
-      if (selectedRackType && material.rackType !== selectedRackType) {
-        return false;
-      }
-
-      // 검색어 필터
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchName = (material.name || '').toLowerCase().includes(term);
-        const matchSpec = (material.specification || '').toLowerCase().includes(term);
-        const matchPartId = (material.partId || '').toLowerCase().includes(term);
-        if (!matchName && !matchSpec && !matchPartId) {
+        // ✅ 파렛트랙 타입 선택 시 경사브레싱/수평브레싱은 제외 (기둥 추가 시 자동으로 포함되므로)
+        if (selectedRackType && selectedRackType.includes('파렛트랙') &&
+          /(경사브[래레]싱|수평브레싱)/.test(material.name)) {
           return false;
         }
-      }
 
-      // 재고 있는 것만 보기
-      if (showOnlyInStock) {
-        const stock = inventory[material.partId] || 0;
-        if (stock <= 0) {
+        // 랙 타입 필터
+        if (selectedRackType && material.rackType !== selectedRackType) {
           return false;
         }
-      }
+
+        // 검색어 필터
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          const matchName = (material.name || '').toLowerCase().includes(term);
+          const matchSpec = (material.specification || '').toLowerCase().includes(term);
+          const matchPartId = (material.partId || '').toLowerCase().includes(term);
+          if (!matchName && !matchSpec && !matchPartId) {
+            return false;
+          }
+        }
+
+        // 재고 있는 것만 보기
+        if (showOnlyInStock) {
+          const stock = inventory[material.partId] || 0;
+          if (stock <= 0) {
+            return false;
+          }
+        }
 
         return true;
       })
@@ -121,7 +127,26 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
     setSelectedMaterial(material);
   };
 
-  // 추가 버튼 핸들러
+  // ✅ 규격에서 D값 추출 (브레싱 spec 결정)
+  const getBracingSpec = (specification, rackType) => {
+    if (!specification) return '';
+    // "1000", "800", "1390x1000" 형식에서 마지막 숫자 추출
+    const match = String(specification).match(/(\d+)$/);
+    if (match) {
+      const lastNum = match[1];
+      // 파렛트랙: 무조건 1000
+      if (rackType === '파렛트랙') {
+        return '1000';
+      }
+      // 파렛트랙 철판형: D값 (800 또는 1000)
+      if (rackType === '파렛트랙 철판형') {
+        return lastNum;
+      }
+    }
+    return '';
+  };
+
+  // ✅ 파렛트랙/철판형 기둥 추가 시 경사/수평브레싱 함께 처리
   const handleAdd = () => {
     if (customMode) {
       // 기타 자재 입력
@@ -165,17 +190,82 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         inventoryPartId: inventoryPartId
       });
 
-      onAdd({
-        name: selectedMaterial.name,
-        specification: selectedMaterial.specification || '',
-        quantity: quantity,
-        unitPrice: effectivePrice,
-        totalPrice: quantity * effectivePrice,
-        note: '',
-        rackType: selectedMaterial.rackType || '기타',
-        partId: selectedMaterial.partId || '',
-        inventoryPartId: inventoryPartId
-      });
+      const rackType = selectedMaterial.rackType || '기타';
+      const isParquetRack = rackType === '파렛트랙' || rackType === '파렛트랙 철판형';
+      const isPillar = selectedMaterial.name && /^기둥/.test(selectedMaterial.name);
+
+      // ✅ 기둥 추가: 경사브레싱/수평브레싱 함께 처리 (additionalMaterials로 전달)
+      if (isParquetRack && isPillar) {
+        const bracingSpec = getBracingSpec(selectedMaterial.specification, rackType);
+        const additionalMaterials = [];
+
+        // 경사브레싱 정보 추가
+        const diagonalMaterial = allMaterials.find(m =>
+          m.rackType === rackType && /^경사브레싱$/.test(m.name) && m.specification === bracingSpec
+        );
+        if (diagonalMaterial) {
+          const diagonalPrice = getEffectivePrice(diagonalMaterial, adminPrices);
+          additionalMaterials.push({
+            name: diagonalMaterial.name,
+            specification: diagonalMaterial.specification || '',
+            quantity: quantity,
+            unitPrice: diagonalPrice,
+            totalPrice: quantity * diagonalPrice,
+            note: '',
+            rackType: rackType,
+            partId: diagonalMaterial.partId || '',
+            inventoryPartId: diagonalMaterial.partId || ''
+          });
+        }
+
+        // 수평브레싱 정보 추가
+        const horizontalMaterial = allMaterials.find(m =>
+          m.rackType === rackType && /^수평브레싱$/.test(m.name) && m.specification === bracingSpec
+        );
+        if (horizontalMaterial) {
+          const horizontalPrice = getEffectivePrice(horizontalMaterial, adminPrices);
+          additionalMaterials.push({
+            name: horizontalMaterial.name,
+            specification: horizontalMaterial.specification || '',
+            quantity: quantity,
+            unitPrice: horizontalPrice,
+            totalPrice: quantity * horizontalPrice,
+            note: '',
+            rackType: rackType,
+            partId: horizontalMaterial.partId || '',
+            inventoryPartId: horizontalMaterial.partId || ''
+          });
+        }
+
+        // ✅ Items에는 "기둥(높이) (경사,수평브레싱포함)" 1줄만
+        // Materials에는 기둥 + 경사브레싱 + 수평브레싱 3줄
+        onAdd({
+          name: `${selectedMaterial.name} (경사,수평브레싱포함)`,
+          specification: selectedMaterial.specification || '',
+          quantity: quantity,
+          unitPrice: effectivePrice,
+          totalPrice: quantity * effectivePrice,
+          note: '',
+          rackType: rackType,
+          partId: selectedMaterial.partId || '',
+          inventoryPartId: inventoryPartId,
+          // ✅ 추가: Materials에 함께 추가될 부품들
+          additionalMaterials: additionalMaterials
+        });
+      } else {
+        // 일반 자재 추가
+        onAdd({
+          name: selectedMaterial.name,
+          specification: selectedMaterial.specification || '',
+          quantity: quantity,
+          unitPrice: effectivePrice,
+          totalPrice: quantity * effectivePrice,
+          note: '',
+          rackType: rackType,
+          partId: selectedMaterial.partId || '',
+          inventoryPartId: inventoryPartId
+        });
+      }
 
       // 선택은 유지, 수량만 초기화
       setQuantity(1);
@@ -340,7 +430,11 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
                     <div className="material-info">
                       <div className="material-name">{mat.name}</div>
                       {mat.specification && (
-                        <div className="material-spec">{mat.specification}</div>
+                        <div className="material-spec">
+                          {mat.rackType === '하이랙' && mat.name.includes('기둥')
+                            ? mat.specification.replace(/높이\s*/g, '')
+                            : mat.specification}
+                        </div>
                       )}
                       <div className="material-meta">
                         {mat.hasAdminPrice && (

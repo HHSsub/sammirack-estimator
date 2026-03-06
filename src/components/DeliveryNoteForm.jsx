@@ -512,10 +512,31 @@ const DeliveryNoteForm = () => {
       })()
     };
 
-    setFormData(prev => ({
-      ...prev,
-      materials: [...prev.materials, materialWithId]
-    }));
+    setFormData(prev => {
+      let materialsToAdd = [materialWithId];
+
+      // ✅ 추가상품: 기둥 세트인 경우 경사/수평브레싱도 함께 추가
+      if (materialData.additionalMaterials && materialData.additionalMaterials.length > 0) {
+        const additionalWithIds = materialData.additionalMaterials.map(additional => ({
+          ...additional,
+          inventoryPartId: (() => {
+            const rawId = generateInventoryPartId({
+              rackType: additional.rackType || '기타',
+              name: additional.name,
+              specification: additional.specification || '',
+              colorWeight: additional.colorWeight || ''
+            });
+            return mapExtraToBaseInventoryPart(rawId);
+          })()
+        }));
+        materialsToAdd = [...materialsToAdd, ...additionalWithIds];
+      }
+
+      return {
+        ...prev,
+        materials: [...prev.materials, ...materialsToAdd]
+      };
+    });
   };
   const rmMat = (idx) => setFormData(p => ({ ...p, materials: p.materials.filter((_, i) => i !== idx) }));
 

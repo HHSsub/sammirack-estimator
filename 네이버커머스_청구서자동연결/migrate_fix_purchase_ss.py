@@ -209,7 +209,7 @@ def main():
             print("    ... +{}개".format(len(old_mats) - 3))
 
         # 신규 materials 생성
-        new_mats, err = regenerate_materials_for_doc(doc)
+        new_mats, updated_items, err = regenerate_materials_for_doc(doc)
         if err:
             print("  ❌ 재생성 실패: {}".format(err))
             fail += 1
@@ -224,12 +224,14 @@ def main():
         # 저장
         updated_doc = dict(doc)
         updated_doc["materials"] = new_mats
-        # items가 문자열이면 리스트로 복원
-        if isinstance(updated_doc.get("items"), str):
+        if updated_items is not None:
+             updated_doc["items"] = updated_items
+        elif isinstance(updated_doc.get("items"), str):
             try:
                 updated_doc["items"] = json.loads(updated_doc["items"])
             except:
                 pass
+
 
         ok = save_document(api_base, doc_id, updated_doc, dry_run=dry_run)
         if ok:

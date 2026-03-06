@@ -599,7 +599,23 @@ const PurchaseOrderForm = () => {
 
         // 서비스 항목(공임, 운임)이 아닐 때만 원자재 명세서(BOM)에 추가
         if (!materialWithId.isService) {
-          nextState.materials = [...prev.materials, materialWithId];
+          let materialsToAdd = [materialWithId];
+
+          // ✅ 추가상품: 기둥 세트인 경우 경사/수평브레싱도 함께 추가
+          if (materialData.additionalMaterials && materialData.additionalMaterials.length > 0) {
+            const additionalWithIds = materialData.additionalMaterials.map(additional => ({
+              ...additional,
+              inventoryPartId: additional.inventoryPartId || additional.partId || generateInventoryPartId({
+                rackType: additional.rackType || '기타',
+                name: additional.name,
+                specification: additional.specification || '',
+                colorWeight: additional.colorWeight || ''
+              })
+            }));
+            materialsToAdd = [...materialsToAdd, ...additionalWithIds];
+          }
+
+          nextState.materials = [...prev.materials, ...materialsToAdd];
         }
 
         return nextState;

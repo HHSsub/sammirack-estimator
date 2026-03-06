@@ -171,6 +171,15 @@ async function saveHandler(req, res) {
   const now = new Date().toISOString();
   const typeVal = data.type || (docId && docId.indexOf('_') >= 0 ? docId.split('_')[0] : 'estimate');
 
+  // 🚨 [긴급 백신] 프론트 로컬 스토리지 좀비 데이터 차단 🚨
+  // 프론트엔드 캐시에 남아있는 "3월 6일" 오염된 타임스탬프가 
+  // 3월 1일 이전 생성 문서의 수정 시각을 파괴하는 것을 서버단에서 원천 차단
+  if (data.createdAt && new Date(data.createdAt) < new Date('2026-03-01')) {
+    if (data.updatedAt && data.updatedAt.startsWith('2026-03-06')) {
+      data.updatedAt = data.createdAt; // 오염된 수정 시각 무시, 원래 생성 시각으로 강제 복귀
+    }
+  }
+
   try {
     // 1. deleted 컬럼이 있는지 확인 (마이그레이션이 안되었을 수도 있으므로)
     // 안전하게 컬럼을 추가하거나, 없는 경우 무시하는 로직이 필요하지만
@@ -213,15 +222,15 @@ async function saveHandler(req, res) {
       data.documentNumber || null,
       data.companyName || null,
       data.bizNumber || null,
-      JSON.stringify(data.items || []),
-      JSON.stringify(data.materials || []),
+      typeof data.items === 'string' ? data.items : JSON.stringify(data.items || []),
+      typeof data.materials === 'string' ? data.materials : JSON.stringify(data.materials || []),
       data.subtotal || 0,
       data.tax || 0,
       data.totalAmount || 0,
       data.notes || '',
       data.topMemo || '',
       data.createdAt || now,
-      now,
+      data.updatedAt || data.createdAt || now,
       data.deleted ? 1 : 0,
       data.deletedAt || null,
       data.deletedBy ? JSON.stringify(data.deletedBy) : null,
