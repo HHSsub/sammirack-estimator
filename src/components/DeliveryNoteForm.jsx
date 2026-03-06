@@ -114,7 +114,9 @@ const DeliveryNoteForm = () => {
     // ✅ 재고 감소 상태 필드 추가
     inventoryDeducted: editingDocumentData.inventoryDeducted || false,
     inventoryDeductedAt: editingDocumentData.inventoryDeductedAt || null,
-    inventoryDeductedBy: editingDocumentData.inventoryDeductedBy || null
+    inventoryDeductedBy: editingDocumentData.inventoryDeductedBy || null,
+    // 자동주문(스마트스토어) 여부 플래그
+    isSmartstore: cartData.isSmartstore || editingDocumentData.isSmartstore || estimateData.isSmartstore || false
   });
 
   // ✅ 관리자 체크 및 전역 설정 로드
@@ -181,7 +183,9 @@ const DeliveryNoteForm = () => {
             notes: data.notes || editingDocumentData.notes || data.notes,
             topMemo: data.topMemo || editingDocumentData.topMemo || data.topMemo,
             materials: materialsToUse,
-            documentSettings: data.documentSettings || null
+            documentSettings: data.documentSettings || null,
+            // 스마트스토어 플래그 유지
+            isSmartstore: data.isSmartstore || editingDocumentData.isSmartstore || estimateData.isSmartstore || false
           };
 
           setFormData(mergedData);
@@ -210,6 +214,8 @@ const DeliveryNoteForm = () => {
       console.log('📦 신규 문서 초기 데이터 로드 시작');
       cartInitializedRef.current = true;
       adminPricesRef.current = loadAdminPricesDirect();
+      // 스마트스토어 플래그 결정
+      const isSmart = formData.isSmartstore || cartData.isSmartstore || editingDocumentData.isSmartstore || false;
 
       const restoredCartItems = cart.map(item => {
         const qty = item.quantity || 1;
@@ -375,6 +381,7 @@ const DeliveryNoteForm = () => {
       // ✅ 수정: 강제 설정
       setFormData(prev => ({
         ...prev,
+        isSmartstore: prev.isSmartstore || isSmart,
         items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
         materials: allMaterials.length ? allMaterials : []
       }));
@@ -389,6 +396,10 @@ const DeliveryNoteForm = () => {
   // 합계 계산 (BOM이 있고 matSum>0 이면 BOM, 아니면 itemSum)
   useEffect(() => {
     const materialsRecalc = formData.materials.map(mat => {
+      // 스마트스토어 주문이면 관리자단가 적용 건너뛰기
+      if (formData.isSmartstore) {
+        return mat;
+      }
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
       const unitPrice = adminPrice && adminPrice > 0 ? adminPrice : (Number(mat.unitPrice) || 0);
@@ -560,6 +571,8 @@ const DeliveryNoteForm = () => {
 
     const newDoc = {  // ✅ 기존 변수명 그대로 사용
       ...formData,
+      // 스마트스토어 플래그 보존
+      isSmartstore: formData.isSmartstore || false,
       id: itemId,
       type: 'delivery',
       // ✅ extraOptions 저장 (문서 로드 시 복원용)
@@ -603,7 +616,8 @@ const DeliveryNoteForm = () => {
           topMemo: newDoc.topMemo,
           inventoryDeducted: newDoc.inventoryDeducted,
           inventoryDeductedAt: newDoc.inventoryDeductedAt,
-          inventoryDeductedBy: newDoc.inventoryDeductedBy
+          inventoryDeductedBy: newDoc.inventoryDeductedBy,
+          isSmartstore: newDoc.isSmartstore
         });
       } catch (err) {
         console.error('문서 즉시 서버 저장 실패:', err);

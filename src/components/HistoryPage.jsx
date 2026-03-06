@@ -551,9 +551,13 @@ const HistoryPage = () => {
 
     try {
       // 1) 서버에서 전체 문서 데이터 가져오기
+      // ✅ [버그 수정] purchase_ss_* 등 item.id에 이미 '_'가 포함된 경우에도 올바르게 type_id로 재조합
+      // 예: item.type='purchase', item.id='ss_2026022847851331' → docId='purchase_ss_2026022847851331'
+      // 기존 로직: _.includes('_') 가 true이면 prefix를 붙이지 않아 ss_... 만 남아서 404 발생
       let docId = item.id;
-      if (!docId.includes('_')) {
-        docId = `${item.type}_${docId}`;
+      const expectedPrefix = `${item.type}_`;
+      if (!docId.startsWith(expectedPrefix)) {
+        docId = `${expectedPrefix}${docId}`;
         console.log('✅ doc_id 정규화:', docId);
       }
 

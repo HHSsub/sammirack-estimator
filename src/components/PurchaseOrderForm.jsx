@@ -115,7 +115,9 @@ const PurchaseOrderForm = () => {
     // ✅ 재고 감소 상태 필드 추가
     inventoryDeducted: false,
     inventoryDeductedAt: null,
-    inventoryDeductedBy: null
+    inventoryDeductedBy: null,
+    // 자동주문(스마트스토어) 여부 플래그
+    isSmartstore: cartData.isSmartstore || editingDocumentData.isSmartstore || estimateData.isSmartstore || false
   });
 
   // ✅ [중요] 세션 중 생성된 ID를 기억하여 중복 생성 방지
@@ -275,6 +277,8 @@ const PurchaseOrderForm = () => {
             topMemo: data.topMemo || editingDocumentData.topMemo || data.topMemo,
             materials: materialsToUse,
             documentSettings: data.documentSettings || null,
+            // 스마트스토어 플래그 유지
+            isSmartstore: data.isSmartstore || editingDocumentData.isSmartstore || false,
             // ✅ 재고 감소 상태 복원 (병합 로직 강화)
             inventoryDeducted: finalInventoryDeducted,
             inventoryDeductedAt: editingDocumentData?.inventoryDeductedAt || data.inventoryDeductedAt || null,
@@ -302,6 +306,9 @@ const PurchaseOrderForm = () => {
       console.log('📦 신규 문서 초기 데이터 로드 시작');
       cartInitializedRef.current = true;
       adminPricesRef.current = loadAdminPricesDirect();
+
+      // 스마트스토어 플래그 결정 (초기값 또는 전달된 cart 데이터 포함)
+      const isSmart = formData.isSmartstore || cartData.isSmartstore || editingDocumentData.isSmartstore || false;
 
       // items 복원 (cart 우선, 없으면 totalBom에서 역추적? 아니면 그냥 cart)
       const restoredCartItems = cart.map(item => {
@@ -454,11 +461,12 @@ const PurchaseOrderForm = () => {
       // ✅ 수정: 강제 설정
       setFormData(prev => ({
         ...prev,
+        isSmartstore: prev.isSmartstore || isSmart,
         items: allItems.length ? allItems : [{ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' }],
         materials: allMaterials.length ? allMaterials : []
       }));
     }
-  }, [cart, totalBom, materials, customItems, customMaterials, isEditMode]);
+  }, [cart, totalBom, materials, customItems, customMaterials, isEditMode, formData.isSmartstore]);
   // ✅ 합계 계산: 무조건 품목 목록(items) 기준 (1126_1621수정)
   useEffect(() => {
     // ✅ materials가 비어있어도 합계 계산은 수행해야 함 (items 기준이므로)
@@ -467,6 +475,10 @@ const PurchaseOrderForm = () => {
     // }
 
     const materialsWithAdmin = formData.materials.map(mat => {
+      // 스마트스토어 주문이면 단가 재계산 하지 않고 원본 유지
+      if (formData.isSmartstore) {
+        return mat;
+      }
       const adminPrice = resolveAdminPrice(adminPricesRef.current, mat);
       const quantity = Number(mat.quantity) || 0;
       // ✅ 수정: mat과 quantity 사용
@@ -702,6 +714,8 @@ const PurchaseOrderForm = () => {
       ...formData,
       id: itemId,  // ✅ 이미 prefix 포함된 ID 사용
       type: 'purchase',
+      // 스마트스토어 플래그 보존
+      isSmartstore: formData.isSmartstore || false,
       status: formData.status || '진행 중',
       purchaseNumber: formData.documentNumber,
       customerName: formData.companyName,
@@ -740,7 +754,8 @@ const PurchaseOrderForm = () => {
           topMemo: newOrder.topMemo,
           inventoryDeducted: newOrder.inventoryDeducted,
           inventoryDeductedAt: newOrder.inventoryDeductedAt,
-          inventoryDeductedBy: newOrder.inventoryDeductedBy
+          inventoryDeductedBy: newOrder.inventoryDeductedBy,
+          isSmartstore: newOrder.isSmartstore
         });
       } catch (err) {
         console.error('문서 즉시 서버 저장 실패:', err);
