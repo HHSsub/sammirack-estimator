@@ -368,7 +368,7 @@ export const ProductProvider = ({ children }) => {
         setBomData(bj);
         setBomDataForRegeneration(bj); // ✅ 추가: BOM 재생성 유틸에도 데이터 전달
 
-        const canonical = ["경량랙", "중량랙", "파렛트랙", "파렛트랙 철판형", "하이랙", "스텐랙"];
+        const canonical = ["하이랙", "파렛트랙", "파렛트랙 철판형", "스텐랙", "경량랙", "중량랙"];
         const fromData = Object.keys(dj || {});
         const types = canonical.filter(t => fromData.includes(t));
         const leftovers = fromData.filter(t => !types.includes(t));
@@ -462,14 +462,14 @@ export const ProductProvider = ({ children }) => {
             ]);
 
             // 5️⃣ height 선택되면 level 구성
-            if (selectedOptions.height && versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]) {
+            if (selectedOptions.height) {
               const levelsFromData = Object.keys(
                 versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height] || {}
               );
               next.level = sortLevels(levelsFromData.length ? levelsFromData : ["L1", "L2", "L3", "L4", "L5", "L6"]);
 
               // 6️⃣ level 선택되면 formType 구성
-              if (selectedOptions.level && versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level]) {
+              if (selectedOptions.level) {
                 const fm = versionBlock[selectedOptions.weight]?.[selectedOptions.size]?.[selectedOptions.height]?.[selectedOptions.level] || {};
                 next.formType = Object.keys(fm).length ? Object.keys(fm) : ["독립형", "연결형"];
               }

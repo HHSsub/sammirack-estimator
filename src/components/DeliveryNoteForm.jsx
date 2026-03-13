@@ -498,7 +498,7 @@ const DeliveryNoteForm = () => {
     setShowMaterialSelector(true);  // 재고셀렉터 신규추가(26_01_27)
   };
   const handleMaterialAdd = (materialData) => {
-    // ✅ inventoryPartId 생성 (청구서쪽에서 재고감소용)
+    // ✅ inventoryPartId 생성 (발주서쪽에서 재고감소용)
     const materialWithId = {
       ...materialData,
       inventoryPartId: (() => {
@@ -513,7 +513,10 @@ const DeliveryNoteForm = () => {
     };
 
     setFormData(prev => {
-      let materialsToAdd = [materialWithId];
+      let materialsToAdd = [{
+        ...materialWithId,
+        name: materialData.originalName || materialWithId.name
+      }];
 
       // ✅ 추가상품: 기둥 세트인 경우 경사/수평브레싱도 함께 추가
       if (materialData.additionalMaterials && materialData.additionalMaterials.length > 0) {
@@ -532,9 +535,30 @@ const DeliveryNoteForm = () => {
         materialsToAdd = [...materialsToAdd, ...additionalWithIds];
       }
 
+      const newMaterials = [...prev.materials];
+      materialsToAdd.forEach(newItem => {
+        const existingIdx = newMaterials.findIndex(m =>
+          m.inventoryPartId === newItem.inventoryPartId &&
+          m.name === newItem.name &&
+          m.specification === newItem.specification &&
+          m.rackType === newItem.rackType
+        );
+
+        if (existingIdx >= 0) {
+          const prevQty = parseInt(newMaterials[existingIdx].quantity) || 0;
+          const addQty = parseInt(newItem.quantity) || 0;
+          newMaterials[existingIdx].quantity = prevQty + addQty;
+
+          const unitPrice = parseFloat(newMaterials[existingIdx].unitPrice) || 0;
+          newMaterials[existingIdx].totalPrice = (prevQty + addQty) * unitPrice;
+        } else {
+          newMaterials.push(newItem);
+        }
+      });
+
       return {
         ...prev,
-        materials: [...prev.materials, ...materialsToAdd]
+        materials: newMaterials
       };
     });
   };

@@ -38,7 +38,7 @@ function formatSpecification(str) {
 
 // ✅ 재고 감소 함수 수정 (export 필요)
 // ✅ 서버 기반 재고 감소 함수
-// ✅ materialsOverride: cart에 bom이 없을 때(예: 청구서 생성 플로우) 원자재 배열로 재고 차감
+// ✅ materialsOverride: cart에 bom이 없을 때(예: 발주서 생성 플로우) 원자재 배열로 재고 차감
 export const deductInventoryOnPrint = async (cartItems, documentType = 'document', documentNumber = '', materialsOverride = null) => {
   if (!cartItems || !Array.isArray(cartItems)) {
     console.warn('재고 감소: 유효하지 않은 카트 데이터');

@@ -154,14 +154,12 @@ export const generateInventoryPartId = (item) => {
     if (baseName === '기둥') {
       // 기둥: 사이즈WxD높이H[중량] (DB: 사이즈60x높이200270kg)
       // [New Rule] Depth 무시 (60x108 -> 60x)
-      const match = cleanSpec.match(/(\d+x\d*|\d+)높이(\d+)/) || cleanSpec.match(/(\d+x\d*|\d+)(\d+)/);
-      let sizePart = match ? match[1] : (cleanSpec.includes('x') ? cleanSpec : '60x108');
-
-      // 60x108 -> 60x
-      sizePart = sizePart.replace(/(\d+)x\d+/, '$1x');
-
-      const heightPart = match ? match[2] : '150';
-      finalSpec = `사이즈${sizePart}높이${heightPart}${weightAttr}`;
+      const match = cleanSpec.match(/(\d+)x(\d+)높이(\d+)/) || cleanSpec.match(/(\d+)x(\d+)(\d+)/) || cleanSpec.match(/(\d+)높이(\d+)/);
+      
+      let widthPart = match ? match[1] : '60';
+      let heightPart = (match && match.length > 3) ? match[3] : (match ? match[2] : '150');
+      
+      finalSpec = `사이즈${widthPart}x높이${heightPart}${weightAttr}`;
     } else if (baseName === '선반') {
       // 선반: 사이즈WxD[중량] (DB: 사이즈45x108270kg)
       const sizeMatch = cleanSpec.match(/(\d+x\d*|\d+)/);

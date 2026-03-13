@@ -633,3 +633,11 @@
   color: #10b981;
   font-weight: bold;
 }
+
+/* ✅ 스마트스토어 문서 (SS-) 하이라이트 */
+.item-cell.document-id.ss-document {
+  background-color: #e3f2fd;
+  /* 옅은 파란색 */
+  border-left: 2px solid #2196f3;
+  /* 살짝 더 강조를 위한 왼쪽 박스 */
+}

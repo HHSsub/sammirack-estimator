@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=rocky
-WorkingDirectory=/home/rocky/네이버커머스_청구서자동연결
-ExecStart=/usr/bin/python3 -u /home/rocky/네이버커머스_청구서자동연결/order_listener.py
+WorkingDirectory=/home/rocky/네이버커머스_발주서자동연결
+ExecStart=/usr/bin/python3 -u /home/rocky/네이버커머스_발주서자동연결/order_listener.py
 Environment=PYTHONUNBUFFERED=1
 Restart=always
 RestartSec=10

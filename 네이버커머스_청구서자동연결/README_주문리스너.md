@@ -3,7 +3,7 @@
 ## 파일 구성
 
 ```
-네이버커머스_청구서자동연결/
+네이버커머스_발주서자동연결/
 ├── config.py             ← API 키 및 프록시 설정 (★ 여기에 KEY 입력)
 ├── order_listener.py     ← 실시간 주문 리스너 메인
 ├── requirements.txt      ← 필요 패키지 목록
@@ -37,7 +37,7 @@ CLIENT_SECRET = "YOUR_CLIENT_SECRET"  # 앱 시크릿 (bcrypt salt)
 ## 3단계: 실행
 
 ```bash
-cd 네이버커머스_청구서자동연결
+cd 네이버커머스_발주서자동연결
 python order_listener.py
 ```
 
@@ -91,7 +91,7 @@ POLL_INTERVAL_SECONDS = 30   # 기본 30초, 더 빠르게 하려면 줄일 것
 
 ---
 
-## 견적서/청구서 자동화 연결 (향후 작업)
+## 견적서/발주서 자동화 연결 (향후 작업)
 
 `order_listener.py` 하단의 `on_new_order_hook()` 함수에서  
 새 주문 수신 시 자동으로 호출되는 로직을 추가하면 됩니다:
@@ -100,6 +100,6 @@ POLL_INTERVAL_SECONDS = 30   # 기본 30초, 더 빠르게 하려면 줄일 것
 def on_new_order_hook(order: dict):
     # 예: 견적서 자동 생성
     create_estimate_document(order)
-    # 예: 청구서 자동 생성
+    # 예: 발주서 자동 생성
     create_invoice_document(order)
 ```

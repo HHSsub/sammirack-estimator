@@ -12,16 +12,16 @@ export const generateFileName = (type = 'estimate', documentNumber = '') => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  
+
   const typeMap = {
     estimate: '견적서',
     delivery: '거래명세서',
-    purchase: '청구서'
+    purchase: '발주서'
   };
-  
+
   const koreanType = typeMap[type] || '견적서';
   const dateStr = `${y}${m}${day}`;
-  
+
   if (documentNumber) {
     return `${koreanType}_${documentNumber}_${dateStr}.xlsx`;
   } else {
@@ -60,7 +60,7 @@ const alignLeftTop = { horizontal: 'left', vertical: 'top', wrapText: true };
 // 색
 const fillDocTitle = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 문서제목: 덜 어두운 회색
 const fillHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD9D9D9' } };    // 15% 회색
-const fillItemHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 25% 회색 (청구서 원자재 헤더 등)
+const fillItemHeader = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBFBFBF' } }; // 25% 회색 (발주서 원자재 헤더 등)
 const fillWhite = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
 
 // 컬럼 너비(요청 반영: E,F 더 넓게)
@@ -120,7 +120,7 @@ function setRowHeights(ws, map) {
 function buildTop(ws, type, { date, companyName, contact, documentNumber } = {}) {
   // 문서 제목 A5:J5
   ws.mergeCells('A5:J5');
-  const title = type === 'purchase' ? '청구서' : type === 'delivery' ? '거래명세서' : '견적서';
+  const title = type === 'purchase' ? '발주서' : type === 'delivery' ? '거래명세서' : '견적서';
   const titleCell = ws.getCell('A5');
   titleCell.value = title;
   titleCell.font = { bold: true, size: 20 };
@@ -129,7 +129,7 @@ function buildTop(ws, type, { date, companyName, contact, documentNumber } = {})
   setRowHeights(ws, { 5: 45 });
 
   // 6행: 거래일자 + 거래번호
-  ws.mergeCells('A6:B6'); 
+  ws.mergeCells('A6:B6');
   ws.getCell('A6').value = '거래일자';
   ws.getCell('A6').alignment = alignCenter;
 
@@ -163,7 +163,7 @@ function buildTop(ws, type, { date, companyName, contact, documentNumber } = {})
 
   // 하단 문구 A9:E10 병합
   ws.mergeCells('A9:E10');
-  const bottomText = type === 'purchase' ? '아래와 같이 청구합니다' : type === 'delivery' ? '아래와 같이 거래합니다' : '아래와 같이 견적합니다';
+  const bottomText = type === 'purchase' ? '아래와 같이 발주합니다' : type === 'delivery' ? '아래와 같이 거래합니다' : '아래와 같이 견적합니다';
   ws.getCell('A9').value = bottomText;
   ws.getCell('A9').alignment = alignCenter;
   setRowHeights(ws, { 9: 40 });
@@ -176,46 +176,46 @@ function buildTop(ws, type, { date, companyName, contact, documentNumber } = {})
   // 공급자 상세 정보
   ws.getCell('G6').value = '사업자등록번호';
   ws.getCell('G6').alignment = alignCenter;
-  
-  ws.mergeCells('H6:J6'); 
-  ws.getCell('H6').value = '232-81-01750'; 
+
+  ws.mergeCells('H6:J6');
+  ws.getCell('H6').value = '232-81-01750';
   ws.getCell('H6').alignment = alignCenter;
 
   ws.getCell('G7').value = '상호';
   ws.getCell('G7').alignment = alignCenter;
-  
+
   ws.getCell('H7').value = '삼미앵글랙산업';
   ws.getCell('H7').alignment = alignCenter;
-  
+
   ws.getCell('I7').value = '대표자';
   ws.getCell('I7').alignment = alignCenter;
-  
+
   ws.getCell('J7').value = '박이삭';
   ws.getCell('J7').alignment = alignCenter;
 
   ws.getCell('G8').value = '소재지';
   ws.getCell('G8').alignment = alignCenter;
-  
-  ws.mergeCells('H8:J8'); 
+
+  ws.mergeCells('H8:J8');
   ws.getCell('H8').value = '경기도 광명시 원노온사로 39, 철제 스틸하우스 1';
   ws.getCell('H8').alignment = alignCenter;
 
   ws.getCell('G9').value = 'TEL';
   ws.getCell('G9').alignment = alignCenter;
-  
+
   ws.getCell('H9').value = '010-9548-9578  010-4311-7733';
   ws.getCell('H9').alignment = alignCenter;
-  
+
   ws.getCell('I9').value = 'FAX';
   ws.getCell('I9').alignment = alignCenter;
-  
+
   ws.getCell('J9').value = '(02)2611-4595';
   ws.getCell('J9').alignment = alignCenter;
 
   ws.getCell('G10').value = '홈페이지';
   ws.getCell('G10').alignment = alignCenter;
-  
-  ws.mergeCells('H10:J10'); 
+
+  ws.mergeCells('H10:J10');
   ws.getCell('H10').value = 'http://www.ssmake.com';
   ws.getCell('H10').alignment = alignCenter;
 
@@ -265,32 +265,32 @@ function buildEstimate(ws, items = [], totals, notes) {
   // ✅ 수식으로 변경: 소계/부가세/합계 (A26:F28 / G26:H28)
   const totalStart = 26;
   const labels = ['소계', '부가가치세', '합계'];
-  
+
   for (let i = 0; i < 3; i++) {
     const r = totalStart + i;
     ws.mergeCells(`A${r}:F${r}`);
     ws.getCell(`A${r}`).value = labels[i];
     ws.getCell(`A${r}`).alignment = alignCenter;
     ws.mergeCells(`G${r}:J${r}`);
-    
+
     // ✅ 고정값 대신 엑셀 수식 적용
     if (i === 0) { // 소계
-      ws.getCell(`G${r}`).value = { 
+      ws.getCell(`G${r}`).value = {
         formula: `SUM(H13:H${12 + rowCount})`,
-        result: totals?.subtotal || 0 
+        result: totals?.subtotal || 0
       };
     } else if (i === 1) { // 부가가치세
-      ws.getCell(`G${r}`).value = { 
-        formula: `G${totalStart}*0.1`, 
-        result: totals?.tax || 0 
+      ws.getCell(`G${r}`).value = {
+        formula: `G${totalStart}*0.1`,
+        result: totals?.tax || 0
       };
     } else { // 합계
-      ws.getCell(`G${r}`).value = { 
-        formula: `G${totalStart}+G${totalStart + 1}`, 
-        result: totals?.total || 0 
+      ws.getCell(`G${r}`).value = {
+        formula: `G${totalStart}+G${totalStart + 1}`,
+        result: totals?.total || 0
       };
     }
-    
+
     styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
   // 합계 숫자 서식
@@ -298,18 +298,18 @@ function buildEstimate(ws, items = [], totals, notes) {
 
   // 특기사항 A29:J31 (흰색 배경, 좌상단 정렬)
   ws.mergeCells('A29:J31');
-  
+
   // 특기사항 제목
   ws.getCell('A29').value = "특기사항";
   ws.getCell('A29').font = { bold: true };
   ws.getCell('A29').alignment = { vertical: "top", horizontal: "left" };
-  
+
   // notes 내용 (있으면)
   if (notes) {
     ws.getCell('A30').value = notes;
     ws.getCell('A30').alignment = { vertical: "top", horizontal: "left", wrapText: true };
   }
-  
+
   styleRange(ws, 29, 1, 31, 10, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
   // 회사명 푸터 J32
@@ -321,11 +321,11 @@ function buildEstimate(ws, items = [], totals, notes) {
   fullBorder(ws, 5, 32, 1, 10);
 }
 
-/** 청구서 & 거래명세서 공통 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
+/** 발주서 & 거래명세서 공통 (아이템 8행 고정 최소, 21~23 합계, 24~ 원자재 명세) */
 function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals, notes) {
   // 섹션 타이틀 A11:J11
   ws.mergeCells('A11:J11');
-  const sectionTitle = type === 'purchase' ? '청구명세' : '거래명세';
+  const sectionTitle = type === 'purchase' ? '발주명세' : '거래명세';
   ws.getCell('A11').value = sectionTitle;
   ws.getCell('A11').fill = fillHeader;
   ws.getCell('A11').alignment = alignCenter;
@@ -364,40 +364,40 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   // ✅ 수식으로 변경: 합계 A21:F23 / G21:H23
   const totalStart = 21;
   const labels = ['소계', '부가가치세', '합계'];
-  
+
   // 원자재 데이터 범위 계산 (26행부터 최소 30행)
   const matRows = Math.max(materials?.length || 0, 30);
   const materialEndRow = 25 + matRows; // 26행부터 시작하므로
-  
+
   for (let i = 0; i < 3; i++) {
     const r = totalStart + i;
     ws.mergeCells(`A${r}:F${r}`);
     ws.getCell(`A${r}`).value = labels[i];
     ws.getCell(`A${r}`).alignment = alignCenter;
     ws.mergeCells(`G${r}:J${r}`);
-    
-    // ✅ 고정값 대신 엑셀 수식 적용 (위의 청구 명세 기준)
+
+    // ✅ 고정값 대신 엑셀 수식 적용 (위의 발주 명세 기준)
     if (i === 0) { // 소계
-      ws.getCell(`G${r}`).value = { 
+      ws.getCell(`G${r}`).value = {
         formula: `SUM(H13:H${12 + itemRows})`,
-    // ✅ 고정값 대신 엑셀 수식 적용 (원자재 E열 기준, 아래의 코드 절대 지우지말것(언제가 쓸수도있음 원자재 가격 기준))
-    // if (i === 0) { // 소계
-    //   ws.getCell(`G${r}`).value = { 
-    //     formula: `SUM(E26:E${materialEndRow})`, 
-        result: totals?.subtotal || 0 
+        // ✅ 고정값 대신 엑셀 수식 적용 (원자재 E열 기준, 아래의 코드 절대 지우지말것(언제가 쓸수도있음 원자재 가격 기준))
+        // if (i === 0) { // 소계
+        //   ws.getCell(`G${r}`).value = { 
+        //     formula: `SUM(E26:E${materialEndRow})`, 
+        result: totals?.subtotal || 0
       };
     } else if (i === 1) { // 부가가치세
-      ws.getCell(`G${r}`).value = { 
-        formula: `G${totalStart}*0.1`, 
-        result: totals?.tax || 0 
+      ws.getCell(`G${r}`).value = {
+        formula: `G${totalStart}*0.1`,
+        result: totals?.tax || 0
       };
     } else { // 합계
-      ws.getCell(`G${r}`).value = { 
-        formula: `G${totalStart}+G${totalStart + 1}`, 
-        result: totals?.total || 0 
+      ws.getCell(`G${r}`).value = {
+        formula: `G${totalStart}+G${totalStart + 1}`,
+        result: totals?.total || 0
       };
     }
-    
+
     styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
   setNumFmt(ws, totalStart, 7, totalStart + 2, 10);
@@ -430,14 +430,14 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
   for (let i = 0; i < matRows; i++) {
     const r = 26 + i;
     const m = materials[i] || {};
-    
+
     // ✅ 하이랙 부품의 경우 색상 정보가 포함된 이름 사용
     let displayName = m.name || '';
     if (m.rackType === '하이랙' && m.colorWeight) {
       const partName = extractPartNameFromCleanName(m.name) || m.name;
       displayName = generateHighRackDisplayName(partName, m.colorWeight);
     }
-    
+
     ws.getCell(`A${r}`).value = i + 1;
     ws.mergeCells(`B${r}:D${r}`);
     ws.getCell(`E${r}`).value = m.specification ?? '';
@@ -449,20 +449,20 @@ function buildPurchaseOrTransaction(ws, type, items = [], materials = [], totals
     styleRange(ws, r, 1, r, 10, { font: fontDefault, alignment: alignCenter, border: borderThin });
   }
   // setNumFmt(ws, 26, 6, 25 + matRows, 7);
-  
+
   // 특기사항 A56:J58
   ws.mergeCells('A56:J58');
   // 특기사항 제목
   ws.getCell('A56').value = "특기사항";
   ws.getCell('A56').font = { bold: true };
   ws.getCell('A56').alignment = { vertical: "top", horizontal: "left" };
-  
+
   // notes 내용 (있으면)
   if (notes) {
     ws.getCell('A57').value = notes;
     ws.getCell('A57').alignment = { vertical: "top", horizontal: "left", wrapText: true };
   }
-  
+
   styleRange(ws, 56, 1, 58, 10, { font: fontDefault, alignment: alignLeftTop, border: borderThin, fill: fillWhite });
 
   // 회사명 J59
@@ -496,7 +496,7 @@ async function placeStamp(workbook, ws) {
 export async function exportToExcel(rawData, type = 'estimate') {
   // rawData: { date, companyName, items, materials, subtotal, tax, totalAmount, notes, ... }
   const workbook = new ExcelJS.Workbook();
-  const sheetName = type === 'purchase' ? '청구서' : (type === 'delivery' ? '거래명세서' : '견적서');
+  const sheetName = type === 'purchase' ? '발주서' : (type === 'delivery' ? '거래명세서' : '견적서');
   const ws = workbook.addWorksheet(sheetName);
 
   // 컬럼 너비
@@ -521,7 +521,7 @@ export async function exportToExcel(rawData, type = 'estimate') {
   const notes = rawData?.notes || '';
 
   if (type === 'purchase' || type === 'delivery') {
-    // 청구서와 거래명세서는 동일한 레이아웃 (원자재 명세서 포함)
+    // 발주서와 거래명세서는 동일한 레이아웃 (원자재 명세서 포함)
     buildPurchaseOrTransaction(ws, type, items, materials, totals, notes);
   } else {
     // 견적서는 기존 레이아웃 (원자재 명세서 없음)
@@ -530,7 +530,7 @@ export async function exportToExcel(rawData, type = 'estimate') {
 
   // 셀 전체 가운데 정렬 유지 (특기사항 제외 이미 따로 처리)
   styleRange(ws, 5, 1, ws.rowCount, 10, { alignment: alignCenter });
-  
+
   // 도장 이미지
   await placeStamp(workbook, ws);
 
@@ -559,15 +559,15 @@ export const exportEstimateWithInventory = async (formData, cartData, fileName) 
 };
 
 /**
- * ✅ 청구서 출력 시 재고 감소 연동
+ * ✅ 발주서 출력 시 재고 감소 연동
  */
 export const exportPurchaseWithInventory = async (formData, cartData, fileName) => {
   try {
     await exportToExcel(formData, 'purchase');
-    console.log('✅ 청구서 Excel 출력 완료');
-    return { success: true, message: '청구서 출력 완료' };
+    console.log('✅ 발주서 Excel 출력 완료');
+    return { success: true, message: '발주서 출력 완료' };
   } catch (error) {
-    console.error('청구서 출력 실패:', error);
+    console.error('발주서 출력 실패:', error);
     throw error;
   }
 };
@@ -594,13 +594,13 @@ export const printDocumentWithInventory = async (documentType, formData, cartDat
   switch (documentType) {
     case 'estimate':
       return await exportEstimateWithInventory(formData, cartData, fileName);
-    
+
     case 'purchase':
       return await exportPurchaseWithInventory(formData, cartData, fileName);
-    
+
     case 'delivery':
       return await exportDeliveryWithInventory(formData, cartData, fileName);
-    
+
     default:
       await exportToExcel(formData, documentType);
       return { success: true, message: '문서 출력 완료' };

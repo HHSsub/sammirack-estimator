@@ -1,10 +1,10 @@
-# HistoryPage 청구서 인쇄 재고 인식 버그 수정
+# HistoryPage 발주서 인쇄 재고 인식 버그 수정
 
 ## 🐛 문제
 
 **증상:**
-- 홈화면에서 직접 청구서 생성 → 인쇄: ✅ 정상 작동
-- 문서관리탭에서 견적서 → "청구서 생성" → 인쇄: ❌ 모든 부품 재고 0으로 인식
+- 홈화면에서 직접 발주서 생성 → 인쇄: ✅ 정상 작동
+- 문서관리탭에서 견적서 → "발주서 생성" → 인쇄: ❌ 모든 부품 재고 0으로 인식
 
 **로그:**
 ```
@@ -112,12 +112,12 @@ const convertToPurchase = (item) => {
 
 ## 🧪 테스트 방법
 
-### 시나리오 1: 견적서 → 청구서 변환 후 인쇄
+### 시나리오 1: 견적서 → 발주서 변환 후 인쇄
 
 1. 홈화면에서 경량랙 견적서 생성 및 저장
 2. 문서관리탭으로 이동
-3. 해당 견적서에서 "청구서 생성" 클릭
-4. 청구서 화면에서 "인쇄" 클릭
+3. 해당 견적서에서 "발주서 생성" 클릭
+4. 발주서 화면에서 "인쇄" 클릭
 
 **기대 결과:**
 - ✅ 재고가 충분하면 정상 인쇄
@@ -141,7 +141,7 @@ const convertToPurchase = (item) => {
 
 ### Before (버그)
 ```
-견적서 → 청구서 변환
+견적서 → 발주서 변환
 └─ materials 전달 (inventoryPartId 없음)
    └─ PurchaseOrderForm
       └─ checkInventoryAvailability
@@ -152,7 +152,7 @@ const convertToPurchase = (item) => {
 
 ### After (수정)
 ```
-견적서 → 청구서 변환  
+견적서 → 발주서 변환  
 └─ materials에 inventoryPartId 추가 ✅
    └─ PurchaseOrderForm
       └─ checkInventoryAvailability
@@ -172,7 +172,7 @@ HistoryPage에서 materials를 전달할 때 `inventoryPartId`가 없었음
 PurchaseOrderForm에 전달하기 전에 각 material에 `inventoryPartId` 생성 및 추가
 
 **효과:**
-- ✅ 견적서 → 청구서 변환 시 재고 정상 인식
+- ✅ 견적서 → 발주서 변환 시 재고 정상 인식
 - ✅ 홈화면 직접 생성과 동일하게 작동
 - ✅ Race Condition 수정과 독립적으로 작동
 

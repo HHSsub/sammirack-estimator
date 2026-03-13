@@ -67,7 +67,7 @@ TOKEN_EXPIRES_IN_SECONDS = 10800  # 3시간 = 3 * 60 * 60
 # ====================================
 # sammirack-estimator 서버 API URL
 # ====================================
-# 가비아 서버의 sammirack 웹앱 API (DRY_RUN=False 시 여기에 청구서 POST)
+# 가비아 서버의 sammirack 웹앱 API (DRY_RUN=False 시 여기에 발주서 POST)
 # 가비아 서버(139.150.11.53)에서 실행할 때: http://localhost/api
 # 로컬 PC에서 직접 접근 시: http://139.150.11.53/api
 SAMMIRACK_SERVER_URL = "http://139.150.11.53/api"

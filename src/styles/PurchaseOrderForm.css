@@ -1,4 +1,4 @@
-/* PurchaseOrderForm.css - 거래명세서 / 청구서 전체 스타일 (흑백 기반) */
+/* PurchaseOrderForm.css - 거래명세서 / 발주서 전체 스타일 (흑백 기반) */
 
 .purchase-order-form-container {
   max-width: 1200px;
@@ -10,7 +10,7 @@
 }
 
 /* =====================================================
-   ✅ FAX CAPTURE - PurchaseOrderForm 전용 (청구서/거래명세서)
+   ✅ FAX CAPTURE - PurchaseOrderForm 전용 (발주서/거래명세서)
    ===================================================== */
 
 /* ✅ 컨테이너 */

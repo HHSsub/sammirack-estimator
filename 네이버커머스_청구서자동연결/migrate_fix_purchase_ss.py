@@ -6,7 +6,7 @@ migrate_fix_purchase_ss.py
 수정된 BOM 코드로 재생성하는 마이그레이션 스크립트.
 
 사용법 (가비아 서버에서):
-  cd /opt/sammirack/네이버커머스_청구서자동연결
+  cd /opt/sammirack/네이버커머스_발주서자동연결
   python3 migrate_fix_purchase_ss.py              # DRY_RUN (기본)
   python3 migrate_fix_purchase_ss.py --execute    # 실제 반영
 

@@ -201,7 +201,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
 
         // 경사브레싱 정보 추가
         const diagonalMaterial = allMaterials.find(m =>
-          m.rackType === rackType && /^경사브레싱$/.test(m.name) && m.specification === bracingSpec
+          m.rackType === rackType && /경사브[래레]싱/.test(m.name) && m.specification === bracingSpec
         );
         if (diagonalMaterial) {
           const diagonalPrice = getEffectivePrice(diagonalMaterial, adminPrices);
@@ -220,7 +220,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
 
         // 수평브레싱 정보 추가
         const horizontalMaterial = allMaterials.find(m =>
-          m.rackType === rackType && /^수평브레싱$/.test(m.name) && m.specification === bracingSpec
+          m.rackType === rackType && /수평브[래레]싱/.test(m.name) && m.specification === bracingSpec
         );
         if (horizontalMaterial) {
           const horizontalPrice = getEffectivePrice(horizontalMaterial, adminPrices);
@@ -241,6 +241,7 @@ const MaterialSelector = ({ isOpen, onClose, onAdd }) => {
         // Materials에는 기둥 + 경사브레싱 + 수평브레싱 3줄
         onAdd({
           name: `${selectedMaterial.name} (경사,수평브레싱포함)`,
+          originalName: selectedMaterial.name,
           specification: selectedMaterial.specification || '',
           quantity: quantity,
           unitPrice: effectivePrice,

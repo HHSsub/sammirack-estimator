@@ -12,22 +12,12 @@ import DocumentSettingsModal from './DocumentSettingsModal';
 import { convertDOMToPDFBase64, base64ToBlobURL, sendFax } from '../utils/faxUtils';
 import FaxPreviewModal from './FaxPreviewModal';
 import ToastNotification from './ToastNotification'; // ✅ 토스트 알림 추가
+import { getFullPrintHTML, PROVIDER } from '../utils/printGenerator'; // ✅ 통합 인쇄 유틸
 import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추가
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
 
-// ✅ PROVIDER는 고정 (도장 이미지 포함)
-const PROVIDER = {
-  bizNumber: '232-81-01750',
-  companyName: '삼미앵글랙산업',
-  ceo: '박이삭',
-  address: '경기도 광명시 원노온사로 39, 철제 스틸하우스 1',
-  website: 'http://www.ssmake.com',
-  tel: '010-9548-9578  010-4311-7733',
-  fax: '(02)2611-4595',
-  stampImage: `${import.meta.env.BASE_URL}images/도장.png`
-};
 
 const EstimateForm = () => {
   const { id } = useParams();
@@ -441,7 +431,10 @@ const EstimateForm = () => {
 
         // 서비스 항목(공임, 운임)이 아닐 때만 원자재 명세서(BOM)에 추가
         if (!materialWithId.isService) {
-          let materialsToAdd = [materialWithId];
+          let materialsToAdd = [{
+            ...materialWithId,
+            name: materialData.originalName || materialWithId.name
+          }];
 
           // ✅ 추가상품: 기둥 세트인 경우 경사/수평브레싱도 함께 추가
           if (materialData.additionalMaterials && materialData.additionalMaterials.length > 0) {
@@ -460,7 +453,28 @@ const EstimateForm = () => {
             materialsToAdd = [...materialsToAdd, ...additionalWithIds];
           }
 
-          nextState.materials = [...prev.materials, ...materialsToAdd];
+          const newMaterials = [...prev.materials];
+          materialsToAdd.forEach(newItem => {
+            const existingIdx = newMaterials.findIndex(m =>
+              m.inventoryPartId === newItem.inventoryPartId &&
+              m.name === newItem.name &&
+              m.specification === newItem.specification &&
+              m.rackType === newItem.rackType
+            );
+
+            if (existingIdx >= 0) {
+              const prevQty = parseInt(newMaterials[existingIdx].quantity) || 0;
+              const addQty = parseInt(newItem.quantity) || 0;
+              newMaterials[existingIdx].quantity = prevQty + addQty;
+
+              const unitPrice = parseFloat(newMaterials[existingIdx].unitPrice) || 0;
+              newMaterials[existingIdx].totalPrice = (prevQty + addQty) * unitPrice;
+            } else {
+              newMaterials.push(newItem);
+            }
+          });
+
+          nextState.materials = newMaterials;
         }
 
         return nextState;
@@ -626,7 +640,19 @@ const EstimateForm = () => {
       documentNumberInputRef.current?.focus();
       return;
     }
-    window.print();
+    
+    const title = `견적서_${formData.documentNumber}`;
+    const fullHTML = getFullPrintHTML({
+      ...formData,
+      type: 'estimate'
+    }, { 
+      title, 
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+    });
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(fullHTML);
+    printWindow.document.close();
   };
 
   const handleFaxPreview = async () => {
@@ -637,21 +663,36 @@ const EstimateForm = () => {
     }
 
     try {
-      const docElement = document.querySelector('.estimate-form-container');
-      if (!docElement) {
-        alert('문서 영역을 찾을 수 없습니다.');
-        return;
-      }
-
       alert('PDF 생성 중입니다. 잠시만 기다려주세요...');
 
-      const base64 = await convertDOMToPDFBase64(docElement);
-      setPdfBase64(base64);
+      const title = `견적서_${formData.documentNumber}`;
+      const fullHTML = getFullPrintHTML({
+        ...formData,
+        type: 'estimate'
+      }, { 
+        title, 
+        baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+      });
 
-      const blobURL = base64ToBlobURL(base64);
-      setPdfBlobURL(blobURL);
+      // iframe을 사용하여 HTML 렌더링 후 PDF 변환
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.write(fullHTML);
+      iframe.contentDocument.close();
 
-      setShowFaxModal(true);
+      setTimeout(async () => {
+        const docElement = iframe.contentDocument.body;
+        const base64 = await convertDOMToPDFBase64(docElement);
+        setPdfBase64(base64);
+
+        const blobURL = base64ToBlobURL(base64);
+        setPdfBlobURL(blobURL);
+
+        setShowFaxModal(true);
+        document.body.removeChild(iframe);
+      }, 500);
+
     } catch (error) {
       console.error('❌ PDF 생성 오류:', error);
       alert(`PDF 생성에 실패했습니다.\n오류: ${error.message}`);
@@ -719,7 +760,7 @@ const EstimateForm = () => {
       return;
     }
 
-    console.log('🔍 견적서→청구서 변환 시작:', formData.estimateNumber);
+    console.log('🔍 견적서→발주서 변환 시작:', formData.estimateNumber);
 
     // 1. 카트 데이터 추출
     const cart = (formData.cart && formData.cart.length > 0 ? formData.cart : formData.items || []).map(it => ({
@@ -771,7 +812,7 @@ const EstimateForm = () => {
 
     console.log(`✅ 변환 완료: cart ${cart.length}개, materials ${materials.length}개`);
 
-    // 4. 청구서로 이동
+    // 4. 발주서로 이동
     navigate('/purchase-order/new', {
       state: {
         cart: cart,
@@ -1022,7 +1063,7 @@ const EstimateForm = () => {
           저장하기
         </button>
         <button type="button" onClick={handleExportToExcel} className="excel-btn">엑셀로 저장하기</button>
-        <button type="button" onClick={convertToPurchase} className="invoice-btn">청구서 생성</button>
+        <button type="button" onClick={convertToPurchase} className="invoice-btn">발주서 생성</button>
         <button type="button" onClick={handlePrint} className="print-btn">인쇄하기</button>
         <button type="button" onClick={handleFaxPreview} className="fax-btn">📠 FAX 전송</button>
       </div>

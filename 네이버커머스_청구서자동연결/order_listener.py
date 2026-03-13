@@ -667,9 +667,13 @@ def map_highrack_color(raw_color):
     시스템의 5가지 표준 color 키로 매핑.
     (메트그레이 270/450, 블루오렌지 270/450, 블루오렌지 600kg)
     """
-    raw = raw_color.replace(" ", "")
-    is_blue = "블루" in raw or "오렌지" in raw
+    if not raw_color: return "메트그레이(볼트식)270kg"
     
+    raw = str(raw_color).replace(" ", "")
+    is_blue_orange = "블루" in raw or "오렌지" in raw
+    is_ivory = "아이보리" in raw
+    
+    # 중량 추출 (숫자만 보고 시스템 표준 중량으로 매핑)
     weight = "270kg"
     if "700" in raw or "600" in raw:
         weight = "600kg"
@@ -678,12 +682,13 @@ def map_highrack_color(raw_color):
     elif "200" in raw or "270" in raw:
         weight = "270kg"
         
-    if weight == "600kg":
-        return "블루(기둥.선반)+오렌지(빔)600kg"
-    elif is_blue:
+    if is_blue_orange:
+        # 블루오렌지의 경우 로드빔은 _generate_inventory_part_id에서 별도 처리됨
         return "블루(기둥)+오렌지(가로대)(볼트식){}".format(weight)
+    elif is_ivory:
+        return "아이보리(볼트식){}".format(weight)
     else:
-        # 아이보리, 메트그레이 등 기타 색상은 전부 메트그레이 통일
+        # 기타 색상(메트그레이 등)은 전부 메트그레이 통일
         return "메트그레이(볼트식){}".format(weight)
 
 
@@ -702,19 +707,24 @@ def classify_row(order):
     option_str   = str(order.get("옵션", "") or "")
     combined     = product_name + " " + option_str
 
-    # ① ADDON 키워드 있으면 즉시 addon (색상/규격 체크 불필요)
+    # ① ADDON 키워드 있으면 즉시 addon (단, '추가상품구매'는 제외)
+    # '추가상품구매'는 메인 상품명에 자주 포함되는 플레이스홀더임
+    addon_check_str = combined.replace("추가상품구매", "")
     for kw in ADDON_KEYWORDS:
-        if kw in combined:
+        if kw in addon_check_str:
             return "addon"
 
-    # ② 지원 랙 이름으로 시작하면 파싱 없이 바로 main (파렛트랙 옵션 구조 호환)
+    # ② 지원 랙 이름으로 시작하면 파싱 없이 바로 main
     for prefix in SUPPORTED_RACK_PREFIXES:
         if product_name.strip().startswith(prefix):
             return "main"
 
     # ③ 색상 또는 규격(폭) 있으면 main
     parsed = parse_smartstore_option(option_str)
-    return "main" if (parsed.get("color") or parsed.get("width") or parsed.get("size_raw")) else "addon"
+    if (parsed.get("color") or parsed.get("width") or parsed.get("size_raw")):
+        return "main"
+        
+    return "addon"
 
 
 def _parse_payment_dt(dt_str):
@@ -828,7 +838,6 @@ def build_material_item(order, main_rack_type=""):
     # type: (dict, str) -> dict
     """
     추가부품(addon) 주문 1행 → materials[] 한 행.
-    materials 구조: name / rackType / specification / quantity / unitPrice / totalPrice / note
     """
     product_name = str(order.get("상품명", "") or "")
     option_str   = str(order.get("옵션", "") or "")
@@ -845,13 +854,24 @@ def build_material_item(order, main_rack_type=""):
         total = 0
     unit_price = total // qty if qty else total
 
-    # 괄호 안 텍스트에서 부품명 추출 (예: "45X200(메트그레이선반)" → "메트그레이선반")
+    # 괄호 안 텍스트에서 부품명 추출
     m = _re.search(r'[（(]([^）)]+)[）)]', product_name)
     mat_name = m.group(1) if m else product_name
 
-    # 규격: 상품명에서 숫자×숫자 추출
-    m2 = _re.search(r'(\d+)[xX×](\d+)', product_name)
-    spec = "{}x{}".format(m2.group(1), m2.group(2)) if m2 else product_name
+    # 규격: 옵션(더 상세함) -> 상품명 순으로 숫자×숫자(×숫자) 추출
+    # 80x206 600kg 같은 경우 600이 3번째 숫자로 잡히지 않도록 구분자(x, X, *, ×)를 명시
+    dim_pattern = r'(\d+)\s*[xX×*]\s*(\d+)(?:\s*[xX×*]\s*(\d+))?'
+    m2 = _re.search(dim_pattern, option_str)
+    if not m2:
+        m2 = _re.search(dim_pattern, product_name)
+    
+    if m2:
+        if m2.group(3):
+            spec = "{}x{}x{}".format(m2.group(1), m2.group(2), m2.group(3))
+        else:
+            spec = "{}x{}".format(m2.group(1), m2.group(2))
+    else:
+        spec = product_name
 
     # 로드빔 계열 처리
     if "로드빔" in option_str or "로드빔" in product_name:
@@ -866,6 +886,13 @@ def build_material_item(order, main_rack_type=""):
     elif "기둥" in mat_name:
         mat_name = _re.sub(r'([가-힣])기둥', r'\1 기둥', mat_name)
 
+    # 하이랙인 경우 색상/중량 추출
+    cw = ""
+    color = ""
+    if main_rack_type == "하이랙":
+        combined = product_name + " " + option_str
+        cw = map_highrack_color(combined)
+        
     return {
         "name":          mat_name,
         "rackType":      main_rack_type,
@@ -874,6 +901,8 @@ def build_material_item(order, main_rack_type=""):
         "unitPrice":     unit_price,
         "totalPrice":    total,
         "note":          "",
+        "colorWeight":   cw,
+        "color":         color
     }
 
 
@@ -972,6 +1001,26 @@ def _generate_inventory_part_id(rack_type, name, specification, color="", color_
 
     clean_name = _re.sub(r'\s+', '', str(name)).replace('*', 'x')
 
+    def _snap_dimension(val_str, standards, tolerance=10):
+        try:
+            num_str = _re.sub(r'\D', '', val_str)
+            if not num_str: return val_str
+            val = int(num_str)
+            best_match = val_str
+            min_diff = tolerance + 1
+            for s in standards:
+                diff = abs(s - val)
+                if diff < min_diff:
+                    min_diff = diff
+                    best_match = str(s)
+            return best_match
+        except:
+            return val_str
+
+    HI_D = [45, 60, 80]
+    HI_W = [108, 150, 200]
+    HI_H = [150, 200, 250]
+
     # ── 하이랙 전용 처리 ──
     if rt == "하이랙":
         # 기본 부품명 추출
@@ -998,30 +1047,51 @@ def _generate_inventory_part_id(rack_type, name, specification, color="", color_
                 color_attr = "블루(기둥)+오렌지(가로대)(볼트식)"
 
         # 중량 추출 (기본 270kg)
+        # 중요: clean_name뿐만 아니라 specification, color, color_weight 전체에서 중량 검색
         weight_attr = "270kg"
-        if "450kg" in clean_name or "450kg" in str(specification):
+        search_target = clean_name + str(specification or '') + str(color or '') + str(color_weight or '')
+        if "450kg" in search_target:
             weight_attr = "450kg"
-        elif "600kg" in clean_name or "600kg" in str(specification):
+        elif "600kg" in search_target:
             weight_attr = "600kg"
+        elif "270kg" in search_target:
+            weight_attr = "270kg"
 
         # 규격 처리
         clean_spec = _re.sub(r'\s+', '', str(specification or '')).replace('*', 'x')
         clean_spec = _re.sub(r'(270|450|600)kg', '', clean_spec)  # 중량 중복 제거
 
         if base_name == "기둥":
-            m = _re.search(r'(\d+x\d*|\d+)높이(\d+)', clean_spec)
-            if not m:
-                m = _re.search(r'(\d+x\d*|\d+)(\d+)', clean_spec)
-            size_part = m.group(1) if m else '60x108'
-            height_part = m.group(2) if m else '150'
-            final_spec = "사이즈{}높이{}{}".format(size_part, height_part, weight_attr)
+            # 하이랙 기둥 인벤토리 규격: '사이즈{폭}x높이{높이}{중량}'
+            # clean_spec에서 숫자만 추출하여 폭과 높이를 스냅
+            nums = _re.findall(r'(\d+)', clean_spec)
+            if len(nums) >= 3:
+                # DxWxH -> 첫번째가 폭(45,60,80), 세번째가 높이 (가운데 width는 무시)
+                width_part = _snap_dimension(nums[0], HI_D, tolerance=20)
+                height_part = _snap_dimension(nums[2], HI_H, tolerance=50)
+            elif len(nums) == 2:
+                # WxH (Addon) -> 첫번째가 폭(깊이), 두번째가 높이
+                width_part = _snap_dimension(nums[0], HI_D, tolerance=20)
+                height_part = _snap_dimension(nums[1], HI_H, tolerance=50)
+            else:
+                # 숫자가 하나만 있으면 높이로 간주하고 폭은 기본값 60
+                width_part = '60'
+                height_part = _snap_dimension(nums[0] if nums else '150', HI_H, tolerance=50)
+            
+            final_spec = "사이즈{}x높이{}{}".format(width_part, height_part, weight_attr)
         elif base_name == "선반":
-            sm = _re.search(r'(\d+x\d*|\d+)', clean_spec)
-            size_part = sm.group(1) if sm else '45x108'
+            m = _re.search(r'(\d+)x(\d+)', clean_spec)
+            if m:
+                d_part = _snap_dimension(m.group(1), HI_D)
+                w_part = _snap_dimension(m.group(2), HI_W)
+                size_part = "{}x{}".format(d_part, w_part)
+            else:
+                sm = _re.search(r'(\d+)', clean_spec)
+                size_part = sm.group(1) if sm else '45x108'
             final_spec = "사이즈{}{}".format(size_part, weight_attr)
         elif base_name == "로드빔":
             lm = _re.search(r'(\d+)', clean_spec)
-            length_part = lm.group(1) if lm else '108'
+            length_part = _snap_dimension(lm.group(1) if lm else '108', HI_W)
             final_spec = "{}{}".format(length_part, weight_attr)
         else:
             final_spec = clean_spec
@@ -1061,8 +1131,15 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
     res = []
 
     sz = option_data.get("size_raw", "")
+    # "추가상품구매" 등의 플레이스홀더 처리
+    if sz and "추가" in sz:
+        sz = ""
+    
     w, d = _parse_wd(sz)
     ht_raw = str(option_data.get("height", ""))
+    if "추가" in ht_raw:
+        ht_raw = ""
+        
     dan = _parse_level(option_data.get("dan", "1"))
     form = option_data.get("rack_type_hint", "독립형")
     color = option_data.get("color", "")
@@ -1255,7 +1332,7 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
         res.append({"name": "안전핀", "rackType": rack_type, "specification": "",
                     "quantity": dan * qty, "colorWeight": "", "color": ""})
 
-    # ═══ 공통: partId, inventoryPartId, 가격 조회 ════════════════════════════
+    # ─── 모든 자재에 대해 공통 ID 및 단가 로드 (ID 생성 필수) ───
     for r in res:
         rt = r["rackType"]
         nm = r["name"]
@@ -1263,16 +1340,15 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
         cl = r.get("color", "")
         cw = r.get("colorWeight", "")
 
-        # 파렛트랙은 SS 기본 신형
         version = "신형" if rt == "파렛트랙" else ""
 
         r["partId"] = _generate_part_id(rt, nm, sp)
+        # _inventoryPartId 생성 (매우 중요: 테스트 코드 및 재고 연동 필수)
         r["_inventoryPartId"] = _generate_inventory_part_id(
             rt, nm, sp, color=cl, color_weight=cw, version=version
         )
-        # inventoryPartId도 동일하게 설정 (React 호환)
         r["inventoryPartId"] = r["_inventoryPartId"]
-
+        
         # _inventoryList (React 호환)
         r["_inventoryList"] = [{
             "inventoryPartId": r["_inventoryPartId"],
@@ -1282,16 +1358,16 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
             "specification": sp,
             "rackType": rt,
             "name": nm,
-            "version": version,
+            "version": version
         }]
 
         # admin_prices에서 가격 조회
-        price = _lookup_admin_price(r["partId"])
-        if not price:
-            price = _lookup_admin_price(r["_inventoryPartId"])
-        r["unitPrice"] = price
-        r["totalPrice"] = price * r["quantity"]
-        r["note"] = ""
+        if not r.get("unitPrice"):
+            price = _lookup_admin_price(r["partId"])
+            if not price:
+                price = _lookup_admin_price(r["_inventoryPartId"])
+            r["unitPrice"] = price
+            r["totalPrice"] = price * r["quantity"]
 
     return res
 
@@ -1320,17 +1396,21 @@ def build_grouped_document(group):
     mains  = [r for r in group_sorted if classify_row(r) == "main"]
     addons = [r for r in group_sorted if classify_row(r) == "addon"]
 
-    # 메인 랙이 없을 경우 전체를 main으로 처리 (단독 주문 등)
-    if not mains:
-        mains  = group_sorted
-        addons = []
-
-    main_rack_type = get_rack_type(mains[0].get("상품명", "")) if mains else ""
+    # 세션의 대표 랙 타입 결정
+    session_rack_type = ""
+    if mains:
+        session_rack_type = get_rack_type(mains[0].get("상품명", ""), mains[0].get("옵션", ""))
+    elif addons:
+        # 메인 상품 없이 추가상품만 있는 경우, 첫 번째 항목에서 랙 타입을 유추
+        for r in addons:
+            session_rack_type = get_rack_type(r.get("상품명", ""), r.get("옵션", ""))
+            if session_rack_type: break
 
     # items[] 및 materials[](BOM) 생성
     items = []
     materials = []
     
+    # 메인 랙 처리 (있는 경우에만)
     for r in mains:
         pname = str(r.get("상품명", "") or "")
         optv  = str(r.get("옵션", "") or "")
@@ -1358,19 +1438,57 @@ def build_grouped_document(group):
 
     # 3. 추가부품(addons) 주문을 materials에 합산
     for r in addons:
-        materials.append(build_material_item(r, main_rack_type))
+        materials.append(build_material_item(r, session_rack_type))
 
-    # 4. materials 중복 제거 및 수량 합산 (자재명 + 규격 기준)
+    # 4. materials 중복 제거 및 수량 합산 (자재명 + 규격 + 색상 기준)
     merged_mats = {}
     for m in materials:
-        key = (m["name"], m.get("rackType", ""), m.get("specification", ""))
+        key = (m["name"], m.get("rackType", ""), m.get("specification", ""), m.get("colorWeight", ""), m.get("color", ""))
         if key in merged_mats:
             merged_mats[key]["quantity"] += m["quantity"]
-            merged_mats[key]["totalPrice"] += m.get("totalPrice", 0)
+            # totalPrice는 나중에 재조회된 단가로 갱신할 수 있으나 일단 합산
+            merged_mats[key]["totalPrice"] = merged_mats[key].get("totalPrice", 0) + m.get("totalPrice", 0)
         else:
             merged_mats[key] = m
             
     materials = sorted(merged_mats.values(), key=lambda x: (x.get("rackType", ""), x["name"]))
+
+    # 5. 모든 자재에 대해 공통 ID 및 단가 로드
+    for r in materials:
+        rt = r["rackType"]
+        nm = r["name"]
+        sp = r.get("specification", "")
+        cl = r.get("color", "")
+        cw = r.get("colorWeight", "")
+
+        # 파렛트랙은 SS 기본 신형
+        version = "신형" if rt == "파렛트랙" else ""
+
+        r["partId"] = _generate_part_id(rt, nm, sp)
+        r["_inventoryPartId"] = _generate_inventory_part_id(
+            rt, nm, sp, color=cl, color_weight=cw, version=version
+        )
+        r["inventoryPartId"] = r["_inventoryPartId"]
+        
+        # _inventoryList (React 호환)
+        r["_inventoryList"] = [{
+            "inventoryPartId": r["_inventoryPartId"],
+            "quantity": r["quantity"],
+            "colorWeight": cw,
+            "color": cl,
+            "specification": sp,
+            "rackType": rt,
+            "name": nm,
+            "version": version
+        }]
+
+        # admin_prices에서 가격 조회 (이미 있으면(addon) 유지하되 없으면 조회)
+        if not r.get("unitPrice"):
+            price = _lookup_admin_price(r["partId"])
+            if not price:
+                price = _lookup_admin_price(r["_inventoryPartId"])
+            r["unitPrice"] = price
+            r["totalPrice"] = price * r["quantity"]
 
     # 금액 합산
     subtotal     = sum(_safe_int(r.get("최종금액", 0)) for r in group_sorted)
@@ -1386,11 +1504,16 @@ def build_grouped_document(group):
 
     doc_id      = "purchase_ss_{}".format(order_id)
     doc_num     = "SS-{}".format(order_id[-10:]) if len(order_id) >= 10 else "SS-{}".format(order_id)
-    company     = str(first.get("수취인명") or first.get("구매자명") or "")
-    notes_str   = "배송지: {} | 연락처: {} | 수취인: {}".format(
+    
+    # 상호명: 구매자명 우선, 비어있으면 수취인명
+    buyer_name = str(first.get("구매자명", "") or "").strip()
+    recipient_name = str(first.get("수취인명", "") or "").strip()
+    company = buyer_name if buyer_name else recipient_name
+
+    # 메모: 배송지, 연락처 정보를 메모칸으로 이동
+    memo_str = "배송지: {} | 연락처: {}".format(
         str(first.get("배송지", "") or ""),
         str(first.get("연락처", "") or ""),
-        str(first.get("수취인명", "") or ""),
     )
 
     return {
@@ -1405,8 +1528,8 @@ def build_grouped_document(group):
         "subtotal":        subtotal,
         "tax":             tax,
         "total_amount":    total_amount,
-        "notes":           notes_str,
-        "top_memo":        "",
+        "notes":           "", # 비고칸은 비움 (메모로 이동됨)
+        "top_memo":        memo_str,
         "created_at":      now_iso,
         "updated_at":      now_iso,
         "type":            "purchase",
@@ -1417,7 +1540,7 @@ def build_grouped_document(group):
         "companyName":     company,
         "bizNumber":       "",
         "totalAmount":     total_amount,
-        "topMemo":         "",
+        "topMemo":         memo_str,
         "purchaseNumber":  doc_num,
         "customerName":    company,
         "status":          "진행 중",
@@ -1429,7 +1552,7 @@ def build_grouped_document(group):
         "_buyer":          str(first.get("구매자명", "") or ""),
         "_mains_count":    len(mains),
         "_addons_count":   len(addons),
-        "_rack_type":      main_rack_type,
+        "_rack_type":      session_rack_type,
     }
 
 

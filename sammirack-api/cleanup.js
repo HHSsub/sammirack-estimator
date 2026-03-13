@@ -47,7 +47,7 @@ async function cleanupDocuments() {
     }
 
     // 2. 문서 번호(document_number) + 타입(type) 중복 검사
-    // 번호가 같더라도 타입(견적서/청구서)이 다르면 다른 문서로 취급해야 함
+    // 번호가 같더라도 타입(견적서/발주서)이 다르면 다른 문서로 취급해야 함
     const activeRows = await db.all('SELECT * FROM documents WHERE deleted != 1 OR deleted IS NULL');
     const numberMap = {};
 

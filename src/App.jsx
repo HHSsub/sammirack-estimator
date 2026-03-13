@@ -54,7 +54,7 @@ function App() {
             <Link to="/history" className="nav-link">문서 관리</Link>
           )}
           <Link to="/estimate/new" className="nav-link">견적서 작성</Link>
-          <Link to="/purchase-order/new" className="nav-link">청구서 작성</Link>
+          <Link to="/purchase-order/new" className="nav-link">발주서 작성</Link>
           {currentUser?.role === 'admin' && (
             <Link to="/inventory" className="nav-link">재고관리</Link>
           )}
@@ -338,7 +338,7 @@ const HomePage = ({ currentUser }) => {
             <p style={{ margin: '4px 0 0 0', fontSize: '14px' }}>
               거래번호: <strong>{editingData.editingDocumentData?.documentNumber}</strong> |
               유형: {editingData.editingDocumentType === 'estimate' ? '견적서' :
-                editingData.editingDocumentType === 'purchase' ? '청구서' : '거래명세서'}
+                editingData.editingDocumentType === 'purchase' ? '발주서' : '거래명세서'}
             </p>
           </div>
           <button
@@ -447,7 +447,7 @@ const HomePage = ({ currentUser }) => {
           <button
             onClick={() => {
               // 🔴 디버깅 로그 추가
-              console.log('청구서 작성 버튼 클릭!');
+              console.log('발주서 작성 버튼 클릭!');
               console.log('cart:', cart);
               console.log('cart.length:', cart?.length);
               console.log('cart[0]:', cart[0]);
@@ -475,7 +475,7 @@ const HomePage = ({ currentUser }) => {
             }}
             className="create-order-button"
           >
-            청구서 작성
+            발주서 작성
           </button>
 
         </div>

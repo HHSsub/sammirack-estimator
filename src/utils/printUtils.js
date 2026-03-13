@@ -71,7 +71,7 @@ export const formatEstimateData = (formData, cart, cartTotal) => {
   };
 };
 
-// 청구서(발주/주문) 데이터 포맷팅
+// 발주서(발주/주문) 데이터 포맷팅
 export const formatPurchaseOrderData = (formData, cart, materials, cartTotal) => {
   const currentDate = new Date().toISOString().split('T')[0];
   const last4 = extractLast4Digits(formData?.contactInfo);

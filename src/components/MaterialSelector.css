@@ -218,8 +218,9 @@
 }
 
 .material-spec {
-  font-size: 12px;
-  color: #bb1934;
+  font-size: 13px;
+  color: #007bff;
+  /* 파란색으로 변경 (#bb1934 에서 수정) */
   margin-top: 2px;
 }
 

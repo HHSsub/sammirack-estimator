@@ -27,7 +27,7 @@ Impact: 0.20                    [시간 기반]
 상태: ESTIMATE_MODIFIED          ↓
 Impact: 0.20                 ┌─ 14:00 이전?
          ↓                  │  └→ 당일 처리
-청구서 생성                  │     (당일 발송)
+발주서 생성                  │     (당일 발송)
 상태: PURCHASE_ORDER_CREATED│
 Impact: 0.70                 └─ 14:00 이후?
          ↓                      └→ 다음 영업일 처리
@@ -66,7 +66,7 @@ ESTIMATE  ──수정──→  PURCHASE_ORDER  ──전송──→  ORDER_CO
 
 **Impact Score의 의미**:
 - **0.20**: 견적서 단계 - 취소될 가능성 높음 (80% 확률로 변경/취소)
-- **0.70**: 청구서 단계 - 의도 명확하지만 마지막 확인 전 (30% 리스크)
+- **0.70**: 발주서 단계 - 의도 명확하지만 마지막 확인 전 (30% 리스크)
 - **0.95**: FAX 전송됨 - 거의 확정 (5% 리스크만 있음)
 - **1.00**: 배송 중/완료 - 100% 확정
 
@@ -514,8 +514,8 @@ function runDailyInventoryProcessor() {
 | ESTIMATE_CREATED | 수동 | 0.20 | 견적서 작성, 매우 불확실 |
 | ESTIMATE_MODIFIED | 수동 | 0.20 | 견적서 수정, 여전히 불확실 |
 | QUOTE_SENT | 수동 | 0.50 | 고객에게 전송, 검토 중 |
-| PURCHASE_ORDER_CREATED | 수동 | 0.70 | 청구서 생성, 의도 명확 |
-| PURCHASE_ORDER_MODIFIED | 수동 | 0.70 | 청구서 수정, 마지막 확인 |
+| PURCHASE_ORDER_CREATED | 수동 | 0.70 | 발주서 생성, 의도 명확 |
+| PURCHASE_ORDER_MODIFIED | 수동 | 0.70 | 발주서 수정, 마지막 확인 |
 | ORDER_CONFIRMED_PRINTED | 수동 | 0.90 | 인쇄됨, 거의 확정 |
 | ORDER_CONFIRMED_FAX_SENT | 수동 | 0.95 | FAX 전송됨, 매우 확정 |
 | ORDER_CONFIRMED_EMAIL_SENT | 수동 | 0.90 | 메일 전송됨, 거의 확정 |

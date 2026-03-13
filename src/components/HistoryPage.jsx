@@ -14,6 +14,7 @@ import {
 import { regenerateBOMFromDisplayName, setBomDataForRegeneration } from '../utils/bomRegeneration';
 import { generateInventoryPartId, generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
 import { documentsAPI } from '../services/apiClient';  // ✅ 이 줄 추가
+import { getFullPrintHTML, generateDocHTML } from '../utils/printGenerator'; // ✅ 통합 인쇄 유틸
 
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
@@ -28,6 +29,17 @@ import { documentsAPI } from '../services/apiClient';  // ✅ 이 줄 추가
  * - ✅ 컬럼별 정렬 기능
  * - ✅ 메모 기능 (상태 대체)
  */
+const PROVIDER = {
+  bizNumber: '232-81-01750',
+  companyName: '삼미앵글랙산업',
+  ceo: '박이삭',
+  address: '경기도 광명시 원노온사로 39, 철제 스틸하우스 1',
+  website: 'http://www.ssmake.com',
+  tel: '010-9548-9578\n010-4311-7733',
+  fax: '(02)2611-4595',
+  stampImage: `${import.meta.env.BASE_URL}images/도장.png`
+};
+
 const HistoryPage = () => {
   const navigate = useNavigate();
   // State for history items (estimates, orders, delivery notes)
@@ -59,6 +71,9 @@ const HistoryPage = () => {
   // ✅ 메모 모달 state
   const [memoModalItem, setMemoModalItem] = useState(null);
   const [memoModalValue, setMemoModalValue] = useState('');
+
+  // ✅ 일괄 작업을 위한 선택 상태
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   // Load history on component mount
   useEffect(() => {
@@ -355,7 +370,7 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
 
     const confirmDelete = window.confirm(
-      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 삭제하시겠습니까 ?
+      `정말로 이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}를 삭제하시겠습니까 ?
   ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
       
 ※ 삭제된 문서는 '삭제된 문서 보기'에서 복구할 수 있습니다.`
@@ -367,6 +382,14 @@ const HistoryPage = () => {
         const success = await deleteDocumentSync(item.id, item.type);
 
         if (success) {
+          // ✅ 선택 상태에서도 제거
+          const itemKey = `${item.type}_${item.id}`;
+          setSelectedIds(prev => {
+            const next = new Set(prev);
+            next.delete(itemKey);
+            return next;
+          });
+
           // ✅ UI 즉시 반영 (강제 업데이트) - 이 부분이 실행되어야 화면에서 사라집니다
           console.log(`⚡ UI 강제 삭제 처리: ${item.id} (${item.type})`);
 
@@ -403,7 +426,7 @@ const HistoryPage = () => {
     if (!item || !item.id || !item.type) return;
 
     const confirmRestore = window.confirm(
-      `이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}를 복구하시겠습니까 ?
+      `이 ${item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}를 복구하시겠습니까 ?
   ${item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''} `
     );
 
@@ -459,7 +482,7 @@ const HistoryPage = () => {
   };
 
   /**
-   * ✅ 견적서를 청구서로 변환 (BOM 복구 및 하이랙 규격 보정 포함)
+   * ✅ 견적서를 발주서로 변환 (BOM 복구 및 하이랙 규격 보정 포함)
    */
   const convertToPurchase = (item) => {
     if (!item) return;
@@ -551,9 +574,6 @@ const HistoryPage = () => {
 
     try {
       // 1) 서버에서 전체 문서 데이터 가져오기
-      // ✅ [버그 수정] purchase_ss_* 등 item.id에 이미 '_'가 포함된 경우에도 올바르게 type_id로 재조합
-      // 예: item.type='purchase', item.id='ss_2026022847851331' → docId='purchase_ss_2026022847851331'
-      // 기존 로직: _.includes('_') 가 true이면 prefix를 붙이지 않아 ss_... 만 남아서 404 발생
       let docId = item.id;
       const expectedPrefix = `${item.type}_`;
       if (!docId.startsWith(expectedPrefix)) {
@@ -574,12 +594,11 @@ const HistoryPage = () => {
           quantity: Number(itm.quantity) || 1,
           unitPrice: Number(itm.unitPrice) || 0,
           totalPrice: Number(itm.totalPrice) || 0,
-          customPrice: Number(itm.customPrice) || 0,  // ✅ customPrice 보존!
-          price: Number(itm.unitPrice) || 0  // ✅ price는 unitPrice를 사용 (총가격이 아님!)
+          customPrice: Number(itm.customPrice) || 0,
+          price: Number(itm.unitPrice) || 0
         }));
       }
       console.log('📦 복원된 cart:', cart);
-
 
       // 3) Materials 복원 + BOM 재생성
       let materials = [];
@@ -592,7 +611,6 @@ const HistoryPage = () => {
         }));
         console.log('✅ 기존 materials 복원:', materials);
       } else if (cart.length > 0) {
-        // BOM 재생성
         console.log('⚠️ materials 비어있음 - cart에서 BOM 재생성');
         materials = [];
         cart.forEach(cartItem => {
@@ -625,62 +643,52 @@ const HistoryPage = () => {
 
       // Cart에 Admin 가격 적용
       cart = cart.map(cartItem => {
-        // ✅ 1순위: customPrice가 있으면 보존!
-        if (cartItem.customPrice !== undefined && cartItem.customPrice !== null && cartItem.customPrice > 0) {
-          console.log(`  ⚠️ customPrice 보존: ${cartItem.displayName} - ${cartItem.customPrice}원`);
+        // 1순위: customPrice 보존
+        if (cartItem.customPrice && cartItem.customPrice > 0) {
           return {
             ...cartItem,
             unitPrice: cartItem.customPrice,
             totalPrice: cartItem.customPrice * cartItem.quantity,
-            price: cartItem.customPrice  // 단가만! 
+            price: cartItem.customPrice
           };
         }
 
-        // ✅ 2순위: Admin 가격 적용
+        // 2순위: Admin 가격 적용
         const partId = generatePartId(cartItem);
         const adminPrice = adminPrices[partId];
         if (adminPrice && adminPrice.price > 0) {
-          const newUnitPrice = adminPrice.price;
-          const newTotalPrice = newUnitPrice * cartItem.quantity;
-          console.log(`✅ Cart 가격 업데이트: ${cartItem.displayName} - ${newUnitPrice}원`);
+          const newPrice = adminPrice.price;
           return {
             ...cartItem,
-            unitPrice: newUnitPrice,
-            totalPrice: newTotalPrice,
-            price: newTotalPrice
+            unitPrice: newPrice,
+            totalPrice: newPrice * cartItem.quantity,
+            price: newPrice
           };
         }
 
-        // ✅ 3순위: 기존 가격 유지
-        console.log(`  ⚠️ 기존 가격 유지: ${cartItem.displayName}`);
+        // 3순위: 기존 가격 유지
         return {
           ...cartItem,
-          price: cartItem.unitPrice || cartItem.price || 0  // ✅ 단가 우선!
+          price: cartItem.unitPrice || cartItem.price || 0
         };
       });
-
 
       // Materials에 Admin 가격 적용
       materials = materials.map(mat => {
         const partId = generatePartId(mat);
         const adminPrice = adminPrices[partId];
         if (adminPrice && adminPrice.price > 0) {
-          const newUnitPrice = adminPrice.price;
-          const newTotalPrice = newUnitPrice * mat.quantity;
-          console.log(`✅ Material 가격 업데이트: ${mat.name} - ${newUnitPrice}원`);
+          const newPrice = adminPrice.price;
           return {
             ...mat,
-            unitPrice: newUnitPrice,
-            totalPrice: newTotalPrice
+            unitPrice: newPrice,
+            totalPrice: newPrice * mat.quantity
           };
         }
         return mat;
       });
 
-      console.log('💰 가격 재적용 완료 - Cart:', cart);
-      console.log('💰 가격 재적용 완료 - Materials:', materials);
-
-      // 6) 편집 데이터 구성
+      // 5) 편집 데이터 구성 및 이동
       const editingData = {
         cart,
         totalBom: materials,
@@ -694,24 +702,7 @@ const HistoryPage = () => {
         }
       };
 
-      console.log('🚀 편집 데이터로 이동:', editingData);
-
-      // 7) 홈 화면으로 이동 (필수!)
-      navigate('/', {
-        state: editingData,
-        replace: false  // 뒤로가기 가능하도록
-      });
-
-      // // 7) 문서 타입에 따라 경로 이동 (이거 주석 절대로 지우지말것, 홈화면 안거칠꺼면 이거 주석 풀면 됨)
-      // const docType = fullDoc.type || 'estimate';
-
-      // if (docType === 'purchase') {
-      //   navigate('/purchase-order/new', { state: editingData });
-      // } else if (docType === 'delivery') {
-      //   navigate('/delivery-note/new', { state: editingData });
-      // } else {
-      //   navigate('/estimate/new', { state: editingData });
-      // }
+      navigate('/', { state: editingData });
 
     } catch (error) {
       console.error('❌ 편집 실패:', error);
@@ -719,393 +710,70 @@ const HistoryPage = () => {
     }
   };
 
+  /**
+   * ✅ 선택 관련 핸들러
+   */
+  const handleSelectRow = (item, isChecked) => {
+    const itemKey = `${item.type}_${item.id}`;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (isChecked) next.add(itemKey);
+      else next.delete(itemKey);
+      return next;
+    });
+  };
 
+  const handleSelectAll = (isChecked) => {
+    if (isChecked) {
+      const allKeys = sortedItems.map(item => `${item.type}_${item.id}`);
+      setSelectedIds(new Set(allKeys));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
 
+  const isAllSelected = sortedItems.length > 0 && selectedIds.size >= sortedItems.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < sortedItems.length;
 
   /**
-   * ✅ 인쇄 버튼 처리
+   * ✅ 통합 HTML 생성 함수 (PurchaseOrderForm 디자인 100% 복제)
    */
   const printItem = (item) => {
     if (!item || !item.type) return;
 
     const printWindow = window.open('', '_blank');
-    const printData = item;
-    let printHTML = '';
+    const title = item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서';
+    const fullHTML = getFullPrintHTML(item, { 
+      title, 
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+    });
 
-    if (item.type === 'estimate') {
-      // 견적서 인쇄용 HTML
-      printHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>견적서</title>
-    <style>
-        @media print {
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-            .print-header { text-align: center; margin-bottom: 30px; }
-            .print-header h1 { font-size: 24px; margin: 0; }
-            .info-table, .quote-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .info-table td, .quote-table th, .quote-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-            .quote-table th { background-color: #f0f0f0; text-align: center; }
-            .right { text-align: right; }
-            .label { background-color: #f8f9fa; font-weight: bold; }
-            .notes-section { margin-top: 20px; }
-            .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
-        }
-    </style>
-</head>
-<body>
-    <div class="print-header">
-        <h1>견&nbsp;&nbsp;&nbsp;&nbsp;적&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-        <div>거래번호: ${printData.estimateNumber || printData.documentNumber || ''}</div>
-    </div>
-
-    <table class="info-table">
-      <tbody>
-        <tr>
-          <td class="label">견적일자</td>
-          <td>${printData.date}</td>
-          <td class="label">사업자등록번호</td>
-          <td>232-81-01750</td>
-        </tr>
-        <tr>
-          <td class="label">상호명</td>
-          <td>${printData.customerName || printData.companyName || ''}</td>
-          <td class="label">상호</td>
-          <td>삼미앵글랙산업</td>
-        </tr>
-        <tr>
-          <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
-            아래와 같이 견적합니다 (부가세, 운임비 별도)
-          </td>
-          <td class="label">대표자</td>
-          <td>박이삭</td>
-        </tr>
-        <tr>
-          <td class="label">소재지</td>
-          <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
-        </tr>
-        <tr>
-          <td class="label">TEL</td>
-          <td>(02)2611-4597</td>
-        </tr>
-        <tr>
-          <td class="label">FAX</td>
-          <td>(02)2611-4595</td>
-        </tr>
-        <tr>
-          <td class="label">홈페이지</td>
-          <td>http://www.ssmake.com</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <table class="quote-table">
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>품명</th>
-          <th>단위</th>
-          <th>수량</th>
-          <th>단가</th>
-          <th>공급가</th>
-          <th>비고</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${(printData.items || []).map((item, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${item.name || ''}</td>
-            <td>${item.unit || ''}</td>
-            <td>${item.quantity || ''}</td>
-            <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
-            <td class="right">${parseInt(item.totalPrice || 0).toLocaleString()}</td>
-            <td>${item.note || ''}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-
-    <table class="total-table">
-      <tbody>
-        <tr>
-          <td class="label">소계</td>
-          <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
-        </tr>
-        <tr>
-          <td class="label">부가세</td>
-          <td class="right">${(printData.tax || 0).toLocaleString()}</td>
-        </tr>
-        <tr>
-          <td class="label"><strong>합계</strong></td>
-          <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
-        </tr>
-      </tbody>
-    </table>
-
-    ${printData.notes ? `
-      <div class="notes-section">
-        <strong>비고:</strong><br>
-        ${printData.notes.replace(/\n/g, '<br>')}
-      </div>
-    ` : ''}
-
-    <div class="form-company">(주)삼미앵글랙산업</div>
-</body>
-    </html >
-      `;
-    } else if (item.type === 'delivery') {
-      // 거래명세서 인쇄용 HTML
-      printHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>거래명세서</title>
-    <style>
-        @media print {
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-            .print-header { text-align: center; margin-bottom: 30px; }
-            .print-header h1 { font-size: 24px; margin: 0; }
-            .info-table, .quote-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .info-table td, .quote-table th, .quote-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-            .quote-table th { background-color: #f0f0f0; text-align: center; }
-            .right { text-align: right; }
-            .label { background-color: #f8f9fa; font-weight: bold; }
-            .notes-section { margin-top: 20px; }
-            .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
-        }
-    </style>
-</head>
-<body>
-    <div class="print-header">
-        <h1>거&nbsp;&nbsp;래&nbsp;&nbsp;명&nbsp;&nbsp;세&nbsp;&nbsp;서</h1>
-        <div>거래번호: ${printData.documentNumber || ''}</div>
-    </div>
-
-    <table class="info-table">
-      <tbody>
-        <tr>
-          <td class="label">거래일자</td>
-          <td>${printData.date}</td>
-          <td class="label">사업자등록번호</td>
-          <td>232-81-01750</td>
-        </tr>
-        <tr>
-          <td class="label">상호명</td>
-          <td>${printData.customerName || printData.companyName || ''}</td>
-          <td class="label">상호</td>
-          <td>삼미앵글랙산업</td>
-        </tr>
-        <tr>
-          <td colspan="2" rowspan="4" style="text-align: center; font-weight: bold; vertical-align: middle; padding: 16px 0; background: #f8f9fa;">
-            아래와 같이 견적합니다 (부가세, 운임비 별도)
-          </td>
-          <td class="label">대표자</td>
-          <td>박이삭</td>
-        </tr>
-        <tr>
-          <td class="label">소재지</td>
-          <td>경기도 광명시 원노온사로 39, 철제 스틸하우스 1</td>
-        </tr>
-        <tr>
-          <td class="label">TEL</td>
-          <td>(02)2611-4597</td>
-        </tr>
-        <tr>
-          <td class="label">FAX</td>
-          <td>(02)2611-4595</td>
-        </tr>
-        <tr>
-          <td class="label">홈페이지</td>
-          <td>http://www.ssmake.com</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <table class="quote-table">
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>품명</th>
-          <th>단위</th>
-          <th>수량</th>
-          <th>단가</th>
-          <th>공급가</th>
-          <th>비고</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${(printData.items || []).map((item, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${item.name || ''}</td>
-            <td>${item.unit || ''}</td>
-            <td>${item.quantity || ''}</td>
-            <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
-            <td class="right">${parseInt(item.totalPrice || 0).toLocaleString()}</td>
-            <td>${item.note || ''}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-
-    <table class="total-table">
-      <tbody>
-        <tr>
-          <td class="label">소계</td>
-          <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
-        </tr>
-        <tr>
-          <td class="label">부가세</td>
-          <td class="right">${(printData.tax || 0).toLocaleString()}</td>
-        </tr>
-        <tr>
-          <td class="label"><strong>합계</strong></td>
-          <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
-        </tr>
-      </tbody>
-    </table>
-
-    ${printData.notes ? `
-      <div class="notes-section">
-        <strong>비고:</strong><br>
-        ${printData.notes.replace(/\n/g, '<br>')}
-      </div>
-    ` : ''}
-
-    <div class="form-company">(주)삼미앵글랙산업</div>
-</body>
-</html>
-      `;
-    } else if (item.type === 'purchase') {
-      // 청구서 인쇄용 HTML (주요 아이템 + 원자재 포함)
-      printHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>청구서</title>
-    <style>
-        @media print {
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-            .print-header { text-align: center; margin-bottom: 30px; }
-            .print-header h1 { font-size: 24px; margin: 0; }
-            .info-table, .order-table, .material-table, .total-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            .info-table td, .order-table th, .order-table td, .material-table th, .material-table td, .total-table td { border: 1px solid #000; padding: 8px; }
-            .order-table th, .material-table th { background-color: #f0f0f0; text-align: center; }
-            .right { text-align: right; }
-            .label { background-color: #f8f9fa; font-weight: bold; }
-            .section-title { margin-top: 30px; margin-bottom: 10px; font-size: 18px; font-weight: bold; }
-            .notes-section { margin-top: 20px; }
-            .form-company { text-align: center; margin-top: 30px; font-weight: bold; }
-        }
-    </style>
-</head>
-<body>
-    <div class="print-header">
-        <h1>청&nbsp;&nbsp;&nbsp;&nbsp;구&nbsp;&nbsp;&nbsp;&nbsp;서</h1>
-        <div>거래번호: ${printData.purchaseNumber || printData.documentNumber || ''}</div>
-    </div>
-
-    <table class="info-table">
-      <tbody>
-        <tr>
-          <td class="label">거래일자</td>
-          <td>${printData.date}</td>
-          <td class="label">사업자등록번호</td>
-          <td>232-81-01750</td>
-        </tr>
-        <tr>
-          <td class="label">상호명</td>
-          <td>${printData.customerName || printData.companyName || ''}</td>
-          <td class="label">상호</td>
-          <td>삼미앵글랙산업</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <table class="order-table">
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>품명</th>
-          <th>단위</th>
-          <th>수량</th>
-          <th>단가</th>
-          <th>공급가</th>
-          <th>비고</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${(printData.items || []).map((item, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${item.name || ''}</td>
-            <td>${item.unit || ''}</td>
-            <td>${item.quantity || ''}</td>
-            <td>${parseInt(item.unitPrice || 0).toLocaleString()}</td>
-            <td class="right">${parseInt(item.totalPrice || 0).toLocaleString()}</td>
-            <td>${item.note || ''}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-
-    ${(printData.materials && printData.materials.length > 0) ? `
-    <table class="material-table" style="margin-top: 20px;">
-      <thead>
-        <tr>
-          <th>NO</th>
-          <th>부품명</th>
-          <th>규격/설명</th>
-          <th>수량</th>
-          <th>비고</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${printData.materials.map((mat, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${mat.name || ''}</td>
-            <td>${mat.specification || ''}</td>
-            <td>${mat.quantity || ''}</td>
-            <td>${mat.note || ''}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-    ` : ''}
-
-    <table class="total-table">
-      <tbody>
-        <tr>
-          <td class="label">소계</td>
-          <td class="right">${(printData.subtotal || 0).toLocaleString()}</td>
-        </tr>
-        <tr>
-          <td class="label">부가세</td>
-          <td class="right">${(printData.tax || 0).toLocaleString()}</td>
-        </tr>
-        <tr>
-          <td class="label"><strong>합계</strong></td>
-          <td class="right"><strong>${(printData.totalAmount || printData.totalPrice || 0).toLocaleString()}</strong></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="form-company">(주)삼미앵글랙산업</div>
-</body>
-</html>
-      `;
-    }
-
-    printWindow.document.write(printHTML);
+    printWindow.document.write(fullHTML);
     printWindow.document.close();
-    printWindow.onload = function () {
-      printWindow.focus();
-      printWindow.print();
-      // printWindow.close();
-    };
+  };
+
+  /**
+   * ✅ 일괄 인쇄 기능
+   */
+  const handleBulkPrint = () => {
+    if (selectedIds.size === 0) return;
+
+    const itemsToPrint = Array.from(selectedIds).map(key => {
+      const [type, id] = key.split('_');
+      const realId = key.substring(type.length + 1);
+      return historyItems.find(item => item.id === realId && item.type === type);
+    }).filter(Boolean);
+
+    if (itemsToPrint.length === 0) return;
+
+    const printWindow = window.open('', '_blank');
+    const fullHTML = getFullPrintHTML(itemsToPrint, { 
+      title: `일괄 인쇄 (${itemsToPrint.length}건)`, 
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+    });
+
+    printWindow.document.write(fullHTML);
+    printWindow.document.close();
   };
 
   /**
@@ -1188,7 +856,7 @@ const HistoryPage = () => {
       <div className="item-details">
         <div className="details-header">
           <h2>
-            {isEstimate ? '견적서' : selectedItem.type === 'purchase' ? '청구서' : '거래명세서'} 상세정보
+            {isEstimate ? '견적서' : selectedItem.type === 'purchase' ? '발주서' : '거래명세서'} 상세정보
           </h2>
           <button className="back-button" onClick={() => setView('list')}>목록으로</button>
         </div>
@@ -1308,7 +976,7 @@ const HistoryPage = () => {
               </button>
               {isEstimate && (
                 <button onClick={() => convertToPurchase(selectedItem)}>
-                  청구서 생성
+                  발주서 생성
                 </button>
               )}
               <button className="delete-button" onClick={() => deleteItem(selectedItem)}>
@@ -1358,7 +1026,7 @@ const HistoryPage = () => {
               className="list-item deleted-item"
             >
               <div className="item-cell document-type">
-                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}
+                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}
               </div>
               <div className="item-cell document-id">
                 {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
@@ -1408,6 +1076,14 @@ const HistoryPage = () => {
     return (
       <div className="history-list">
         <div className="list-header">
+          <div className="header-cell checkbox-cell" style={{ width: '40px', textAlign: 'center' }}>
+            <input
+              type="checkbox"
+              checked={isAllSelected}
+              onChange={(e) => handleSelectAll(e.target.checked)}
+              ref={el => { if (el) el.indeterminate = isSomeSelected; }}
+            />
+          </div>
           <div className="header-cell document-type sortable" onClick={() => handleSort('documentType')}>
             유형{renderSortIcon('documentType')}
           </div>
@@ -1440,16 +1116,23 @@ const HistoryPage = () => {
           sortedItems.map((item) => (
             <div
               key={`${item.type}_${item.id}`}
-              className={`list-item ${(item.inventoryDeducted || isTransactionDeducted(item.estimateNumber || item.purchaseNumber || item.documentNumber)) ? 'inventory-deducted' : ''}`}
+              className={`list-item ${selectedItem && selectedItem.id === item.id ? 'active' : ''} ${selectedIds.has(`${item.type}_${item.id}`) ? 'selected' : ''} ${(item.inventoryDeducted || isTransactionDeducted(item.estimateNumber || item.purchaseNumber || item.documentNumber)) ? 'inventory-deducted' : ''}`}
               onClick={() => {
                 setSelectedItem(item);
                 setView('details');
               }}
             >
-              <div className="item-cell document-type">
-                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '청구서' : '거래명세서'}
+              <div className="item-cell checkbox-cell" style={{ width: '40px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(`${item.type}_${item.id}`)}
+                  onChange={(e) => handleSelectRow(item, e.target.checked)}
+                />
               </div>
-              <div className="item-cell document-id">
+              <div className="item-cell document-type">
+                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}
+              </div>
+              <div className={`item-cell document-id ${(item.estimateNumber?.startsWith('SS-') || item.purchaseNumber?.startsWith('SS-') || item.documentNumber?.startsWith('SS-')) ? 'ss-document' : ''}`}>
                 {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
               </div>
               <div className="item-cell date">
@@ -1497,10 +1180,10 @@ const HistoryPage = () => {
                 </button>
                 {item.type === 'estimate' && (
                   <button
-                    title="청구서 생성"
+                    title="발주서 생성"
                     onClick={(e) => { e.stopPropagation(); convertToPurchase(item); }}
                   >
-                    청구서생성
+                    발주서생성
                   </button>
                 )}
                 <button
@@ -1529,6 +1212,24 @@ const HistoryPage = () => {
                 <span className="last-sync">
                   마지막 동기화: {formatDateTime(lastSyncTime)}
                 </span>
+              )}
+              {selectedIds.size > 0 && (
+                <button
+                  className="bulk-print-button"
+                  onClick={() => handleBulkPrint()}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#ff6600',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    marginRight: '10px'
+                  }}
+                >
+                  🖨️ 선택 항목 일괄 인쇄 ({selectedIds.size})
+                </button>
               )}
               <button
                 className="sync-button"
@@ -1600,7 +1301,7 @@ const HistoryPage = () => {
               새 견적서 작성
             </button>
             <button onClick={() => navigate('/purchase-order/new')}>
-              새 청구서 작성
+              새 발주서 작성
             </button>
             <button
               className="deleted-docs-button"
