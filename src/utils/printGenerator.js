@@ -12,7 +12,7 @@ export const PROVIDER = {
   website: 'http://www.ssmake.com',
   tel: '010-9548-9578\n010-4311-7733',
   fax: '(02)2611-4595',
-  stampImage: '/images/도장.png' // Base URL should be handled by the caller or env
+  stampImage: 'images/도장.png' // Base URL handled below
 };
 
 /**
@@ -66,8 +66,15 @@ const getPrintStyles = () => `
 export const generateDocHTML = (item, options = {}) => {
   if (!item) return '';
 
-  const { baseURL = '' } = options;
-  const stampImage = item.documentSettings?.stampImage || (baseURL + PROVIDER.stampImage);
+  const { baseURL = '', globalSettings = null } = options;
+  const normalizedBaseURL = baseURL.replace(/\/$/, '');
+  
+  // Settings precedence: document-specific > global passed in > hardcoded fallback
+  const settings = item.documentSettings || globalSettings || PROVIDER;
+  
+  const stampImage = settings.stampImage 
+    ? (settings.stampImage.startsWith('http') ? settings.stampImage : `${normalizedBaseURL}/${settings.stampImage.replace(/^\//, '')}`)
+    : `${normalizedBaseURL}/images/도장.png`;
 
   const isEstimate = item.type === 'estimate';
   const isPurchase = item.type === 'purchase';
@@ -77,14 +84,12 @@ export const generateDocHTML = (item, options = {}) => {
   const docNumLabel = isEstimate ? '견적번호' : isPurchase ? '발주번호' : '거래번호';
   const docNum = isEstimate ? (item.estimateNumber || item.documentNumber || '') : isPurchase ? (item.purchaseNumber || item.documentNumber || '') : (item.documentNumber || '');
 
-  // Providers details (prefer saved settings if available)
-  const settings = item.documentSettings || PROVIDER;
 
   // Item list (minimum 8 rows)
   const items = item.items || [];
   const filledItems = [...items];
   while (filledItems.length < 8) {
-    filledItems.push({ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '' });
+    filledItems.push({ name: '', unit: '', quantity: '', unitPrice: '', totalPrice: '', note: '', isEmpty: true });
   }
 
   // Materials list (Purchase Order & Delivery Note only, minimum 12 rows)
@@ -93,12 +98,36 @@ export const generateDocHTML = (item, options = {}) => {
   const filledMaterials = [...materials];
   if (showMaterials) {
     while (filledMaterials.length < 12) {
-      filledMaterials.push({ name: '', specification: '', quantity: '', note: '' });
+      filledMaterials.push({ name: '', specification: '', quantity: '', note: '', isEmpty: true });
     }
   }
 
   return `
     <div class="print-page-container">
+      <style>
+        .form-table tr.empty-row td {
+          height: 12px !important;
+          padding: 0 !important;
+          font-size: 0 !important;
+          line-height: 0 !important;
+        }
+        .form-table td {
+          padding: 3px 6px !important;
+          height: auto !important;
+          min-height: 22px !important;
+        }
+        .info-table td {
+          padding: 2px 6px !important;
+        }
+        .form-header h1 {
+          font-size: 24px !important;
+          margin: 0 0 10px 0 !important;
+        }
+        .print-page-container {
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+      </style>
       <div class="form-header">
         <h1>${title}</h1>
       </div>
@@ -166,7 +195,7 @@ export const generateDocHTML = (item, options = {}) => {
         </thead>
         <tbody>
           ${filledItems.map((it, idx) => `
-            <tr>
+            <tr class="${it.isEmpty ? 'empty-row' : ''}">
               <td>${idx + 1}</td>
               <td class="left">${it.name || ''}</td>
               <td>${it.unit || ''}</td>
@@ -193,7 +222,7 @@ export const generateDocHTML = (item, options = {}) => {
         </thead>
         <tbody>
           ${filledMaterials.map((m, idx) => `
-            <tr>
+            <tr class="${m.isEmpty ? 'empty-row' : ''}">
               <td>${idx + 1}</td>
               <td class="left">${m.name || ''}</td>
               <td class="left">${m.specification || ''}</td>
@@ -248,12 +277,6 @@ export const getFullPrintHTML = (data, options = {}) => {
     </head>
     <body>
       ${contentHTML}
-      <script>
-        window.onload = function() {
-          window.print();
-          // window.close();
-        };
-      </script>
     </body>
     </html>
   `;

@@ -881,12 +881,30 @@ const PurchaseOrderForm = () => {
       customerName: formData.companyName
     }, { 
       title, 
-      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, ''),
+      globalSettings: getDocumentSettings()
     });
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(fullHTML);
-    printWindow.document.close();
+    // ✅ hidden iframe을 사용하여 새 창 없이 현재 페이지에서 인쇄창 호출
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    iframe.contentWindow.document.write(fullHTML);
+    iframe.contentWindow.document.close();
+
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
 
     setTimeout(async () => {
       const confirmDeduct = window.confirm(

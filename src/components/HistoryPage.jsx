@@ -8,13 +8,114 @@ import {
   deleteDocumentSync,
   restoreDocumentSync,
   permanentDeleteDocumentSync,
-  forceServerSync,
-  isTransactionDeducted
+  forceServerSync
 } from '../utils/realtimeAdminSync';
 import { regenerateBOMFromDisplayName, setBomDataForRegeneration } from '../utils/bomRegeneration';
 import { generateInventoryPartId, generatePartId, loadAllMaterials } from '../utils/unifiedPriceManager';
-import { documentsAPI } from '../services/apiClient';  // ✅ 이 줄 추가
-import { getFullPrintHTML, generateDocHTML } from '../utils/printGenerator'; // ✅ 통합 인쇄 유틸
+import { documentsAPI } from '../services/apiClient';
+import { getFullPrintHTML, generateDocHTML } from '../utils/printGenerator';
+import { getDocumentSettings } from '../utils/documentSettings';
+
+// ✅ Format Helpers (컴포넌트 외부로 이동하여 Memo 컴포넌트에서 사용 가능하게 함)
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return `${date.getFullYear()} - ${String(date.getMonth() + 1).padStart(2, '0')} - ${String(date.getDate()).padStart(2, '0')} `;
+  } catch { return dateString; }
+};
+
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return `${date.getFullYear()} - ${String(date.getMonth() + 1).padStart(2, '0')} - ${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')} `;
+  } catch { return dateString; }
+};
+
+// ✅ 목록 행 성능 최적화를 위한 Memo 컴포넌트
+const HistoryItemRow = React.memo(({ 
+  item, 
+  isSelected, 
+  isInventoryDeducted, 
+  onSelect, 
+  onRowClick, 
+  onEdit, 
+  onPrint, 
+  onConvertToPurchase, 
+  onDelete, 
+  onMemoClick 
+}) => {
+  const isSSDoc = item.estimateNumber?.startsWith('SS-') || 
+                  item.purchaseNumber?.startsWith('SS-') || 
+                  item.documentNumber?.startsWith('SS-');
+
+  return (
+    <div
+      className={`list-item ${isSelected ? 'selected' : ''} ${isInventoryDeducted ? 'inventory-deducted' : ''}`}
+      onClick={() => onRowClick(item)}
+    >
+      <div className="item-cell checkbox-cell" style={{ width: '40px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onSelect(item, e.target.checked)}
+          style={{ transform: 'scale(1.5)', cursor: 'pointer' }}
+        />
+      </div>
+      <div className="item-cell document-type">
+        {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}
+      </div>
+      <div className={`item-cell document-id ${isSSDoc ? 'ss-document' : ''}`}>
+        {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
+      </div>
+      <div className="item-cell date">
+        {formatDate(item.date)}
+      </div>
+      <div className="item-cell updated-date">
+        {item.updatedAt ? formatDateTime(item.updatedAt) : '-'}
+      </div>
+      <div className="item-cell product">
+        {item.productType}
+      </div>
+      <div className="item-cell price">
+        {item.totalPrice?.toLocaleString()}원
+      </div>
+      <div
+        className="item-cell memo"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMemoClick(item);
+        }}
+        style={{ cursor: 'pointer' }}
+      >
+        <div style={{
+          width: '100%',
+          color: '#ff6600',
+          fontWeight: 'bold',
+          fontSize: '13px',
+          padding: '2px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
+        }}>
+          {item.memo && item.memo.length > 15
+            ? `${item.memo.substring(0, 15)}...`
+            : (item.memo || '메모...')}
+        </div>
+      </div>
+      <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
+        <button title="편집" onClick={(e) => { e.stopPropagation(); onEdit(item); }}>편집</button>
+        <button title="인쇄" onClick={(e) => { e.stopPropagation(); onPrint(item); }}>인쇄</button>
+        {item.type === 'estimate' && (
+          <button title="발주서 생성" onClick={(e) => { e.stopPropagation(); onConvertToPurchase(item); }}>발주서생성</button>
+        )}
+        <button title="삭제" className="delete-icon" onClick={(e) => { e.stopPropagation(); onDelete(item); }}>삭제</button>
+      </div>
+    </div>
+  );
+});
+
 
 /**
  * HistoryPage component for managing estimates, purchase orders, and delivery notes
@@ -713,7 +814,7 @@ const HistoryPage = () => {
   /**
    * ✅ 선택 관련 핸들러
    */
-  const handleSelectRow = (item, isChecked) => {
+  const handleSelectRow = useCallback((item, isChecked) => {
     const itemKey = `${item.type}_${item.id}`;
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -721,19 +822,51 @@ const HistoryPage = () => {
       else next.delete(itemKey);
       return next;
     });
-  };
+  }, []);
 
-  const handleSelectAll = (isChecked) => {
+  const handleSelectAll = useCallback((isChecked) => {
     if (isChecked) {
       const allKeys = sortedItems.map(item => `${item.type}_${item.id}`);
       setSelectedIds(new Set(allKeys));
     } else {
       setSelectedIds(new Set());
     }
-  };
+  }, [sortedItems]);
+
+  /**
+   * ✅ 재고 처리가 완료된 거래번호 목록 (성능 최적화: 루프 밖에서 미리 계산)
+   */
+  const deductedDocNumbers = useMemo(() => {
+    const deducted = new Set();
+    historyItems.forEach(doc => {
+      if (doc.inventoryDeducted === true && !doc.deleted) {
+        const num = doc.documentNumber || doc.purchaseNumber || doc.deliveryNumber || doc.estimateNumber;
+        if (num) deducted.add(String(num).trim());
+      }
+    });
+    return deducted;
+  }, [historyItems]);
 
   const isAllSelected = sortedItems.length > 0 && selectedIds.size >= sortedItems.length;
   const isSomeSelected = selectedIds.size > 0 && selectedIds.size < sortedItems.length;
+
+  /**
+   * ✅ 핸들러 안정화 (useCallback)
+   */
+  const handleRowClick = useCallback((it) => {
+    setSelectedItem(it);
+    setView('details');
+  }, []);
+
+  const handleMemoClick = useCallback((it) => {
+    setMemoModalItem(it);
+    setMemoModalValue(it.memo || '');
+  }, []);
+
+  const handleEdit = useCallback((it) => editItem(it), []); // editItem은 추후 useCallback 고려
+  const handlePrint = useCallback((it) => printItem(it), []);
+  const handleConvertToPurchase = useCallback((it) => convertToPurchase(it), []);
+  const handleDelete = useCallback((it) => deleteItem(it), []);
 
   /**
    * ✅ 통합 HTML 생성 함수 (PurchaseOrderForm 디자인 100% 복제)
@@ -741,15 +874,32 @@ const HistoryPage = () => {
   const printItem = (item) => {
     if (!item || !item.type) return;
 
-    const printWindow = window.open('', '_blank');
     const title = item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서';
     const fullHTML = getFullPrintHTML(item, { 
       title, 
-      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, ''),
+      globalSettings: getDocumentSettings() // ✅ 현재 관리자 설정 전달
     });
 
-    printWindow.document.write(fullHTML);
-    printWindow.document.close();
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    iframe.contentWindow.document.write(fullHTML);
+    iframe.contentWindow.document.close();
+
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
   };
 
   /**
@@ -766,14 +916,31 @@ const HistoryPage = () => {
 
     if (itemsToPrint.length === 0) return;
 
-    const printWindow = window.open('', '_blank');
     const fullHTML = getFullPrintHTML(itemsToPrint, { 
       title: `일괄 인쇄 (${itemsToPrint.length}건)`, 
-      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, ''),
+      globalSettings: getDocumentSettings() // ✅ 현재 관리자 설정 전달
     });
 
-    printWindow.document.write(fullHTML);
-    printWindow.document.close();
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+
+    iframe.contentWindow.document.write(fullHTML);
+    iframe.contentWindow.document.close();
+
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
   };
 
   /**
@@ -808,33 +975,6 @@ const HistoryPage = () => {
     }
   };
 
-  /**
-   * Format date for display
-   */
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-
-    try {
-      const date = new Date(dateString);
-      return `${date.getFullYear()} -${String(date.getMonth() + 1).padStart(2, '0')} -${String(date.getDate()).padStart(2, '0')} `;
-    } catch {
-      return dateString;
-    }
-  };
-
-  /**
-   * ✅ Format datetime for display
-   */
-  const formatDateTime = (dateString) => {
-    if (!dateString) return '';
-
-    try {
-      const date = new Date(dateString);
-      return `${date.getFullYear()} -${String(date.getMonth() + 1).padStart(2, '0')} -${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')} `;
-    } catch {
-      return dateString;
-    }
-  };
 
   /**
    * ✅ 정렬 아이콘 표시
@@ -1114,87 +1254,19 @@ const HistoryPage = () => {
           </div>
         ) : (
           sortedItems.map((item) => (
-            <div
+            <HistoryItemRow 
               key={`${item.type}_${item.id}`}
-              className={`list-item ${selectedItem && selectedItem.id === item.id ? 'active' : ''} ${selectedIds.has(`${item.type}_${item.id}`) ? 'selected' : ''} ${(item.inventoryDeducted || isTransactionDeducted(item.estimateNumber || item.purchaseNumber || item.documentNumber)) ? 'inventory-deducted' : ''}`}
-              onClick={() => {
-                setSelectedItem(item);
-                setView('details');
-              }}
-            >
-              <div className="item-cell checkbox-cell" style={{ width: '40px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(`${item.type}_${item.id}`)}
-                  onChange={(e) => handleSelectRow(item, e.target.checked)}
-                />
-              </div>
-              <div className="item-cell document-type">
-                {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}
-              </div>
-              <div className={`item-cell document-id ${(item.estimateNumber?.startsWith('SS-') || item.purchaseNumber?.startsWith('SS-') || item.documentNumber?.startsWith('SS-')) ? 'ss-document' : ''}`}>
-                {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
-              </div>
-              <div className="item-cell date">
-                {formatDate(item.date)}
-              </div>
-              <div className="item-cell updated-date">
-                {item.updatedAt ? formatDateTime(item.updatedAt) : '-'}
-              </div>
-              <div className="item-cell product">
-                {item.productType}
-              </div>
-              <div className="item-cell price">
-                {item.totalPrice?.toLocaleString()}원
-              </div>
-              <div
-                className="item-cell memo"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMemoModalItem(item);
-                  setMemoModalValue(item.memo || '');
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <div style={{
-                  width: '100%',
-                  color: '#ff6600',
-                  fontWeight: 'bold',
-                  fontSize: '13px',
-                  padding: '2px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {item.memo && item.memo.length > 15
-                    ? `${item.memo.substring(0, 15)}...`
-                    : (item.memo || '메모...')}
-                </div>
-              </div>
-              <div className="item-cell actions" onClick={(e) => e.stopPropagation()}>
-                <button title="편집" onClick={(e) => { e.stopPropagation(); editItem(item); }}>
-                  편집
-                </button>
-                <button title="인쇄" onClick={(e) => { e.stopPropagation(); printItem(item); }}>
-                  인쇄
-                </button>
-                {item.type === 'estimate' && (
-                  <button
-                    title="발주서 생성"
-                    onClick={(e) => { e.stopPropagation(); convertToPurchase(item); }}
-                  >
-                    발주서생성
-                  </button>
-                )}
-                <button
-                  title="삭제"
-                  className="delete-icon"
-                  onClick={(e) => { e.stopPropagation(); deleteItem(item); }}
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
+              item={item}
+              isSelected={selectedIds.has(`${item.type}_${item.id}`)}
+              isInventoryDeducted={item.inventoryDeducted || deductedDocNumbers.has(String(item.estimateNumber || item.purchaseNumber || item.documentNumber).trim())}
+              onSelect={handleSelectRow}
+              onRowClick={handleRowClick}
+              onEdit={handleEdit}
+              onPrint={handlePrint}
+              onConvertToPurchase={handleConvertToPurchase}
+              onDelete={handleDelete}
+              onMemoClick={handleMemoClick}
+            />
           ))
         )}
       </div>
@@ -1214,22 +1286,9 @@ const HistoryPage = () => {
                 </span>
               )}
               {selectedIds.size > 0 && (
-                <button
-                  className="bulk-print-button"
-                  onClick={() => handleBulkPrint()}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#ff6600',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold',
-                    marginRight: '10px'
-                  }}
-                >
-                  🖨️ 선택 항목 일괄 인쇄 ({selectedIds.size})
-                </button>
+                <span className="selected-count" style={{ marginRight: '15px', color: '#ff6600', fontWeight: 'bold' }}>
+                  {selectedIds.size}개 선택됨
+                </span>
               )}
               <button
                 className="sync-button"
@@ -1303,6 +1362,24 @@ const HistoryPage = () => {
             <button onClick={() => navigate('/purchase-order/new')}>
               새 발주서 작성
             </button>
+            {selectedIds.size > 0 && (
+              <button
+                className="bulk-print-button"
+                onClick={() => handleBulkPrint()}
+                style={{
+                  padding: '8px 20px',
+                  backgroundColor: '#ff6600',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  marginRight: 'auto', // Push others to right if needed, but flex takes care
+                }}
+              >
+                🖨️ 선택 항목 일괄 인쇄 ({selectedIds.size})
+              </button>
+            )}
             <button
               className="deleted-docs-button"
               onClick={() => {

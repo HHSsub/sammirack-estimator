@@ -640,21 +640,38 @@ const EstimateForm = () => {
       documentNumberInputRef.current?.focus();
       return;
     }
-    
+
     const title = `견적서_${formData.documentNumber}`;
     const fullHTML = getFullPrintHTML({
       ...formData,
       type: 'estimate'
-    }, { 
-      title, 
-      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+    }, {
+      title,
+      baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, ''),
+      globalSettings: getDocumentSettings()
     });
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(fullHTML);
-    printWindow.document.close();
-  };
+    // ✅ hidden iframe을 사용하여 새 창 없이 현재 페이지에서 인쇄창 호출
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
 
+    iframe.contentWindow.document.write(fullHTML);
+    iframe.contentWindow.document.close();
+
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
+  };
   const handleFaxPreview = async () => {
     if (!formData.documentNumber.trim()) {
       alert('거래번호(문서번호)를 입력해주세요.');
@@ -669,9 +686,10 @@ const EstimateForm = () => {
       const fullHTML = getFullPrintHTML({
         ...formData,
         type: 'estimate'
-      }, { 
-        title, 
-        baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '') 
+      }, {
+        title,
+        baseURL: window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, ''),
+        globalSettings: getDocumentSettings()
       });
 
       // iframe을 사용하여 HTML 렌더링 후 PDF 변환
