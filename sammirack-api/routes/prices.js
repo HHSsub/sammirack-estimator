@@ -28,7 +28,60 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ✅ 공통 업데이트 핸들러
+// ✅ 벌크 업데이트 핸들러 (프론트에서 한 번에 전송)
+router.post('/bulk-update', async (req, res) => {
+  const { prices } = req.body; // { partId: { price, timestamp, account, partInfo } }
+  if (!prices || typeof prices !== 'object') {
+    return res.status(400).json({ error: 'prices 객체 필요' });
+  }
+
+  const entries = Object.entries(prices).filter(([partId, data]) => {
+    return partId && !isNaN(partId) === false && data && data.price > 0;
+  });
+
+  if (entries.length === 0) {
+    return res.json({ success: true, updated: 0 });
+  }
+
+  try {
+    await db.run('BEGIN TRANSACTION');
+    for (const [partId, data] of entries) {
+      const { price, timestamp, account, partInfo = {} } = data;
+      await db.run(`
+        INSERT INTO admin_prices
+        (part_id, price, timestamp, account, rack_type, name, specification, original_price, display_name)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(part_id) DO UPDATE SET
+          price = excluded.price,
+          timestamp = excluded.timestamp,
+          account = excluded.account,
+          rack_type = excluded.rack_type,
+          name = excluded.name,
+          specification = excluded.specification,
+          original_price = excluded.original_price,
+          display_name = excluded.display_name
+      `, [
+        partId,
+        price,
+        timestamp || new Date().toISOString(),
+        account || 'api',
+        partInfo.rackType || null,
+        partInfo.name || null,
+        partInfo.specification || null,
+        partInfo.originalPrice || null,
+        partInfo.displayName || null
+      ]);
+    }
+    await db.run('COMMIT');
+    res.json({ success: true, updated: entries.length });
+  } catch (error) {
+    await db.run('ROLLBACK').catch(() => {});
+    console.error('벌크 가격 업데이트 실패:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ✅ 공통 업데이트 핸들러 (단일 아이템용 - 이벤트 즉시 반영)
 async function updateHandler(req, res) {
   const { partId, price, timestamp, account, partInfo } = req.body;
 

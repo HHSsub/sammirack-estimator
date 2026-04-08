@@ -22,6 +22,7 @@ import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartName
 import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
 import { regenerateBOMFromDisplayName } from '../utils/bomRegeneration';
 import { getFullPrintHTML, PROVIDER } from '../utils/printGenerator'; // ✅ 통합 인쇄 유틸
+import { sortBOMByMaterialRule } from '../utils/materialSort';
 
 
 // ✅ 경량랙 색상 표시용 함수 (색상+부품명 조합)
@@ -220,7 +221,7 @@ const PurchaseOrderForm = () => {
               }
             });
 
-            data.materials = Array.from(bomMap.values());
+            data.materials = sortBOMByMaterialRule(Array.from(bomMap.values()));
 
             console.log('✅ 원자재 재생성 완료:', data.materials.length, '개');
 
@@ -230,7 +231,7 @@ const PurchaseOrderForm = () => {
 
           // ✅ 편집 후 진입 시 state.totalBom으로 materials 보정 (비어 있으면)
           if (editingDocumentId && totalBom && totalBom.length > 0 && (!data.materials || data.materials.length === 0)) {
-            data.materials = totalBom;
+            data.materials = sortBOMByMaterialRule(totalBom);
           }
 
           // ✅ 편집 후 진입 시 state.cart로 items 보정 (비어 있으면)
@@ -251,7 +252,7 @@ const PurchaseOrderForm = () => {
           }
 
           // ✅ 편집 후 진입 시 state.editingDocumentData로 메타정보 보정 (비어 있으면)
-          const materialsToUse = data.materials; // Use the potentially regenerated/corrected materials
+          const materialsToUse = sortBOMByMaterialRule(data.materials || []);
 
           // ✅ [CRITICAL] 재고 감소 상태 복정: editingDocumentData > data 순으로 우선순위 부여
           const finalInventoryDeducted = editingDocumentData?.inventoryDeducted !== undefined

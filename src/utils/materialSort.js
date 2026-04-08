@@ -20,6 +20,16 @@ const normalizeName = (n = "") =>
   n.replace(/경사브래싱/g, "경사브레싱")
    .replace(/경사브레싱/g, "경사브레싱"); // 최종 통일 형태 하나로
 
+const getSourcePriority = (material = {}) => {
+  const rawMarker = String(
+    material.ssSource ?? material._ssSource ?? material.sourceGroup ?? ""
+  ).toLowerCase();
+
+  if (!rawMarker) return 0;
+  if (/(addon|additional|extra|추가옵션|추가상품|추가주문)/.test(rawMarker)) return 1;
+  return 0;
+};
+
 export const materialComparator = (a, b) => {
   if (a.rackType !== b.rackType) {
     return String(a.rackType).localeCompare(String(b.rackType), "ko");
@@ -27,9 +37,14 @@ export const materialComparator = (a, b) => {
 
   const an = normalizeName(a.name || "");
   const bn = normalizeName(b.name || "");
+
   const ga = getGroupIndex(an);
   const gb = getGroupIndex(bn);
   if (ga !== gb) return ga - gb;
+
+  const sourceA = getSourcePriority(a);
+  const sourceB = getSourcePriority(b);
+  if (sourceA !== sourceB) return sourceA - sourceB;
 
   // 같은 그룹 내: 숫자 우선 비교 후 한글/숫자 혼합 localeCompare
   const na = (an.match(/\d+/) || [])[0];

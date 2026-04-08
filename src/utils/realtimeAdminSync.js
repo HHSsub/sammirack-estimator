@@ -267,6 +267,9 @@ class RealtimeAdminSync {
       const activityData = activityRes.data || [];
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityData));
 
+      // 서버 풀 로드 시점 기록 → 이후 saveToServerWithMerge에서 변경분만 전송
+      this.lastSyncTime = Date.now();
+
       console.log('✅ Gabia 서버 데이터 로드 완료');
       console.log(`   재고: ${Object.keys(inventoryData).length}개`);
       console.log(`   가격: ${Object.keys(mergedPrices).length}개`);
@@ -542,91 +545,43 @@ class RealtimeAdminSync {
     try {
       console.log('💾 Gabia 서버에 데이터 저장 시작...');
 
-      const serverDocuments = await this.getServerDocuments();
-
       const localDocuments = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
       const inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || '{}');
       const adminPrices = JSON.parse(localStorage.getItem(ADMIN_PRICES_KEY) || '{}');
-      // ✅ activityLog가 배열인지 확인
-      let activityLog;
-      try {
-        const stored = localStorage.getItem(ACTIVITY_LOG_KEY);
-        activityLog = stored ? JSON.parse(stored) : [];
-        if (!Array.isArray(activityLog)) {
-          console.warn('⚠️ activityLog가 배열이 아님. 초기화함:', activityLog);
-          activityLog = [];
-        }
-      } catch (e) {
-        console.error('❌ activityLog 파싱 실패:', e);
-        activityLog = [];
-      }
-      const mergedDocuments = this.mergeDocumentsByTimestamp(serverDocuments, localDocuments);
 
-      localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(mergedDocuments));
-      this.syncToLegacyKeys(mergedDocuments);
+      this.syncToLegacyKeys(localDocuments);
 
-      const userIP = await this.getUserIP();
-
-      // ✅ 배열 검증
-      if (!Array.isArray(activityLog)) {
-        activityLog = [];
-      }
-
-      activityLog.unshift({
-        timestamp: new Date().toISOString(),
-        action: 'data_sync',
-        userIP,
-        dataTypes: ['inventory', 'prices', 'documents'],
-        documentCount: Object.keys(mergedDocuments).length
-      });
-
-      if (activityLog.length > 1000) {
-        activityLog.splice(1000);
-      }
-
-      // ✅ 최적화: 변경된 문서만 필터링하여 저장 (Diff Sync)
+      // lastSyncTime 이후 변경된 문서만 전송 (서버 재조회 없음)
+      const lastSyncTime = this.lastSyncTime || 0;
       const documentsToSave = {};
       let changedCount = 0;
-
-      for (const [key, doc] of Object.entries(mergedDocuments)) {
-        const serverDoc = serverDocuments[key];
-
-        // 1. 서버에 없는 새로운 문서
-        if (!serverDoc) {
-          documentsToSave[key] = doc;
-          changedCount++;
-          continue;
-        }
-
-        // 2. 로컬에서 수정된 문서 (timestamp 비교)
-        const localTime = new Date(doc.updatedAt || doc.createdAt || 0).getTime();
-        const serverTime = new Date(serverDoc.updatedAt || serverDoc.createdAt || 0).getTime();
-
-        // 로컬이 더 최신이거나, 삭제 상태가 다른 경우 저장
-        if (localTime > serverTime || doc.deleted !== serverDoc.deleted) {
+      for (const [key, doc] of Object.entries(localDocuments)) {
+        const docTime = new Date(doc.updatedAt || doc.createdAt || 0).getTime();
+        if (docTime > lastSyncTime) {
           documentsToSave[key] = doc;
           changedCount++;
         }
       }
 
-      console.log(`⚡ 변경된 문서 ${changedCount}개만 서버에 저장합니다. (전체: ${Object.keys(mergedDocuments).length}개)`);
+      console.log(`⚡ 변경된 문서 ${changedCount}개만 서버에 저장합니다. (전체: ${Object.keys(localDocuments).length}개)`);
 
       await Promise.all([
         inventoryAPI.update(inventory).catch(err => console.error('재고 저장 실패:', err)),
         this.saveAllPrices(adminPrices).catch(err => console.error('가격 저장 실패:', err)),
-        // ✅ 수정: 전체 문서 대신 변경된 문서만 저장
-        this.saveAllDocuments(documentsToSave).catch(err => console.error('문서 저장 실패:', err)),
+        changedCount > 0
+          ? this.saveAllDocuments(documentsToSave).catch(err => console.error('문서 저장 실패:', err))
+          : Promise.resolve(),
         activityAPI.log('data_sync', {
           dataTypes: ['inventory', 'prices', 'documents'],
-          documentCount: Object.keys(mergedDocuments).length
+          documentCount: Object.keys(localDocuments).length
         }).catch(err => console.error('활동 로그 저장 실패:', err))
       ]);
 
-      console.log(`✅ Gabia 서버에 데이터 저장 완료 (문서 ${Object.keys(mergedDocuments).length}개 중 ${changedCount}개 업데이트)`);
+      this.lastSyncTime = Date.now();
 
-      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(activityLog));
+      console.log(`✅ Gabia 서버에 데이터 저장 완료 (${changedCount}개 변경분 전송)`);
 
-      this.broadcastUpdate('documents-updated', mergedDocuments);
+      this.broadcastUpdate('documents-updated', localDocuments);
 
       return true;
 
@@ -637,90 +592,51 @@ class RealtimeAdminSync {
   }
 
   async saveAllPrices(adminPrices) {
-    // ✅ 배열이면 객체로 변환 (데이터 손상 방지)
     if (Array.isArray(adminPrices)) {
       console.warn('⚠️ adminPrices가 배열입니다. 무시합니다.');
       return;
     }
 
-    // ✅ 유효한 항목만 필터링
-    const validEntries = Object.entries(adminPrices).filter(([partId, data]) => {
-      // 숫자 키 제거
-      if (!isNaN(partId)) {
-        console.warn(`⚠️ 잘못된 partId 제거: ${partId}`);
-        return false;
-      }
-      // price가 없는 항목 제거
-      if (!data || !data.price || data.price <= 0) {
-        console.warn(`⚠️ price 없는 항목 제거: ${partId}`);
-        return false;
-      }
-      return true;
-    });
+    // 유효한 항목만 필터링
+    const validPrices = {};
+    for (const [partId, data] of Object.entries(adminPrices)) {
+      if (!isNaN(partId) || !data || !data.price || data.price <= 0) continue;
+      validPrices[partId] = {
+        price: Number(data.price),
+        timestamp: data.timestamp,
+        account: data.account,
+        partInfo: data.partInfo || {}
+      };
+    }
 
-    if (validEntries.length === 0) {
+    if (Object.keys(validPrices).length === 0) {
       console.log('📋 저장할 가격 데이터 없음');
       return;
     }
 
-    // ✅ 배치 크기 줄이고 에러 무시
-    for (let i = 0; i < validEntries.length; i += 5) {
-      const batch = validEntries.slice(i, i + 5);
-      await Promise.all(
-        batch.map(([partId, data]) =>
-          pricesAPI.update(partId, {
-            price: Number(data.price),
-            timestamp: data.timestamp,
-            account: data.account,
-            partInfo: data.partInfo || {}
-          }).catch(err => {
-            // 405 에러는 무시
-            if (!err.message.includes('405')) {
-              console.error(`가격 저장 실패 (${partId}):`, err.message);
-            }
-          })
-        )
-      );
-    }
+    // 전체 가격 한 번에 전송 (HTTP 요청 1번)
+    await pricesAPI.bulkUpdate(validPrices).catch(err =>
+      console.error('가격 벌크 저장 실패:', err.message)
+    );
   }
 
   async saveAllDocuments(documents) {
     const docEntries = Object.entries(documents);
-    for (let i = 0; i < docEntries.length; i += 10) {
-      const batch = docEntries.slice(i, i + 10);
-      await Promise.all(
-        batch.map(([docKey, doc]) => {
-          const type = doc.type;
+    if (docEntries.length === 0) return;
 
-          // ✅ [Fix] ID 일관성 유지 (prefix_id 형태 보장)
-          let idStr = String(docKey).replace(/\.0$/, '');
-
-          // 1. 접두사 확인 (없으면 추가)
-          if (!idStr.startsWith(`${type}_`)) {
-            idStr = `${type}_${idStr}`;
-          }
-
-          // 2. 이중 접두사 수정
-          if (idStr.startsWith(`${type}_${type}_`)) {
-            idStr = idStr.replace(`${type}_${type}_`, `${type}_`);
-          }
-
-          const docId = idStr; // 최종 ID
-
-          // id 필드와 docId 필드 모두 full ID로 저장
-          const cleanedDoc = {
-            ...doc,
-            id: docId,
-            docId: docId,
-            type: type
-          };
-
-          return documentsAPI.save(docId, cleanedDoc).catch(err =>
-            console.error(`문서 저장 실패 (${docKey}):`, err)
-          );
-        })
-      );
+    // ID 정규화 후 한 번에 전송 (HTTP 요청 1번)
+    const normalized = {};
+    for (const [docKey, doc] of docEntries) {
+      const type = doc.type;
+      let idStr = String(docKey).replace(/\.0$/, '');
+      if (!idStr.startsWith(`${type}_`)) idStr = `${type}_${idStr}`;
+      if (idStr.startsWith(`${type}_${type}_`)) idStr = idStr.replace(`${type}_${type}_`, `${type}_`);
+      normalized[idStr] = { ...doc, id: idStr, docId: idStr, type };
     }
+
+    await documentsAPI.bulkSave(normalized).catch(err =>
+      console.error('문서 벌크 저장 실패:', err)
+    );
   }
 
   broadcastUpdate(type, data) {
@@ -867,7 +783,11 @@ export const loadAllDocuments = (includeDeleted = false) => {
 export const loadDeletedDocuments = () => {
   try {
     const documents = JSON.parse(localStorage.getItem(DOCUMENTS_KEY) || '{}');
-    return Object.values(documents).filter(doc => doc.deleted === true || doc.deleted === 1);
+    // permanently_deleted=true는 UI에서 완전히 숨김 (영구삭제 완료된 것)
+    return Object.values(documents).filter(doc =>
+      (doc.deleted === true || doc.deleted === 1) &&
+      !doc.permanentlyDeleted && doc.permanently_deleted !== 1
+    );
   } catch (error) {
     console.error('삭제된 문서 로드 실패:', error);
     return [];

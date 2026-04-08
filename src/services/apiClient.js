@@ -25,15 +25,17 @@ export const inventoryAPI = {
 // 가격 API
 export const pricesAPI = {
   getAll: () => apiClient.get('/prices'),
-  update: (partId, priceData) => apiClient.post('/prices/update', { partId, ...priceData })
+  update: (partId, priceData) => apiClient.post('/prices/update', { partId, ...priceData }),
+  bulkUpdate: (prices) => apiClient.post('/prices/bulk-update', { prices })
 };
 
 // 문서 API
 export const documentsAPI = {
   getAll: () => apiClient.get('/documents'),
-  getById: (docId) => apiClient.get(`/documents/${docId}`),  // ✅ 괄호로 수정!
+  getById: (docId) => apiClient.get(`/documents/${docId}`),
   save: (docId, data) => apiClient.post('/documents/save', { docId, ...data }),
-  delete: (docId) => apiClient.delete(`/documents/${docId}`)  // ✅ 괄호로 수정!
+  bulkSave: (documents) => apiClient.post('/documents/bulk-save', { documents }),
+  delete: (docId) => apiClient.delete(`/documents/${docId}`)
 };
 
 // 활동 로그 API

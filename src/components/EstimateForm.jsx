@@ -17,6 +17,7 @@ import ConfirmDialog from './ConfirmDialog'; // ✅ 확인 다이얼로그 추�
 import { useProducts } from '../contexts/ProductContext'; // ✅ extraProducts 사용
 import { getExtraOptionDisplayInfo, generateHighRackDisplayName, extractPartNameFromCleanName } from '../utils/bomDisplayNameUtils'; // ✅ 표시명 생성 유틸
 import MaterialSelector from './MaterialSelector';  // 26_01_27 신규기능추가 
+import { sortBOMByMaterialRule } from '../utils/materialSort';
 
 
 const EstimateForm = () => {
@@ -146,13 +147,13 @@ const EstimateForm = () => {
               }
             });
 
-            data.materials = Array.from(bomMap.values());
+            data.materials = sortBOMByMaterialRule(Array.from(bomMap.values()));
             console.log(`✅ materials 자동 생성 완료: ${data.materials.length}개`);
           }
 
           // ✅ 편집 후 진입 시 state.totalBom으로 materials 보정 (비어 있으면)
           if (editingDocumentId && totalBom && totalBom.length > 0 && (!data.materials || data.materials.length === 0)) {
-            data.materials = totalBom;
+            data.materials = sortBOMByMaterialRule(totalBom);
           }
 
           // ✅ 편집 후 진입 시 state.cart로 items 보정 (비어 있으면)
@@ -187,7 +188,8 @@ const EstimateForm = () => {
             bizNumber: data.bizNumber || editingDocumentData.bizNumber || data.bizNumber,
             notes: data.notes || editingDocumentData.notes || data.notes,
             topMemo: data.topMemo || editingDocumentData.topMemo || data.topMemo,
-            documentSettings: data.documentSettings || null
+            documentSettings: data.documentSettings || null,
+            materials: sortBOMByMaterialRule(data.materials || [])
           };
 
           setFormData(mergedData);

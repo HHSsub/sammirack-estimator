@@ -12,6 +12,23 @@ function getTypeAndId(row) {
   return { type, id };
 }
 
+function safeParseItems(itemsRaw) {
+  try {
+    const parsed = JSON.parse(itemsRaw || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function summarizeProductType(items = []) {
+  const names = items
+    .map(it => String(it?.name || '').trim())
+    .filter(Boolean);
+  if (names.length === 0) return '';
+  return names.join(' | ');
+}
+
 // 전체 문서 조회
 router.get('/', async (req, res) => {
   try {
@@ -20,6 +37,15 @@ router.get('/', async (req, res) => {
 
     rows.forEach(row => {
       const { type, id } = getTypeAndId(row);
+      const parsedItems = safeParseItems(row.items);
+      let parsedMaterials = [];
+      let materialsError = false;
+      try {
+        parsedMaterials = JSON.parse(row.materials || '[]') || [];
+      } catch {
+        parsedMaterials = [];
+        materialsError = true;
+      }
 
       documents[row.doc_id] = {
         id,
@@ -31,22 +57,27 @@ router.get('/', async (req, res) => {
         companyName: row.company_name,
         customerName: row.company_name,
         bizNumber: row.biz_number,
-        items: JSON.parse(row.items),
-        materials: JSON.parse(row.materials),
+        items: parsedItems,
+        materials: parsedMaterials,
         subtotal: row.subtotal,
         tax: row.tax,
         totalAmount: row.total_amount,
         totalPrice: row.total_amount,
-        notes: row.notes,
+        notes: materialsError
+          ? '[에러발생한문서 - 문의주세요 010-6317-4543] ' + (row.notes || '')
+          : row.notes,
         topMemo: row.top_memo,
         memo: row.top_memo,
+        materialsError,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        productType: JSON.parse(row.items)[0]?.name || '',
+        productType: summarizeProductType(parsedItems),
         // ✅ 삭제 상태 반환 추가 (이게 없어서 프론트가 삭제된걸 몰랐음)
         deleted: !!row.deleted,
         deletedAt: row.deleted_at,
         deletedBy: row.deleted_by ? JSON.parse(row.deleted_by) : null,
+        permanentlyDeleted: !!row.permanently_deleted,
+        permanentlyDeletedAt: row.permanently_deleted_at,
         // ✅ 재고 감소 상태 반환
         inventoryDeducted: !!row.inventory_deducted,
         inventoryDeductedAt: row.inventory_deducted_at,
@@ -132,7 +163,7 @@ router.get('/:docId', async (req, res) => {
       memo: row.memo,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      productType: row.product_type,
+      productType: summarizeProductType(items),
       // ✅ 재고 감소 상태
       inventoryDeducted: !!row.inventory_deducted,
       inventoryDeductedAt: row.inventory_deducted_at,
@@ -149,6 +180,84 @@ router.get('/:docId', async (req, res) => {
 });
 
 
+
+// ✅ 벌크 저장 핸들러 (변경된 문서들 한 번에 전송)
+router.post('/bulk-save', async (req, res) => {
+  const { documents } = req.body; // { docId: docData, ... }
+  if (!documents || typeof documents !== 'object') {
+    return res.status(400).json({ error: 'documents 객체 필요' });
+  }
+
+  const entries = Object.entries(documents);
+  if (entries.length === 0) {
+    return res.json({ success: true, saved: 0 });
+  }
+
+  const now = new Date().toISOString();
+
+  try {
+    await db.run('BEGIN TRANSACTION');
+    for (let [docId, data] of entries) {
+      // ID 정규화
+      docId = String(docId).replace(/\.0$/, '');
+      if (docId.indexOf('_') === -1) {
+        docId = `${data.type || 'estimate'}_${docId}`;
+      }
+
+      const typeVal = data.type || docId.split('_')[0] || 'estimate';
+
+      await db.run(`
+        INSERT INTO documents
+        (doc_id, type, date, document_number, company_name, biz_number, items, materials,
+        subtotal, tax, total_amount, notes, top_memo, created_at, updated_at,
+        deleted, deleted_at, deleted_by,
+        permanently_deleted, permanently_deleted_at,
+        inventory_deducted, inventory_deducted_at, inventory_deducted_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(doc_id) DO UPDATE SET
+          type = excluded.type,
+          date = excluded.date,
+          document_number = excluded.document_number,
+          company_name = excluded.company_name,
+          biz_number = excluded.biz_number,
+          items = excluded.items,
+          materials = excluded.materials,
+          subtotal = excluded.subtotal,
+          tax = excluded.tax,
+          total_amount = excluded.total_amount,
+          notes = excluded.notes,
+          top_memo = excluded.top_memo,
+          updated_at = excluded.updated_at,
+          deleted = excluded.deleted,
+          deleted_at = excluded.deleted_at,
+          deleted_by = excluded.deleted_by,
+          permanently_deleted = excluded.permanently_deleted,
+          permanently_deleted_at = excluded.permanently_deleted_at,
+          inventory_deducted = excluded.inventory_deducted,
+          inventory_deducted_at = excluded.inventory_deducted_at,
+          inventory_deducted_by = excluded.inventory_deducted_by
+      `, [
+        docId, typeVal, data.date,
+        data.documentNumber || null, data.companyName || null, data.bizNumber || null,
+        typeof data.items === 'string' ? data.items : JSON.stringify(data.items || []),
+        typeof data.materials === 'string' ? data.materials : JSON.stringify(data.materials || []),
+        data.subtotal || 0, data.tax || 0, data.totalAmount || 0,
+        data.notes || '', data.topMemo || '',
+        data.createdAt || now, data.updatedAt || data.createdAt || now,
+        data.deleted ? 1 : 0, data.deletedAt || null,
+        data.deletedBy ? JSON.stringify(data.deletedBy) : null,
+        data.permanentlyDeleted ? 1 : 0, data.permanentlyDeletedAt || null,
+        data.inventoryDeducted ? 1 : 0, data.inventoryDeductedAt || null, data.inventoryDeductedBy || null
+      ]);
+    }
+    await db.run('COMMIT');
+    res.json({ success: true, saved: entries.length });
+  } catch (error) {
+    await db.run('ROLLBACK').catch(() => {});
+    console.error('벌크 문서 저장 실패:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ✅ 공통 저장 핸들러 (doc_id unchanged; type from body)
 async function saveHandler(req, res) {
@@ -193,8 +302,9 @@ async function saveHandler(req, res) {
         (doc_id, type, date, document_number, company_name, biz_number, items, materials,
         subtotal, tax, total_amount, notes, top_memo, created_at, updated_at,
         deleted, deleted_at, deleted_by,
+        permanently_deleted, permanently_deleted_at,
         inventory_deducted, inventory_deducted_at, inventory_deducted_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(doc_id) DO UPDATE SET
           type = excluded.type,
           date = excluded.date,
@@ -212,6 +322,8 @@ async function saveHandler(req, res) {
           deleted = excluded.deleted,
           deleted_at = excluded.deleted_at,
           deleted_by = excluded.deleted_by,
+          permanently_deleted = excluded.permanently_deleted,
+          permanently_deleted_at = excluded.permanently_deleted_at,
           inventory_deducted = excluded.inventory_deducted,
           inventory_deducted_at = excluded.inventory_deducted_at,
           inventory_deducted_by = excluded.inventory_deducted_by
@@ -234,7 +346,8 @@ async function saveHandler(req, res) {
       data.deleted ? 1 : 0,
       data.deletedAt || null,
       data.deletedBy ? JSON.stringify(data.deletedBy) : null,
-      // ✅ 신규 컬럼 값 바인딩
+      data.permanentlyDeleted ? 1 : 0,
+      data.permanentlyDeletedAt || null,
       data.inventoryDeducted ? 1 : 0,
       data.inventoryDeductedAt || null,
       data.inventoryDeductedBy || null
@@ -262,21 +375,35 @@ async function saveHandler(req, res) {
   }
 }
 
-// 초기화 시 컬럼 확인 (선택적)
+// 초기화 시 컬럼 확인 및 7일 지난 영구삭제 row 물리 정리
 (async () => {
+  // 컬럼 자동 추가
+  const columnsToAdd = [
+    ['inventory_deducted', 'INTEGER DEFAULT 0'],
+    ['inventory_deducted_at', 'TEXT'],
+    ['inventory_deducted_by', 'TEXT'],
+    ['permanently_deleted', 'INTEGER DEFAULT 0'],
+    ['permanently_deleted_at', 'TEXT'],
+  ];
+  for (const [col, def] of columnsToAdd) {
+    try {
+      await db.run(`ALTER TABLE documents ADD COLUMN ${col} ${def}`);
+      console.log(`🔧 컬럼 추가: ${col}`);
+    } catch (e) { /* 이미 존재하면 무시 */ }
+  }
+
+  // 7일 지난 영구삭제 row 물리 DELETE (DB 정리)
   try {
-    // 간단한 조회로 컬럼 확인
-    await db.get('SELECT inventory_deducted FROM documents LIMIT 1');
-  } catch (e) {
-    if (e.message.includes('no such column')) {
-      console.log('🔧 초기화: inventory_deducted 컬럼 추가 중...');
-      try {
-        await db.run('ALTER TABLE documents ADD COLUMN inventory_deducted INTEGER DEFAULT 0');
-        await db.run('ALTER TABLE documents ADD COLUMN inventory_deducted_at TEXT');
-        await db.run('ALTER TABLE documents ADD COLUMN inventory_deducted_by TEXT');
-        console.log('✅ 초기화: 컬럼 추가 성공');
-      } catch (err) { /* ignore if parallel */ }
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const result = await db.run(
+      `DELETE FROM documents WHERE permanently_deleted = 1 AND permanently_deleted_at < ?`,
+      [cutoff]
+    );
+    if (result.changes > 0) {
+      console.log(`🧹 영구삭제 정리: ${result.changes}개 row 물리 삭제 (7일 경과)`);
     }
+  } catch (e) {
+    console.error('영구삭제 정리 실패:', e.message);
   }
 })();
 
@@ -284,17 +411,72 @@ async function saveHandler(req, res) {
 router.post('/save', saveHandler);
 router.put('/save', saveHandler);
 router.patch('/save', saveHandler);
-router.post('/:docId', saveHandler);  // POST /api/documents/{docId}
-router.put('/:docId', saveHandler);   // PUT /api/documents/{docId}
-router.patch('/:docId', saveHandler); // PATCH /api/documents/{docId}
 
-// 문서 삭제
+// ⚠️ IMPORTANT: /:docId/inventory-deducted를 :docId보다 반드시 먼저 정의!
+router.post('/:docId/inventory-deducted', async (req, res) => {
+  try {
+    const docId = req.params.docId;
+    const { deducted, deductedAt, deductedBy } = req.body;
+
+    const now = new Date().toISOString();
+    const deductedAtVal = deductedAt || now;
+    const deductedByVal = deductedBy || 'smartstore-listener';
+
+    await db.run(`
+      UPDATE documents
+      SET inventory_deducted = ?,
+          inventory_deducted_at = ?,
+          inventory_deducted_by = ?
+      WHERE doc_id = ?
+    `, [deducted ? 1 : 0, deductedAtVal, JSON.stringify(deductedByVal), docId]);
+
+    res.json({ success: true, message: '재고 감소 상태 업데이트 완료' });
+  } catch (error) {
+    console.error('재고 감소 상태 업데이트 실패:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ✅ 일반 문서 저장/업데이트 (덜 구체적인 라우트는 맨 뒤)
+router.post('/:docId', saveHandler);
+router.put('/:docId', saveHandler);
+router.patch('/:docId', saveHandler);
+
+// 문서 영구 삭제
 router.delete('/:docId', async (req, res) => {
   try {
-    await db.run('DELETE FROM documents WHERE doc_id = ?', [req.params.docId]);
-    res.json({ success: true });
+    const docId = req.params.docId;
+
+    // 1차: 그대로 삭제 시도
+    let result = await db.run('DELETE FROM documents WHERE doc_id = ?', [docId]);
+
+    // 2차: 0 rows → type prefix 없이 재시도 (예: "estimate_1234" → "1234")
+    if (result.changes === 0) {
+      const parts = docId.split('_');
+      if (parts.length >= 2) {
+        const withoutPrefix = parts.slice(1).join('_');
+        result = await db.run('DELETE FROM documents WHERE doc_id = ?', [withoutPrefix]);
+      }
+    }
+
+    // 3차: 아직도 0 rows → doc_id LIKE 패턴으로 삭제 (접두사 변형 대응)
+    if (result.changes === 0) {
+      const bare = docId.replace(/^(estimate|purchase|delivery)_/, '');
+      result = await db.run(
+        "DELETE FROM documents WHERE doc_id = ? OR doc_id = ? OR doc_id LIKE ?",
+        [bare, `estimate_${bare}`, `purchase_${bare}`]
+      );
+    }
+
+    if (result.changes === 0) {
+      console.warn(`⚠️ 영구 삭제: 일치하는 문서 없음 doc_id=${docId}`);
+      return res.status(404).json({ error: '삭제할 문서를 찾을 수 없습니다.' });
+    }
+
+    console.log(`🔥 영구 삭제 완료: ${docId} (${result.changes}행)`);
+    res.json({ success: true, deleted: result.changes });
   } catch (error) {
-    console.error('문서 삭제 실패:', error);
+    console.error('문서 영구 삭제 실패:', error);
     res.status(500).json({ error: error.message });
   }
 });

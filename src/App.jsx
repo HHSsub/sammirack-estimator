@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';  // ✅ useLocation, useNavigate 추가
 import './App.css';
 import { useProducts } from './contexts/ProductContext';
@@ -16,6 +16,7 @@ import Login from './components/Login';
 import PasswordChange from './components/PasswordChange';
 import ShortageInventoryManager from './components/ShortageInventoryManager';
 import UpdateHistory from './components/UpdateHistory';  // ✅ 추가
+import { sortBOMByMaterialRule } from './utils/materialSort';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -289,19 +290,19 @@ const HomePage = ({ currentUser }) => {
     // 1순위: 편집 모드에서 editingData.materials가 있으면 사용
     if (isEditMode && editingData.materials && editingData.materials.length > 0) {
       console.log('✅ [편집모드] editingData.materials 사용:', editingData.materials.length, '개');
-      return editingData.materials;
+      return sortBOMByMaterialRule(editingData.materials);
     }
 
     // 2순위: cart가 있으면 병합된 cartBOMView 사용 (동일 partId 부품 합산)
     // ✅ _inventoryList가 포함되어 있어 재고 감소 시 개별 inventoryPartId로 정확히 차감됨
     if (cart && cart.length > 0 && cartBOMView && cartBOMView.length > 0) {
       console.log('✅ cartBOMView 사용 (병합됨):', cartBOMView.length, '개');
-      return cartBOMView;
+      return sortBOMByMaterialRule(cartBOMView);
     }
 
     // 3순위: cartBOMView 사용 (fallback)
     console.log('⚠️ cartBOMView fallback:', cartBOMView?.length, '개');
-    return cartBOMView || [];
+    return sortBOMByMaterialRule(cartBOMView || []);
   }, [isEditMode, editingData.materials, cart, cartBOMView]);
 
 

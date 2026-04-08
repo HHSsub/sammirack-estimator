@@ -65,6 +65,9 @@ const HistoryItemRow = React.memo(({
       </div>
       <div className="item-cell document-type">
         {item.type === 'estimate' ? '견적서' : item.type === 'purchase' ? '발주서' : '거래명세서'}
+        {item.materialsError && (
+          <span style={{ color: 'red', fontWeight: 'bold', fontSize: '11px', marginLeft: '4px' }}>⚠️에러</span>
+        )}
       </div>
       <div className={`item-cell document-id ${isSSDoc ? 'ss-document' : ''}`}>
         {item.type === 'estimate' ? item.estimateNumber : item.type === 'purchase' ? item.purchaseNumber : item.documentNumber || ''}
@@ -567,17 +570,41 @@ const HistoryPage = () => {
 
     if (confirmDelete) {
       try {
-        const success = await permanentDeleteDocumentSync(item.id, item.type);
+        // item.id가 이미 "estimate_1234" 형태일 수 있으므로 이중 prefix 방지
+        const rawId = String(item.id || '');
+        const docKey = rawId.startsWith(`${item.type}_`) ? rawId : `${item.type}_${rawId}`;
+        const now = new Date().toISOString();
 
-        if (success) {
-          setDeletedItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
-          alert('문서가 영구 삭제되었습니다.');
-        } else {
-          alert('영구 삭제에 실패했습니다.');
-        }
+        console.log(`🔥 영구삭제 요청: docKey=${docKey}, item.id=${item.id}, item.type=${item.type}`);
+
+        // ✅ 영구삭제 = permanently_deleted=1 + deleted=1 소프트 마킹
+        //    DB row를 즉시 물리삭제하면 다른 PC가 "새 문서"로 인식해 좀비 부활함
+        //    소프트 마킹으로 모든 PC에 영구삭제 상태 전파 → 7일 후 서버에서 물리 삭제
+        await documentsAPI.save(docKey, {
+          ...item,
+          deleted: true,
+          deletedAt: item.deletedAt || now,
+          permanentlyDeleted: true,
+          permanentlyDeletedAt: now,
+          updatedAt: now,
+        });
+
+        // 현재 PC localStorage에서도 즉시 반영
+        try {
+          const lsDocs = JSON.parse(localStorage.getItem('synced_documents') || '{}');
+          if (lsDocs[docKey]) {
+            lsDocs[docKey].permanentlyDeleted = true;
+            lsDocs[docKey].permanently_deleted = 1;
+            lsDocs[docKey].permanentlyDeletedAt = now;
+            localStorage.setItem('synced_documents', JSON.stringify(lsDocs));
+          }
+        } catch (_) {}
+
+        setDeletedItems(prev => prev.filter(i => !(i.id === item.id && i.type === item.type)));
+        alert('문서가 영구 삭제되었습니다.');
       } catch (error) {
-        console.error('Error permanently deleting item:', error);
-        alert('영구 삭제 중 오류가 발생했습니다.');
+        console.error('영구삭제 실패:', error?.response?.data || error.message);
+        alert(`영구 삭제에 실패했습니다.\n${error?.response?.data?.error || error.message}`);
       }
     }
   };

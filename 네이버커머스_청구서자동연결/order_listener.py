@@ -376,7 +376,14 @@ def filter_korean(text):
 # ─── DRY_RUN 플래그 ────────────────────────────────────────────────────────
 # True : 콘솔 출력만 (DB 저장 안 함)  ← 1단계 기본값
 # False: 가비아 서버에 실제 POST       ← 2단계에서 전환
-DRY_RUN = False
+#
+# ⚠️ ══════════════════════════════════════════════════════════════════════
+# ⚠️  AI AGENT / CLAUDE CODE 절대 수정 금지
+# ⚠️  이 값(DRY_RUN)은 오직 사람(운영자)만 직접 수정할 수 있음
+# ⚠️  어떤 AI 에이전트도 이 줄을 변경하거나 덮어쓰는 것을 금지함
+# ⚠️  변경 시 실제 고객 주문 데이터가 누락되는 장애 발생
+# ⚠️ ══════════════════════════════════════════════════════════════════════
+DRY_RUN = False  # DO NOT TOUCH - AI AGENT MUST NEVER MODIFY THIS LINE
 
 # ─── 지원 랙 타입 화이트리스트 ──────────────────────────────────────────────
 # admin_prices.json 기준 실제 존재하는 rack_type만 포함
@@ -401,7 +408,10 @@ UNSUPPORTED_RACK_PREFIXES = [
 ]
 
 # ─── 추가부품(addon) 판단 키워드 ─────────────────────────────────────────────
-ADDON_KEYWORDS = ["추가", "단추가", "선반추가", "기둥추가", "로드빔"]
+# 중요:
+# - 메인 주문의 옵션 플레이스홀더("A.색상: 추가상품구매")는 addon 판정 근거가 아님
+# - 실제 추가부품 주문으로 명확히 보이는 패턴만 addon으로 판정
+ADDON_KEYWORDS = ["단추가", "선반추가", "기둥추가", "로드빔추가"]
 
 
 
@@ -411,15 +421,15 @@ def is_supported_rack(product_name, option_str=""):
     스마트스토어 상품명(+옵션)이 sammirack-estimator 지원 랙 관련 주문인지 확인.
     비지원 랙(초스피드/실버/사이버/올스텐/스텐)은 False → 주문 전체 skip.
 
-    단, 추가부품(선반추가/기둥추가/로드빔 등):
+    단, 추가부품(선반추가/기둥추가/로드빔추가/단추가 등):
     - 상품명 또는 옵션 중 하나라도 ADDON_KEYWORDS 포함 시 True (통과)
-    - 예) "1460(철판형 1단)" 상품명에는 없어도 옵션에 "로드빔+" 있으면 통과
+    - 예) 상품명에는 랙명이 없어도 옵션에 '선반추가/기둥추가' 문구가 있으면 통과
     """
     name     = (product_name or "").strip()
     opt_str  = (option_str or "").strip()
     combined = name + " " + opt_str
 
-    # 추가부품 키워드 → 통과 (그룹 내 addon으로 처리)
+    # 추가부품 키워드 → 통과 (그룹 내 addon 후보)
     for kw in ADDON_KEYWORDS:
         if kw in combined:
             return True
@@ -707,17 +717,17 @@ def classify_row(order):
     option_str   = str(order.get("옵션", "") or "")
     combined     = product_name + " " + option_str
 
-    # ① ADDON 키워드 있으면 즉시 addon (단, '추가상품구매'는 제외)
-    # '추가상품구매'는 메인 상품명에 자주 포함되는 플레이스홀더임
+    # ① 지원 랙 이름으로 시작하면 파싱 없이 바로 main
+    #    (옵션에 '추가상품구매'가 있어도 메인 주문임)
+    for prefix in SUPPORTED_RACK_PREFIXES:
+        if product_name.strip().startswith(prefix):
+            return "main"
+
+    # ② 명시적인 추가부품 문구가 있으면 addon
     addon_check_str = combined.replace("추가상품구매", "")
     for kw in ADDON_KEYWORDS:
         if kw in addon_check_str:
             return "addon"
-
-    # ② 지원 랙 이름으로 시작하면 파싱 없이 바로 main
-    for prefix in SUPPORTED_RACK_PREFIXES:
-        if product_name.strip().startswith(prefix):
-            return "main"
 
     # ③ 색상 또는 규격(폭) 있으면 main
     parsed = parse_smartstore_option(option_str)
@@ -901,6 +911,7 @@ def build_material_item(order, main_rack_type=""):
         "unitPrice":     unit_price,
         "totalPrice":    total,
         "note":          "",
+        "ssSource":      "addon",
         "colorWeight":   cw,
         "color":         color
     }
@@ -1161,18 +1172,18 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
         else:
             g_spec = "높이 {} {}".format(ht_raw, weight_only).strip()
         res.append({"name": "기둥", "rackType": rack_type, "specification": g_spec,
-                    "quantity": pillar_qty, "colorWeight": cw, "color": ""})
+                    "quantity": pillar_qty, "colorWeight": cw, "color": "", "ssSource": "main"})
         # 로드빔: {d}{weight}
         r_spec = "{} {}".format(rod_beam_d, weight_only).strip() if rod_beam_d else weight_only
         res.append({"name": "로드빔", "rackType": rack_type, "specification": r_spec,
-                    "quantity": 2 * dan * qty, "colorWeight": cw, "color": ""})
+                    "quantity": 2 * dan * qty, "colorWeight": cw, "color": "", "ssSource": "main"})
         # 선반: 사이즈{w}x{d}{weight}
         if w and d:
             s_spec = "사이즈 {}x{} {}".format(w, d, weight_only).strip()
         else:
             s_spec = "사이즈 {} {}".format(sz, weight_only).strip() if sz else weight_only
         res.append({"name": "선반", "rackType": rack_type, "specification": s_spec,
-                    "quantity": shelf_per_level * dan * qty, "colorWeight": cw, "color": ""})
+                    "quantity": shelf_per_level * dan * qty, "colorWeight": cw, "color": "", "ssSource": "main"})
 
     # ═══ 파렛트랙 / 파렛트랙 철판형 ══════════════════════════════════════════
     # 파렛트랙 SS 옵션: 폭x길이(단당2000Kg): 1000x1480(연결형)2000kg
@@ -1204,36 +1215,36 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
 
         # 기둥
         res.append({"name": "기둥", "rackType": rack_type, "specification": ht_mm,
-                    "quantity": post_qty, "colorWeight": "", "color": ""})
+                    "quantity": post_qty, "colorWeight": "", "color": "", "ssSource": "main"})
         # 로드빔
         res.append({"name": "로드빔", "rackType": rack_type, "specification": rod_spec,
-                    "quantity": 2 * dan * qty, "colorWeight": "", "color": ""})
+                    "quantity": 2 * dan * qty, "colorWeight": "", "color": "", "ssSource": "main"})
 
         if is_iron:
             # 철판 선반: 사이즈 {로드빔}x{깊이}
             shelf_per_level = 2 if rod_len in (1380, 1390) else (3 if rod_len in (2080, 2090) else (4 if rod_len in (2580, 2590, 2710, 2790) else 1))
             iron_sz = "사이즈 {}x{}".format(rod_len, depth_val)
             res.append({"name": "선반", "rackType": rack_type, "specification": iron_sz,
-                        "quantity": shelf_per_level * dan * qty, "colorWeight": "", "color": ""})
+                        "quantity": shelf_per_level * dan * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         else:
             # 타이빔: 깊이 (항상 1000)
             tie_spec = str(depth_val)
             res.append({"name": "타이빔", "rackType": rack_type, "specification": tie_spec,
-                        "quantity": 2 * dan * qty, "colorWeight": "", "color": ""})
+                        "quantity": 2 * dan * qty, "colorWeight": "", "color": "", "ssSource": "main"})
 
         # 안전핀
         res.append({"name": "안전핀", "rackType": rack_type, "specification": "",
-                    "quantity": 2 * dan * 2 * qty, "colorWeight": "", "color": ""})
+                    "quantity": 2 * dan * 2 * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         # 하드웨어: 브레싱 spec은 깊이 (1000)
         brace_spec = str(depth_val)
         res.append({"name": "수평브레싱", "rackType": rack_type, "specification": brace_spec,
-                    "quantity": (2 if form == "연결형" else 4) * qty, "colorWeight": "", "color": ""})
+                    "quantity": (2 if form == "연결형" else 4) * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         res.append({"name": "경사브레싱", "rackType": rack_type, "specification": brace_spec,
-                    "quantity": (2 if form == "연결형" else 4) * qty, "colorWeight": "", "color": ""})
+                    "quantity": (2 if form == "연결형" else 4) * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         res.append({"name": "앙카볼트", "rackType": rack_type, "specification": "",
-                    "quantity": (2 if form == "연결형" else 4) * qty, "colorWeight": "", "color": ""})
+                    "quantity": (2 if form == "연결형" else 4) * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         res.append({"name": "브레싱볼트", "rackType": rack_type, "specification": "",
-                    "quantity": post_qty * 3, "colorWeight": "", "color": ""})
+                    "quantity": post_qty * 3, "colorWeight": "", "color": "", "ssSource": "main"})
 
     # ═══ 스텐랙 ══════════════════════════════════════════════════════════════
     # 스텐랙 SS: "스텐선반추가(단위cm) 폭x길이: 50x180" → height는 별도 또는 기본 210
@@ -1244,9 +1255,9 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
         # 선반 사이즈: WxD 형식
         sz_spec = "사이즈{}".format(sz) if sz else ""
         res.append({"name": "기둥", "rackType": rack_type, "specification": ht_spec,
-                    "quantity": 4 * qty, "colorWeight": "", "color": ""})
+                    "quantity": 4 * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         res.append({"name": "선반", "rackType": rack_type, "specification": sz_spec,
-                    "quantity": dan * qty, "colorWeight": "", "color": ""})
+                    "quantity": dan * qty, "colorWeight": "", "color": "", "ssSource": "main"})
 
     # ═══ 경량랙 / 중량랙 ═════════════════════════════════════════════════════
     # 경량랙 SS: "색상: 블랙 / 규격: 30x75 / 높이: 75 / 단수: 2단"
@@ -1304,7 +1315,7 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
             pass
         g_spec = "h{}".format(ht_mm_val) if ht_mm_val else ""
         res.append({"name": "기둥", "rackType": rack_type, "specification": g_spec,
-                    "quantity": post_qty, "colorWeight": "", "color": rack_color})
+                    "quantity": post_qty, "colorWeight": "", "color": rack_color, "ssSource": "main"})
 
         # 선반 spec: w{width}xd{depth}
         if width_mm and depth_mm:
@@ -1312,25 +1323,25 @@ def generate_bom_for_rack(rack_type, option_data, quantity):
         else:
             sel_spec = sz
         res.append({"name": "선반", "rackType": rack_type, "specification": sel_spec,
-                    "quantity": dan * qty, "colorWeight": "", "color": rack_color})
+                    "quantity": dan * qty, "colorWeight": "", "color": rack_color, "ssSource": "main"})
 
         # 받침(상/하) spec: d{depth_mm}
         depth_spec = "d{}".format(depth_mm) if depth_mm else ""
         res.append({"name": "받침(상)", "rackType": rack_type, "specification": depth_spec,
-                    "quantity": post_qty, "colorWeight": "", "color": rack_color})
+                    "quantity": post_qty, "colorWeight": "", "color": rack_color, "ssSource": "main"})
         res.append({"name": "받침(하)", "rackType": rack_type, "specification": depth_spec,
-                    "quantity": post_qty, "colorWeight": "", "color": rack_color})
+                    "quantity": post_qty, "colorWeight": "", "color": rack_color, "ssSource": "main"})
 
         # 연결대 spec: w{width_mm}
         width_spec = "w{}".format(width_mm) if width_mm else ""
         res.append({"name": "연결대", "rackType": rack_type, "specification": width_spec,
-                    "quantity": dan * qty, "colorWeight": "", "color": rack_color})
+                    "quantity": dan * qty, "colorWeight": "", "color": rack_color, "ssSource": "main"})
 
         # 안전좌 / 안전핀
         res.append({"name": "안전좌", "rackType": rack_type, "specification": "",
-                    "quantity": dan * qty, "colorWeight": "", "color": ""})
+                    "quantity": dan * qty, "colorWeight": "", "color": "", "ssSource": "main"})
         res.append({"name": "안전핀", "rackType": rack_type, "specification": "",
-                    "quantity": dan * qty, "colorWeight": "", "color": ""})
+                    "quantity": dan * qty, "colorWeight": "", "color": "", "ssSource": "main"})
 
     # ─── 모든 자재에 대해 공통 ID 및 단가 로드 (ID 생성 필수) ───
     for r in res:
@@ -1380,6 +1391,100 @@ def _safe_int(val):
         return 0
 
 
+def _load_material_order_rules():
+    # type: () -> List[dict]
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cfg_path = os.path.abspath(os.path.join(base_dir, "..", "src", "config", "materialOrder.json"))
+        with open(cfg_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        order_rows = payload.get("order", []) or []
+        return [{
+            "key": str(r.get("key", "") or ""),
+            "aliases": [str(a) for a in (r.get("aliases", []) or [])],
+            "idx": idx,
+        } for idx, r in enumerate(order_rows)]
+    except Exception:
+        return []
+
+
+MATERIAL_ORDER_RULES = _load_material_order_rules()
+
+
+def _build_addon_item_name(order):
+    # type: (dict) -> str
+    """추가옵션 주문행을 품목목록에 표시할 이름 생성."""
+    pname = str(order.get("상품명", "") or "").strip()
+    optv = str(order.get("옵션", "") or "").strip()
+    if not optv:
+        return pname
+    if optv in pname:
+        return pname
+    return "{}: {}".format(pname, optv)
+
+
+def _material_group_priority(name):
+    # type: (str) -> int
+    n = str(name or "")
+    for rule in MATERIAL_ORDER_RULES:
+        key = rule.get("key", "")
+        if key == "*":
+            continue
+        if key and key in n:
+            return int(rule.get("idx", 9999))
+        aliases = rule.get("aliases", []) or []
+        for alias in aliases:
+            if alias and alias in n:
+                return int(rule.get("idx", 9999))
+
+    for rule in MATERIAL_ORDER_RULES:
+        if rule.get("key") == "*":
+            return int(rule.get("idx", 9999))
+    return 9999
+
+
+def _material_source_priority(mat):
+    # type: (dict) -> int
+    marker = str(mat.get("ssSource", "") or "").strip().lower()
+    if marker in ("addon", "additional", "extra"):
+        return 1
+    return 0
+
+
+def _material_sort_key(mat):
+    # type: (dict) -> tuple
+    name = str(mat.get("name", "") or "")
+    return (
+        str(mat.get("rackType", "") or ""),  # 1. 랙 타입 (하이랙...)
+        _material_source_priority(mat),      # 2. 메인(0) vs 애드온(1) - 메인 먼저
+        _material_group_priority(name),      # 3. 부품 순서 (메인/애드온 내부에서만)
+        name,                                 # 4. 이름 (동일 우선순위 시)
+    )
+
+
+def _dedupe_group_rows(group):
+    # type: (List[dict]) -> List[dict]
+    """같은 스마트스토어 주문행이 중복 수집된 경우 1행만 남긴다."""
+    seen = set()
+    deduped = []
+    for row in group:
+        key = (
+            str(row.get("상품주문번호", "") or ""),
+            str(row.get("상품명", "") or ""),
+            str(row.get("옵션", "") or ""),
+            str(row.get("주문수량", "") or ""),
+            str(row.get("최종금액", "") or ""),
+            str(row.get("수취인명", "") or ""),
+            str(row.get("연락처", "") or ""),
+            str(row.get("배송지", "") or ""),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(row)
+    return deduped
+
+
 def build_grouped_document(group):
     # type: (List[dict]) -> dict
     """
@@ -1391,6 +1496,7 @@ def build_grouped_document(group):
     - doc_id는 그룹 내 가장 작은 상품주문번호 기준
     - camelCase + snake_case 필드 동시 포함 (React 웹앱 + DB 양쪽 호환)
     """
+    group = _dedupe_group_rows(group)
     group_sorted = sorted(group, key=lambda r: str(r.get("상품주문번호", "")))
 
     mains  = [r for r in group_sorted if classify_row(r) == "main"]
@@ -1434,16 +1540,28 @@ def build_grouped_document(group):
         # 2. 메인 랙의 BOM 생성하여 materials에 합산
         if rtype and rtype != "기타":
             rack_bom = generate_bom_for_rack(rtype, parsed, qty)
+            for m in rack_bom:
+                m["ssSource"] = "main"
             materials.extend(rack_bom)
 
-    # 3. 추가부품(addons) 주문을 materials에 합산
+    # 3. 추가부품(addons) 주문을 items/materials에 반영
     for r in addons:
+        qty = _safe_int(r.get("주문수량", 1)) or 1
+        total = _safe_int(r.get("최종금액", 0))
+        items.append({
+            "name": _build_addon_item_name(r),
+            "unit": "개",
+            "quantity": qty,
+            "unitPrice": total // qty if qty else total,
+            "totalPrice": total,
+            "note": str(r.get("옵션", "") or ""),
+        })
         materials.append(build_material_item(r, session_rack_type))
 
     # 4. materials 중복 제거 및 수량 합산 (자재명 + 규격 + 색상 기준)
     merged_mats = {}
     for m in materials:
-        key = (m["name"], m.get("rackType", ""), m.get("specification", ""), m.get("colorWeight", ""), m.get("color", ""))
+        key = (m["name"], m.get("rackType", ""), m.get("specification", ""), m.get("colorWeight", ""), m.get("color", ""), m.get("ssSource", "main"))
         if key in merged_mats:
             merged_mats[key]["quantity"] += m["quantity"]
             # totalPrice는 나중에 재조회된 단가로 갱신할 수 있으나 일단 합산
@@ -1451,7 +1569,7 @@ def build_grouped_document(group):
         else:
             merged_mats[key] = m
             
-    materials = sorted(merged_mats.values(), key=lambda x: (x.get("rackType", ""), x["name"]))
+    materials = sorted(merged_mats.values(), key=_material_sort_key)
 
     # 5. 모든 자재에 대해 공통 ID 및 단가 로드
     for r in materials:
@@ -1503,7 +1621,11 @@ def build_grouped_document(group):
     date_part = dt_str.split("T")[0] if "T" in dt_str else datetime.now(KST).strftime("%Y-%m-%d")
 
     doc_id      = "purchase_ss_{}".format(order_id)
-    doc_num     = "SS-{}".format(order_id[-10:]) if len(order_id) >= 10 else "SS-{}".format(order_id)
+    # 거래번호: 연락처 뒤 8자리 기준 (예: 010-8457-8978 → SS-84578978)
+    phone_raw   = str(first.get("연락처", "") or "")
+    phone_digits = _re.sub(r'\D', '', phone_raw)  # 숫자만 추출
+    phone_suffix = phone_digits[-8:] if len(phone_digits) >= 8 else phone_digits
+    doc_num     = "SS-{}".format(phone_suffix) if phone_suffix else "SS-{}".format(order_id[-10:])
     
     # 상호명: 구매자명 우선, 비어있으면 수취인명
     buyer_name = str(first.get("구매자명", "") or "").strip()
@@ -1760,6 +1882,109 @@ def save_document_to_server(payload):
         return False
 
 
+def deduct_inventory_for_smartstore(payload):
+    # type: (dict) -> bool
+    """
+    스마트스토어 주문에 한정하여 재고를 곧바로 차감합니다.
+    매칭되지 않는 재고는 차감 요청을 하지 않습니다.
+
+    API: POST {SAMMIRACK_SERVER_URL}/api/inventory/deduct
+    Body: { deductions: {partId: amount}, documentId: str, userIp: str }
+
+    반환: True(성공) / False(실패)
+    """
+    if DRY_RUN:
+        print("[DRY-RUN] deduct_inventory_for_smartstore 실제 호출 안 함 (DRY_RUN=True)")
+        return False
+
+    materials = payload.get("materials", [])
+    if not materials:
+        print("[INVENTORY] materials 없음 → 재고 차감 생략")
+        return True  # 성공으로 간주 (차감할 게 없음)
+
+    deductions = {}
+    for mat in materials:
+        part_id = mat.get("partId") or mat.get("inventoryPartId")
+        quantity = mat.get("quantity", 0)
+        if part_id and quantity > 0:
+            deductions[part_id] = (deductions.get(part_id, 0) + quantity)
+
+    if not deductions:
+        print("[INVENTORY] 유효한 partId 없음 → 재고 차감 생략")
+        return True
+
+    doc_id = payload.get("doc_id") or payload.get("id", "")
+    user_ip = "smartstore-listener"  # 고정 IP
+
+    body = {
+        "deductions": deductions,
+        "documentId": doc_id,
+        "userIp": user_ip
+    }
+
+    url = "{}/inventory/deduct".format(SAMMIRACK_SERVER_URL)
+    headers = {"Content-Type": "application/json"}
+
+    proxies = PROXIES if USE_PROXY else None
+
+    try:
+        resp = requests.post(
+            url,
+            json=body,
+            headers=headers,
+            proxies=proxies,
+            timeout=30,
+        )
+        if resp.status_code in (200, 201):
+            print("[INVENTORY-DEDUCT] 재고 차감 성공: {} (HTTP {})".format(doc_id, resp.status_code))
+            # 재고 감소 성공 시 문서의 inventory_deducted 업데이트
+            update_inventory_deducted_status(doc_id, True)
+            return True
+        else:
+            print("[INVENTORY-ERROR] HTTP {} | {}".format(resp.status_code, resp.text[:200]))
+            return False
+    except requests.exceptions.ConnectionError:
+        print("[INVENTORY-ERROR] 서버 연결 실패: {}".format(url))
+        return False
+    except requests.exceptions.Timeout:
+        print("[INVENTORY-ERROR] 서버 응답 시간 초과 (30초)")
+        return False
+    except Exception as e:
+        print("[INVENTORY-ERROR] 예상치 못한 오류: {}".format(e))
+        return False
+
+
+def update_inventory_deducted_status(doc_id, deducted):
+    # type: (str, bool) -> None
+    """
+    문서의 inventory_deducted 상태를 업데이트합니다.
+    """
+    url = "{}/api/documents/{}/inventory-deducted".format(SAMMIRACK_SERVER_URL, doc_id)
+    headers = {"Content-Type": "application/json"}
+
+    body = {
+        "deducted": deducted,
+        "deductedBy": "smartstore-listener"
+    }
+
+    proxies = PROXIES if USE_PROXY else None
+
+    try:
+        resp = requests.post(
+            url,
+            json=body,
+            headers=headers,
+            proxies=proxies,
+            timeout=15,
+        )
+        if resp.status_code in (200, 201):
+            print("[DOCUMENT-UPDATE] inventory_deducted 업데이트 성공: {} (HTTP {})".format(doc_id, resp.status_code))
+        else:
+            print("[DOCUMENT-UPDATE-ERROR] HTTP {} | {}".format(resp.status_code, resp.text[:200]))
+    except Exception as e:
+        print("[DOCUMENT-UPDATE-ERROR] {}".format(e))
+
+
 
 
 
@@ -1915,6 +2140,7 @@ class OrderListener(object):
         
         DRY_RUN=True : print_dry_run()으로 콘솔 출력만
         DRY_RUN=False: print_dry_run() 후 save_document_to_server()를 호출
+        스마트스토어 주문에 한정하여 재고 차감도 곧바로 수행
         """
         payload = build_grouped_document(group)
         print_dry_run(payload)
@@ -1932,7 +2158,9 @@ class OrderListener(object):
                 print("[LOG-ERROR] 페이로드 로깅 실패: {}".format(e))
 
         if not DRY_RUN:
-            save_document_to_server(payload)
+            save_success = save_document_to_server(payload)
+            if save_success and payload.get("isSmartstore"):
+                deduct_inventory_for_smartstore(payload)
 
 
 

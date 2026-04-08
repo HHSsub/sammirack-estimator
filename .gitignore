@@ -34,3 +34,6 @@ Keypair
 *.log
 
 *.txt
+
+# 서버 접속 정보 (로컬 전용)
+.server-info
